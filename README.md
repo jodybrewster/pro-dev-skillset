@@ -26,7 +26,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 These plugins from `claude-plugins-official` pair naturally with the stack but are NOT auto-installed by `pro-starter`. Install with one command:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/install-companions.sh)
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
 ```
 
 The script installs:
@@ -52,10 +52,10 @@ RELEASING.md                         # version-bump law + tag scheme
 
 ### One-line bootstrap (recommended)
 
-Inside a fresh project:
+Inside a fresh project (requires `gh` CLI — this repo is private):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/bootstrap.sh)
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
 Add `--with-companions` to also install vercel + figma + playwright. Add `--scope user` to install at user scope (default is project).
@@ -66,7 +66,7 @@ Drop `templates/project-settings.json` into a new project as `.claude/settings.j
 
 ```bash
 mkdir -p .claude
-curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/project-settings.json -o .claude/settings.json
+gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d > .claude/settings.json
 ```
 
 On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to the rest).

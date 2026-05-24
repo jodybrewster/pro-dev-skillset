@@ -2,7 +2,10 @@
 # One-line bootstrap for a fresh project that wants Jody's pro-dev stack.
 #
 # Usage (from inside a project dir):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/bootstrap.sh)
+#   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
+#
+# (gh is required because pro-dev-skillset is a private repo — raw.github
+# URLs 404 without auth. gh uses your existing GitHub auth.)
 #
 # What it does:
 #   1. Writes .claude/settings.json from this repo's templates/project-settings.json
@@ -33,15 +36,27 @@ if ! command -v claude >/dev/null 2>&1; then
   exit 127
 fi
 
+# pro-dev-skillset is a private repo, so we fetch via gh api (which uses
+# GitHub auth) rather than raw.githubusercontent.com (which 404s on private).
+if ! command -v gh >/dev/null 2>&1; then
+  echo "error: gh CLI not found on PATH. Install with: brew install gh" >&2
+  echo "       (Needed because pro-dev-skillset is a private repo.)" >&2
+  exit 127
+fi
+
+fetch() {
+  # $1 = path within repo; writes content to stdout
+  gh api "repos/jodybrewster/pro-dev-skillset/contents/$1" --jq '.content' | base64 -d
+}
+
 # 1. Drop the project-settings template
 mkdir -p .claude
 if [ -f .claude/settings.json ]; then
   echo "warning: .claude/settings.json already exists — leaving it alone."
-  echo "         If you want the pro-dev-skillset settings, merge from:"
-  echo "         https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/project-settings.json"
+  echo "         If you want the pro-dev-skillset settings, fetch with:"
+  echo "         gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d"
 else
-  curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/project-settings.json \
-    -o .claude/settings.json
+  fetch templates/project-settings.json > .claude/settings.json
   echo "wrote .claude/settings.json"
 fi
 
@@ -52,8 +67,7 @@ claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
 # 3. Optional companions
 if [ $WITH_COMPANIONS -eq 1 ]; then
   echo "Installing recommended companion plugins..."
-  bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/install-companions.sh) \
-    --scope "${SCOPE}"
+  bash <(fetch templates/install-companions.sh) --scope "${SCOPE}"
 fi
 
 echo
