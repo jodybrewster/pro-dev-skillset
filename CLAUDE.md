@@ -4,7 +4,7 @@ Working notes for Claude Code (and Codex) when editing this marketplace repo its
 
 ## What this repo is
 
-A private Claude Code plugin marketplace (`pro-dev-skillset`) hosting 8 plugins, ~23 skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
+A private Claude Code plugin marketplace (`pro-dev-skillset`) hosting 8 plugins and 24 skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
 
 The plugins are **skills-only by design** — historically. Hooks, commands, and agents are now being layered in where deterministic triggering beats description-matching.
 
@@ -78,5 +78,5 @@ CI runs these automatically on PR (see `.github/workflows/`). All must pass befo
 ## When you're stuck
 
 - Skill not loading after edit? You forgot the version bump.
-- Cross-marketplace dep silently disabling a plugin? That's a known Claude Code 2.1.150 bug — keep cross-marketplace deps OUT of `plugin.json` and document them as opt-in companions in README.
+- Cross-marketplace dependency problems? The marketplace allowlists `claude-plugins-official`, and official dependencies use object-form entries in `plugin.json` (`name`, `marketplace`, `version`). If auto-install misbehaves on a Claude Code version, use `templates/install-companions.sh` as the explicit fallback.
 - `claude plugin validate --strict` failing on a freshly-forked skill? Likely an unrecognized frontmatter key or a missing sidecar `@reference`.

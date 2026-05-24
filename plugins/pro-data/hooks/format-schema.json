@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'file=$(jq -r .tool_input.file_path 2>/dev/null); [ -z \"$file\" ] || [ \"$file\" = \"null\" ] && exit 0; case \"$file\" in *schema.prisma) npx --no-install prisma format --schema \"$file\" >/dev/null 2>&1 || true ;; */db/schema*.ts|*/drizzle/schema*.ts|*/schema.ts) npx --no-install prettier --write \"$file\" >/dev/null 2>&1 || true ;; esac; exit 0'"
+            "command": "bash -c 'file=$(jq -r .tool_input.file_path 2>/dev/null); [ -z \"$file\" ] || [ \"$file\" = \"null\" ] && exit 0; case \"$file\" in *schema.prisma) npx --no-install prisma format --schema \"$file\" >/dev/null 2>&1 || echo \"warning: prisma format failed for $file\" >&2 ;; */db/schema*.ts|*/drizzle/schema*.ts|*/schema.ts) npx --no-install prettier --write \"$file\" >/dev/null 2>&1 || echo \"warning: prettier failed for $file\" >&2 ;; esac; exit 0'"
           }
         ]
       }

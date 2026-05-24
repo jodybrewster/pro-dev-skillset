@@ -1,6 +1,6 @@
 {
   "name": "pro-data",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
   "author": {
     "name": "Jody Brewster",

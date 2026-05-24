@@ -21,7 +21,7 @@ digraph when_to_use {
     "Tasks mostly independent?" [shape=diamond];
     "Stay in this session?" [shape=diamond];
     "subagent-driven-development" [shape=box];
-    "executing-plans" [shape=box];
+    "inline execution with checkpoints" [shape=box];
     "Manual execution or brainstorm first" [shape=box];
 
     "Have implementation plan?" -> "Tasks mostly independent?" [label="yes"];
@@ -29,11 +29,11 @@ digraph when_to_use {
     "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
     "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
     "Stay in this session?" -> "subagent-driven-development" [label="yes"];
-    "Stay in this session?" -> "executing-plans" [label="no - parallel session"];
+    "Stay in this session?" -> "inline execution with checkpoints" [label="no - parallel session"];
 }
 ```
 
-**vs. Executing Plans (parallel session):**
+**vs. inline execution in a parallel session:**
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
 - Two-stage review after each task: spec compliance first, then code quality
@@ -63,7 +63,7 @@ digraph process {
     "Read plan, extract all tasks with full text, note context, create task list in your task tracker" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
-    "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Finish development branch" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract all tasks with full text, note context, create task list in your task tracker" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
@@ -82,7 +82,7 @@ digraph process {
     "Mark task complete in your task tracker" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use superpowers:finishing-a-development-branch";
+    "Dispatch final code reviewer subagent for entire implementation" -> "Finish development branch";
 }
 ```
 
@@ -267,16 +267,16 @@ Done!
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **superpowers:writing-plans** - Creates the plan this skill executes
-- **superpowers:requesting-code-review** - Code review template for reviewer subagents
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+- **using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
+- **writing-plans** - Creates the plan this skill executes
+- **requesting-code-review** - Code review template for reviewer subagents
+- **verification-before-completion** - Complete development only after fresh verification evidence
 
 **Subagents should use:**
-- **superpowers:test-driven-development** - Subagents follow TDD for each task
+- **test-driven-development** - Subagents follow TDD for each task
 
 **Alternative workflow:**
-- **superpowers:executing-plans** - Use for parallel session instead of same-session execution
+- **inline execution with checkpoints** - Use for a parallel session instead of same-session subagent execution
 
 ---
 

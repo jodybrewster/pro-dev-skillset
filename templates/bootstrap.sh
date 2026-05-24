@@ -10,13 +10,15 @@
 # What it does:
 #   1. Writes .claude/settings.json from this repo's templates/project-settings.json
 #      (registers the pro-dev-skillset marketplace + enables pro-starter)
-#   2. Installs pro-starter@pro-dev-skillset at project scope (cascades to
-#      pro-core + pro-quality + pro-nextjs + pro-design)
-#   3. Optionally runs install-companions.sh if --with-companions is passed
-#      (installs vercel + figma + playwright from claude-plugins-official)
+#   2. Optionally runs install-companions.sh before dependency resolution if
+#      --with-companions is passed (installs vercel + figma + playwright from
+#      claude-plugins-official explicitly)
+#   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
+#      full stack: pro-core, pro-quality, pro-nextjs, pro-design, pro-testing,
+#      pro-data, and pro-spec)
 #
 # Flags:
-#   --with-companions   Also install the cross-marketplace companion plugins
+#   --with-companions   Pre-install the cross-marketplace dependencies explicitly
 #   --scope <s>         Install scope: user | project (default: project)
 
 set -euo pipefail
@@ -60,15 +62,15 @@ else
   echo "wrote .claude/settings.json"
 fi
 
-# 2. Install pro-starter (cascades to all stack plugins)
-echo "Installing pro-starter@pro-dev-skillset --scope ${SCOPE}..."
-claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
-
-# 3. Optional companions
+# 2. Optional explicit cross-marketplace dependency install
 if [ $WITH_COMPANIONS -eq 1 ]; then
-  echo "Installing recommended companion plugins..."
+  echo "Pre-installing official cross-marketplace dependencies..."
   bash <(fetch templates/install-companions.sh) --scope "${SCOPE}"
 fi
+
+# 3. Install pro-starter (cascades to all stack plugins)
+echo "Installing pro-starter@pro-dev-skillset --scope ${SCOPE}..."
+claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
 
 echo
 echo "Done. Verify with: claude plugin list"

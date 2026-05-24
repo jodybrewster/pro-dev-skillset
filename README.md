@@ -7,42 +7,47 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 **Skill-bearing plugins:**
 
 - **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
-- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
-- **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Companion: `figma` for Figma-MCP integration (Figma-to-component skills don't exist as MIT upstream content yet — write originals when needed).
+- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion. Depends on `playwright@claude-plugins-official`.
+- **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Depends on `figma@claude-plugins-official` for Figma-MCP integration.
 
-- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT): vitest (with mocking + monorepo + testing-patterns + troubleshooting sidecars), playwright-automation (Page Object Model + 8 reference sidecars), storybook-interactions (play-functions-as-spec), visual-testing (Playwright/Chromatic/Percy/Argos patterns).
+- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT): vitest (with mocking + monorepo + testing-patterns + troubleshooting sidecars), playwright-automation (Page Object Model + 8 reference sidecars), storybook-interactions (play-functions-as-spec), visual-testing (Playwright/Chromatic/Percy/Argos patterns). Depends on `playwright@claude-plugins-official`.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-spec`** — spec-driven development skills adapted from `github/spec-kit` (MIT): writing-feature-specs (PRD with Given/When/Then), clarifying-specs (10-category ambiguity taxonomy).
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
-- **`pro-nextjs`** — Next.js / Vercel projects. Recommended companions: `vercel`, `figma`.
+- **`pro-nextjs`** — Next.js / Vercel projects. Depends on `vercel@claude-plugins-official` and `figma@claude-plugins-official`.
 
 **Meta:**
 
-- **`pro-starter`** — pulls all 7 skill-bearing plugins (`pro-core` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-spec` + `pro-nextjs`). One install ⇒ Jody's full stack (~21 skills across all plugins).
+- **`pro-starter`** — pulls the full stack: 6 skill-bearing plugins (`pro-core` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-spec`) plus the `pro-nextjs` marker plugin. One install ⇒ Jody's full stack (24 skills across all skill-bearing plugins).
 
-### Recommended companions (opt-in)
+### Official dependencies
 
-These plugins from `claude-plugins-official` pair naturally with the stack but are NOT auto-installed by `pro-starter`. Install with one command:
+These plugins from `claude-plugins-official` are declared as cross-marketplace dependencies by the relevant `pro-*` plugins:
+
+- `vercel` — Next.js / Vercel deployment workflows (pairs with `pro-nextjs`)
+- `figma` — design lookup + asset extraction (pairs with `pro-nextjs` and `pro-design`)
+- `playwright` — browser E2E testing (pairs with `pro-quality` and `pro-testing`)
+
+If a Claude Code version does not auto-install cross-marketplace dependencies correctly, run the helper script explicitly:
 
 ```bash
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
 ```
-
-The script installs:
-- `vercel` — Next.js / Vercel deployment workflows (pairs with `pro-nextjs`)
-- `figma` — design lookup + asset extraction (pairs with `pro-nextjs`)
-- `playwright` — browser E2E testing (pairs with `pro-quality`)
-
-> **Why opt-in rather than `dependencies`:** Claude Code 2.1.150 validates cross-marketplace deps but does not auto-install them. Worse — a depending plugin is silently disabled (and its skills disappear) when a declared cross-marketplace dep is missing. Keeping the companions out of `plugin.json` means the `pro-*` skills always work whether or not you've installed the companions.
 
 Layout:
 
 ```
 .claude-plugin/marketplace.json      # marketplace manifest
 plugins/
-  pro-core/                          # real plugin: skills only
+  pro-core/                          # core skills + parallelism hook
+  pro-quality/                       # quality skills + review/verify commands
+  pro-nextjs/                        # marker plugin, no skills
+  pro-design/                        # design skills
+  pro-testing/                       # testing skills
+  pro-data/                          # data/auth skills + schema formatting hook
+  pro-spec/                          # spec skills + spec/clarify commands
   pro-starter/                       # meta-plugin: dependencies only
 templates/
   project-settings.json              # drop-in for any new project's .claude/
@@ -59,7 +64,7 @@ Inside a fresh project (requires `gh` CLI — this repo is private):
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-Add `--with-companions` to also install vercel + figma + playwright. Add `--scope user` to install at user scope (default is project).
+Add `--with-companions` to explicitly pre-install vercel + figma + playwright before dependency resolution. Add `--scope user` to install at user scope (default is project).
 
 ### Per-project (committed)
 
@@ -108,18 +113,30 @@ See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.j
 
 ## Codex parity
 
-The skill-bearing plugins also load under OpenAI Codex via the Agent Skills standard. Verified end-to-end on `codex-cli 0.122.0-alpha.13`:
+The skill-bearing plugins are kept compatible with OpenAI Codex via the Agent Skills standard. Last manual smoke check used `codex-cli 0.122.0-alpha.13`; CI does not yet enforce this path.
 
 ```bash
 codex plugin marketplace add jodybrewster/pro-dev-skillset
-# then add to ~/.codex/config.toml:
-#   [plugins."pro-starter@pro-dev-skillset"]
+# then add each plugin you want to ~/.codex/config.toml:
+#   [plugins."pro-core@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-quality@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-design@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-testing@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-data@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-spec@pro-dev-skillset"]
+#   enabled = true
+#   [plugins."pro-nextjs@pro-dev-skillset"]
 #   enabled = true
 codex exec --skip-git-repo-check "enumerate available skills"
-# → returns the same 23 pro-* skill slugs as Claude Code
+# Expected: the same 24 pro-* skill slugs as Claude Code
 ```
 
-Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Two soft drift items in pro-core/pro-quality SKILL.md bodies were rewritten for harness-neutral language (no more hard-coded `TodoWrite`/`Task tool` references).
+Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).
 
 ## License
 

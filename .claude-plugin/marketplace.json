@@ -7,46 +7,49 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.0.0"
+    "version": "1.0.2"
   },
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official"
+  ],
   "plugins": [
     {
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev. SessionStart hook reminds Claude to dispatch independent subagents in parallel.",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
-      "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Recommended companion: playwright from claude-plugins-official",
-      "version": "0.6.0",
+      "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Depends on Playwright from claude-plugins-official",
+      "version": "0.6.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
-      "description": "Next.js stack marker; recommended companions: vercel + figma from claude-plugins-official",
-      "version": "0.6.0",
+      "description": "Next.js stack marker with official Vercel and Figma plugin dependencies",
+      "version": "0.6.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition. Companion: figma from claude-plugins-official",
-      "version": "0.4.0",
+      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition. Depends on Figma from claude-plugins-official",
+      "version": "0.4.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
-      "description": "Testing skills: Vitest, Playwright automation, Storybook interactions, visual testing. Recommended companion: playwright from claude-plugins-official",
-      "version": "0.3.0",
+      "description": "Testing skills: Vitest, Playwright automation, Storybook interactions, visual testing. Depends on Playwright from claude-plugins-official",
+      "version": "0.3.1",
       "category": "development",
       "strict": true
     },
@@ -54,7 +57,7 @@
       "name": "pro-data",
       "source": "./plugins/pro-data",
       "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "category": "development",
       "strict": true
     },
@@ -69,8 +72,8 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's full pro dev stack (7 skill-bearing plugins)",
-      "version": "1.0.0",
+      "description": "Meta-plugin: installs Jody's full pro dev stack (6 skill-bearing plugins plus pro-nextjs marker)",
+      "version": "1.0.2",
       "category": "development",
       "strict": true
     }

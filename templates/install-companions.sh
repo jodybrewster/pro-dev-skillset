@@ -1,23 +1,19 @@
 #!/usr/bin/env bash
-# Install pro-dev-skillset's recommended cross-marketplace companion plugins.
+# Install pro-dev-skillset's official cross-marketplace dependencies.
 #
-# The pro-* plugins are self-contained and load fine on their own. These
-# companions add useful tooling for the stack patterns they're paired with:
+# The pro-* plugins declare these as dependencies. This script is useful as an
+# explicit pre-install/fallback path for Claude Code versions that do not
+# auto-install cross-marketplace dependencies correctly:
 #
 #   - vercel    : Next.js / Vercel deployment workflows  (paired with pro-nextjs)
 #   - figma     : Figma asset extraction + design lookup (paired with pro-nextjs)
-#   - playwright: browser E2E testing                    (paired with pro-quality)
-#
-# Why this is a separate script: Claude Code 2.1.150 declares dependencies
-# across marketplaces but does NOT auto-install them — and a depending plugin
-# is silently disabled when its cross-marketplace dep is missing. So pro-* keeps
-# its cross-marketplace deps OUT of plugin.json, and you opt in via this script.
+#   - playwright: browser E2E testing                    (paired with pro-quality/pro-testing)
 #
 # Usage:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/install-companions.sh)
+#   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
 #
 # Or copy this file into your project and run it. Pass --scope project or
-# --scope user (default: user) to control where the companions get installed.
+# --scope user (default: user) to control where the dependencies get installed.
 
 set -euo pipefail
 
