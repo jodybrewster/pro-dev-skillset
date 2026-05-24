@@ -1,0 +1,12 @@
+{
+  "name": "pro-spec",
+  "version": "0.1.0",
+  "description": "Spec-driven development marker (GitHub Spec Kit / specification-first workflows). Skills slot reserved for Phase 3 content",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "dependencies": [
+    "pro-core@pro-dev-skillset@^0.2.0"
+  ]
+}

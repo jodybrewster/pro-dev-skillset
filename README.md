@@ -4,10 +4,22 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 ## What's here
 
-- **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development.
+**Skill-bearing plugins:**
+
+- **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
-- **`pro-nextjs`** — thin stack-marker plugin for Next.js / Vercel projects: depends on `pro-core`. No skills of its own (yet) — exists as a category marker so Phase 3 Next.js skills have a home.
-- **`pro-starter`** — meta-plugin with no skills of its own; depends on `pro-core` + `pro-quality` + `pro-nextjs`. Installing this one plugin pulls all four `pro-*` plugins.
+- **`pro-design`** — frontend design skills forked from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT): design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale.
+
+**Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
+
+- **`pro-nextjs`** — Next.js / Vercel projects. Recommended companions: `vercel`, `figma`.
+- **`pro-testing`** — Vitest / Playwright / Storybook. Recommended companion: `playwright`.
+- **`pro-data`** — Drizzle / Prisma / Auth. Skill slot reserved.
+- **`pro-spec`** — Spec-driven development / GitHub Spec Kit. Skill slot reserved.
+
+**Meta:**
+
+- **`pro-starter`** — depends on `pro-core` + `pro-quality` + `pro-nextjs` + `pro-design`. Installing this one plugin pulls Jody's default stack (4 plugins, 13 skills).
 
 ### Recommended companions (opt-in)
 
@@ -38,7 +50,17 @@ RELEASING.md                         # version-bump law + tag scheme
 
 ## Install paths
 
-### Per-project (committed, recommended)
+### One-line bootstrap (recommended)
+
+Inside a fresh project:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/bootstrap.sh)
+```
+
+Add `--with-companions` to also install vercel + figma + playwright. Add `--scope user` to install at user scope (default is project).
+
+### Per-project (committed)
 
 Drop `templates/project-settings.json` into a new project as `.claude/settings.json`:
 
@@ -47,7 +69,7 @@ mkdir -p .claude
 curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/project-settings.json -o .claude/settings.json
 ```
 
-On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to `pro-core`).
+On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to the rest).
 
 ### Ad-hoc, mid-development
 
