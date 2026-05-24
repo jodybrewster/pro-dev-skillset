@@ -41,15 +41,26 @@ claude plugin install pro-starter@pro-dev-skillset --scope project
 
 ## Headless / CI gotcha
 
-`claude -p` (headless) does NOT trigger the folder-trust prompt that authorizes `extraKnownMarketplaces` ([anthropics/claude-code#13097](https://github.com/anthropics/claude-code/issues/13097)). For CI:
+`claude -p` (headless) does NOT trigger the folder-trust prompt that authorizes `extraKnownMarketplaces` ([anthropics/claude-code#13097](https://github.com/anthropics/claude-code/issues/13097)).
 
-1. Open the project interactively once, accept the folder-trust prompt.
-2. Commit the resulting `.claude/settings.local.json` (or the trusted-folders entry).
-3. Subsequent `claude -p` runs in CI will then read the trusted config and install plugins as expected.
+Verified workaround:
+
+1. Drop `templates/project-settings.json` into the repo as `.claude/settings.json` (the marketplace is then auto-registered on next `claude` invocation, even headless).
+2. Either open `claude` interactively once and accept the folder-trust prompt — OR run `claude plugin install pro-starter@pro-dev-skillset --scope project` explicitly (no prompt required).
+3. After install, `.claude/settings.json` is updated so `enabledPlugins` contains both `pro-starter` and `pro-core`. Commit it — subsequent `claude -p` runs in CI then re-resolve the same stack on cache miss.
 
 ## Folder-trust prompt
 
 Every first-open of a project that adopts the template settings triggers a folder-trust prompt. This is expected and a one-time cost per project per machine.
+
+## Cleanup
+
+`pro-starter` is a meta-plugin — uninstalling it leaves `pro-core` as an orphaned auto-installed dep. To remove both:
+
+```bash
+claude plugin uninstall pro-starter@pro-dev-skillset --scope project
+claude plugin prune --scope project -y     # -y required in non-TTY contexts
+```
 
 ## Releasing
 
