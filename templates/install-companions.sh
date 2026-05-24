@@ -21,7 +21,11 @@
 
 set -euo pipefail
 
-SCOPE="${1:---scope user}"
+# Default scope is user. Override with: install-companions.sh --scope project
+SCOPE="user"
+if [ "${1:-}" = "--scope" ] && [ -n "${2:-}" ]; then
+  SCOPE="$2"
+fi
 
 # Make sure claude-plugins-official is registered (it's bundled in recent CC
 # installs; this is the one-line safety net if it ever isn't).
@@ -31,8 +35,8 @@ if ! claude plugin marketplace list 2>/dev/null | grep -q claude-plugins-officia
 fi
 
 for plugin in vercel figma playwright; do
-  echo "Installing ${plugin}@claude-plugins-official ${SCOPE}..."
-  claude plugin install "${plugin}@claude-plugins-official" ${SCOPE}
+  echo "Installing ${plugin}@claude-plugins-official at ${SCOPE} scope..."
+  claude plugin install "${plugin}@claude-plugins-official" --scope "${SCOPE}"
 done
 
 echo
