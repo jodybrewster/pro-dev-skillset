@@ -1,12 +1,12 @@
 {
   "name": "pro-spec",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Spec-driven development skills: writing feature specs (PRDs with Given/When/Then), clarifying specs (10-category ambiguity taxonomy). Adapted from github/spec-kit",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.3.0"
+    "pro-core@pro-dev-skillset@^0.4.0"
   ]
 }

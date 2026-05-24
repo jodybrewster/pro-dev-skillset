@@ -1,7 +1,7 @@
 {
   "name": "pro-core",
-  "version": "0.3.0",
-  "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev",
+  "version": "0.4.0",
+  "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev. SessionStart hook reminds Claude to dispatch independent subagents in parallel.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
