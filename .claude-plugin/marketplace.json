@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "0.7.0"
+    "version": "0.9.0"
   },
   "plugins": [
     {
@@ -22,7 +22,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Recommended companion: playwright from claude-plugins-official",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "category": "development",
       "strict": true
     },
@@ -54,7 +54,7 @@
       "name": "pro-data",
       "source": "./plugins/pro-data",
       "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -62,7 +62,7 @@
       "name": "pro-spec",
       "source": "./plugins/pro-spec",
       "description": "Spec-driven development skills: writing feature specs (PRDs with Given/When/Then), clarifying specs (10-category ambiguity taxonomy). Adapted from github/spec-kit",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -70,7 +70,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Meta-plugin: installs Jody's full pro dev stack (7 skill-bearing plugins)",
-      "version": "0.7.0",
+      "version": "0.9.0",
       "category": "development",
       "strict": true
     }

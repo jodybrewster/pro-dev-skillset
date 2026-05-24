@@ -1,0 +1,57 @@
+name: Validate marketplace and plugins
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate marketplace + plugins (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Verify Claude Code install
+        run: claude --version
+
+      - name: Validate marketplace manifest (strict)
+        run: claude plugin validate . --strict
+
+      - name: Validate every plugin (strict)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          failed=0
+          for plugin in plugins/*/; do
+            plugin="${plugin%/}"
+            echo "::group::Validating ${plugin}"
+            if ! claude plugin validate "$plugin" --strict; then
+              echo "::error file=${plugin}/.claude-plugin/plugin.json::Plugin validation failed: ${plugin}"
+              failed=1
+              echo "::endgroup::"
+              break
+            fi
+            echo "::endgroup::"
+          done
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+  # TODO: Add Codex parity smoke check once the Codex CLI plugin marketplace
+  # commands are stable and documented. The README references
+  # `codex-cli 0.122.0-alpha.13`, but the exact `codex plugin ...` invocation
+  # for adding a local marketplace path is not confirmed. Re-enable as a
+  # separate job with `continue-on-error: true` once verified.

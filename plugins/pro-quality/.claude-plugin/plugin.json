@@ -1,6 +1,6 @@
 {
   "name": "pro-quality",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Recommended companion: playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
