@@ -8,7 +8,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 - **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
-- **`pro-design`** — frontend design skills forked from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT): design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale.
+- **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Companion: `figma` for Figma-MCP integration (Figma-to-component skills don't exist as MIT upstream content yet — write originals when needed).
 
 - **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT): vitest (with mocking + monorepo + testing-patterns + troubleshooting sidecars), playwright-automation (Page Object Model + 8 reference sidecars), storybook-interactions (play-functions-as-spec), visual-testing (Playwright/Chromatic/Percy/Argos patterns).
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
@@ -106,7 +106,22 @@ claude plugin prune --scope project -y     # -y required in non-TTY contexts
 
 See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.json` in the same commit, validate strict, tag with `claude plugin tag --push`.
 
+## Codex parity
+
+The skill-bearing plugins also load under OpenAI Codex via the Agent Skills standard. Verified end-to-end on `codex-cli 0.122.0-alpha.13`:
+
+```bash
+codex plugin marketplace add jodybrewster/pro-dev-skillset
+# then add to ~/.codex/config.toml:
+#   [plugins."pro-starter@pro-dev-skillset"]
+#   enabled = true
+codex exec --skip-git-repo-check "enumerate available skills"
+# → returns the same 23 pro-* skill slugs as Claude Code
+```
+
+Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Two soft drift items in pro-core/pro-quality SKILL.md bodies were rewritten for harness-neutral language (no more hard-coded `TodoWrite`/`Task tool` references).
+
 ## License
 
-- `pro-core` skills are forked from [obra/superpowers](https://github.com/obra/superpowers) under the MIT License. See `plugins/pro-core/LICENSE` and the per-file attribution at the bottom of each `SKILL.md`.
-- Everything else in this repo is private to Jody Brewster.
+- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-quality), `Owl-Listener/designer-skills` (pro-design), `PaulRBerg/agent-skills` + `petrkindlmann/qa-skills` + `peterknezek/skills` (pro-testing), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `github/spec-kit` (pro-spec). Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md.
+- Everything else in this repo (manifests, templates, README, RELEASING) is private to Jody Brewster.

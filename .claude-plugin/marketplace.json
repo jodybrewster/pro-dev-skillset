@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "plugins": [
     {
@@ -37,8 +37,8 @@
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale",
-      "version": "0.2.0",
+      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition. Companion: figma from claude-plugins-official",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -70,7 +70,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Meta-plugin: installs Jody's full pro dev stack (7 skill-bearing plugins)",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "category": "development",
       "strict": true
     }

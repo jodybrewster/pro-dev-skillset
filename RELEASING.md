@@ -58,7 +58,15 @@ Forked SKILL.md files should load under OpenAI Codex too (Agent Skills standard)
 - Missing sidecar files referenced in the body — every `@filename.md` or "see `filename.md`" must exist in the same directory
 - Non-standard frontmatter keys (`harness:`, `claude_code:`, `tools_required:`) — the standard only guarantees `name`, `description`, optional `tags`/`tools`/`model`
 
-Known soft drift in current pro-core: `requesting-code-review` and `subagent-driven-development` mention `Task`/`TodoWrite` by CC-specific name. Not a blocker for CC users; will rewrite when we have an active Codex consumer.
+Soft drift in pro-core/pro-quality was rewritten for harness-neutrality and **verified end-to-end on `codex-cli 0.122.0-alpha.13`** — `codex exec --skip-git-repo-check` enumerates the same 23 pro-* skill slugs as Claude Code. Test command:
+
+```bash
+codex plugin marketplace add jodybrewster/pro-dev-skillset
+# add the [plugins."pro-starter@pro-dev-skillset"] enabled = true block
+# to ~/.codex/config.toml (Codex 0.122 doesn't have install-cascade yet
+# so each pro-* plugin you want must be enabled explicitly there)
+codex exec --skip-git-repo-check "list skill slugs"
+```
 
 ## Upstream watch (forked skills)
 
