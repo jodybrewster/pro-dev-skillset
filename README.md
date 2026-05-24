@@ -5,11 +5,11 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 ## What's here
 
 - **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development.
-- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
-- **`pro-nextjs`** — thin stack pack for Next.js / Vercel projects: depends on `pro-core` plus `vercel@claude-plugins-official`. No skills of its own.
-- **`pro-starter`** — meta-plugin with no skills of its own; depends on `pro-core` + `pro-quality` + `pro-nextjs`. Installing this one plugin pulls the whole stack.
+- **`pro-quality`** — quality-gate skills forked from `obra/superpowers` (requesting code review with reusable reviewer prompt, receiving code review, verification-before-completion) plus `playwright@claude-plugins-official` for browser E2E testing.
+- **`pro-nextjs`** — thin stack pack for Next.js / Vercel projects: depends on `pro-core` plus `vercel@claude-plugins-official` and `figma@claude-plugins-official`. No skills of its own.
+- **`pro-starter`** — meta-plugin with no skills of its own; depends on `pro-core` + `pro-quality` + `pro-nextjs`. Installing this one plugin pulls the whole stack — 7 plugins total (4 `pro-*` + vercel + figma + playwright).
 
-> **Cross-marketplace prerequisite:** `pro-nextjs` (and therefore `pro-starter`) pulls in `vercel@claude-plugins-official`. The `claude-plugins-official` marketplace is registered by default in recent Claude Code installs. If it ever isn't, register it once: `claude plugin marketplace add anthropics/claude-plugins-official`.
+> **Cross-marketplace prerequisite:** `pro-starter` transitively pulls in `vercel`, `figma`, and `playwright` from `claude-plugins-official`. That marketplace is registered by default in recent Claude Code installs. If it ever isn't, register it once: `claude plugin marketplace add anthropics/claude-plugins-official`.
 
 Layout:
 
