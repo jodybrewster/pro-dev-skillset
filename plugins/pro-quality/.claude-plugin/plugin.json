@@ -1,12 +1,9 @@
 {
   "name": "pro-quality",
-  "version": "0.2.0",
-  "description": "Quality gate skills (review + verification) plus playwright from claude-plugins-official",
+  "version": "0.3.0",
+  "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Recommended companion: playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
-  },
-  "dependencies": [
-    "playwright@claude-plugins-official"
-  ]
+  }
 }

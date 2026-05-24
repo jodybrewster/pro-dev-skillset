@@ -5,11 +5,24 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 ## What's here
 
 - **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development.
-- **`pro-quality`** — quality-gate skills forked from `obra/superpowers` (requesting code review with reusable reviewer prompt, receiving code review, verification-before-completion) plus `playwright@claude-plugins-official` for browser E2E testing.
-- **`pro-nextjs`** — thin stack pack for Next.js / Vercel projects: depends on `pro-core` plus `vercel@claude-plugins-official` and `figma@claude-plugins-official`. No skills of its own.
-- **`pro-starter`** — meta-plugin with no skills of its own; depends on `pro-core` + `pro-quality` + `pro-nextjs`. Installing this one plugin pulls the whole stack — 7 plugins total (4 `pro-*` + vercel + figma + playwright).
+- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
+- **`pro-nextjs`** — thin stack-marker plugin for Next.js / Vercel projects: depends on `pro-core`. No skills of its own (yet) — exists as a category marker so Phase 3 Next.js skills have a home.
+- **`pro-starter`** — meta-plugin with no skills of its own; depends on `pro-core` + `pro-quality` + `pro-nextjs`. Installing this one plugin pulls all four `pro-*` plugins.
 
-> **Cross-marketplace prerequisite:** `pro-starter` transitively pulls in `vercel`, `figma`, and `playwright` from `claude-plugins-official`. That marketplace is registered by default in recent Claude Code installs. If it ever isn't, register it once: `claude plugin marketplace add anthropics/claude-plugins-official`.
+### Recommended companions (opt-in)
+
+These plugins from `claude-plugins-official` pair naturally with the stack but are NOT auto-installed by `pro-starter`. Install with one command:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/jodybrewster/pro-dev-skillset/main/templates/install-companions.sh)
+```
+
+The script installs:
+- `vercel` — Next.js / Vercel deployment workflows (pairs with `pro-nextjs`)
+- `figma` — design lookup + asset extraction (pairs with `pro-nextjs`)
+- `playwright` — browser E2E testing (pairs with `pro-quality`)
+
+> **Why opt-in rather than `dependencies`:** Claude Code 2.1.150 validates cross-marketplace deps but does not auto-install them. Worse — a depending plugin is silently disabled (and its skills disappear) when a declared cross-marketplace dep is missing. Keeping the companions out of `plugin.json` means the `pro-*` skills always work whether or not you've installed the companions.
 
 Layout:
 
