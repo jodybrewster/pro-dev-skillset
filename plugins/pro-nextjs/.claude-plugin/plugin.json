@@ -1,0 +1,13 @@
+{
+  "name": "pro-nextjs",
+  "version": "0.1.0",
+  "description": "Next.js + Vercel stack pack: core dev skills plus the official Vercel plugin",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "dependencies": [
+    "pro-core@pro-dev-skillset@^0.1.0",
+    "vercel@claude-plugins-official"
+  ]
+}

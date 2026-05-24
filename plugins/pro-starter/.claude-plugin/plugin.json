@@ -1,12 +1,14 @@
 {
   "name": "pro-starter",
-  "version": "0.1.0",
-  "description": "Installs Jody's full pro dev plugin stack",
+  "version": "0.2.0",
+  "description": "Installs Jody's full pro dev plugin stack (core + quality + nextjs)",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.1.0"
+    "pro-core@pro-dev-skillset@^0.1.0",
+    "pro-quality@pro-dev-skillset@^0.1.0",
+    "pro-nextjs@pro-dev-skillset@^0.1.0"
   ]
 }

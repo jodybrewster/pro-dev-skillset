@@ -7,3 +7,4 @@ node_modules/
 
 # Local-only Claude state
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
