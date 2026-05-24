@@ -1,0 +1,12 @@
+{
+  "name": "pro-starter",
+  "version": "0.1.0",
+  "description": "Installs Jody's full pro dev plugin stack",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "dependencies": [
+    "pro-core@pro-dev-skillset@^0.1.0"
+  ]
+}

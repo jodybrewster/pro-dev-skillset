@@ -1,0 +1,9 @@
+{
+  "name": "pro-core",
+  "version": "0.1.0",
+  "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  }
+}

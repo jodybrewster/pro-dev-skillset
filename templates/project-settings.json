@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "pro-dev-skillset": {
+      "source": {
+        "source": "github",
+        "repo": "jodybrewster/pro-dev-skillset"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "pro-starter@pro-dev-skillset": true
+  }
+}

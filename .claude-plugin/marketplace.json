@@ -1,0 +1,30 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "pro-dev-skillset",
+  "owner": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "metadata": {
+    "description": "Jody's portable pro dev skill stack",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "pro-core",
+      "source": "./plugins/pro-core",
+      "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-starter",
+      "source": "./plugins/pro-starter",
+      "description": "Meta-plugin: installs the full pro dev stack",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    }
+  ]
+}
