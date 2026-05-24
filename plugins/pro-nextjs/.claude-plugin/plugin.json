@@ -1,12 +1,12 @@
 {
   "name": "pro-nextjs",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Next.js stack marker; recommended companions: vercel + figma from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.2.0"
+    "pro-core@pro-dev-skillset@^0.3.0"
   ]
 }

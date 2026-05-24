@@ -1,12 +1,12 @@
 {
   "name": "pro-data",
-  "version": "0.1.0",
-  "description": "Data & auth stack marker (Drizzle / Prisma / Auth). Skills slot reserved for Phase 3 content",
+  "version": "0.2.0",
+  "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.2.0"
+    "pro-core@pro-dev-skillset@^0.3.0"
   ]
 }

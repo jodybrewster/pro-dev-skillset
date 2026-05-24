@@ -10,16 +10,17 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion.
 - **`pro-design`** — frontend design skills forked from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT): design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale.
 
+- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT): vitest (with mocking + monorepo + testing-patterns + troubleshooting sidecars), playwright-automation (Page Object Model + 8 reference sidecars), storybook-interactions (play-functions-as-spec), visual-testing (Playwright/Chromatic/Percy/Argos patterns).
+- **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
+- **`pro-spec`** — spec-driven development skills adapted from `github/spec-kit` (MIT): writing-feature-specs (PRD with Given/When/Then), clarifying-specs (10-category ambiguity taxonomy).
+
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
 - **`pro-nextjs`** — Next.js / Vercel projects. Recommended companions: `vercel`, `figma`.
-- **`pro-testing`** — Vitest / Playwright / Storybook. Recommended companion: `playwright`.
-- **`pro-data`** — Drizzle / Prisma / Auth. Skill slot reserved.
-- **`pro-spec`** — Spec-driven development / GitHub Spec Kit. Skill slot reserved.
 
 **Meta:**
 
-- **`pro-starter`** — depends on `pro-core` + `pro-quality` + `pro-nextjs` + `pro-design`. Installing this one plugin pulls Jody's default stack (4 plugins, 13 skills).
+- **`pro-starter`** — pulls all 7 skill-bearing plugins (`pro-core` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-spec` + `pro-nextjs`). One install ⇒ Jody's full stack (~21 skills across all plugins).
 
 ### Recommended companions (opt-in)
 

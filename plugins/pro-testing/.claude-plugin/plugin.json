@@ -1,12 +1,12 @@
 {
   "name": "pro-testing",
-  "version": "0.1.0",
-  "description": "Testing stack marker (Vitest / Playwright / Storybook). Recommended companion: playwright from claude-plugins-official",
+  "version": "0.2.0",
+  "description": "Testing skills: Vitest, Playwright automation, Storybook interactions, visual testing. Recommended companion: playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.2.0"
+    "pro-core@pro-dev-skillset@^0.3.0"
   ]
 }
