@@ -13,6 +13,18 @@ Execute plan by dispatching fresh subagent per task, with two-stage review after
 
 **Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
 
+## Before You Start — Fresh Context
+
+If a saved plan file exists (`docs/superpowers/plans/*.md` or equivalent), execution should start from a **clean context**. The plan IS the source of truth — prior conversation context (brainstorming, design exploration, rejected alternatives) is not needed and can pollute scope decisions.
+
+**Preferred flow:**
+1. **Tell the user to clear context first:** "Run `/clear` to start fresh, then re-invoke this skill with the plan path."
+2. **After they clear,** receive a minimal invocation like `execute the plan at <path>`. Read the plan + the spec it references. That's your context.
+
+**Continue in current session ONLY if** the plan was authored in this exact conversation AND clearing context would lose decisions that aren't captured in the plan file. If everything important made it into the plan, ask the user to clear before you begin.
+
+This applies to **the controller (you)**. Subagents already get fresh context per dispatch — that's a separate concern.
+
 ## When to Use
 
 ```dot
