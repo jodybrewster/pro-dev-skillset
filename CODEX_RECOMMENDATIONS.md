@@ -32,8 +32,8 @@ The research supports this repo's current direction, but the repo should stay cu
    - dependency ranges after version bumps
    - stale private-repo install commands
 
-7. **Do not import gstack or ECC wholesale.**
-   Treat gstack and ECC as reference libraries. Cherry-pick small, pure-markdown ideas such as adversarial review, careful/freeze/guard style commands, and security scan patterns. Avoid daemon or CLI-dependent commands unless the full runtime is vendored and tested.
+7. **Keep wholesale imports isolated.**
+   This recommendation was superseded for GStack by the opt-in `pro-gstack` comparison plugin. The default stack should still stay curated: `pro-gstack` vendors the full upstream source for traceability, exposes prefixed harness-neutral adapters, and remains outside `pro-starter`. Treat ECC and any future large imports the same way unless they earn promotion through repeated use.
 
 ## Practical Next Steps
 

@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.2.1"
+    "version": "1.4.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -66,6 +66,22 @@
       "source": "./plugins/pro-spec",
       "description": "Spec-driven development skills: writing feature specs (PRDs with Given/When/Then), clarifying specs (10-category ambiguity taxonomy). Adapted from github/spec-kit",
       "version": "0.4.0",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-spdd",
+      "source": "./plugins/pro-spdd",
+      "description": "Structured Prompt-Driven Development workflow: story decomposition, analysis, REASONS Canvas, generation, prompt update, sync, API test, code review, and reverse engineering. Adapted from gszhangwei/open-spdd.",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-gstack",
+      "source": "./plugins/pro-gstack",
+      "description": "Opt-in GStack workflow adapters: persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Adapted from garrytan/gstack.",
+      "version": "0.1.0",
       "category": "development",
       "strict": true
     },

@@ -405,7 +405,7 @@ Example:
   "id": "2026-05-26-moodboard-collections",
   "title": "Moodboard Collections",
   "branch": "feature/moodboard-collections",
-  "worktree_path": "../mieruka-moodboard-collections",
+  "workspace_path": "/Users/jodybrewster/Projects/mieruka",
   "phase": "Build",
   "state": "in_progress",
   "risk": "medium",
@@ -965,7 +965,7 @@ Suggested Mieruka/lifecycle commands:
 - `/mieruka-advance` - move phase only if required gates pass.
 - `/mieruka-block <reason>` - mark workstream blocked.
 - `/mieruka-resume <id>` - read status and relevant artifacts.
-- `/mieruka-handoff` - write concise handoff for another agent/session/worktree.
+- `/mieruka-handoff` - write concise handoff for another agent or session.
 
 ## Skills To Add
 
@@ -1092,3 +1092,62 @@ Prototype-informed SPDD
 ```
 
 The differentiator is that specs are living artifacts informed by stories, optional research, and in-repo prototypes before implementation planning.
+
+## pro-spdd Baseline
+
+`pro-spdd` is an opt-in plugin copied/adapted from OpenSPDD (`gszhangwei/open-spdd`). It is focused only on Structured Prompt-Driven Development artifacts and command workflows.
+
+Canonical SPDD artifact directories:
+
+```text
+requirements/
+spdd/
+  analysis/
+  prompt/
+scripts/
+```
+
+Canonical SPDD commands:
+
+```text
+/spdd-story
+/spdd-analysis
+/spdd-reasons-canvas
+/spdd-generate
+/spdd-prompt-update
+/spdd-sync
+/spdd-api-test
+/spdd-code-review
+/spdd-reverse
+```
+
+Mieruka can later index or display these artifacts, but `pro-spdd` itself should stay OpenSPDD-compatible and should not depend on the Mieruka app.
+
+## pro-gstack Comparison Plugin
+
+`pro-gstack` is an opt-in plugin copied/adapted from GStack (`garrytan/gstack`). It is for testing GStack's persona/command operating model beside SPDD, not for changing the default Mieruka lifecycle yet.
+
+How it differs from `pro-spdd`:
+
+```text
+pro-spdd    = story -> analysis -> REASONS canvas -> generate -> sync
+pro-gstack  = office-hours/personas -> reviewed plan -> review/QA/ship specialists
+```
+
+Local command policy:
+
+```text
+/gstack-office-hours
+/gstack-plan-ceo-review
+/gstack-plan-eng-review
+/gstack-plan-design-review
+/gstack-review
+/gstack-qa-only
+/gstack-qa
+/gstack-cso
+/gstack-ship
+```
+
+All GStack-derived commands are prefixed as `/gstack-*` so they can be tested without colliding with existing commands like `/spec`, `/review`, `/qa`, or `/ship`.
+
+Mieruka can later observe or display outputs from either approach. For now, `pro-spdd` remains the structured artifact pipeline and `pro-gstack` remains the persona/review/QA/ship comparison layer.
