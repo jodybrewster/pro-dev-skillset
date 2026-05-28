@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.4.5"
+    "version": "1.4.6"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -89,7 +89,7 @@
       "name": "pro-mieruka",
       "source": "./plugins/pro-mieruka",
       "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Resolves local build until mieruka is published to npm.",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "category": "development",
       "strict": true
     },
