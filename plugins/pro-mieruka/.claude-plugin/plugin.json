@@ -1,6 +1,6 @@
 {
   "name": "pro-mieruka",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Resolves local build until mieruka is published to npm.",
   "author": {
     "name": "Jody Brewster",
