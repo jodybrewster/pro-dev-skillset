@@ -4,9 +4,29 @@ Working notes for Claude Code (and Codex) when editing this marketplace repo its
 
 ## What this repo is
 
-A private Claude Code plugin marketplace (`pro-dev-skillset`) hosting 8 plugins and 24 skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
+`pro-dev-skillset` is a private Claude Code plugin marketplace — a standalone collection of skills, hooks, commands, and agents that a user installs into their Claude Code setup. It is **not an app**. It has no UI, no server, and no database. It ships workflow intelligence to Claude Code sessions.
+
+A user installs skills from this repo once, and those skills become available in every project they work on. The skills are independent — they work in any repo without requiring any other tool.
+
+**How it relates to Mieruka:** Mieruka is a separate Storybook-like app that installs into a user's target repo as `.mieruka/` (similar to how Storybook installs as `.storybook/`). If a user has both `pro-dev-skillset` skills installed in Claude Code and Mieruka installed in their working repo, the skills can communicate with Mieruka via MCP tools or by writing to the `.mieruka/` directory. But the two systems are independent by design — skills work without Mieruka, and Mieruka works without these skills.
+
+This repo currently hosts 8 plugins and 24+ skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
 
 The plugins are **skills-only by design** — historically. Hooks, commands, and agents are now being layered in where deterministic triggering beats description-matching.
+
+## What this repo is experimenting with
+
+This marketplace is actively testing three upstream workflow frameworks — `pro-gstack` (GStack), `pro-core`/`pro-quality` (Superpowers), and `pro-spdd` (SPDD) — to answer two different real-world questions:
+
+**Use case 1: Solo developer building a full application.**
+A single developer uses GStack's persona-driven planning and review workflows combined with Superpowers' brainstorming, TDD, and systematic debugging skills. GStack handles the structured thinking — office hours, CEO/engineering/design reviews, QA, ship readiness. Superpowers handles the execution muscle. Together they give one person the planning and quality leverage of a small team.
+
+**Use case 2: Consulting team delivering for a client.**
+A team of consultants uses SPDD's spec-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
+
+**The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, specs, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, specs, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
+
+The three frameworks are opt-in (`pro-spdd` and `pro-gstack` are separate plugins). The default stack (`pro-core`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-spec`) works without them.
 
 ## Use subagents to parallelize — aggressively
 

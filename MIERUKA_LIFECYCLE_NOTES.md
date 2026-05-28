@@ -2,15 +2,29 @@
 
 ## Core Idea
 
-Mieruka is an in-repo product/design/prototyping surface, similar in role to Storybook, but focused on research-backed UI exploration before implementation. It should live alongside the product repo and communicate with installed skills and MCP tools.
+Mieruka is a Storybook-like app that installs directly into a user's git repo as a `.mieruka/` directory — the same way Storybook installs as `.storybook/`. It is a local, in-repo product/design/prototyping surface focused on research-backed UI exploration before implementation.
 
-The skills and Mieruka should be symbiotic:
+This repo (`pro-dev-skillset`) is a separate, independent set of Claude Code skills. A user installs the skills from this repo into their Claude Code setup and installs Mieruka into the repo they are actually building. The two systems are independent by design: the skills work without Mieruka and Mieruka works without the skills.
+
+When both are installed in the same working repo, they become symbiotic. Skills can communicate with Mieruka through MCP tools exposed by the Mieruka MCP server, or through file changes written to the `.mieruka/` directory that the Mieruka app observes.
 
 - Skills orchestrate discovery, definition, prototyping, build, validation, and shipping.
-- Mieruka stores product context, prototype state, references, screen maps, and implementation drift reports.
+- Mieruka stores product context, prototype state, references, screen maps, and implementation drift reports inside `.mieruka/` in the user's repo.
 - MCP tools provide the interface between agents and Mieruka, Storybook, browser tools, search, and optional external design tools.
 
 External tools such as Figma, Webflow, and Magicpath can be used through MCP adapters, but Mieruka should be the primary local workspace when available.
+
+## How pro-dev-skillset Connects to Mieruka
+
+`pro-dev-skillset` is experimenting with three upstream workflow frameworks to serve two distinct use cases, and Mieruka is the client-facing surface for both.
+
+**Use case 1: Solo developer building a full application.**
+A single developer uses GStack's (`pro-gstack`) persona-driven planning and review workflows alongside Superpowers' (`pro-core`, `pro-quality`) brainstorming, TDD, and debugging skills. GStack handles structured thinking — office hours, CEO/engineering/design review, QA, ship readiness. Superpowers handles execution. Together they give one person the planning and quality leverage of a small team. Mieruka receives workstream updates from these skills and can show the developer a live dashboard of phase, risk, decisions, and drift without them having to read artifacts manually.
+
+**Use case 2: Consulting team delivering for a client.**
+A team of consultants uses SPDD's (`pro-spdd`) spec-driven workflow — story decomposition, REASONS canvas, analysis, and prompt-driven generation — to align a client on what is being built before implementation starts. Skills write stories, specs, and canvas artifacts into `.mieruka/` or push updates via Mieruka MCP tools. Mieruka then surfaces these to the client as readable governance: saved stories, approved specs, REASONS canvases, approval gates, and daily progress summaries. The client sees structured evidence of progress without needing to read code or talk to Claude directly.
+
+**The three frameworks are opt-in.** `pro-spdd` and `pro-gstack` are separate plugins. The default skill stack works without them. Mieruka's role as a client-facing surface applies to either approach — it observes `.mieruka/` file changes and MCP calls regardless of which framework drove them.
 
 ## Mieruka App
 
@@ -1039,12 +1053,13 @@ External design tools should be adapters, not the source of truth:
 
 ## Repo Strategy
 
-Long-term, keep the Mieruka app/MCP repo and the skill marketplace repo separate.
+Keep the Mieruka app/MCP repo and the skill marketplace repo (`pro-dev-skillset`) separate. This is already the design — `pro-dev-skillset` is a standalone Claude Code plugin marketplace. Mieruka is a separate app that installs into user repos as `.mieruka/`.
 
 Reason:
 
+- The skills are independently useful without Mieruka. A user can install `pro-dev-skillset` into any project.
 - App/MCP code and skill marketplace code have different release cadences.
-- Skills should be installable into other repos.
+- Skills should be installable into other repos without requiring Mieruka.
 - Plugin versioning needs cleaner semver/tag discipline.
 - Product code has UI, auth, database, deployment, migrations.
 - Skills have workflows, commands, prompts, and MCP contracts.
