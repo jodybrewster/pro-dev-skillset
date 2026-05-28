@@ -1,7 +1,7 @@
 {
   "name": "pro-mieruka",
-  "version": "0.1.1",
-  "description": "Mieruka integration: /init-mieruka installs the mieruka visual design companion into the current project and registers its MCP server with Claude Code. Resolves local build until mieruka is published to npm.",
+  "version": "0.1.2",
+  "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Resolves local build until mieruka is published to npm.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
