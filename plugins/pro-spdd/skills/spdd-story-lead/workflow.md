@@ -312,11 +312,47 @@ Input can be provided in two ways:
       /spdd-analysis @requirements/<file-name>.md
    ```
 
-9. **Offer to proceed with SPDD analysis**
+9. **Push stories to Mieruka governance**
 
-   > "Stories are ready. Would you like me to proceed with `/spdd-analysis` for any of the generated stories?"
+   For each story file written in Step 8, push it to the Mieruka governance dashboard so the client can review and approve before any downstream SPDD step runs.
 
-   If the user selects a story, invoke the `/spdd-analysis` workflow with that story file as input.
+   a. **Check the Mieruka MCP is available**:
+    - The Mieruka MCP server is registered as `mieruka` in the project's `.mcp.json` (default URL `http://127.0.0.1:7777/api/mcp`).
+    - If the `mcp__mieruka__spdd_write_story` tool is unavailable (server not running, MCP not registered), **do not fail the workflow**. Print:
+      > ⚠️ Mieruka MCP not available — stories saved locally but not pushed. Run `/start-mieruka` and re-run `/spdd-story` (or `/spdd-sync`) to push.
+      Then skip to Step 10.
+
+   b. **For each saved story file, push then mark as proposed**:
+
+      Derive these fields:
+       - `story_key`: filename without `.md`, lowercased, with non-alphanumeric characters replaced by `-`. E.g. `[User-story-3]daily-standup-tracker.md` → `user-story-3-daily-standup-tracker`
+       - `title`: the top-level `# ...` heading from the document, or the first `## [STORY-...]` heading if no `#` exists
+       - `file_path`: absolute path to the saved file
+       - `body_md`: the **complete** markdown contents of the file — do NOT summarize or truncate
+
+      Then call:
+
+      ```
+      mcp__mieruka__spdd_write_story({ story_key, title, file_path, body_md })
+      mcp__mieruka__spdd_set_story_status({ story_key, status: "proposed" })
+      ```
+
+      The story now appears in the Mieruka `/spdd` UI as `proposed` and is visible to the client.
+
+   c. **Append push summary** to the Step 8 output:
+
+      ```
+      🔗 Pushed to Mieruka governance (status: proposed):
+      - {story_key} → http://127.0.0.1:7777/spdd
+      ```
+
+      If push was skipped because the MCP was unavailable, surface the warning here instead.
+
+10. **Offer to proceed with SPDD analysis**
+
+    > "Stories are ready and pushed to Mieruka as `proposed`. Wait for client approval in the Mieruka `/spdd` UI before running `/spdd-analysis`. Would you like me to set up `/spdd-analysis` for a specific story once it is approved?"
+
+    Do NOT invoke `/spdd-analysis` until the story's status in Mieruka is `approved` (the client must mark it in the UI, or the user must explicitly say "approved, proceed").
 
 **Output**
 
@@ -347,6 +383,9 @@ Structured, INVEST-compliant story document(s) saved to `requirements/`, contain
 - Always read ALL `@` referenced files completely
 - Always create `requirements/` directory if it does not exist
 - File name MUST follow the naming convention: `[User-story-{N}]{kebab-case-title}.md`
+- Mieruka push MUST set status to `proposed` — never `approved`. The client controls the approval gate, not this command
+- If the Mieruka MCP is unreachable, treat as a soft failure: the story file on disk is the source of truth; surface a clear warning and continue
+- Do NOT invoke downstream SPDD steps (`/spdd-analysis` etc.) from this command — wait for client approval in Mieruka first
 
 **Context Integrity Guardrails**:
 
