@@ -1,0 +1,9 @@
+{
+  "name": "pro-mieruka",
+  "version": "0.1.0",
+  "description": "Mieruka integration: /init-mieruka installs the mieruka visual design companion (npx mieruka init) into the current project and registers its MCP server with Claude Code.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  }
+}

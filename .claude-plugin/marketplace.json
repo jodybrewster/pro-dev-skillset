@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.4.1"
+    "version": "1.4.2"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -86,10 +86,18 @@
       "strict": true
     },
     {
+      "name": "pro-mieruka",
+      "source": "./plugins/pro-mieruka",
+      "description": "Mieruka integration: /init-mieruka installs the mieruka visual design companion (npx mieruka init) into the current project and registers its MCP server with Claude Code.",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's full pro dev stack (6 skill-bearing plugins plus pro-nextjs marker)",
-      "version": "1.0.2",
+      "description": "Meta-plugin: installs Jody's full pro dev stack (6 skill-bearing plugins plus pro-nextjs marker and pro-mieruka)",
+      "version": "1.0.3",
       "category": "development",
       "strict": true
     }
