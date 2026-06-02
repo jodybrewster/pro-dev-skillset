@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.4.7"
+    "version": "1.6.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -48,7 +48,7 @@
     {
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
-      "description": "Testing skills: Vitest, Playwright automation, Storybook interactions, visual testing. Depends on Playwright from claude-plugins-official",
+      "description": "Testing skills: Vitest, Playwright automation, agent-browser (AI-driven browser automation CLI), Storybook interactions, visual testing. Depends on Playwright from claude-plugins-official",
       "version": "0.3.1",
       "category": "development",
       "strict": true
@@ -82,6 +82,14 @@
       "source": "./plugins/pro-gstack",
       "description": "Opt-in GStack workflow adapters: persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Adapted from garrytan/gstack.",
       "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-research",
+      "source": "./plugins/pro-research",
+      "description": "Deep web research engine for any topic. /research <question> runs an adaptive intake interview, then decomposes into angles, fans out research subagents over a free-first retrieval ladder (Serper -> Jina/Firecrawl -> agent-browser), verifies citations, and synthesizes a cited report. /lead-research <company|domain|ICP> is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Domain memory + evidence persisted to .research/ to survive compaction. Optional Mieruka governance mirror when .mieruka/ is present.",
+      "version": "0.2.0",
       "category": "development",
       "strict": true
     },

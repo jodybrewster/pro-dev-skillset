@@ -1,0 +1,9 @@
+{
+  "name": "pro-research",
+  "version": "0.2.0",
+  "description": "Deep web research engine for any topic. /research <question> decomposes into angles, fans out research subagents over a free-first retrieval ladder (Serper -> Jina/Firecrawl -> agent-browser), verifies citations, and synthesizes a cited report. /lead-research <company|domain|ICP> is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Evidence persisted to .research/ to survive compaction. Optional Mieruka governance mirror when .mieruka/ is present.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  }
+}

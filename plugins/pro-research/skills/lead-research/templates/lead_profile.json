@@ -1,0 +1,55 @@
+{
+  "$schema_note": "Example + shape for a per-entity lead profile. Written to .research/<run-id>/<entity>/lead_profile.json. All claims must be citation-backed; unverified claims are labeled, not silently included.",
+  "entity": "Acme Corp",
+  "domain": "acme.com",
+  "run_id": "run-20260602-100000-acme-batch",
+  "generated_at": "2026-06-02T10:30:00Z",
+  "icp_score": 82,
+  "band": "hot",
+  "score_rationale": "Strong fit (5/6 ICP criteria) and a fresh $40M Series B (Mar 2026); capped by contactability (role found, no public email) and one unverified hiring claim.",
+  "score_components": {
+    "fit": 0.91,
+    "signal_recency": 0.70,
+    "contactability": 0.50,
+    "data_confidence": 0.78
+  },
+  "firmographics": {
+    "description": "B2B workflow automation platform",
+    "industry": "SaaS / workflow automation",
+    "size_band": "201-500",
+    "hq": "Austin, TX, US",
+    "tech_stack_hints": ["Next.js", "AWS"],
+    "claims": [
+      {"field": "industry", "value": "SaaS / workflow automation", "source_id": "s1", "verified": true}
+    ]
+  },
+  "signals": [
+    {
+      "kind": "funding",
+      "summary": "Raised a $40M Series B",
+      "date": "2026-03-15",
+      "strength": "strong",
+      "source_id": "s2",
+      "verified": true
+    }
+  ],
+  "contacts": [
+    {
+      "role": "VP Engineering",
+      "name": "(public, if available)",
+      "public_contact_path": null,
+      "contactability": "role-only",
+      "source_id": "s3",
+      "verified": true,
+      "note": "Identified from public leadership page; no gated-PII source used."
+    }
+  ],
+  "citations": [
+    {"id": "s1", "url": "https://acme.com/about", "title": "About Acme", "fetched_at": "2026-06-02T10:00:00Z", "via": "jina"},
+    {"id": "s2", "url": "https://techcrunch.com/...", "title": "Acme raises $40M", "fetched_at": "2026-06-02T10:05:00Z", "via": "jina"},
+    {"id": "s3", "url": "https://acme.com/team", "title": "Acme leadership", "fetched_at": "2026-06-02T10:07:00Z", "via": "jina"}
+  ],
+  "unverified": [
+    {"claim": "Hiring surge of 20+ engineers in Q2 2026", "reason": "source changed since first fetch", "source_id": "s4"}
+  ]
+}

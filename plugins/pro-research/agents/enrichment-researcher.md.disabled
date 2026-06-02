@@ -1,0 +1,24 @@
+# enrichment-researcher — DEFERRED / DISABLED STUB
+
+This file is intentionally suffixed `.disabled` so Claude Code will **not** load it as an agent.
+The paid enrichment layer (Exa / Apollo / People Data Labs / Hunter) is out of scope for this build.
+
+When the enrichment layer is built, rename this to `enrichment-researcher.md`, give it the standard
+agent frontmatter (`description`, `tools`), and implement the four-part contract below. Until then,
+the three live agents (`company-researcher`, `signals-researcher`, `people-researcher`) cover the
+free-first sources documented in `../skills/lead-research/references/sources.md`.
+
+## Planned contract (for when this is activated)
+
+1. **Objective** — enrich an entity/contact beyond what free public sources yield: verified emails,
+   precise headcount, deeper firmographics, similar-company discovery.
+2. **Output format** — same as the free agents: append evidence/claims to `.research/<run-id>/*.jsonl`,
+   return a compact JSON summary. Tag each enrichment record with its provider.
+3. **Tool & source guidance** — gate every provider behind its key (`EXA_API_KEY`, `APOLLO_API_KEY`,
+   `PDL_API_KEY`, `HUNTER_API_KEY`); degrade gracefully when a key is absent. Never call a paid
+   provider without an explicit per-run opt-in.
+4. **Task boundaries** — handle PII explicitly and lawfully; route all contact data through the same
+   verification + persistence as the free layer; respect provider ToS and rate limits.
+
+See `../skills/lead-research/references/sources.md` ("DEFERRED — the enrichment layer") for the
+provider matrix.
