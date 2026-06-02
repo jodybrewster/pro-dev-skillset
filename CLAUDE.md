@@ -48,6 +48,8 @@ Agent(pro-core hook draft) → wait → Agent(pro-data) → wait → Agent(pro-q
 
 When dispatching, give each subagent **self-contained context**: it can't see your conversation. State the file path, the exact change, the schema/format to follow, and what "done" looks like. Don't write "based on the discussion, add the hook" — write "create `plugins/pro-data/hooks/format-schema.json` with a `PostToolUse` matcher on `Write|Edit` targeting `**/schema.prisma`, running `npx prisma format`."
 
+**Model: dispatch these subagents on Sonnet** (`claude-sonnet-4-6`) — it's the right cost/quality tier for repo edits, drafting, validation, and code search. Reserve Opus for the orchestrating turn (planning, synthesis, judgment); use Haiku only for the `pro-research` skill's bounded fetch-and-extract research agents. Default to Sonnet subagents and parallelize whenever the work splits cleanly.
+
 ## The version-bump law (non-negotiable)
 
 The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. Any content edit without a version bump silently serves stale content on `claude plugin update`. So:
