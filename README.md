@@ -15,6 +15,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 - **`pro-spec`** — spec-driven development skills adapted from `github/spec-kit` (MIT): writing-feature-specs (PRD with Given/When/Then), clarifying-specs (10-category ambiguity taxonomy).
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
+- **`pro-research`** — opt-in deep web research engine (original, not forked). `/research <topic>` decomposes a question into angles, fans out parallel research subagents over a free-first retrieval ladder (Serper → Jina/Firecrawl → `agent-browser`), verifies every citation, and synthesizes a cited report. `/lead-research <company|domain|ICP>` is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Includes an adaptive intake interview + domain memory, bundled zero-dependency ESM scripts, and an optional Mieruka governance mirror. Requires `SERPER_API_KEY` (free tier); `JINA_API_KEY` / `FIRECRAWL_API_KEY` optional. Not included in `pro-starter`.
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
@@ -53,6 +54,7 @@ plugins/
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-gstack/                        # opt-in GStack workflow adapters + upstream snapshot
+  pro-research/                      # opt-in deep-research + lead-research: /research, /lead-research, agents, scripts
 templates/
   project-settings.json              # drop-in for any new project's .claude/
 RELEASING.md                         # version-bump law + tag scheme
@@ -140,8 +142,10 @@ codex plugin marketplace add jodybrewster/pro-dev-skillset
 #   enabled = true
 #   [plugins."pro-gstack@pro-dev-skillset"]  # optional
 #   enabled = true
+#   [plugins."pro-research@pro-dev-skillset"]  # optional
+#   enabled = true
 codex exec --skip-git-repo-check "enumerate available skills"
-# Expected for starter-installed plugins: 25 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled
+# Expected for starter-installed plugins: 25 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled; +1 (lead-research) if pro-research is enabled
 ```
 
 Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).
@@ -149,4 +153,5 @@ Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps th
 ## License
 
 - Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-quality), `Owl-Listener/designer-skills` (pro-design), `PaulRBerg/agent-skills` + `petrkindlmann/qa-skills` + `peterknezek/skills` (pro-testing), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `github/spec-kit` (pro-spec), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (pro-gstack). Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
+- `pro-research` is original work by Jody Brewster (not forked from any upstream).
 - Everything else in this repo (manifests, templates, README, RELEASING) is private to Jody Brewster.
