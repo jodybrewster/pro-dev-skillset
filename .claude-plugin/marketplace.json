@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.6.0"
+    "version": "1.6.1"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -16,8 +16,8 @@
     {
       "name": "pro-core",
       "source": "./plugins/pro-core",
-      "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev, grill-me (interview-driven plan stress-test). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch.",
-      "version": "0.6.2",
+      "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev, find-skills (discover/install ecosystem skills via npx skills), grill-me (interview-driven plan stress-test). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch.",
+      "version": "0.6.3",
       "category": "development",
       "strict": true
     },
