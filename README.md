@@ -4,6 +4,35 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 ## What's here
 
+One continuous software lifecycle, delivered as a plugin marketplace. **Start with [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md)** (in `pro-core`) — the router that maps any task to the right phase and skill. The lifecycle runs **Define → Plan → Spec → Build → Verify → Review → Security → Ship**, with cross-cutting research/data/design skills alongside.
+
+### Lifecycle phases
+
+| Phase | Skills | Plugin |
+|---|---|---|
+| **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills`, `karpathy-guidelines` | `pro-core` |
+| **Define** | `interview-me`, `idea-refine`, `brainstorming` | `pro-pdd` *(opt-in)* |
+| **Plan** | pure planning mode *(harness — no skill)*, `writing-plans` | `pro-pdd` *(opt-in)* |
+| **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
+| **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
+| **Build** | `ui-ux-pro-max`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
+| **Build** | drizzle (orm + schema), prisma, nextauth | `pro-data` |
+| **Build** | `context-engineering`†, `doubt-driven-development`† | `pro-core` |
+| **Verify** | `qa-do`/`qa-start` (router), `agent-browser` (interactive), `playwright-automation` (committed e2e), `vitest`, `visual-testing`, api/contract-testing, test strategy/risk/planning/reliability | `pro-testing` |
+| **Verify** | `systematic-debugging` | `pro-execution` |
+| **Verify** | `verification-before-completion` | `pro-quality` |
+| **Review** | `requesting-code-review`, `receiving-code-review`, `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
+| **Security** | `security-and-hardening`, `cso` | `pro-security` *(planned)* |
+| **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
+| **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
+| **Workflows** *(cross-cutting)* | GStack persona-driven planning/review/QA/ship/security/docs | `pro-gstack` *(opt-in)* |
+
+*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine installed separately (e.g. `ui-ux-pro-max` → `impeccable`, managed by `/design-engine`).
+
+### Plugins
+
+The same skills, grouped by how they're packaged, installed, and attributed.
+
 **Skill-bearing plugins:**
 
 - **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/gh` GitHub workflow command, and safety/parallelism hooks.
@@ -11,7 +40,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion. Depends on `playwright@claude-plugins-official`.
 - **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Depends on `figma@claude-plugins-official` for Figma-MCP integration.
 
-- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT) plus `vercel-labs/agent-browser` (Apache-2.0): vitest, playwright-automation, agent-browser, storybook-interactions, visual-testing. Depends on `playwright@claude-plugins-official`.
+- **`pro-testing`** — the Verify phase: `vitest`, `agent-browser` (interactive verification), `storybook-interactions`, plus a vendored `petrkindlmann/qa-skills` library (43 skills) exposed as a curated testing-core subset — `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT) plus `vercel-labs/agent-browser` (Apache-2.0). Depends on `playwright@claude-plugins-official`.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
@@ -23,7 +52,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 **Meta:**
 
-- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin and `pro-mieruka`. One install ⇒ Jody's standard stack (24 skills across the starter-installed skill-bearing plugins). `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in.
+- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin and `pro-mieruka`. One install ⇒ Jody's standard stack (33 skills across the starter-installed skill-bearing plugins). `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in.
 
 ### Official dependencies
 
@@ -145,7 +174,7 @@ codex plugin marketplace add jodybrewster/pro-dev-skillset
 #   [plugins."pro-pdd@pro-dev-skillset"]  # optional
 #   enabled = true
 codex exec --skip-git-repo-check "enumerate available skills"
-# Expected for starter-installed plugins: 24 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled; +4 if pro-pdd is enabled
+# Expected for starter-installed plugins: 33 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled; +4 if pro-pdd is enabled
 ```
 
 Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).

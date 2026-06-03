@@ -29,6 +29,44 @@ Outcome: a `using-pro-dev` meta-skill (the router), the qa-skills-wrapped `pro-t
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` + gstack ship workflows | pro-ship (planned Ph2) | planned |
 | **Research / Data / Design** | lead-research; drizzle/prisma/nextauth; design-token/motion/typography/shadcn/a11y | pro-research, pro-data, pro-design | exist (domain, cross-cutting) |
 
+## Status (living checklist)
+
+Updated 2026-06-03. Parts A, B, C shipped. Part D is the remaining in-scope work; the rest are separate efforts the router already points at.
+
+### ✅ Part C — Verify phase: qa-skills wrap (shipped, commit `7ff25a5`, pro-testing 0.4.0)
+- [x] Vendor `petrkindlmann/qa-skills` (43 skills) into `plugins/pro-testing/upstream/qa-skills/`
+- [x] Expose testing-core subset as shims: `qa-do`/`qa-start`, `playwright-automation`, `visual-testing`, `api-testing`/`contract-testing`, `test-reliability`, `test-strategy`/`risk-based-testing`/`test-planning`, `storybook-interactions`, `qa-project-context`
+- [x] Relabel the axis — interactive verification (`agent-browser`) vs committed regression suite (`playwright`); add vitest boundary block
+- [x] Retire the 2 forks (`playwright-automation`, `visual-testing`) → vendored; overlap-table HOLDs respected
+- [x] Bump pro-testing 0.3.3 → 0.4.0
+
+### ✅ Part A — `using-pro-dev` meta-skill (shipped, PR #7, pro-core 0.8.0)
+- [x] `plugins/pro-core/skills/using-pro-dev/SKILL.md` — router diagram, both lifecycle sequences, operating behaviors referencing `[[karpathy-guidelines]]`, quick-reference phase table
+- [x] Bump pro-core 0.7.0 → 0.8.0 (plugin.json + marketplace.json + descriptions)
+
+### ✅ Part B — Define phase: fork + grill-me retirement (shipped, PR #7, pro-pdd 0.2.0)
+- [x] Fork `interview-me` (SKILL.md) into pro-pdd with attribution footer
+- [x] Fork `idea-refine` (SKILL.md + 3 sidecars + script) into pro-pdd; Codex-parity fixes (relative script path, harness-neutral question phrasing)
+- [x] Delete `grill-me`; `"grill me"` trigger preserved in `interview-me`'s description
+- [x] Update pro-pdd `LICENSE` attribution (addyosmani/agent-skills)
+- [x] Scrub grill-me refs (README ×2, marketplace.json, plugin.json); swap `mattpocock/skills` → `addyosmani/agent-skills`; fix skill count (+2 → +4)
+- [x] Bump pro-pdd 0.1.0 → 0.2.0; marketplace `metadata.version` 1.8.0 → 1.9.0
+- [x] `claude plugin validate . --strict` passes
+
+### ⏭️ Part D — agent-skills structure parity (in scope)
+- [x] **README phase reorganization** — "What's here" now leads with a per-phase lifecycle table (Define→…→Ship + cross-cutting), `using-pro-dev` linked as the entry point; plugin breakdown retained below for packaging/attribution. Also refreshed stale counts (starter 24→33 skills post-Part C) and the `pro-testing` bullet (vendored qa-skills library)
+- [ ] **Skill anatomy consistency** — bring new/edited skills toward the agent-skills anatomy (Overview / When to Use / Process / Rationalizations / Red Flags / Verification) where it fits
+- [x] **Lifecycle slash commands — DEFERRED** by decision (no `/spec /plan /build /test /review /ship`); revisit once owning plugins exist
+
+### 🔜 Separate efforts (out of scope here; the router already points at these as "planned")
+- [ ] **pro-security** plugin — `security-and-hardening`, `security-auditor`, `cso` (router SECURITY branch is a planned target)
+- [ ] **pro-ship** plugin — `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration`
+- [ ] **Build-skill folds** referenced by the router but not yet installed: `context-engineering`, `doubt-driven-development` (pro-core); `api-and-interface-design`, `source-driven-development` (pro-execution); `frontend-ui-engineering` (pro-design)
+- [ ] **Review-skill folds**: `code-simplification`, `performance-optimization` (pro-quality) — currently only the `/code-review` + `/simplify` built-ins cover this
+- [ ] Once any of the above land, drop the "(planned)" / "route when present" hedges in `using-pro-dev`'s router + quick-reference table
+
+---
+
 ## Part A — `using-pro-dev` meta-skill (NEW, in pro-core)
 
 Models `using-agent-skills` but adapted. Lives at `plugins/pro-core/skills/using-pro-dev/SKILL.md`. Contents:
