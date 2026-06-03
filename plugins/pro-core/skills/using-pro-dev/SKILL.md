@@ -1,0 +1,97 @@
+---
+name: using-pro-dev
+description: Routes a task to the right pro-dev phase and skill across the full development lifecycle (Define→Plan/Spec→Build→Verify→Review→Security→Ship). Invoke this at session start, when you're unsure which skill to use, where to begin, what the workflow is, which pro-dev skill applies, or how to approach a problem. This is the cross-lifecycle meta-router for the entire pro-dev-skillset marketplace — it hands off to qa-do (pro-testing) for routing within the Verify phase, and to the open-SPDD branch (pro-spdd) for client-facing or spec-driven work.
+---
+
+# Using pro-dev
+
+## Overview
+
+`pro-dev-skillset` is a marketplace of lifecycle skills organized by development phase — from initial idea capture through spec, build, verify, review, security, and ship. This meta-skill routes an incoming task to the right phase and skill so you spend zero time wondering what to invoke next. It is the cross-lifecycle router; [[qa-do]] (pro-testing) handles routing *within* the Verify phase, and the open-SPDD branch (pro-spdd) handles the full structured spec workflow for client or team-facing work.
+
+## Router
+
+```
+Task arrives
+  ├ Don't know what you want? ───────→ interview-me (pro-pdd)
+  ├ Rough concept, need variants? ───→ idea-refine (pro-pdd)
+  ├ Ideate + design behind a gate? ──→ brainstorming (pro-pdd)
+  ├ PLAN:
+  │   ├ quick/solo, think it through → pure planning mode (Claude Code / Codex plan mode — no skill)
+  │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd)
+  │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
+  ├ BUILD:
+  │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
+  │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
+  │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
+  │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
+  │   ├ UI ──────────────────────────→ frontend-ui-engineering + pro-design skills
+  │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
+  │   ├ better context ──────────────→ context-engineering (pro-core)
+  │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
+  ├ Something broke? ────────────────→ systematic-debugging (pro-execution)
+  ├ VERIFY:
+  │   ├ run the whole suite ─────────→ qa-do / qa-start (pro-testing, vendored qa-skills router)
+  │   ├ interactive browser check ───→ agent-browser (pro-testing)
+  │   ├ committed e2e suite ─────────→ playwright-automation (pro-testing)
+  │   ├ unit/component ──────────────→ vitest (pro-testing)
+  │   └ claiming done ───────────────→ verification-before-completion (pro-quality)
+  ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
+  ├ SECURITY: security-and-hardening / cso (pro-security)
+  └ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
+```
+
+Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid stop, not a skip — for a quick or solo task, thinking it through in Claude Code / Codex plan mode without invoking any skill is complete, legitimate planning.
+
+## Lifecycle Sequence
+
+**Solo / default path:**
+1. interview-me → clarify goals and constraints
+2. idea-refine → surface viable approaches
+3. pure planning mode OR writing-plans → commit to an approach
+4. test-driven-development / subagent-driven-development → build
+5. qa-do / run the suite → verify
+6. requesting-code-review / code-simplification → review
+7. shipping-and-launch → ship
+
+**Client / spec-driven path:**
+1. interview-me → capture requirements
+2. open-SPDD: story → analysis → reasons-canvas → generate → review/api-test → sync
+3. qa-do / run the suite → verify
+4. requesting-code-review → review
+5. shipping-and-launch → ship
+
+Not every task needs every phase — a bug fix might be just `systematic-debugging` → `test-driven-development` → `verification-before-completion`.
+
+## Core Operating Behaviors
+
+The universal operating behaviors — think before coding, prefer simplicity, make surgical changes, verify don't assume — are encoded in [[karpathy-guidelines]] (pro-core). Defer to that skill for those rules; they are not repeated here.
+
+The pro-dev-specific rules are:
+
+**(a) Branch to open-SPDD when the work is client-facing or needs a shared written artifact trail before any code is written.** If the audience is a client, a stakeholder, or a team that needs written alignment, route through the SPDD branch. For solo or greenfield work with no external audience, stay on the default path.
+
+**(b) Pure planning mode is a valid stop, not a skip.** A quick task thought through in Claude Code / Codex plan mode — using the harness's built-in planning capability, with no skill invoked — is complete planning. Do not treat the absence of a `writing-plans` invocation as skipped planning.
+
+**(c) The Verify phase delegates to [[qa-do]] / `qa-start`.** The `qa-do` skill (pro-testing, vendored from qa-skills) owns the routing logic within testing. Do not re-implement that routing here — simply hand off and let it drive.
+
+## Quick Reference
+
+| Phase | Skill(s) | Plugin | One-line |
+|---|---|---|---|
+| Meta | using-pro-dev, [[find-skills]], [[karpathy-guidelines]] | pro-core | Router, ecosystem discovery, operating behaviors |
+| Define | interview-me, idea-refine, brainstorming | pro-pdd | Clarify → variant → gated ideation |
+| Plan | pure planning mode (harness — no skill), writing-plans | pro-pdd | Think it through or write a TDD plan |
+| Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
+| Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
+| Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
+| Build | frontend-ui-engineering + design skills | pro-design | UI implementation and design system |
+| Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
+| Verify | [[qa-do]] / qa-start, agent-browser, playwright-automation, vitest | pro-testing | Full suite, browser, e2e, unit |
+| Verify | systematic-debugging | pro-execution | Break-fix root cause |
+| Verify | verification-before-completion | pro-quality | Gate before claiming done |
+| Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |
+| Security | security-and-hardening, cso | pro-security (planned) | Hardening and security officer review |
+| Ship | ci-cd-and-automation, shipping-and-launch, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, launch, document, retire |
+| Research | lead-research | pro-research | ICP and lead profiling |
+| Design | design-token, motion, typography, shadcn, a11y | pro-design | Token system, animation, type, components, accessibility |
