@@ -2,47 +2,44 @@
 description: "Check, install, or update the impeccable UI/UX engine that the ui-ux-pro-max bridge routes to — reports installed version and scope, and keeps the pro-design stack current. Usage: /design-engine [check|install|update]"
 argument-hint: "[check|install|update]"
 allowed-tools:
+  - "Bash(npx impeccable skills*)"
+  - "Bash(npx skills add pbakaus/impeccable*)"
   - "Bash(ls ~/.claude/skills/impeccable*)"
   - "Bash(ls .claude/skills/impeccable*)"
-  - "Bash(npx impeccable*)"
   - "Bash(claude plugin update*)"
 ---
 
-Ensure the design engine behind the `ui-ux-pro-max` bridge — the standalone `impeccable` skill — is installed and current. `impeccable` is **not vendored** into this marketplace; it's an external package, so this command manages it in place rather than from the repo.
+Ensure the design engine behind the `ui-ux-pro-max` bridge — the standalone `impeccable` skill — is installed and current. `impeccable` is **not vendored** into this marketplace; it's an external package (homepage https://impeccable.style), so this command manages it in place rather than from the repo.
 
 Parse the action from `$ARGUMENTS` (default `check`).
 
-## 1. Detect (always run first)
+## Install channels (important)
 
-Check both scopes for `impeccable/SKILL.md` and read its `version:` frontmatter:
+`impeccable` ships two builds:
 
-- **User scope:** `~/.claude/skills/impeccable/SKILL.md` (applies to every project on this machine)
-- **Project scope:** `.claude/skills/impeccable/SKILL.md` (committed with the repo)
+- **`npx impeccable skills <cmd>`** — a build compiled for THIS harness. This is the canonical, current channel (e.g. the 3.x line). **Prefer this.**
+- **`npx skills add pbakaus/impeccable`** — a shared build via the generic skills installer. This tracks npm's `latest`, which has lagged (e.g. `2.3.2` while the harness build is `3.1.1`). Use only as a fallback when `npx impeccable` is unavailable.
 
-Report installed/missing per scope and the version of each.
+Never install the shared build over a newer harness build — that downgrades.
 
-## 2. `check` (default)
+## 1. `check` (default)
 
-Report status and stop — do **not** install or change anything:
+- Run **`npx impeccable skills check`** — its own status/version report.
+- Also confirm presence directly: `~/.claude/skills/impeccable/SKILL.md` (user scope — applies to every project) and `.claude/skills/impeccable/SKILL.md` (project scope). Read the `version:` frontmatter from whichever exists.
+- Report installed/missing, version, and scope. Remind the user that marketplace plugins update separately via `claude plugin update` (that refreshes this `pro-design` bridge; `/design-engine` manages only the external engine).
+- Do **not** change anything on `check`.
 
-- Whether `impeccable` is resolvable (either scope present, or `npx impeccable` available).
-- The installed version(s) and scope(s).
-- A reminder that the marketplace plugins update **separately**: `claude plugin update` refreshes the pro-dev stack (including this `pro-design` bridge). `/design-engine` manages only the external engine.
+## 2. `install`
 
-## 3. `install` (when missing in both scopes, or the user asks)
+- Run **`npx impeccable skills install`** (harness-specific build).
+- If `npx impeccable` is unavailable in the environment, fall back to **`npx skills add pbakaus/impeccable`**, and tell the user it's the shared (possibly older) build.
+- Re-run `npx impeccable skills check` and report the resulting version + scope.
 
-`impeccable` is distributed via its own CLI / site (homepage **https://impeccable.style**, entry `npx impeccable`), not the npm `latest` tag alone.
+## 3. `update`
 
-- Run `npx impeccable` to bootstrap it (the CLI scaffolds the skill and project context).
-- **Never silently downgrade.** npm's `latest` has lagged the build shipped via impeccable.style (e.g. a machine here carries `3.1.1` while npm `latest` was `2.3.2`). If step 1 detected a version newer than an install would fetch, STOP and confirm with the user before overwriting.
-- Re-run detection and report the new version + scope.
-
-## 4. `update`
-
-- First show the currently-detected version (step 1).
-- Update through the same front door that produced the install (`npx impeccable`, or re-running the impeccable.style installer). **If you can't determine which channel produced the installed version, ASK the user how they installed it** rather than guessing — a wrong channel can downgrade them.
-- Also run `claude plugin update` to bring the pro-dev marketplace plugins (including `pro-design`) current.
-- Re-detect and report before → after versions.
+- Run **`npx impeccable skills update`**.
+- Then run **`claude plugin update`** to bring the pro-dev marketplace plugins (including `pro-design`) current.
+- Re-run `npx impeccable skills check` and report before → after versions.
 
 ## Notes
 
