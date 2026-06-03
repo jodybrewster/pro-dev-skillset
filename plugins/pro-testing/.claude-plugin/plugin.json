@@ -1,7 +1,7 @@
 {
   "name": "pro-testing",
-  "version": "0.4.0",
-  "description": "The Verify phase: Vitest, agent-browser (interactive verification), Storybook interactions, plus a vendored qa-skills library (43 skills) exposed as a curated testing-core subset — qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Depends on Playwright from claude-plugins-official",
+  "version": "0.5.0",
+  "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via the /qa-engine command (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Depends on Playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"

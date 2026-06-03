@@ -32,9 +32,9 @@ Task arrives
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
   ├ Something broke? ────────────────→ systematic-debugging (pro-execution)
   ├ VERIFY:
-  │   ├ run the whole suite ─────────→ qa-do / qa-start (pro-testing, vendored qa-skills router)
+  │   ├ run the whole suite ─────────→ qa-suite → qa-do / qa-start (pro-testing, bridge: /qa-engine install)
   │   ├ interactive browser check ───→ agent-browser (pro-testing)
-  │   ├ committed e2e suite ─────────→ playwright-automation (pro-testing)
+  │   ├ committed e2e suite ─────────→ playwright-automation (bridged via qa-suite / /qa-engine)
   │   ├ unit/component ──────────────→ vitest (pro-testing)
   │   └ claiming done ───────────────→ verification-before-completion (pro-quality)
   ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
@@ -50,7 +50,7 @@ Some entries are **bridges**, not vendored skills — thin routers that point to
 
 - **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
 - **`pro-mieruka` → the Mieruka app** — install/launch with `/init-mieruka`, `/start-mieruka`.
-- **Verify / `qa-do` (planned bridge)** — the qa-skills layer is slated to convert from vendored to a bridge installed via `/qa-engine` (`npx skills add petrkindlmann/qa-skills …`). See `QA-SKILLS-BRIDGE-PLAN.md`. Until that lands, qa-do/qa-start ship vendored.
+- **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -84,7 +84,7 @@ The pro-dev-specific rules are:
 
 **(b) Pure planning mode is a valid stop, not a skip.** A quick task thought through in Claude Code / Codex plan mode — using the harness's built-in planning capability, with no skill invoked — is complete planning. Do not treat the absence of a `writing-plans` invocation as skipped planning.
 
-**(c) The Verify phase delegates to [[qa-do]] / `qa-start`.** The `qa-do` skill (pro-testing, vendored from qa-skills) owns the routing logic within testing. Do not re-implement that routing here — simply hand off and let it drive.
+**(c) The Verify phase delegates to the `qa-suite` bridge → `qa-do` / `qa-start`.** `qa-suite` (pro-testing) routes to the bridged qa-skills library; once installed (`/qa-engine install`), `qa-do` owns the routing logic within testing. Do not re-implement that routing here — hand off and let it drive. If the suite is missing, run `/qa-engine install` first.
 
 ## Quick Reference
 
@@ -98,7 +98,7 @@ The pro-dev-specific rules are:
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
 | Build | ui-ux-pro-max (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
-| Verify | [[qa-do]] / qa-start (qa-skills — bridge planned via `/qa-engine`), agent-browser, playwright-automation, vitest | pro-testing | Full suite, browser, e2e, unit |
+| Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/qa-engine`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
 | Verify | verification-before-completion | pro-quality | Gate before claiming done |
 | Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |

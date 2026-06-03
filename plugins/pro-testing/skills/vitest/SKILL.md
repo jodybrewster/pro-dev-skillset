@@ -11,10 +11,10 @@ high-quality tests, debug failures, and maintain test suites efficiently.
 **When NOT to use this skill.** `vitest` is the focused Vitest v4 skill for TypeScript
 React/Next.js unit and component tests. For broader, framework-agnostic unit-testing guidance
 (Jest, pytest, test-doubles taxonomy, mutation testing with Stryker/mutmut, coverage threshold
-theory), the vendored `unit-testing` skill lives at
-`../../upstream/qa-skills/skills/unit-testing/SKILL.md` — it is intentionally not exposed as a
-separate auto-triggering skill so the two do not double-trigger. For end-to-end browser tests
-use `playwright-automation`; for interactive one-off browser verification use `agent-browser`.
+theory), the `qa-skills` library has a `unit-testing` skill — it's bridged, not vendored, so
+install the suite via `/qa-engine install` (see the `qa-suite` skill). For end-to-end browser
+tests use the bridged `playwright-automation` (via `qa-suite`); for interactive one-off browser
+verification use `agent-browser`.
 
 **Typical setup:**
 

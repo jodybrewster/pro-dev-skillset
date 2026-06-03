@@ -14,8 +14,14 @@ This plan eliminates that by switching qa-skills from **vendor-and-adapt** to a
 point to the externally-installed qa-skills and provide a command to install/
 update it in place.
 
-**This document is a plan only — it executes nothing.** Resolve the open
-questions, then execute on a dedicated branch.
+> **STATUS: EXECUTED** (branch `feat/qa-skills-bridge`, pro-testing 0.5.0).
+> Decisions taken: **(1) vitest stays native** — it turned out to already be a
+> native `PaulRBerg/agent-skills` fork (not a qa-skills shim; the earlier audit
+> mis-flagged it because of a boundary cross-reference), so no re-fork was
+> needed, only a dangling-reference fix. **(2) bridge skill = `qa-suite`** (a
+> distinct name, to avoid colliding with the *installed* `qa-do`/`qa-start`).
+> **(3) `/qa-engine install` pulls the full curated subset by default**, with
+> per-skill override via arguments.
 
 ## Current state (audit)
 
