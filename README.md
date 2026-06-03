@@ -6,15 +6,16 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 **Skill-bearing plugins:**
 
-- **`pro-core`** — core dev skills forked from [obra/superpowers](https://github.com/obra/superpowers): brainstorming, TDD, systematic debugging, writing plans, using git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
+- **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, grill-me interview/stress-test helper, `/gh` GitHub workflow command, and safety/parallelism hooks.
+- **`pro-execution`** — execution discipline skills forked from [obra/superpowers](https://github.com/obra/superpowers): TDD, systematic debugging, git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion. Depends on `playwright@claude-plugins-official`.
 - **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Depends on `figma@claude-plugins-official` for Figma-MCP integration.
 
-- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT): vitest (with mocking + monorepo + testing-patterns + troubleshooting sidecars), playwright-automation (Page Object Model + 8 reference sidecars), storybook-interactions (play-functions-as-spec), visual-testing (Playwright/Chromatic/Percy/Argos patterns). Depends on `playwright@claude-plugins-official`.
+- **`pro-testing`** — testing skills forked from `PaulRBerg/agent-skills`, `petrkindlmann/qa-skills`, `peterknezek/skills` (all MIT) plus `vercel-labs/agent-browser` (Apache-2.0): vitest, playwright-automation, agent-browser, storybook-interactions, visual-testing. Depends on `playwright@claude-plugins-official`.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
-- **`pro-spec`** — spec-driven development skills adapted from `github/spec-kit` (MIT): writing-feature-specs (PRD with Given/When/Then), clarifying-specs (10-category ambiguity taxonomy).
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
+- **`pro-pdd`** — opt-in plan-driven development skills forked from `obra/superpowers`: brainstorming and written implementation plans. Use this when you want conversational design-to-plan workflow instead of SPDD.
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
@@ -22,7 +23,7 @@ Jody Brewster's private Claude Code plugin marketplace. One install pulls a cura
 
 **Meta:**
 
-- **`pro-starter`** — pulls the full stack: 6 skill-bearing plugins (`pro-core` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-spec`) plus the `pro-nextjs` marker plugin. One install ⇒ Jody's standard stack (25 skills across the starter-installed skill-bearing plugins). `pro-spdd` and `pro-gstack` are opt-in comparison plugins.
+- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin and `pro-mieruka`. One install ⇒ Jody's standard stack (24 skills across the starter-installed skill-bearing plugins). `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in.
 
 ### Official dependencies
 
@@ -43,16 +44,17 @@ Layout:
 ```
 .claude-plugin/marketplace.json      # marketplace manifest
 plugins/
-  pro-core/                          # core skills + parallelism hook
+  pro-core/                          # universal base skills + hooks
+  pro-execution/                     # TDD/debug/worktree/subagent execution skills
   pro-quality/                       # quality skills + review/verify commands
   pro-nextjs/                        # marker plugin, no skills
   pro-design/                        # design skills
   pro-testing/                       # testing skills
   pro-data/                          # data/auth skills + schema formatting hook
-  pro-spec/                          # spec skills + spec/clarify commands
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-gstack/                        # opt-in GStack workflow adapters + upstream snapshot
+  pro-pdd/                           # opt-in plan-driven development skills
 templates/
   project-settings.json              # drop-in for any new project's .claude/
 RELEASING.md                         # version-bump law + tag scheme
@@ -124,6 +126,8 @@ codex plugin marketplace add jodybrewster/pro-dev-skillset
 # then add each plugin you want to ~/.codex/config.toml:
 #   [plugins."pro-core@pro-dev-skillset"]
 #   enabled = true
+#   [plugins."pro-execution@pro-dev-skillset"]
+#   enabled = true
 #   [plugins."pro-quality@pro-dev-skillset"]
 #   enabled = true
 #   [plugins."pro-design@pro-dev-skillset"]
@@ -132,21 +136,21 @@ codex plugin marketplace add jodybrewster/pro-dev-skillset
 #   enabled = true
 #   [plugins."pro-data@pro-dev-skillset"]
 #   enabled = true
-#   [plugins."pro-spec@pro-dev-skillset"]
-#   enabled = true
 #   [plugins."pro-nextjs@pro-dev-skillset"]
 #   enabled = true
 #   [plugins."pro-spdd@pro-dev-skillset"]  # optional
 #   enabled = true
 #   [plugins."pro-gstack@pro-dev-skillset"]  # optional
 #   enabled = true
+#   [plugins."pro-pdd@pro-dev-skillset"]  # optional
+#   enabled = true
 codex exec --skip-git-repo-check "enumerate available skills"
-# Expected for starter-installed plugins: 25 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled
+# Expected for starter-installed plugins: 24 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled; +2 if pro-pdd is enabled
 ```
 
 Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).
 
 ## License
 
-- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-quality), `Owl-Listener/designer-skills` (pro-design), `PaulRBerg/agent-skills` + `petrkindlmann/qa-skills` + `peterknezek/skills` (pro-testing), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `github/spec-kit` (pro-spec), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (pro-gstack). Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
+- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-execution, pro-pdd, pro-quality), `mattpocock/skills` (grill-me in pro-core), `Owl-Listener/designer-skills` (pro-design), `PaulRBerg/agent-skills` + `petrkindlmann/qa-skills` + `peterknezek/skills` (pro-testing), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (pro-gstack). The `agent-browser` skill in pro-testing is forked from `vercel-labs/agent-browser` under Apache-2.0. Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
 - Everything else in this repo (manifests, templates, README, RELEASING) is private to Jody Brewster.

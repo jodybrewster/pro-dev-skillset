@@ -1,0 +1,12 @@
+{
+  "name": "pro-pdd",
+  "version": "0.1.0",
+  "description": "Opt-in plan-driven development skills: brainstorming and written implementation plans. Depends on pro-execution for worktree and subagent execution handoff.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "dependencies": [
+    "pro-execution@pro-dev-skillset@^0.1.0"
+  ]
+}

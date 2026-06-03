@@ -1,19 +1,19 @@
 {
   "name": "pro-starter",
-  "version": "1.0.3",
-  "description": "Installs Jody's full pro dev stack: core + quality + nextjs + design + testing + data + spec + mieruka",
+  "version": "1.1.0",
+  "description": "Installs Jody's default pro dev stack: core + execution + quality + nextjs + design + testing + data + mieruka",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.4.1",
+    "pro-core@pro-dev-skillset@^0.7.0",
+    "pro-execution@pro-dev-skillset@^0.1.0",
     "pro-quality@pro-dev-skillset@^0.6.1",
-    "pro-nextjs@pro-dev-skillset@^0.6.1",
-    "pro-design@pro-dev-skillset@^0.4.1",
-    "pro-testing@pro-dev-skillset@^0.3.1",
-    "pro-data@pro-dev-skillset@^0.4.1",
-    "pro-spec@pro-dev-skillset@^0.4.0",
+    "pro-nextjs@pro-dev-skillset@^0.6.2",
+    "pro-design@pro-dev-skillset@^0.4.2",
+    "pro-testing@pro-dev-skillset@^0.3.3",
+    "pro-data@pro-dev-skillset@^0.4.2",
     "pro-mieruka@pro-dev-skillset@^0.1.0"
   ]
 }

@@ -1,13 +1,13 @@
 {
   "name": "pro-design",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition. Depends on Figma from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.4.1",
+    "pro-core@pro-dev-skillset@^0.7.0",
     {
       "name": "figma",
       "marketplace": "claude-plugins-official",
