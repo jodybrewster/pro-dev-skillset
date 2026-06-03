@@ -15,7 +15,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Plan** | pure planning mode *(harness — no skill)*, `writing-plans` | `pro-pdd` *(opt-in)* |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
-| **Build** | `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
+| **Build** | `ui-ux-pro-max`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
 | **Build** | drizzle (orm + schema), prisma, nextauth | `pro-data` |
 | **Build** | `context-engineering`†, `doubt-driven-development`† | `pro-core` |
 | **Verify** | `qa-do`/`qa-start` (router), `agent-browser` (interactive), `playwright-automation` (committed e2e), `vitest`, `visual-testing`, api/contract-testing, test strategy/risk/planning/reliability | `pro-testing` |
@@ -27,7 +27,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 | **Workflows** *(cross-cutting)* | GStack persona-driven planning/review/QA/ship/security/docs | `pro-gstack` *(opt-in)* |
 
-*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill.
+*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine installed separately (e.g. `ui-ux-pro-max` → `impeccable`, managed by `/design-engine`).
 
 ### Plugins
 
