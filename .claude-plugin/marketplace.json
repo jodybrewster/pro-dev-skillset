@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.9.0"
+    "version": "1.10.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -48,8 +48,8 @@
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition. Depends on Figma from claude-plugins-official",
-      "version": "0.4.2",
+      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Depends on Figma from claude-plugins-official",
+      "version": "0.5.0",
       "category": "development",
       "strict": true
     },
