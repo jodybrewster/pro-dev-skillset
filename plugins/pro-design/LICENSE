@@ -10,6 +10,10 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
   Copyright (c) 2025 Vincent
   Used for: shadcn-ui-composition (from src/skills/web-ui-shadcn-ui/)
 
+The ui-ux-pro-max skill is an original BRIDGE file (no upstream content vendored).
+It points to the standalone `impeccable` skill (Apache-2.0, based on Anthropic's
+frontend-design skill), which is installed and licensed separately.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
