@@ -25,7 +25,8 @@ Task arrives
   │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
   │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
-  │   ├ UI ──────────────────────────→ frontend-ui-engineering + pro-design skills
+  │   ├ UI (full pass) ──────────────→ ui-ux-pro-max → impeccable engine (pro-design, bridge)
+  │   ├ UI (one facet) ──────────────→ frontend-ui-engineering + pro-design skills
   │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
   │   ├ better context ──────────────→ context-engineering (pro-core)
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
@@ -42,6 +43,16 @@ Task arrives
 ```
 
 Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid stop, not a skip — for a quick or solo task, thinking it through in Claude Code / Codex plan mode without invoking any skill is complete, legitimate planning.
+
+## Bridges
+
+Some entries are **bridges**, not vendored skills — thin routers that point to a heavier engine installed *outside* this marketplace. They only do work once that engine is present, so they ship an install/update command:
+
+- **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
+- **`pro-mieruka` → the Mieruka app** — install/launch with `/init-mieruka`, `/start-mieruka`.
+- **Verify / `qa-do` (planned bridge)** — the qa-skills layer is slated to convert from vendored to a bridge installed via `/qa-engine` (`npx skills add petrkindlmann/qa-skills …`). See `QA-SKILLS-BRIDGE-PLAN.md`. Until that lands, qa-do/qa-start ship vendored.
+
+When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
 ## Lifecycle Sequence
 
@@ -85,9 +96,9 @@ The pro-dev-specific rules are:
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
-| Build | frontend-ui-engineering + design skills | pro-design | UI implementation and design system |
+| Build | ui-ux-pro-max (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
-| Verify | [[qa-do]] / qa-start, agent-browser, playwright-automation, vitest | pro-testing | Full suite, browser, e2e, unit |
+| Verify | [[qa-do]] / qa-start (qa-skills — bridge planned via `/qa-engine`), agent-browser, playwright-automation, vitest | pro-testing | Full suite, browser, e2e, unit |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
 | Verify | verification-before-completion | pro-quality | Gate before claiming done |
 | Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |
