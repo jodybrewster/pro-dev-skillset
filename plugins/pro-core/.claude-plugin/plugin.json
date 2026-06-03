@@ -1,7 +1,7 @@
 {
   "name": "pro-core",
-  "version": "0.6.3",
-  "description": "Core dev skills: brainstorming, TDD, debug, planning, worktrees, subagent-driven dev, grill-me (interview-driven plan stress-test). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch.",
+  "version": "0.7.0",
+  "description": "Universal base skills and guardrails: find-skills, karpathy-guidelines, grill-me interview/stress-test helper. /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"

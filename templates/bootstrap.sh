@@ -14,8 +14,8 @@
 #      --with-companions is passed (installs vercel + figma + playwright from
 #      claude-plugins-official explicitly)
 #   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
-#      full stack: pro-core, pro-quality, pro-nextjs, pro-design, pro-testing,
-#      pro-data, and pro-spec)
+#      default stack: pro-core, pro-execution, pro-quality, pro-nextjs,
+#      pro-design, pro-testing, pro-data, and pro-mieruka)
 #
 # Flags:
 #   --with-companions   Pre-install the cross-marketplace dependencies explicitly

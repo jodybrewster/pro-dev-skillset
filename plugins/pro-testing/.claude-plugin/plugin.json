@@ -1,13 +1,13 @@
 {
   "name": "pro-testing",
-  "version": "0.3.1",
-  "description": "Testing skills: Vitest, Playwright automation, Storybook interactions, visual testing. Depends on Playwright from claude-plugins-official",
+  "version": "0.3.3",
+  "description": "Testing skills: Vitest, Playwright automation, agent-browser (AI-driven browser automation CLI), Storybook interactions, visual testing. Depends on Playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.4.1",
+    "pro-core@pro-dev-skillset@^0.7.0",
     {
       "name": "playwright",
       "marketplace": "claude-plugins-official",

@@ -1,27 +1,27 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when executing approved implementation artifacts with independent tasks in the current session, including implementation plans, SPDD REASONS Canvas Operations sections, or equivalent task breakdowns.
 ---
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+Execute an approved task artifact by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
 **Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
-**Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+**Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the approved artifact without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the approved work, so execute it.
 
 ## Before You Start — Fresh Context
 
-If a saved plan file exists (`docs/superpowers/plans/*.md` or equivalent), execution should start from a **clean context**. The plan IS the source of truth — prior conversation context (brainstorming, design exploration, rejected alternatives) is not needed and can pollute scope decisions.
+If a saved execution artifact exists (an implementation plan, an SPDD REASONS Canvas prompt, or equivalent), execution should start from a **clean context**. The artifact IS the source of truth — prior conversation context (brainstorming, design exploration, rejected alternatives) is not needed and can pollute scope decisions.
 
 **Preferred flow:**
 1. **Tell the user to clear context first:** "Run `/clear` to start fresh, then re-invoke this skill with the plan path."
-2. **After they clear,** receive a minimal invocation like `execute the plan at <path>`. Read the plan + the spec it references. That's your context.
+2. **After they clear,** receive a minimal invocation like `execute the approved artifact at <path>`. Read the artifact and any source requirements it references. That's your context.
 
-**Continue in current session ONLY if** the plan was authored in this exact conversation AND clearing context would lose decisions that aren't captured in the plan file. If everything important made it into the plan, ask the user to clear before you begin.
+**Continue in current session ONLY if** the artifact was authored in this exact conversation AND clearing context would lose decisions that aren't captured in the artifact. If everything important made it into the artifact, ask the user to clear before you begin.
 
 This applies to **the controller (you)**. Subagents already get fresh context per dispatch — that's a separate concern.
 
@@ -29,17 +29,17 @@ This applies to **the controller (you)**. Subagents already get fresh context pe
 
 ```dot
 digraph when_to_use {
-    "Have implementation plan?" [shape=diamond];
+    "Have approved execution artifact?" [shape=diamond];
     "Tasks mostly independent?" [shape=diamond];
     "Stay in this session?" [shape=diamond];
     "subagent-driven-development" [shape=box];
     "inline execution with checkpoints" [shape=box];
-    "Manual execution or brainstorm first" [shape=box];
+    "Manual execution or artifact creation first" [shape=box];
 
-    "Have implementation plan?" -> "Tasks mostly independent?" [label="yes"];
-    "Have implementation plan?" -> "Manual execution or brainstorm first" [label="no"];
+    "Have approved execution artifact?" -> "Tasks mostly independent?" [label="yes"];
+    "Have approved execution artifact?" -> "Manual execution or artifact creation first" [label="no"];
     "Tasks mostly independent?" -> "Stay in this session?" [label="yes"];
-    "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
+    "Tasks mostly independent?" -> "Manual execution or artifact creation first" [label="no - tightly coupled"];
     "Stay in this session?" -> "subagent-driven-development" [label="yes"];
     "Stay in this session?" -> "inline execution with checkpoints" [label="no - parallel session"];
 }
@@ -140,9 +140,9 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 ## Example Workflow
 
 ```
-You: I'm using Subagent-Driven Development to execute this plan.
+You: I'm using Subagent-Driven Development to execute this approved artifact.
 
-[Read plan file once: docs/superpowers/plans/feature-plan.md]
+[Read the execution artifact once: implementation plan, SPDD prompt, or equivalent]
 [Extract all 5 tasks with full text and context]
 [Create task list with all tasks in your task tracker]
 
@@ -280,7 +280,7 @@ Done!
 
 **Required workflow skills:**
 - **using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
-- **writing-plans** - Creates the plan this skill executes
+- **approved execution artifact** - Implementation plan, SPDD REASONS Canvas Operations section, or equivalent task breakdown
 - **requesting-code-review** - Code review template for reviewer subagents
 - **verification-before-completion** - Complete development only after fresh verification evidence
 

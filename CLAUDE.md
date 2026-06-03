@@ -10,27 +10,27 @@ A user installs skills from this repo once, and those skills become available in
 
 **How it relates to Mieruka:** Mieruka is a separate Storybook-like app that installs into a user's target repo as `.mieruka/` (similar to how Storybook installs as `.storybook/`). If a user has both `pro-dev-skillset` skills installed in Claude Code and Mieruka installed in their working repo, the skills can communicate with Mieruka via MCP tools or by writing to the `.mieruka/` directory. But the two systems are independent by design — skills work without Mieruka, and Mieruka works without these skills.
 
-This repo currently hosts 8 plugins and 24+ skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
+This repo hosts a private plugin marketplace with 10+ plugins and 20+ skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
 
 The plugins are **skills-only by design** — historically. Hooks, commands, and agents are now being layered in where deterministic triggering beats description-matching.
 
 ## What this repo is experimenting with
 
-This marketplace is actively testing three upstream workflow frameworks — `pro-gstack` (GStack), `pro-core`/`pro-quality` (Superpowers), and `pro-spdd` (SPDD) — to answer two different real-world questions:
+This marketplace is actively testing multiple workflow layers — `pro-gstack` (GStack), `pro-core`/`pro-execution`/`pro-quality`/`pro-pdd` (Superpowers-derived), and `pro-spdd` (SPDD) — to answer two different real-world questions:
 
 **Use case 1: Solo developer building a full application.**
-A single developer uses GStack's persona-driven planning and review workflows combined with Superpowers' brainstorming, TDD, and systematic debugging skills. GStack handles the structured thinking — office hours, CEO/engineering/design reviews, QA, ship readiness. Superpowers handles the execution muscle. Together they give one person the planning and quality leverage of a small team.
+A single developer uses GStack's persona-driven planning and review workflows combined with Superpowers-derived execution and optional PDD skills. GStack handles structured thinking — office hours, CEO/engineering/design reviews, QA, ship readiness. `pro-execution` handles the implementation muscle. `pro-pdd` is opt-in when conversational brainstorming and written implementation plans are desired.
 
 **Use case 2: Consulting team delivering for a client.**
-A team of consultants uses SPDD's spec-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
+A team of consultants uses SPDD's structured prompt-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
 
-**The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, specs, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, specs, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
+**The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, structured prompts, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
 
-The three frameworks are opt-in (`pro-spdd` and `pro-gstack` are separate plugins). The default stack (`pro-core`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-spec`) works without them.
+The client/team frameworks are opt-in (`pro-spdd`, `pro-gstack`, and `pro-pdd` are separate plugins). The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`) works without them.
 
 ## Use subagents to parallelize — aggressively
 
-This repo has 8 plugins. Almost any cross-plugin task (add a hook to N plugins, draft commands for M skills, audit drift, port an upstream change) is **embarrassingly parallel**. Default to subagents whenever the work splits cleanly:
+This repo has many plugins. Almost any cross-plugin task (add a hook to N plugins, draft commands for M skills, audit drift, port an upstream change) is **embarrassingly parallel**. Default to subagents whenever the work splits cleanly:
 
 - **Per-plugin edits**: dispatch one subagent per plugin in a single message (multiple Agent tool calls in one assistant turn). Don't serialize unless edits depend on each other.
 - **Independent research**: spawn `Explore` subagents in parallel — one per question — instead of grepping sequentially.
