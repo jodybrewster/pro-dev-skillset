@@ -1,57 +1,51 @@
-# qa-skills Upstream
+# qa-skills (bridged)
 
-This plugin vendors and adapts the QA skills library from qa-skills.
+`pro-testing` **bridges** to the QA skills library rather than vendoring it. The broad
+suite is installed on demand from upstream; this plugin ships only a thin router skill
+(`qa-suite`) and an install/update command (`/qa-engine`).
 
 - Upstream repository: `https://github.com/petrkindlmann/qa-skills`
-- Imported commit: `3282001983dc85f60a9f2d03231596359b88fb88`
-- Upstream license: MIT (retained at `upstream/qa-skills/LICENSE`)
+- Upstream license: MIT (governed by the upstream repo; nothing is copied here)
+- Distribution: `npx skills add petrkindlmann/qa-skills <skills>` (the `npx skills` ecosystem)
 - Local plugin: `pro-testing`
 
-## Imported Surface
+History: this library was previously **vendored** under `upstream/qa-skills/` (43 skills,
+~1.8 MB) with 11 delegating shims. It was converted to a bridge to eliminate the
+re-pull/re-copy/version-bump sync tax. See `QA-SKILLS-BRIDGE-PLAN.md` at the repo root.
 
-The full upstream repository is vendored under `upstream/qa-skills/` (minus `.git`) for
-traceability and comparison. At import time that is **43 skills** plus their `references/`,
-`AGENTS.md`, `README.md`, and `LICENSE`.
+## How the bridge works
 
-## Exposed skills (11)
+- **`qa-suite`** (skill) — the entry point. Triggers on QA-suite intent, routes to the
+  *installed* qa-skills (`qa-do`/`qa-start` own the routing within testing), and tells the
+  user to `/qa-engine install` when the suite is absent.
+- **`/qa-engine [check|install|update]`** (command) — manages the external suite via
+  `npx skills add petrkindlmann/qa-skills …` and runs `claude plugin update` for the stack.
 
-Only a curated testing-core subset is exposed as auto-triggering shim skills under
-`skills/`. Each shim copies the upstream `description` verbatim and delegates to
-`../../upstream/qa-skills/skills/<name>/SKILL.md`:
+## Curated testing-core subset (what `/qa-engine install` pulls)
 
-- **Routers / foundation:** `qa-do`, `qa-start`, `qa-project-context`
-- **Automation:** `playwright-automation`, `visual-testing`, `api-testing`, `contract-testing`
-- **Reliability:** `test-reliability`
-- **Strategy / planning:** `test-strategy`, `risk-based-testing`, `test-planning`
+`qa-do`, `qa-start`, `qa-project-context`, `playwright-automation`, `visual-testing`,
+`api-testing`, `contract-testing`, `test-reliability`, `test-strategy`, `risk-based-testing`,
+`test-planning`. The full upstream library has 43 skills.
 
-`playwright-automation` and `visual-testing` replace the previous file-level forks of these
-two skills; the vendored versions are now the single source of truth.
+## Native pro-testing skills (NOT bridged)
 
-## Held back (vendored, NOT exposed)
+- **`vitest`** (PaulRBerg/agent-skills, MIT) — focused Vitest v4 unit/component testing.
+- **`agent-browser`** (vercel-labs, Apache-2.0) — interactive verification axis (vs.
+  `playwright-automation`'s committed-regression-suite axis, now installed via the bridge).
+- **`storybook-interactions`** (peterknezek/skills, MIT) — Storybook interaction tests.
 
-These remain available under `upstream/qa-skills/skills/` but are not exposed as shims,
-because another current or planned plugin owns the territory (exposing would double-trigger
-or steal ownership):
+## Territory boundaries (don't install over an owner)
 
-- `unit-testing` → `vitest` (this plugin) owns the focused Vitest TS/React skill
-- `security-testing` → planned `pro-security`
-- `ci-cd-integration`, `release-readiness` → planned `pro-ship`
-- `accessibility-testing` → `pro-design`
-- the remaining ~27 specialized skills (chaos-engineering, mobile-testing, database-testing,
-  performance-testing, coverage-analysis, cross-browser-testing, selector-drift-recovery,
-  synthetic-monitoring, etc.) — exposable in a later pass without re-vendoring.
+Some upstream skills are intentionally left to other plugins; prefer the owner and don't
+route to the bridged version when one exists:
 
-## Local Adaptations
+- `unit-testing` → `vitest` (this plugin) owns focused Vitest TS/React.
+- `security-testing` → planned `pro-security`.
+- `ci-cd-integration`, `release-readiness` → planned `pro-ship`.
+- `accessibility-testing` → `pro-design`.
 
-- Shims are harness-neutral adapters. They read the vendored upstream skill as reference
-  material; they do not run native qa-skills CLI bootstrap, install flows, or `.agents/`
-  provisioning unless the user explicitly requests it.
-- Frontmatter on shims is `name` + `description` only (Agent Skills / Codex parity).
-- `agent-browser` (vercel-labs, Apache-2.0) is intentionally NOT part of this library — it
-  owns the *interactive verification* axis; `playwright-automation` owns the *committed
-  regression suite* axis.
+## Maintenance
 
-## Sync
-
-Re-pull the upstream tree into `upstream/qa-skills/`, re-copy any changed `description`
-values into the exposed shims, and bump the `pro-testing` version (version-bump law).
+None for the library itself — it tracks upstream independently. Updating the **curated
+subset list** (if upstream renames/adds skills) means editing `/qa-engine`'s subset and the
+`qa-suite` skill, then bumping `pro-testing` (version-bump law).

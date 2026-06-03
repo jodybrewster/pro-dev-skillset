@@ -2,12 +2,12 @@ MIT License
 
 This plugin contains skills forked from the following MIT-licensed upstream repositories:
 
-- PaulRBerg/agent-skills (https://github.com/PaulRBerg/agent-skills)
-- peterknezek/skills (https://github.com/peterknezek/skills)
+- PaulRBerg/agent-skills (https://github.com/PaulRBerg/agent-skills) — used for: vitest
+- peterknezek/skills (https://github.com/peterknezek/skills) — used for: storybook-interactions
 
-It also vendors the following MIT-licensed library wholesale (under
-`upstream/qa-skills/`, which retains its own upstream LICENSE file). The exposed
-`skills/` shims delegate to that vendored source:
+It also BRIDGES to the following MIT-licensed library without vendoring any of its
+content. The `qa-suite` skill is an original pointer and `/qa-engine` installs the library
+in place via `npx skills add`; install and license terms are governed by the upstream repo:
 
 - petrkindlmann/qa-skills (https://github.com/petrkindlmann/qa-skills)
 
