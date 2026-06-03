@@ -25,8 +25,18 @@ Stay in pro-design's focused skills when the task is a **single facet**: just to
 
 1. **Check whether `impeccable` is available.** It is commonly installed at user scope (`~/.claude/skills/impeccable/`) or project scope (`.claude/skills/impeccable/`), and exposes an `npx impeccable` CLI.
    - **If present:** follow its `SKILL.md` — load project context first (`node <skill-dir>/scripts/load-context.mjs`, reading PRODUCT.md / DESIGN.md), identify the register (brand vs. product), then load and follow the matching sub-command reference. Invoke a sub-command as `/impeccable <command> [target]` (e.g. `/impeccable craft <feature>`, `/impeccable audit`, `/impeccable live`).
-   - **If absent:** tell the user this is a bridge and the engine isn't installed, then point them to install it (`npx impeccable` / the skill's distribution) rather than half-doing the work here. Offer to fall back to the relevant focused pro-design skill(s) for the facets they need in the meantime.
+   - **If absent:** tell the user this is a bridge and the engine isn't installed, then get it in place with **`/design-engine install`** (or directly: `npx impeccable`, homepage https://impeccable.style). Don't half-do the work here. Offer to fall back to the relevant focused pro-design skill(s) for the facets they need in the meantime.
 2. **Defer to `impeccable` for the actual design work.** Do not reimplement its process, reference files, or scripts in this repo — the whole point of the bridge is that the engine updates independently of this marketplace.
+
+## Keeping the engine installed and current
+
+Because the engine lives outside this marketplace, use the **`/design-engine`** command (in this plugin) to manage it:
+
+- `/design-engine check` — report whether `impeccable` is installed (user vs. project scope) and its version.
+- `/design-engine install` — bootstrap it via `npx impeccable` when missing.
+- `/design-engine update` — refresh the engine **and** run `claude plugin update` for the pro-dev stack.
+
+Note: `impeccable`'s impeccable.style build can run ahead of its npm `latest` tag, so `/design-engine` confirms before any action that would downgrade an already-newer install.
 
 ## Why a bridge, not a fork
 
