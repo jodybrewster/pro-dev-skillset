@@ -1,16 +1,9 @@
 {
   "name": "pro-quality",
-  "version": "0.6.1",
-  "description": "Quality gate skills: requesting + receiving code review, verification-before-completion. Depends on Playwright from claude-plugins-official",
+  "version": "0.6.2",
+  "description": "Quality gate skills: requesting + receiving code review, verification-before-completion.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
-  },
-  "dependencies": [
-    {
-      "name": "playwright",
-      "marketplace": "claude-plugins-official",
-      "version": "*"
-    }
-  ]
+  }
 }
