@@ -89,6 +89,19 @@ templates/
 RELEASING.md                         # version-bump law + tag scheme
 ```
 
+## Try it end-to-end (demo POC)
+
+[`demo/`](./demo) installs this marketplace into a target repo and drives the
+lifecycle skills to build, verify, and run a real Next.js landing page — a
+working proof that the install + skills + tests hang together:
+
+```bash
+./demo/setup.sh         # install marketplace (project scope) → build → test the site
+cd demo/app && claude   # then run /pro-dev-doctor to verify the install through the skills
+```
+
+See [demo/LIFECYCLE.md](./demo/LIFECYCLE.md) for the phase-by-phase build trail.
+
 ## Install paths
 
 ### One-line bootstrap (recommended)
@@ -99,7 +112,9 @@ Inside a fresh project (requires `gh` CLI — this repo is private):
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-Add `--with-companions` to explicitly pre-install vercel + figma + playwright before dependency resolution. Add `--scope user` to install at user scope (default is project).
+This installs the full stack **and the bridge engines by default** — `impeccable` (behind `ui-ux-pro-max`) and `qa-skills` (behind `qa-suite`) — so the design and QA bridges work out of the box. (Mieruka is project-specific; run `/init-mieruka` where you need it.)
+
+Flags: `--no-engines` skips the engine install (offline / CI with no network). `--with-companions` pre-installs vercel + figma + playwright before dependency resolution. `--scope user` installs at user scope (default is project).
 
 ### Per-project (committed)
 

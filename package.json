@@ -1,0 +1,12 @@
+{
+  "name": "pro-dev-skillset-tests",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency test + eval harness for the pro-dev-skillset marketplace. Not published; the marketplace itself ships no code.",
+  "scripts": {
+    "test": "node tests/check.mjs",
+    "test:eval": "node tests/eval.mjs",
+    "test:eval:dry": "node tests/eval.mjs --dry",
+    "test:all": "node tests/check.mjs && node tests/eval.mjs --dry"
+  }
+}
