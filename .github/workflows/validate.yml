@@ -26,6 +26,12 @@ jobs:
       - name: Verify Claude Code install
         run: claude --version
 
+      - name: Static checks (manifests, frontmatter, version-bump law, router)
+        run: node tests/check.mjs
+
+      - name: Routing eval cases reference real skills (dry)
+        run: node tests/eval.mjs --dry
+
       - name: Validate marketplace manifest (strict)
         run: claude plugin validate . --strict
 

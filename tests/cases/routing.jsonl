@@ -1,0 +1,18 @@
+{"prompt": "Where do I start with this? What's the workflow here?", "expect": "using-pro-dev"}
+{"prompt": "Which pro-dev skill should I use for this task?", "expect": "using-pro-dev"}
+{"prompt": "I have a vague itch to build something but I don't know what I actually want yet.", "expect": ["interview-me", "idea-refine"]}
+{"prompt": "Grill me on this idea before I commit to it.", "expect": "interview-me"}
+{"prompt": "I have a rough concept — show me a few different directions I could take it.", "expect": ["idea-refine", "brainstorming"]}
+{"prompt": "Write me a detailed implementation plan with a test-first breakdown before we code.", "expect": "writing-plans"}
+{"prompt": "This is a client engagement — we need a written spec they can sign off on before any code.", "expect": ["spdd-story-lead", "spdd-analysis-lead", "spdd-reasons-canvas-lead"]}
+{"prompt": "Is my change actually working in the browser right now? Click through it for me.", "expect": "agent-browser"}
+{"prompt": "Add a unit test for this React component.", "expect": "vitest"}
+{"prompt": "Run the whole test suite and tell me what's failing.", "expect": ["qa-suite"]}
+{"prompt": "I want to write a durable committed end-to-end regression suite for CI.", "expect": "qa-suite", "notOneOf": ["agent-browser"]}
+{"prompt": "Before I tell the user this is done, double-check it really is.", "expect": "verification-before-completion"}
+{"prompt": "The app keeps crashing on save — help me find the root cause.", "expect": "systematic-debugging"}
+{"prompt": "Review my pull request and the diff on this branch.", "expect": ["requesting-code-review", "receiving-code-review"]}
+{"prompt": "I'm executing an already-approved plan — drive the implementation across subagents.", "expect": "subagent-driven-development"}
+{"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"]}
+{"prompt": "Set up the database schema and migrations with Drizzle.", "expect": ["drizzle-schema-definition", "drizzle-orm-architecture"]}
+{"prompt": "Do a full UI/UX pass on this dashboard and make it polished.", "expect": ["ui-ux-pro-max"]}
