@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ──────────────────────────────────────────────────────────
+   A calm, technical dark theme with a violet→cyan accent. Channels are space-
+   separated RGB so Tailwind's `<alpha-value>` slot works (bg-accent/10, etc.). */
+:root {
+  --bg: 9 9 17;
+  --surface: 17 17 28;
+  --elevated: 24 24 38;
+  --border: 42 42 60;
+  --ink: 240 242 252;
+  --muted: 154 158 180;
+  --accent: 139 124 255;     /* violet */
+  --accent-2: 80 214 230;    /* cyan   */
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas,
+    monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--ink));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Visible, on-brand focus ring for keyboard users (a11y) */
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: rgb(var(--accent) / 0.3);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(
+      100deg,
+      rgb(var(--ink)) 0%,
+      rgb(var(--accent)) 60%,
+      rgb(var(--accent-2)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .ring-border {
+    box-shadow: inset 0 0 0 1px rgb(var(--border) / 0.8);
+  }
+}
+
+/* Respect users who prefer less motion (a11y) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

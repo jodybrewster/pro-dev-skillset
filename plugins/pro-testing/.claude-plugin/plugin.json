@@ -1,13 +1,13 @@
 {
   "name": "pro-testing",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via the /qa-engine command (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Depends on Playwright from claude-plugins-official",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.7.0",
+    "pro-core@pro-dev-skillset@^0.11.0",
     {
       "name": "playwright",
       "marketplace": "claude-plugins-official",

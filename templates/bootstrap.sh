@@ -16,18 +16,25 @@
 #   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
 #      default stack: pro-core, pro-execution, pro-quality, pro-nextjs,
 #      pro-design, pro-testing, pro-data, and pro-mieruka)
+#   4. Installs the bridge engines by default — impeccable (behind ui-ux-pro-max)
+#      and qa-skills (behind qa-suite). These are external npx packages, not
+#      marketplace plugins, so they install here. (Mieruka is project-specific;
+#      run /init-mieruka in the project that needs it.)
 #
 # Flags:
 #   --with-companions   Pre-install the cross-marketplace dependencies explicitly
+#   --no-engines        Skip step 4 (e.g. offline / CI with no network)
 #   --scope <s>         Install scope: user | project (default: project)
 
 set -euo pipefail
 
 SCOPE="project"
 WITH_COMPANIONS=0
+WITH_ENGINES=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --with-companions) WITH_COMPANIONS=1; shift ;;
+    --no-engines) WITH_ENGINES=0; shift ;;
     --scope) SCOPE="$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -72,5 +79,29 @@ fi
 echo "Installing pro-starter@pro-dev-skillset --scope ${SCOPE}..."
 claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
 
+# 4. Install the bridge engines (default ON; --no-engines to skip). These are
+#    external npx packages the bridge skills route to, not marketplace plugins.
+#    Failures here are non-fatal — the stack is already installed, and the
+#    per-engine commands (/design-engine, /qa-engine) can finish the job later.
+if [ "$WITH_ENGINES" -eq 1 ]; then
+  echo
+  echo "Installing bridge engines (impeccable, qa-skills)..."
+  if command -v npx >/dev/null 2>&1; then
+    echo "  • impeccable  (ui-ux-pro-max engine)"
+    npx --yes impeccable skills install \
+      || echo "    ! impeccable install failed — run /design-engine install later"
+
+    echo "  • qa-skills   (qa-suite engine)"
+    QA_SUBSET="qa-do qa-start playwright-automation visual-testing api-testing contract-testing test-reliability test-strategy risk-based-testing test-planning qa-project-context"
+    QA_SCOPE_FLAG=""
+    [ "$SCOPE" = "user" ] && QA_SCOPE_FLAG="-g"
+    # shellcheck disable=SC2086
+    npx --yes skills add petrkindlmann/qa-skills $QA_SCOPE_FLAG $QA_SUBSET \
+      || echo "    ! qa-skills install failed — run /qa-engine install later"
+  else
+    echo "  ! npx not found — skipping engines. Install Node, then run /pro-starter engines."
+  fi
+fi
+
 echo
-echo "Done. Verify with: claude plugin list"
+echo "Done. Verify with: claude plugin list   (and /pro-dev-doctor in a session)"
