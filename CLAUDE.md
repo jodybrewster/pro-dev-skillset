@@ -83,6 +83,29 @@ plugins/<name>/
 
 Empty marker plugins (`pro-nextjs`, `pro-starter`) intentionally have no `skills/` — they exist as category slots / dep aggregators.
 
+## Pre-commit install test (required before every commit + push)
+
+Run all four steps. All must pass — don't commit if any fail.
+
+```bash
+# 1. Static checks: manifests, frontmatter, version-bump law, routing cases
+node tests/check.mjs && node tests/eval.mjs --dry
+
+# 2. Full marketplace + strict validation
+claude plugin validate . --strict
+
+# 3. Install into demo/app and build + vitest
+./demo/setup.sh
+
+# 4. Test pro-starter (the user-facing meta-install) from inside demo/app
+cd demo/app
+claude plugin install pro-starter@pro-dev-skillset --scope project
+```
+
+Step 4 installs `pro-starter` on top of the individual plugins already put down by `setup.sh`. It exercises the dependency resolution cascade (`pro-core`, `pro-design`, `pro-nextjs`, `pro-mieruka`, etc.) and confirms that the meta-plugin resolves cleanly without loader rejection. Verify the output shows all plugins loaded with no errors.
+
+If step 4 fails, check: version-bump law violated, `*` version constraint on a cross-marketplace dep (they report `"unknown"` — drop the hard dep instead), or a missing sidecar file.
+
 ## Pre-tag checklist
 
 ```bash

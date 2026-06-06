@@ -1,17 +1,12 @@
 {
   "name": "pro-design",
-  "version": "0.5.1",
-  "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Depends on Figma from claude-plugins-official",
+  "version": "0.5.2",
+  "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-core@pro-dev-skillset@^0.11.0",
-    {
-      "name": "figma",
-      "marketplace": "claude-plugins-official",
-      "version": "*"
-    }
+    "pro-core@pro-dev-skillset@^0.11.0"
   ]
 }
