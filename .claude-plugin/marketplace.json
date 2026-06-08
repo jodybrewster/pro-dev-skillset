@@ -40,8 +40,8 @@
     {
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
-      "description": "Next.js stack marker. Install vercel and figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.6.4",
+      "description": "Next.js skills: next-best-practices (auto-applied guardrails for file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font), next-upgrade (structured upgrade workflow with codemods), next-cache-components (PPR, use cache, cacheLife, cacheTag). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.7.0",
       "category": "development",
       "strict": true
     },
@@ -112,7 +112,7 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, execution, quality, design, testing, data, nextjs marker, mieruka, and research)",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, execution, quality, design, testing, data, nextjs, mieruka, and research)",
       "version": "1.4.0",
       "category": "development",
       "strict": true
