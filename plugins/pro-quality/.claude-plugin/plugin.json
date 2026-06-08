@@ -1,6 +1,6 @@
 {
   "name": "pro-quality",
-  "version": "0.6.4",
+  "version": "0.7.0",
   "description": "Quality gate skills: requesting + receiving code review, verification-before-completion.",
   "author": {
     "name": "Jody Brewster",
