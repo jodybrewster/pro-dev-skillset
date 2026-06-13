@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.18.0"
+    "version": "1.20.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -40,16 +40,16 @@
     {
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
-      "description": "Next.js skills: next-best-practices (auto-applied guardrails for file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font), next-upgrade (structured upgrade workflow with codemods), next-cache-components (PPR, use cache, cacheLife, cacheTag). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.7.0",
+      "description": "Next.js skills: next-best-practices (auto-applied guardrails for file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font), next-upgrade (structured upgrade workflow with codemods), next-cache-components (PPR, use cache, cacheLife, cacheTag), shadcn (component installation, theming, composition patterns). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.8.0",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.5.2",
+      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, motion (Framer Motion implementation + discipline), typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.6.0",
       "category": "development",
       "strict": true
     },
@@ -113,7 +113,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, execution, quality, design, testing, data, nextjs, mieruka, and research)",
-      "version": "1.4.0",
+      "version": "1.6.0",
       "category": "development",
       "strict": true
     }
