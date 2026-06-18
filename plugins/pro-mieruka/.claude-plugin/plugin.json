@@ -1,7 +1,7 @@
 {
   "name": "pro-mieruka",
-  "version": "0.2.0",
-  "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Includes the visual-context skill for reading Live Designer element selections into Claude Code. Resolves local build until mieruka is published to npm.",
+  "version": "0.3.0",
+  "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Includes the visual-context skill and the wt skill for Worktrunk worktree management. Resolves local build until mieruka is published to npm.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
