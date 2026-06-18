@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.20.0"
+    "version": "1.21.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -104,8 +104,8 @@
     {
       "name": "pro-mieruka",
       "source": "./plugins/pro-mieruka",
-      "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Resolves local build until mieruka is published to npm.",
-      "version": "0.2.0",
+      "description": "Mieruka integration: /init-mieruka installs mieruka into the current project, /start-mieruka launches the dev server. Includes the visual-context skill and the wt skill for Worktrunk worktree management.",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
