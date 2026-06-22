@@ -49,7 +49,7 @@ Two branches in this router reference **planned plugins not yet built**: SECURIT
 Some entries are **bridges**, not vendored skills — thin routers that point to a heavier engine installed *outside* this marketplace. They only do work once that engine is present, so they ship an install/update command:
 
 - **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
-- **`pro-mieruka` → the Mieruka app** — install/launch with `/init-mieruka`, `/start-mieruka`.
+- **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
