@@ -15,7 +15,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 ## 1. Installed plugin inventory
 
 - Run `claude plugin list` and capture which `pro-*` plugins from this marketplace are installed and at what version.
-- The **default stack** that should be present: `pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`. Opt-in plugins (`pro-spdd`, `pro-gstack`, `pro-pdd`, `pro-research`, `pro-mieruka`, `pro-nextjs`, `pro-starter`) are present only if the user chose them — note them, don't fail on absence.
+- The **default stack** that should be present: `pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`. Opt-in plugins (`pro-spdd`, `pro-gstack`, `pro-pdd`, `pro-research`, `pro-nextjs`, `pro-starter`) are present only if the user chose them — note them, don't fail on absence.
 - Report each as installed (with version) or missing.
 
 ## 2. Strict validation
@@ -33,7 +33,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 
 ## 4. Bridge engines (informational)
 
-- Note that bridge skills route to engines installed *outside* this marketplace: `ui-ux-pro-max` → `impeccable` (manage with `/design-engine`), `qa-suite` → `qa-skills` (manage with `/qa-engine`), `pro-mieruka` → the Mieruka app (`/init-mieruka`). These are not required for the marketplace to validate; report whether each engine is present only if its plugin is installed.
+- Note that bridge skills route to engines installed *outside* this marketplace: `ui-ux-pro-max` → `impeccable` (manage with `/design-engine`), `qa-suite` → `qa-skills` (manage with `/qa-engine`). Mieruka ships its own plugin (`/init-mieruka` from the mieruka npm package). These are not required for the marketplace to validate; report whether each engine is present only if its plugin is installed.
 
 ## Summary
 

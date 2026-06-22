@@ -83,7 +83,7 @@ while (pending threads exist):
   re-check
 ```
 
-A `pro-mieruka` `/research-watch` command (when installed) automates this loop.
+A Mieruka `/research-watch` command (when the mieruka plugin is installed) automates this loop.
 
 ## File-mirror fallback (no MCP server)
 

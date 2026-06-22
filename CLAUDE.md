@@ -102,7 +102,7 @@ cd demo/app
 claude plugin install pro-starter@pro-dev-skillset --scope project
 ```
 
-Step 4 installs `pro-starter` on top of the individual plugins already put down by `setup.sh`. It exercises the dependency resolution cascade (`pro-core`, `pro-design`, `pro-nextjs`, `pro-mieruka`, etc.) and confirms that the meta-plugin resolves cleanly without loader rejection. Verify the output shows all plugins loaded with no errors.
+Step 4 installs `pro-starter` on top of the individual plugins already put down by `setup.sh`. It exercises the dependency resolution cascade (`pro-core`, `pro-design`, `pro-nextjs`, etc.) and confirms that the meta-plugin resolves cleanly without loader rejection. Verify the output shows all plugins loaded with no errors.
 
 If step 4 fails, check: version-bump law violated, `*` version constraint on a cross-marketplace dep (they report `"unknown"` — drop the hard dep instead), or a missing sidecar file.
 

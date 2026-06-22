@@ -52,7 +52,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin and `pro-mieruka`. One install ⇒ Jody's standard stack (24 skills across the starter-installed skill-bearing plugins). `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in.
+- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin. One install ⇒ Jody's standard stack. `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in. Mieruka ships its own `.claude-plugin` and installs separately via `npx mieruka init`.
 
 ### Official dependencies
 

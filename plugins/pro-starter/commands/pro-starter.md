@@ -14,7 +14,7 @@ allowed-tools:
 
 One-step setup for the whole pro-dev stack. `pro-starter` itself is a meta-plugin
 that pulls in the default marketplace plugins (core, execution, quality, design,
-data, testing, nextjs marker, mieruka). This command finishes the job by
+data, testing, nextjs marker). This command finishes the job by
 installing the **external engines** that the bridge skills route to — engines
 that are *not* vendored and install on demand by design (see the marketplace's
 bridge pattern). It's the umbrella over [`/design-engine`](impeccable) and
@@ -28,7 +28,6 @@ Parse the action from `$ARGUMENTS` (default `check`).
 |---|---|---|
 | `ui-ux-pro-max` (pro-design) | `impeccable` | `/design-engine` |
 | `qa-suite` (pro-testing) | `qa-skills` (petrkindlmann/qa-skills) | `/qa-engine` |
-| `pro-mieruka` | Mieruka app | `/init-mieruka` (project-scoped) |
 
 `ui-ux-pro-max` and `qa-suite` ship with the stack already (they're skills in
 pro-design / pro-testing). What's missing after a plain `pro-starter` install is

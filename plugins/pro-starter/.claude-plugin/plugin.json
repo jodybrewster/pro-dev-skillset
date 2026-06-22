@@ -1,7 +1,7 @@
 {
   "name": "pro-starter",
-  "version": "1.6.0",
-  "description": "Installs Jody's default pro dev stack: core + execution + quality + nextjs + design + testing + data + mieruka + research",
+  "version": "1.7.0",
+  "description": "Installs Jody's default pro dev stack: core + execution + quality + nextjs + design + testing + data + research",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
@@ -14,7 +14,6 @@
     "pro-design@pro-dev-skillset@^0.6.0",
     "pro-testing@pro-dev-skillset@^0.5.0",
     "pro-data@pro-dev-skillset@^0.4.2",
-    "pro-mieruka@pro-dev-skillset@^0.2.0",
-    "pro-research@pro-dev-skillset@^0.3.0"
+"pro-research@pro-dev-skillset@^0.3.0"
   ]
 }
