@@ -16,3 +16,4 @@
 {"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"]}
 {"prompt": "Set up the database schema and migrations with Drizzle.", "expect": ["drizzle-schema-definition", "drizzle-orm-architecture"]}
 {"prompt": "Do a full UI/UX pass on this dashboard and make it polished.", "expect": ["ui-ux-pro-max"]}
+{"prompt": "Render my plan as a reviewable HTML artifact I can annotate in the browser before we start building.", "expect": "lavish"}

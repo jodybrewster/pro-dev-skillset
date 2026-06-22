@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.22.1"
+    "version": "1.23.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -16,8 +16,8 @@
     {
       "name": "pro-core",
       "source": "./plugins/pro-core",
-      "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like ui-ux-pro-max and qa-suite). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.11.1",
+      "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like ui-ux-pro-max, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
+      "version": "0.11.2",
       "category": "development",
       "strict": true
     },
@@ -73,15 +73,15 @@
       "name": "pro-spdd",
       "source": "./plugins/pro-spdd",
       "description": "Structured Prompt-Driven Development workflow: story decomposition, analysis, REASONS Canvas, generation, prompt update, sync, API test, code review, and reverse engineering. Includes openspdd-ts CLI (bin/openspdd.mjs) for installing templates into any AI editor. Depends on pro-execution for disciplined implementation workflows. Adapted from gszhangwei/open-spdd.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-pdd",
       "source": "./plugins/pro-pdd",
-      "description": "Opt-in Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, and written implementation plans. Depends on pro-execution for worktree and subagent execution handoff.",
-      "version": "0.2.0",
+      "description": "Opt-in Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, and lavish — a bridge to the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -105,7 +105,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, execution, quality, design, testing, data, nextjs, and research)",
-      "version": "1.7.0",
+      "version": "1.7.1",
       "category": "development",
       "strict": true
     }

@@ -19,6 +19,7 @@ Task arrives
   ├ PLAN:
   │   ├ quick/solo, think it through → pure planning mode (Claude Code / Codex plan mode — no skill)
   │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd)
+  │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /lavish-engine install)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
@@ -51,6 +52,7 @@ Some entries are **bridges**, not vendored skills — thin routers that point to
 - **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
+- **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --skill lavish`).
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -90,7 +92,7 @@ The pro-dev-specific rules are:
 |---|---|---|---|
 | Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
 | Define | interview-me, idea-refine, brainstorming | pro-pdd | Clarify → variant → gated ideation |
-| Plan | pure planning mode (harness — no skill), writing-plans | pro-pdd | Think it through or write a TDD plan |
+| Plan | pure planning mode (harness — no skill), writing-plans, lavish (bridge → lavish-axi, via `/lavish-engine`) | pro-pdd | Think it through, write a TDD plan, or render output as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |

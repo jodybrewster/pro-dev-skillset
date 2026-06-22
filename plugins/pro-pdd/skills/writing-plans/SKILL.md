@@ -143,6 +143,8 @@ After saving the plan, offer execution choice:
 
 **Which approach?"**
 
+(Optional, before either path: offer to render the plan as a reviewable HTML artifact the user can annotate in the browser first — the `lavish` skill bridges to `lavish-axi`; run `/lavish-engine install` for the full upstream playbooks. Useful when the user wants to mark up the plan visually before execution begins.)
+
 **If Subagent-Driven chosen:**
 - **REQUIRED SUB-SKILL:** Use subagent-driven-development
 - Fresh subagent per task + two-stage review

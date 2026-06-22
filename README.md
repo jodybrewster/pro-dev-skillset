@@ -85,7 +85,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 |---|---|---|
 | **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills` | `pro-core` |
 | **Define** | `interview-me`, `idea-refine`, `brainstorming` | `pro-pdd` *(opt-in)* |
-| **Plan** | pure planning mode *(harness — no skill)*, `writing-plans` | `pro-pdd` *(opt-in)* |
+| **Plan** | pure planning mode *(harness — no skill)*, `writing-plans`, `lavish`◆ (render output as annotatable HTML artifacts → lavish-axi, via `/lavish-engine`) | `pro-pdd` *(opt-in)* |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
 | **Build** | `ui-ux-pro-max`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
@@ -116,7 +116,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
-- **`pro-pdd`** — opt-in Define + Plan skills: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`). Use this when you want a conversational define-to-plan workflow instead of SPDD.
+- **`pro-pdd`** — opt-in Define + Plan skills: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), and `lavish` — a **bridge** (not vendored) to the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, installed on demand via `/lavish-engine`. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
