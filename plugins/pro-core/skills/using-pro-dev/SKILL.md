@@ -76,8 +76,6 @@ Not every task needs every phase — a bug fix might be just `systematic-debuggi
 
 ## Core Operating Behaviors
 
-The universal operating behaviors — think before coding, prefer simplicity, make surgical changes, verify don't assume — are encoded in [[karpathy-guidelines]] (pro-core). Defer to that skill for those rules; they are not repeated here.
-
 The pro-dev-specific rules are:
 
 **(a) Branch to open-SPDD when the work is client-facing or needs a shared written artifact trail before any code is written.** If the audience is a client, a stakeholder, or a team that needs written alignment, route through the SPDD branch. For solo or greenfield work with no external audience, stay on the default path.
@@ -90,7 +88,7 @@ The pro-dev-specific rules are:
 
 | Phase | Skill(s) | Plugin | One-line |
 |---|---|---|---|
-| Meta | using-pro-dev, [[find-skills]], [[karpathy-guidelines]] | pro-core | Router, ecosystem discovery, operating behaviors |
+| Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
 | Define | interview-me, idea-refine, brainstorming | pro-pdd | Clarify → variant → gated ideation |
 | Plan | pure planning mode (harness — no skill), writing-plans | pro-pdd | Think it through or write a TDD plan |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
