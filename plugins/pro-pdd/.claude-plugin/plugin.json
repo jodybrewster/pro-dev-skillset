@@ -1,12 +1,12 @@
 {
   "name": "pro-pdd",
-  "version": "0.2.0",
-  "description": "Opt-in Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, and written implementation plans. Depends on pro-execution for worktree and subagent execution handoff.",
+  "version": "0.3.0",
+  "description": "Opt-in Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, and lavish — a bridge to the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
   },
   "dependencies": [
-    "pro-execution@pro-dev-skillset@^0.1.0"
+    "pro-execution@pro-dev-skillset@^0.2.0"
   ]
 }

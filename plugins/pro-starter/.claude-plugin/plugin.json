@@ -1,6 +1,6 @@
 {
   "name": "pro-starter",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Installs Jody's default pro dev stack: core + execution + quality + nextjs + design + testing + data + research",
   "author": {
     "name": "Jody Brewster",
@@ -8,7 +8,7 @@
   },
   "dependencies": [
     "pro-core@pro-dev-skillset@^0.11.0",
-    "pro-execution@pro-dev-skillset@^0.1.0",
+    "pro-execution@pro-dev-skillset@^0.2.0",
     "pro-quality@pro-dev-skillset@^0.7.0",
     "pro-nextjs@pro-dev-skillset@^0.8.0",
     "pro-design@pro-dev-skillset@^0.6.0",
