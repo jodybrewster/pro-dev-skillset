@@ -1,6 +1,79 @@
 # pro-dev-skillset
 
-Jody Brewster's private Claude Code plugin marketplace. One install pulls a curated pro-dev stack into any project.
+A Claude Code plugin marketplace for professional software development. Install once — a curated stack of skills, hooks, and workflow commands becomes available in every project.
+
+## Quick start
+
+**Prerequisites:**
+- [Homebrew](https://brew.sh) — package manager used to install the tools below (macOS/Linux)
+- [`gh` CLI](https://cli.github.com) — required to bootstrap from this private repo; also powers the `/gh` command in `pro-core`
+- [`worktrunk`](https://worktrunk.dev) — required for parallel worktree workflows: `brew install worktrunk && wt config shell install`
+
+One-line bootstrap inside a fresh project:
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
+```
+
+This installs `pro-starter` — the meta-plugin that pulls the full default stack: `pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, and the `pro-nextjs` marker plugin. Bridge engines (`impeccable` and `qa-skills`) are included by default so the design and QA workflows work out of the box.
+
+Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
+
+## Dependencies
+
+### Required
+
+| Tool | Purpose | Install |
+|---|---|---|
+| Homebrew | Package manager for the tools below | [brew.sh](https://brew.sh) |
+| `gh` (GitHub CLI) | Bootstrap from this private repo; powers the `/gh` command in `pro-core` | `brew install gh` |
+| `worktrunk` (`wt`) | Parallel worktree + agent management for the `wt` skill in `pro-execution` | `brew install worktrunk && wt config shell install` |
+
+### Optional
+
+These `claude-plugins-official` plugins are declared as cross-marketplace dependencies by the relevant `pro-*` plugins. They install automatically with the corresponding plugin — or manually via the helper script.
+
+| Tool | Installed by | When you need it |
+|---|---|---|
+| `vercel@claude-plugins-official` | `pro-nextjs` | Next.js / Vercel deployment workflows |
+| `figma@claude-plugins-official` | `pro-design`, `pro-nextjs` | Design lookup and asset extraction |
+| `playwright@claude-plugins-official` | `pro-quality`, `pro-testing` | Browser E2E testing |
+
+If a Claude Code version does not auto-install cross-marketplace dependencies correctly, run the helper script explicitly:
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
+```
+
+## Install paths
+
+### One-line bootstrap (recommended)
+
+Inside a fresh project (requires `gh` CLI — this repo is private):
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
+```
+
+Flags: `--no-engines` skips the engine install (offline / CI with no network). `--with-companions` pre-installs vercel + figma + playwright before dependency resolution. `--scope user` installs at user scope (default is project).
+
+### Per-project (committed)
+
+Drop `templates/project-settings.json` into a new project as `.claude/settings.json`:
+
+```bash
+mkdir -p .claude
+gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d > .claude/settings.json
+```
+
+On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to the rest).
+
+### Ad-hoc, mid-development
+
+```bash
+claude plugin marketplace add jodybrewster/pro-dev-skillset
+claude plugin install pro-starter@pro-dev-skillset --scope project
+```
 
 ## What's here
 
@@ -39,7 +112,6 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-execution`** — execution discipline skills forked from [obra/superpowers](https://github.com/obra/superpowers): TDD, systematic debugging, git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion. Depends on `playwright@claude-plugins-official`.
 - **`pro-design`** — frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, typography scale (all from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills), MIT) + shadcn/ui composition with OKLCH theming, cva variants, compound components, Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT). Depends on `figma@claude-plugins-official` for Figma-MCP integration.
-
 - **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via the `/qa-engine` command (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Depends on `playwright@claude-plugins-official`.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
@@ -52,23 +124,9 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-starter`** — pulls the default stack: 6 skill-bearing plugins (`pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data`) plus the `pro-nextjs` marker plugin. One install ⇒ Jody's standard stack. `pro-spdd`, `pro-gstack`, `pro-research`, and `pro-pdd` are opt-in. Mieruka ships its own `.claude-plugin` and installs separately via `npx mieruka init`.
+- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd`, `pro-gstack`, and `pro-pdd` are opt-in.
 
-### Official dependencies
-
-These plugins from `claude-plugins-official` are declared as cross-marketplace dependencies by the relevant `pro-*` plugins:
-
-- `vercel` — Next.js / Vercel deployment workflows (pairs with `pro-nextjs`)
-- `figma` — design lookup + asset extraction (pairs with `pro-nextjs` and `pro-design`)
-- `playwright` — browser E2E testing (pairs with `pro-quality` and `pro-testing`)
-
-If a Claude Code version does not auto-install cross-marketplace dependencies correctly, run the helper script explicitly:
-
-```bash
-bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
-```
-
-Layout:
+### Layout
 
 ```
 .claude-plugin/marketplace.json      # marketplace manifest
@@ -89,11 +147,9 @@ templates/
 RELEASING.md                         # version-bump law + tag scheme
 ```
 
-## Try it end-to-end (demo POC)
+## Demo
 
-[`demo/`](./demo) installs this marketplace into a target repo and drives the
-lifecycle skills to build, verify, and run a real Next.js landing page — a
-working proof that the install + skills + tests hang together:
+[`demo/`](./demo) installs this marketplace into a target repo and drives the lifecycle skills to build, verify, and run a real Next.js landing page — a working proof that the install + skills + tests hang together:
 
 ```bash
 ./demo/setup.sh         # install marketplace (project scope) → build → test the site
@@ -101,38 +157,6 @@ cd demo/app && claude   # then run /pro-dev-doctor to verify the install through
 ```
 
 See [demo/LIFECYCLE.md](./demo/LIFECYCLE.md) for the phase-by-phase build trail.
-
-## Install paths
-
-### One-line bootstrap (recommended)
-
-Inside a fresh project (requires `gh` CLI — this repo is private):
-
-```bash
-bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
-```
-
-This installs the full stack **and the bridge engines by default** — `impeccable` (behind `ui-ux-pro-max`) and `qa-skills` (behind `qa-suite`) — so the design and QA bridges work out of the box. (Mieruka is project-specific; run `/init-mieruka` where you need it.)
-
-Flags: `--no-engines` skips the engine install (offline / CI with no network). `--with-companions` pre-installs vercel + figma + playwright before dependency resolution. `--scope user` installs at user scope (default is project).
-
-### Per-project (committed)
-
-Drop `templates/project-settings.json` into a new project as `.claude/settings.json`:
-
-```bash
-mkdir -p .claude
-gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d > .claude/settings.json
-```
-
-On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to the rest).
-
-### Ad-hoc, mid-development
-
-```bash
-claude plugin marketplace add jodybrewster/pro-dev-skillset
-claude plugin install pro-starter@pro-dev-skillset --scope project
-```
 
 ## Headless / CI gotcha
 
@@ -156,10 +180,6 @@ Every first-open of a project that adopts the template settings triggers a folde
 claude plugin uninstall pro-starter@pro-dev-skillset --scope project
 claude plugin prune --scope project -y     # -y required in non-TTY contexts
 ```
-
-## Releasing
-
-See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.json` in the same commit, validate strict, tag with `claude plugin tag --push`.
 
 ## Codex parity
 
@@ -194,7 +214,11 @@ codex exec --skip-git-repo-check "enumerate available skills"
 
 Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).
 
+## Releasing
+
+See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.json` in the same commit, validate strict, tag with `claude plugin tag --push`.
+
 ## License
 
 - Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-execution, pro-pdd, pro-quality), `addyosmani/agent-skills` (interview-me + idea-refine in pro-pdd), `Owl-Listener/designer-skills` (pro-design), `PaulRBerg/agent-skills` + `peterknezek/skills` (pro-testing; the `petrkindlmann/qa-skills` library is **bridged** via `/qa-engine`, not vendored), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (pro-gstack). The `agent-browser` skill in pro-testing is forked from `vercel-labs/agent-browser` under Apache-2.0. Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
-- Everything else in this repo (manifests, templates, README, RELEASING) is private to Jody Brewster.
+- Manifests, templates, hooks, and tooling in this repo are original work.
