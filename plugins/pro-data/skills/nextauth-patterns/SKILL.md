@@ -1,7 +1,6 @@
 ---
 name: nextauth-patterns
 description: NextAuth.js (Auth.js) configuration including providers, adapters, session management, callbacks, and JWT handling. Use when adding authentication to a Next.js app, configuring OAuth providers, setting up database sessions, implementing auth middleware, or handling user roles and permissions.
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # NextAuth Patterns

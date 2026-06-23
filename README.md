@@ -1,6 +1,6 @@
 # pro-dev-skillset
 
-A Claude Code plugin marketplace for professional software development. Install once — a curated stack of skills, hooks, and workflow commands becomes available in every project.
+A Claude Code and OpenAI Codex plugin marketplace for professional software development. Install once — a curated stack of skills, hooks, workflow commands, and reusable agent skills becomes available in every project.
 
 ## Quick start
 
@@ -9,15 +9,35 @@ A Claude Code plugin marketplace for professional software development. Install 
 - [`gh` CLI](https://cli.github.com) — required to bootstrap from this private repo; also powers the `/gh` command in `pro-core`
 - [`worktrunk`](https://worktrunk.dev) — required for parallel worktree workflows: `brew install worktrunk && wt config shell install`
 
-One-line bootstrap inside a fresh project:
+Optional machine-level status lines for both Claude Code and Codex CLI:
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-statuslines.sh --jq .content | base64 -d)
+```
+
+This installs the richer Claude Code command-backed status line at
+`~/.claude/statusline-command.sh`, wires it into `~/.claude/settings.json`, and configures Codex's
+native `[tui].status_line` with the closest available footer items: model/reasoning, git branch and
+changes, context use, quota windows, and current directory. Codex does not currently support an
+arbitrary shell-backed statusline hook like Claude Code.
+
+One-line bootstrap for Claude Code inside a fresh project:
 
 ```bash
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-This installs `pro-starter` — the meta-plugin that pulls the full default stack: `pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, and the `pro-nextjs` marker plugin. Bridge engines (`impeccable` and `qa-skills`) are included by default so the design and QA workflows work out of the box.
+This installs `pro-starter` — the meta-plugin that pulls the full default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, and the `pro-nextjs` marker plugin. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
+
+For Codex CLI, use the Codex bootstrap instead:
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-bootstrap.sh --jq .content | base64 -d)
+```
+
+Then open Codex in the project and run `/skills` to confirm the pro-dev skills are available.
 
 ## Dependencies
 
@@ -55,7 +75,51 @@ Inside a fresh project (requires `gh` CLI — this repo is private):
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-Flags: `--no-engines` skips the engine install (offline / CI with no network). `--with-companions` pre-installs vercel + figma + playwright before dependency resolution. `--scope user` installs at user scope (default is project).
+Flags: `--no-engines` skips the external engine/project-skill install (offline / CI with no network). `--with-companions` pre-installs vercel + figma + playwright before dependency resolution. `--scope user` installs at user scope (default is project).
+
+### Codex CLI
+
+Inside a fresh project:
+
+```bash
+bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-bootstrap.sh --jq .content | base64 -d)
+```
+
+For local development against this checkout instead of the GitHub source:
+
+```bash
+bash templates/codex-bootstrap.sh --source /Users/jodybrewster/Projects/pro-dev-skillset
+```
+
+The script clones or updates this private repository through `gh` at
+`~/.codex/marketplaces/pro-dev-skillset`, adds that local checkout as a Codex plugin marketplace,
+installs the default stack
+(`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-testing`,
+`pro-data`, `pro-research`), and leaves opt-in plugins (`pro-spdd`, `pro-gstack`)
+disabled unless you pass `--with-opt-in`. It also installs project-local Lavish at
+`.claude/skills/lavish/SKILL.md` and the project command at `.claude/commands/lavish.md` unless you
+pass `--no-lavish`. The bootstrap runs both the generic skill installer and the `--agent claude-code`
+installer so Codex gets `.agents/skills/lavish/SKILL.md` and Claude Code gets
+`.claude/skills/lavish/SKILL.md`.
+
+Manual equivalent when you already have a local checkout:
+
+```bash
+codex plugin marketplace add /Users/jodybrewster/Projects/pro-dev-skillset
+codex plugin add pro-core@pro-dev-skillset
+codex plugin add pro-pdd@pro-dev-skillset
+codex plugin add pro-execution@pro-dev-skillset
+codex plugin add pro-quality@pro-dev-skillset
+codex plugin add pro-nextjs@pro-dev-skillset
+codex plugin add pro-design@pro-dev-skillset
+codex plugin add pro-testing@pro-dev-skillset
+codex plugin add pro-data@pro-dev-skillset
+codex plugin add pro-research@pro-dev-skillset
+```
+
+Codex reads project instructions from `AGENTS.md`. Add one to the target repo root for project
+policy; this repo keeps `AGENTS.md` and `CLAUDE.md` aligned so both Codex and Claude Code see the
+same marketplace-maintenance guidance here.
 
 ### Per-project (committed)
 
@@ -84,8 +148,8 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | Phase | Skills | Plugin |
 |---|---|---|
 | **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills` | `pro-core` |
-| **Define** | `interview-me`, `idea-refine`, `brainstorming` | `pro-pdd` *(opt-in)* |
-| **Plan** | pure planning mode *(harness — no skill)*, `writing-plans`, `lavish`◆ (render output as annotatable HTML artifacts → lavish-axi, via `/lavish-engine`) | `pro-pdd` *(opt-in)* |
+| **Define** | `interview-me`, `idea-refine`, `brainstorming` | `pro-pdd` |
+| **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/lavish-engine`) | `pro-pdd` |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
 | **Build** | `ui-ux-pro-max`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
@@ -100,7 +164,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 | **Workflows** *(cross-cutting)* | GStack persona-driven planning/review/QA/ship/security/docs | `pro-gstack` *(opt-in)* |
 
-*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine installed separately (e.g. `ui-ux-pro-max` → `impeccable`, managed by `/design-engine`).
+*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/lavish-engine`, `ui-ux-pro-max` → `impeccable` via `/design-engine`).
 
 ### Plugins
 
@@ -116,7 +180,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
-- **`pro-pdd`** — opt-in Define + Plan skills: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), and `lavish` — a **bridge** (not vendored) to the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, installed on demand via `/lavish-engine`. Use this when you want a conversational define-to-plan workflow instead of SPDD.
+- **`pro-pdd`** — Define + Plan skills included in `pro-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), and `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
 
@@ -124,12 +188,13 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd`, `pro-gstack`, and `pro-pdd` are opt-in.
+- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd` and `pro-gstack` are opt-in.
 
 ### Layout
 
 ```
 .claude-plugin/marketplace.json      # marketplace manifest
+.agents/plugins/marketplace.json     # Codex marketplace manifest
 plugins/
   pro-core/                          # universal base skills + hooks
   pro-execution/                     # TDD/debug/worktree/subagent execution skills
@@ -141,9 +206,11 @@ plugins/
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-gstack/                        # opt-in GStack workflow adapters + upstream snapshot
-  pro-pdd/                           # opt-in plan-driven development skills
+  pro-pdd/                           # default define + plan-driven development skills
 templates/
   project-settings.json              # drop-in for any new project's .claude/
+  codex-bootstrap.sh                 # Codex CLI marketplace + plugin installer
+  install-statuslines.sh             # machine-level Claude/Codex statusline installer
 RELEASING.md                         # version-bump law + tag scheme
 ```
 
@@ -183,36 +250,29 @@ claude plugin prune --scope project -y     # -y required in non-TTY contexts
 
 ## Codex parity
 
-The skill-bearing plugins are kept compatible with OpenAI Codex via the Agent Skills standard. Last manual smoke check used `codex-cli 0.122.0-alpha.13`; CI does not yet enforce this path.
+The skill-bearing plugins are kept compatible with OpenAI Codex via the Agent Skills standard and
+Codex plugin manifests (`.codex-plugin/plugin.json`). `tests/check.mjs` checks portable skill
+frontmatter, sidecar references, Codex manifests, and a repo-local Codex marketplace under
+`.agents/plugins/marketplace.json`.
 
 ```bash
 codex plugin marketplace add jodybrewster/pro-dev-skillset
-# then add each plugin you want to ~/.codex/config.toml:
-#   [plugins."pro-core@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-execution@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-quality@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-design@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-testing@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-data@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-nextjs@pro-dev-skillset"]
-#   enabled = true
-#   [plugins."pro-spdd@pro-dev-skillset"]  # optional
-#   enabled = true
-#   [plugins."pro-gstack@pro-dev-skillset"]  # optional
-#   enabled = true
-#   [plugins."pro-pdd@pro-dev-skillset"]  # optional
-#   enabled = true
-codex exec --skip-git-repo-check "enumerate available skills"
-# Expected for starter-installed plugins: 24 pro-* skill slugs; +9 if pro-spdd is enabled; +58 if pro-gstack is enabled; +4 if pro-pdd is enabled
+codex plugin add pro-core@pro-dev-skillset
+codex plugin add pro-pdd@pro-dev-skillset
+codex plugin add pro-execution@pro-dev-skillset
+codex plugin add pro-quality@pro-dev-skillset
+codex plugin add pro-nextjs@pro-dev-skillset
+codex plugin add pro-design@pro-dev-skillset
+codex plugin add pro-testing@pro-dev-skillset
+codex plugin add pro-data@pro-dev-skillset
+codex plugin add pro-research@pro-dev-skillset
+codex exec --skip-git-repo-check "enumerate available pro-dev skills"
 ```
 
-Note: Codex 0.122 doesn't have a `plugin install` cascade for transitive deps the way Claude Code does. To get the full stack under Codex today, register the marketplace and enable each pro-* plugin you want explicitly in `config.toml`. Skill bodies should stay harness-neutral (no hard-coded `TodoWrite`/`Task tool` requirements).
+Note: Codex does not use `pro-starter`'s Claude dependency cascade. Install the concrete plugins you
+want, or run `templates/codex-bootstrap.sh`. Skill bodies, command prose, and sidecars should stay
+harness-neutral: no hard-coded `TodoWrite`/`TaskCreate`/`TaskUpdate`, and any Claude Code `Task tool`
+or MCP tool-name examples must include a Codex/fallback path.
 
 ## Releasing
 

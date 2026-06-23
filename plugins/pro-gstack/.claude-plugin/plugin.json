@@ -1,6 +1,6 @@
 {
   "name": "pro-gstack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Opt-in GStack workflow adapters: persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Adapted from garrytan/gstack.",
   "author": {
     "name": "Jody Brewster",

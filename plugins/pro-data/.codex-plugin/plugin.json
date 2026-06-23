@@ -1,0 +1,6 @@
+{
+  "name": "pro-data",
+  "version": "0.4.4",
+  "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
+  "skills": "./skills/"
+}

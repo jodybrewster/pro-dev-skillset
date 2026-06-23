@@ -1,12 +1,9 @@
 {
   "name": "pro-nextjs",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Next.js skills: next-best-practices (auto-applied guardrails), next-upgrade, next-cache-components (PPR/use cache), shadcn (component reference + theming). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
-  },
-  "dependencies": [
-    "pro-core@pro-dev-skillset@^0.11.0"
-  ]
+  }
 }

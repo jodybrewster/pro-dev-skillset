@@ -1,7 +1,6 @@
 ---
 name: next-best-practices
-description: Auto-applied Next.js best practices — file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font optimization, bundling, hydration, and caching. Applied automatically when working on Next.js projects.
-user-invocable: false
+description: Auto-applied Next.js best practices — file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font optimization, bundling, hydration, and caching. Applied automatically when working on Next.js projects; do not invoke directly unless reviewing Next.js conventions.
 ---
 
 # Next.js Best Practices

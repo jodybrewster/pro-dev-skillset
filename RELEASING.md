@@ -6,10 +6,11 @@ Single source of truth for how to ship a new version of a plugin in this marketp
 
 The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. If you change a `SKILL.md` (or any plugin content) without bumping the version, `claude plugin update` silently serves stale content from the cache.
 
-So: **every content change requires a version bump**, and the bump MUST happen in two files in the same commit:
+So: **every content change requires a version bump**, and the bump MUST happen in the manifests in the same commit:
 
 1. `plugins/<plugin>/.claude-plugin/plugin.json` → `version`
-2. `.claude-plugin/marketplace.json` → matching entry's `version`
+2. `plugins/<plugin>/.codex-plugin/plugin.json` → matching `version` when the plugin is available in Codex
+3. `.claude-plugin/marketplace.json` → matching entry's `version`
 
 If a meta-plugin (`pro-starter`) depends on a bumped plugin, also bump the meta-plugin and its marketplace entry so installers re-resolve dependencies.
 
@@ -58,13 +59,19 @@ Forked SKILL.md files should load under OpenAI Codex too (Agent Skills standard)
 - Missing sidecar files referenced in the body — every `@filename.md` or "see `filename.md`" must exist in the same directory
 - Non-standard frontmatter keys (`harness:`, `claude_code:`, `tools_required:`) — the standard only guarantees `name`, `description`, optional `tags`/`tools`/`model`
 
-Soft drift in pro-core/pro-quality was rewritten for harness-neutrality and last manually smoke-checked on `codex-cli 0.122.0-alpha.13`. CI does not yet enforce Codex parity; when checking manually, `codex exec --skip-git-repo-check` should enumerate the same 24 pro-* skill slugs as Claude Code. Test command:
+Soft drift in pro-core/pro-quality was rewritten for harness-neutrality. CI checks static Codex parity and Codex plugin manifests, but a manual smoke test is still useful after marketplace or manifest changes:
 
 ```bash
 codex plugin marketplace add jodybrewster/pro-dev-skillset
-# add each pro-* plugin you want to ~/.codex/config.toml
-# (Codex 0.122 doesn't have install-cascade yet)
-codex exec --skip-git-repo-check "list skill slugs"
+codex plugin add pro-core@pro-dev-skillset
+codex plugin add pro-execution@pro-dev-skillset
+codex plugin add pro-quality@pro-dev-skillset
+codex plugin add pro-nextjs@pro-dev-skillset
+codex plugin add pro-design@pro-dev-skillset
+codex plugin add pro-testing@pro-dev-skillset
+codex plugin add pro-data@pro-dev-skillset
+codex plugin add pro-research@pro-dev-skillset
+codex exec --skip-git-repo-check "list available pro-dev skill slugs"
 ```
 
 ## Upstream watch (forked skills)

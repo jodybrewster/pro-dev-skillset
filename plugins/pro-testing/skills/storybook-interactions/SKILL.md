@@ -1,14 +1,13 @@
 ---
 name: storybook-interactions
 description: Use when creating Storybook play functions, writing interaction tests in stories, or reviewing play function code in pull requests. Ensures consistent structure, proper query priorities, correct async handling, and best practices for Storybook interaction testing.
-dependencies:
-  - "@storybook/test"
-  - "@storybook/addon-interactions"
 ---
 
 # Storybook Interaction Tests (Play Functions)
 
 Write play functions with consistent structure, accessible queries, and proper async handling.
+
+Expected project dependencies: `@storybook/test` and `@storybook/addon-interactions`.
 
 ## Required Structure
 

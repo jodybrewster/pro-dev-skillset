@@ -1,12 +1,9 @@
 {
   "name": "pro-execution",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
-  },
-  "dependencies": [
-    "pro-core@pro-dev-skillset@^0.11.0"
-  ]
+  }
 }

@@ -13,7 +13,7 @@ description: shadcn/ui component composition, CLI usage, OKLCH theming, cva vari
 
 ## CRITICAL: Before Using This Skill
 
-> **All code must follow project conventions in CLAUDE.md** (kebab-case, named exports, import ordering, `import type`, named constants)
+> **All code must follow project conventions in AGENTS.md / CLAUDE.md** (kebab-case, named exports, import ordering, `import type`, named constants)
 
 **(You MUST use the CLI to add components - `npx shadcn@latest add [component]` - not manual copy)**
 
@@ -388,7 +388,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 
 ## CRITICAL REMINDERS
 
-> **All code must follow project conventions in CLAUDE.md**
+> **All code must follow project conventions in AGENTS.md / CLAUDE.md**
 
 **(You MUST use the CLI to add components - `npx shadcn@latest add [component]` - not manual copy)**
 

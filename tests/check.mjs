@@ -37,13 +37,25 @@ const EXTERNAL = new Set([
 const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
-// Frontmatter keys that break Codex / Agent Skills parity.
-const FORBIDDEN_FM_KEYS = new Set(["harness", "claude_code", "claude-code"]);
+// Frontmatter keys guaranteed portable by Codex / Agent Skills.
+const PORTABLE_SKILL_FM_KEYS = new Set(["name", "description", "tags", "tools", "model"]);
 
 // ── tiny helpers ────────────────────────────────────────────────────────────
 const isDir = (p) => existsSync(p) && statSync(p).isDirectory();
 const listDirs = (p) => (isDir(p) ? readdirSync(p).filter((d) => isDir(join(p, d))) : []);
 const rel = (p) => relative(ROOT, p);
+
+function walkFiles(dir, predicate = () => true, acc = []) {
+  if (!isDir(dir)) return acc;
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    const r = rel(p);
+    if (r.includes("/upstream/") || r.includes("/__pycache__/")) continue;
+    if (statSync(p).isDirectory()) walkFiles(p, predicate, acc);
+    else if (predicate(p)) acc.push(p);
+  }
+  return acc;
+}
 
 function parseFrontmatter(text) {
   // Minimal YAML frontmatter: a leading `---` block of `key: value` lines.
@@ -93,7 +105,9 @@ function loadModel() {
   for (const name of listDirs(PLUGINS_DIR)) {
     const dir = join(PLUGINS_DIR, name);
     const manifestPath = join(dir, ".claude-plugin", "plugin.json");
+    const codexManifestPath = join(dir, ".codex-plugin", "plugin.json");
     const manifest = existsSync(manifestPath) ? readJSON(manifestPath) : null;
+    const codexManifest = existsSync(codexManifestPath) ? readJSON(codexManifestPath) : null;
     const skills = [];
     for (const slug of listDirs(join(dir, "skills"))) {
       const skillMd = join(dir, "skills", slug, "SKILL.md");
@@ -102,7 +116,7 @@ function loadModel() {
         skillSlugs.add(slug);
       }
     }
-    plugins.push({ name, dir, manifestPath, manifest, skills });
+    plugins.push({ name, dir, manifestPath, manifest, codexManifestPath, codexManifest, skills });
   }
   return { marketplace, mpByName, plugins, skillSlugs };
 }
@@ -153,26 +167,72 @@ checks.frontmatter = (m) => {
     if (data.name && data.name !== s.slug)
       warnings.push(`${rel(s.path)}: frontmatter name "${data.name}" != dir "${s.slug}"`);
     for (const k of keys)
-      if (FORBIDDEN_FM_KEYS.has(k))
-        failures.push(`${rel(s.path)}: forbidden frontmatter key '${k}' (breaks Codex parity)`);
+      if (!PORTABLE_SKILL_FM_KEYS.has(k))
+        failures.push(`${rel(s.path)}: non-portable frontmatter key '${k}' (Codex skill frontmatter should stay portable)`);
   }
   return { failures, warnings };
 };
 
-// Codex parity: flag Claude-Code-only tool names hard-coded in skill bodies
+// Codex parity: flag Claude-Code-only terms across the plugin surface, not just SKILL.md bodies.
 checks["codex-parity"] = (m) => {
   const failures = [], warnings = [];
-  // Unambiguous Claude-Code-only tool names. `Task tool` is intentionally
-  // omitted: skills correctly say "dispatch a subagent (in Claude Code, the
-  // Task tool; in <other>, …)", which is the harness-neutral phrasing we want.
-  const patterns = [/\bTodoWrite\b/, /\bTaskCreate\b/, /\bTaskUpdate\b/];
-  for (const p of m.plugins) for (const s of p.skills) {
-    const { body } = parseFrontmatter(readFileSync(s.path, "utf8"));
-    body.split("\n").forEach((line, i) => {
-      for (const re of patterns)
+  const hardPatterns = [/\bTodoWrite\b/, /\bTaskCreate\b/, /\bTaskUpdate\b/];
+  const softPatterns = [
+    { re: /\bTask tool\b/, note: "mention Codex/fresh-agent fallback when naming Claude Code's Task tool" },
+    { re: /\bmcp__[A-Za-z0-9_]+\b/, note: "keep MCP tool names in adapter/fallback prose, never as a required path" },
+  ];
+  const files = m.plugins.flatMap((p) =>
+    walkFiles(p.dir, (f) => /\.md$/.test(f))
+  );
+  for (const file of files) {
+    const text = readFileSync(file, "utf8");
+    text.split("\n").forEach((line, i) => {
+      for (const re of hardPatterns)
         if (re.test(line))
-          warnings.push(`${rel(s.path)}:${i + 1}: harness-specific term — ${line.trim().slice(0, 70)}`);
+          failures.push(`${rel(file)}:${i + 1}: Claude-Code-only tool name — ${line.trim().slice(0, 90)}`);
+      for (const { re, note } of softPatterns) {
+        if (!re.test(line)) continue;
+        const hasFallback =
+          /Codex|harness|fallback|adapter|unavailable|optional|if .*available|when .*available/i.test(line);
+        if (!hasFallback)
+          warnings.push(`${rel(file)}:${i + 1}: harness-specific surface (${note}) — ${line.trim().slice(0, 90)}`);
+      }
     });
+  }
+  return { failures, warnings };
+};
+
+checks["codex-manifests"] = (m) => {
+  const failures = [], warnings = [];
+  const codexMarketplacePath = join(ROOT, ".agents", "plugins", "marketplace.json");
+  if (!existsSync(codexMarketplacePath)) {
+    failures.push(".agents/plugins/marketplace.json missing (Codex marketplace)");
+  } else {
+    const codexMarketplace = readJSON(codexMarketplacePath);
+    const entries = new Map((codexMarketplace.plugins ?? []).map((p) => [p.name, p]));
+    for (const p of m.plugins) {
+      if (p.name === "pro-starter") continue; // Claude dependency aggregator; Codex installs concrete plugins.
+      const entry = entries.get(p.name);
+      if (!entry) failures.push(`${p.name}: missing from .agents/plugins/marketplace.json`);
+      else if (entry.source?.path !== `./plugins/${p.name}`)
+        failures.push(`${p.name}: Codex marketplace path should be ./plugins/${p.name}`);
+    }
+  }
+
+  for (const p of m.plugins) {
+    if (p.name === "pro-starter") continue;
+    if (!p.codexManifest) {
+      failures.push(`${p.name}: missing .codex-plugin/plugin.json`);
+      continue;
+    }
+    if (p.codexManifest.name !== p.manifest?.name)
+      failures.push(`${p.name}: Codex manifest name differs from Claude manifest`);
+    if (p.codexManifest.version !== p.manifest?.version)
+      failures.push(`${p.name}: Codex manifest version ${p.codexManifest.version} differs from Claude manifest ${p.manifest?.version}`);
+    if (!p.codexManifest.skills && p.skills.length)
+      failures.push(`${p.name}: Codex manifest missing skills path`);
+    if (p.codexManifest.skills && p.codexManifest.skills !== "./skills/")
+      warnings.push(`${p.name}: Codex manifest skills path is ${p.codexManifest.skills}, expected ./skills/`);
   }
   return { failures, warnings };
 };
@@ -238,7 +298,7 @@ checks.router = (m) => {
   // inverse drift: shipped non-gstack skills that the router never mentions
   for (const p of m.plugins) {
     // skip plugins the router references by family/abbreviation, not exact slug
-    if (["pro-gstack", "pro-mieruka", "pro-starter", "pro-nextjs",
+    if (["pro-gstack", "pro-starter", "pro-nextjs",
          "pro-data", "pro-design", "pro-spdd", "pro-research"].includes(p.name)) continue;
     for (const s of p.skills) {
       if (s.slug === "using-pro-dev") continue;

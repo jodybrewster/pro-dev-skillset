@@ -16,24 +16,25 @@ Parse the action from `$ARGUMENTS` (default `check`).
 
 ## 1. `check` (default)
 
-- Look for the upstream `lavish` skill at `~/.claude/skills/lavish/` (user scope — applies to every project) and `.claude/skills/lavish/` (project scope). Report which scope(s) have it, if any.
-- Note that the **CLI always works** without any install via `npx -y lavish-axi` — the upstream skill only adds the richer artifact playbooks.
+- Check specifically for the required project-local skill file: `.claude/skills/lavish/SKILL.md`.
+- Also report whether a user-scope copy exists at `~/.claude/skills/lavish/SKILL.md`, but do not treat user scope as satisfying the project-local setup check.
+- Note that the **CLI can run** via `npx -y lavish-axi`, but substantive plan review requires the project-local upstream `lavish` skill so the richer artifact playbooks are available inside this project.
 - Remind the user that the marketplace plugins update separately via `claude plugin update` (that refreshes this `pro-pdd` bridge; `/lavish-engine` manages only the external engine).
 - Do **not** change anything on `check`.
 
 ## 2. `install`
 
-- Run **`npx skills add kunchenguid/lavish-axi --skill lavish`**.
-- Default to **project scope**; pass `-g` to install at user scope (every project) if the user asks for global.
-- Re-check and report what landed and where.
+- Run **`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish`**.
+- Run it from the project root and default to **project scope**; pass `-g` only if the user explicitly asks for global.
+- Re-check and require `.claude/skills/lavish/SKILL.md` to exist before reporting success.
 
 ## 3. `update`
 
-- Re-run **`npx skills add kunchenguid/lavish-axi --skill lavish`** to pull the latest upstream (the installer overwrites with the current version).
+- Re-run **`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish`** to pull the latest upstream (the installer overwrites with the current version).
 - Then run **`claude plugin update`** to bring the pro-dev marketplace plugins (including `pro-pdd`) current.
-- Re-check and report before → after.
+- Re-check and require `.claude/skills/lavish/SKILL.md` to exist before reporting success.
 
 ## Notes
 
-- This command manages the **engine**, not the bridge. The `lavish` skill (in this plugin) is the thin router — it catches artifact-review intent and drives `npx -y lavish-axi` (open → poll → end).
+- This command manages the **project-local upstream skill and engine**, not the bridge. The `lavish` skill (in this plugin) is the thin router — it catches artifact-review intent and drives the project-local upstream playbooks plus `npx -y lavish-axi` (open → poll → end).
 - Nothing about `lavish-axi` is committed to this marketplace; treat it as an external dependency with its own release cadence.

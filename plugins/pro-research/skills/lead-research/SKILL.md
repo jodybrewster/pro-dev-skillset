@@ -11,10 +11,6 @@ description: >-
   "build a lead profile," "score these accounts against our ICP," "who should we target,"
   "find buying signals for X," "deep research on <topic>," "qualify this prospect." Prefer
   this over ad-hoc web search whenever the answer must be cited, scored, or reproducible.
-metadata:
-  author: pro-dev-skillset
-  version: "0.1.0"
-  category: research
 ---
 
 <objective>

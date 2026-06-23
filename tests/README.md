@@ -1,8 +1,9 @@
 # tests/ — marketplace test + eval harness
 
 Zero-dependency checks for `pro-dev-skillset`. The marketplace ships no runtime
-code, so these validate the **content contract**: manifests, frontmatter, the
-version-bump law, cross-skill references, and the `using-pro-dev` router.
+code, so these validate the **content contract**: Claude and Codex manifests,
+frontmatter, the version-bump law, cross-skill references, and the
+`using-pro-dev` router.
 
 Everything runs on plain Node ≥ 18 — no `npm install`, no toolchain.
 
@@ -23,8 +24,9 @@ gate CI runs (`.github/workflows/validate.yml`).
 | Check | What it asserts | Fails on |
 |---|---|---|
 | `versions` | `plugin.json` version == its `marketplace.json` entry; intra-marketplace `^x.y.z` deps are satisfiable | the version-bump law being violated |
-| `frontmatter` | every `SKILL.md` has `name` + `description`; no `harness:`/`claude_code:` keys (Codex parity) | missing/forbidden frontmatter |
-| `codex-parity` | no hard-coded `TodoWrite`/`TaskCreate`/`TaskUpdate` in skill bodies | Claude-Code-only tool names (warn) |
+| `frontmatter` | every `SKILL.md` has `name` + `description` and only portable Agent Skills frontmatter keys | missing/non-portable frontmatter |
+| `codex-parity` | command/skill/sidecar prose avoids hard-required Claude-only tool names and flags harness-specific surfaces | Claude-Code-only tool names |
+| `codex-manifests` | concrete skill-bearing plugins have `.codex-plugin/plugin.json` aligned with their Claude manifests and the repo-local Codex marketplace | missing/stale Codex plugin metadata |
 | `references` | every `@sidecar.md` and relative `.md` link resolves on disk | dangling sidecar references |
 | `wikilinks` | every `[[slug]]` resolves to a real skill or a known bridge target | broken memory-style links |
 | `router` | every route target in `using-pro-dev`'s diagram is a real/planned/external/command slug; warns on shipped skills the router never mentions | router drift |

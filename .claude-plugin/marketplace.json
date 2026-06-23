@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.23.1"
+    "version": "1.24.6"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -17,7 +17,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like ui-ux-pro-max, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.11.2",
+      "version": "0.11.5",
       "category": "development",
       "strict": true
     },
@@ -25,7 +25,7 @@
       "name": "pro-execution",
       "source": "./plugins/pro-execution",
       "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "category": "development",
       "strict": true
     },
@@ -33,7 +33,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, validation handoff. Enforces doc freshness before git push and blocks plan saves outside the project directory.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "category": "development",
       "strict": true
     },
@@ -41,7 +41,7 @@
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
       "description": "Next.js skills: next-best-practices (auto-applied guardrails for file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font), next-upgrade (structured upgrade workflow with codemods), next-cache-components (PPR, use cache, cacheLife, cacheTag), shadcn (component installation, theming, composition patterns). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "category": "development",
       "strict": true
     },
@@ -49,7 +49,7 @@
       "name": "pro-design",
       "source": "./plugins/pro-design",
       "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, motion (Framer Motion implementation + discipline), typography scale, shadcn/ui composition, plus ui-ux-pro-max (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "category": "development",
       "strict": true
     },
@@ -57,7 +57,7 @@
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
       "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via the /qa-engine command (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/qa-engine), not as a hard plugin dependency.",
-      "version": "0.5.3",
+      "version": "0.5.4",
       "category": "development",
       "strict": true
     },
@@ -65,7 +65,7 @@
       "name": "pro-data",
       "source": "./plugins/pro-data",
       "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
-      "version": "0.4.3",
+      "version": "0.4.4",
       "category": "development",
       "strict": true
     },
@@ -73,15 +73,15 @@
       "name": "pro-spdd",
       "source": "./plugins/pro-spdd",
       "description": "Structured Prompt-Driven Development workflow: story decomposition, analysis, REASONS Canvas, generation, prompt update, sync, API test, code review, and reverse engineering. Includes openspdd-ts CLI (bin/openspdd.mjs) for installing templates into any AI editor. Depends on pro-execution for disciplined implementation workflows. Adapted from gszhangwei/open-spdd.",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-pdd",
       "source": "./plugins/pro-pdd",
-      "description": "Opt-in Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, and lavish — a bridge to the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
-      "version": "0.3.0",
+      "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
+      "version": "0.3.6",
       "category": "development",
       "strict": true
     },
@@ -89,7 +89,7 @@
       "name": "pro-gstack",
       "source": "./plugins/pro-gstack",
       "description": "Opt-in GStack workflow adapters: persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Adapted from garrytan/gstack.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "development",
       "strict": true
     },
@@ -97,15 +97,15 @@
       "name": "pro-research",
       "source": "./plugins/pro-research",
       "description": "Deep web research engine for any topic. /research <question> runs an adaptive intake interview, then decomposes into angles, fans out research subagents over a free-first retrieval ladder (Serper -> Jina/Firecrawl -> agent-browser), verifies citations, and synthesizes a cited report. /lead-research <company|domain|ICP> is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Domain memory + evidence persisted to .research/ to survive compaction. Mieruka integration: drives the Research tab via MCP tools (list_research_threads, get_research_thread, update_research_thread) when .mieruka/ is present; falls back to file-mirror.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, execution, quality, design, testing, data, nextjs, and research)",
-      "version": "1.7.1",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, testing, data, nextjs, and research)",
+      "version": "1.7.4",
       "category": "development",
       "strict": true
     }
