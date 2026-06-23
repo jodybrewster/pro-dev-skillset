@@ -11,7 +11,7 @@ This is a **bridge, not a vendored library.** The broad QA capability is the sta
 
 1. **Check whether `qa-skills` is installed.** Look for its skills at user scope (`~/.claude/skills/`) or project scope (`.claude/skills/`) — e.g. `qa-do`, `qa-start`, `playwright-automation`.
    - **If present:** defer to the installed suite. `qa-do` is its task router and `qa-start` sets QA up in a project — hand off to them; they own the routing within testing. Don't re-implement that here.
-   - **If absent:** tell the user the suite isn't installed, then run **`/qa-engine install`** (or directly: `npx skills add petrkindlmann/qa-skills <skills>`). Offer the focused native skills in the meantime: `vitest` (unit/component), `agent-browser` (interactive browser check), `storybook-interactions`.
+   - **If absent:** tell the user the suite isn't installed, then run **`/qa-engine install`** (or directly: `npx skills add petrkindlmann/qa-skills -y --agent claude-code --skill <skills>` — the `-y`/`--agent`/trailing `--skill` flags are required to install non-interactively into `.claude/skills/`; bare skill names trigger the interactive picker). Offer the focused native skills in the meantime: `vitest` (unit/component), `agent-browser` (interactive browser check), `storybook-interactions`.
 2. **Defer to `qa-skills` for the actual work.** Do not reimplement its skills or references in this repo — the point of the bridge is that the library updates independently.
 
 ## What stays native in `pro-testing`

@@ -21,7 +21,7 @@ Parse the action from `$ARGUMENTS` (default `check`).
 qa-do qa-start playwright-automation visual-testing api-testing contract-testing test-reliability test-strategy risk-based-testing test-planning qa-project-context
 ```
 
-The full library has 43 skills — browse with `npx skills` or at https://github.com/petrkindlmann/qa-skills. `vitest`, `agent-browser`, and `storybook-interactions` are **native** pro-testing skills, not installed here.
+The full library has 50 skills — browse with `npx skills` or at https://github.com/petrkindlmann/qa-skills. `vitest`, `agent-browser`, and `storybook-interactions` are **native** pro-testing skills, not installed here.
 
 ## 1. `check` (default)
 
@@ -31,13 +31,14 @@ The full library has 43 skills — browse with `npx skills` or at https://github
 
 ## 2. `install`
 
-- Run **`npx skills add petrkindlmann/qa-skills <curated subset>`** (or the specific skills from `$ARGUMENTS` if given).
-- `-g` installs at user scope (every project); omit for project scope. Default to project scope unless the user asks for global.
+- Run **`npx skills add petrkindlmann/qa-skills -y --agent claude-code --skill <curated subset>`** (or the specific skills from `$ARGUMENTS` if given).
+- Flag notes: `-y` skips the scope/confirm prompt; `--agent claude-code` copies into `.claude/skills/` (where Claude Code and `check` above both look); `--skill` must come **last** because it greedily consumes every name that follows it. Passing skill names as bare positional args instead drops you into the interactive 50-skill picker — the CLI reads bare args as agent names, not skills.
+- `-g` installs at user scope (every project); omit for project scope. Default to project scope unless the user asks for global. Put `-g` before `--skill`.
 - Re-check and report what landed and where.
 
 ## 3. `update`
 
-- Re-run **`npx skills add petrkindlmann/qa-skills <subset>`** to pull the latest (the skills installer overwrites with the current upstream).
+- Re-run **`npx skills add petrkindlmann/qa-skills -y --agent claude-code --skill <subset>`** to pull the latest (the skills installer overwrites with the current upstream).
 - Then run **`claude plugin update`** to bring the pro-dev marketplace plugins (including `pro-testing`) current.
 - Re-check and report before → after.
 
