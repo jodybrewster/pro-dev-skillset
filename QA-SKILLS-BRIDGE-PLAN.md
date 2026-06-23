@@ -9,7 +9,7 @@ sync chore: every upstream change means re-pull the tree, re-copy changed
 descriptions, and version-bump.
 
 This plan eliminates that by switching qa-skills from **vendor-and-adapt** to a
-**bridge**, mirroring the `ui-ux-pro-max → impeccable` bridge in `pro-design`
+**bridge**, mirroring the `impeccable-bridge → impeccable` bridge in `pro-design`
 (skill + `/design-engine` command). Instead of carrying the 43-skill tree, we
 point to the externally-installed qa-skills and provide a command to install/
 update it in place.

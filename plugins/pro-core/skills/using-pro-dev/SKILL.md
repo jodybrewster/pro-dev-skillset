@@ -27,8 +27,13 @@ Task arrives
   │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
   │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
-  │   ├ UI (full pass) ──────────────→ ui-ux-pro-max → impeccable engine (pro-design, bridge)
+  │   ├ UI (full pass) ──────────────→ impeccable-bridge → impeccable engine (pro-design, bridge)
   │   ├ UI (one facet) ──────────────→ frontend-ui-engineering + pro-design skills
+  │   ├ design doc (DESIGN.md) ──────→ stitch-skill (pro-design)
+  │   ├ UI polish (targeted) ─────────→ taste-skill (pro-design)
+  │   ├ video / programmatic render ──→ remotion (pro-motion)
+  │   ├ complex animation sequence ───→ hyperframes (pro-motion)
+  │   ├ marketing / hero animation ───→ gsap (pro-motion)
   │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
   │   ├ better context ──────────────→ context-engineering (pro-core)
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
@@ -50,7 +55,7 @@ Two branches in this router reference **planned plugins not yet built**: SECURIT
 
 Some entries are **bridges**, not vendored skills — thin routers that point to a heavier engine installed *outside* this marketplace. They only do work once that engine is present, so they ship an install/update command:
 
-- **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
+- **`impeccable-bridge` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 - **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
@@ -97,7 +102,9 @@ The pro-dev-specific rules are:
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, wt, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
-| Build | ui-ux-pro-max (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
+| Build | impeccable-bridge (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
+| Build | stitch-skill (DESIGN.md), taste-skill (targeted polish) | pro-design | Design documentation + visual polish pass |
+| Build | remotion (video render), hyperframes (complex animation), gsap (marketing animation) | pro-motion | Motion and video |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
 | Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/qa-engine`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |

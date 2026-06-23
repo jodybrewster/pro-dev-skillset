@@ -152,7 +152,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/lavish-engine`) | `pro-pdd` |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
-| **Build** | `ui-ux-pro-max`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
+| **Build** | `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/design-engine`), `frontend-ui-engineering`†, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition | `pro-design` |
 | **Build** | drizzle (orm + schema), prisma, nextauth | `pro-data` |
 | **Build** | `context-engineering`†, `doubt-driven-development`† | `pro-core` |
 | **Verify** | `qa-suite`◆ → `qa-do`/`qa-start` + playwright/visual/api/contract/strategy/risk/planning (bridged qa-skills, via `/qa-engine`), `agent-browser` (interactive), `vitest` (unit), `storybook-interactions` | `pro-testing` |
@@ -164,7 +164,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 | **Workflows** *(cross-cutting)* | GStack persona-driven planning/review/QA/ship/security/docs | `pro-gstack` *(opt-in)* |
 
-*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/lavish-engine`, `ui-ux-pro-max` → `impeccable` via `/design-engine`).
+*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/lavish-engine`, `impeccable-bridge` → `impeccable` via `/design-engine`).
 
 ### Plugins
 

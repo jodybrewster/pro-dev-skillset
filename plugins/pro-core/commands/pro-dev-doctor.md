@@ -36,7 +36,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 ## 4. Bridge engines and project-local skills
 
 - `lavish` → `lavish-axi` requires the upstream skill to be materialized in the project. Check `.claude/skills/lavish/SKILL.md`; if it is missing, mark the install **needs attention** and point the user at `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. A user-scope copy at `~/.claude/skills/lavish/SKILL.md` is useful but does not satisfy this project-local check.
-- `ui-ux-pro-max` → `impeccable` (manage with `/design-engine`) and `qa-suite` → `qa-skills` (manage with `/qa-engine`) route to engines installed *outside* this marketplace. Report whether each engine is present if its plugin is installed.
+- `impeccable-bridge` → `impeccable` (manage with `/design-engine`) and `qa-suite` → `qa-skills` (manage with `/qa-engine`) route to engines installed *outside* this marketplace. Report whether each engine is present if its plugin is installed.
 - Mieruka ships its own plugin (`/init-mieruka` from the mieruka npm package). Report it separately if the project uses it.
 
 ## Summary

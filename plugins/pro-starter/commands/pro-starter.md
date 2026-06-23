@@ -1,5 +1,5 @@
 ---
-description: "Set up or verify the full pro-dev stack in one step. Confirms the default-stack plugins are installed, then installs the external engines the bridges route to — lavish-axi (behind lavish), impeccable (behind ui-ux-pro-max), and qa-skills (behind qa-suite) — and points you at Mieruka. The umbrella over /lavish-engine, /design-engine, and /qa-engine. Usage: /pro-starter [check|install|engines|update]"
+description: "Set up or verify the full pro-dev stack in one step. Confirms the default-stack plugins are installed, then installs the external engines the bridges route to — lavish-axi (behind lavish), impeccable (behind impeccable-bridge), and qa-skills (behind qa-suite) — and points you at Mieruka. The umbrella over /lavish-engine, /design-engine, and /qa-engine. Usage: /pro-starter [check|install|engines|update]"
 argument-hint: "[check|install|engines|update]"
 allowed-tools:
   - "Bash(claude plugin list*)"
@@ -29,10 +29,10 @@ Parse the action from `$ARGUMENTS` (default `check`).
 | Bridge skill | Engine | Per-engine command |
 |---|---|---|
 | `lavish` (pro-pdd) | `lavish-axi` + project-local `lavish` skill | `/lavish-engine` |
-| `ui-ux-pro-max` (pro-design) | `impeccable` | `/design-engine` |
+| `impeccable-bridge` (pro-design) | `impeccable` | `/design-engine` |
 | `qa-suite` (pro-testing) | `qa-skills` (petrkindlmann/qa-skills) | `/qa-engine` |
 
-`lavish`, `ui-ux-pro-max`, and `qa-suite` ship with the stack already (they're
+`lavish`, `impeccable-bridge`, and `qa-suite` ship with the stack already (they're
 skills in pro-pdd / pro-design / pro-testing). What's missing after a plain
 `pro-starter` install is the project-local upstream skill or engines below
 them — that's what `install`/`engines` add.
@@ -41,7 +41,7 @@ them — that's what `install`/`engines` add.
 
 Report, without changing anything:
 - **Stack coverage** — run `claude plugin list` and confirm the default stack
-  (`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`,
+  (`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`,
   `pro-data`, `pro-testing`) is installed and enabled. (`/pro-dev-doctor` does the deeper
   version-and-routing check.)
 - **lavish** — require `.claude/skills/lavish/SKILL.md` to exist. A user-scope

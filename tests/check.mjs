@@ -315,7 +315,7 @@ checks.bridges = (m) => {
   for (const p of m.plugins)
     for (const f of (isDir(join(p.dir, "commands")) ? readdirSync(join(p.dir, "commands")) : []))
       if (f.endsWith(".md")) commandFiles.add(f.replace(/\.md$/, ""));
-  const bridges = ["qa-suite", "ui-ux-pro-max", "lavish"];
+  const bridges = ["qa-suite", "impeccable-bridge", "lavish"];
   for (const p of m.plugins) for (const s of p.skills) {
     if (!bridges.includes(s.slug)) continue;
     const body = readFileSync(s.path, "utf8");

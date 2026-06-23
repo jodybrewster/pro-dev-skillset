@@ -30,7 +30,7 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `references` | every `@sidecar.md` and relative `.md` link resolves on disk | dangling sidecar references |
 | `wikilinks` | every `[[slug]]` resolves to a real skill or a known bridge target | broken memory-style links |
 | `router` | every route target in `using-pro-dev`'s diagram is a real/planned/external/command slug; warns on shipped skills the router never mentions | router drift |
-| `bridges` | bridge skills (`qa-suite`, `ui-ux-pro-max`) name an install command that exists | a bridge pointing at a missing command |
+| `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`) name an install command that exists | a bridge pointing at a missing command |
 
 Roadmap skills the router intentionally names (pro-security, pro-ship, the
 Phase 4–7 build folds) live in the `PLANNED` allowlist at the top of
