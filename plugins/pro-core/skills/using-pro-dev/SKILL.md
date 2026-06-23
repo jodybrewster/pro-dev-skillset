@@ -17,12 +17,13 @@ Task arrives
   ├ Rough concept, need variants? ───→ idea-refine (pro-pdd)
   ├ Ideate + design behind a gate? ──→ brainstorming (pro-pdd)
   ├ PLAN:
-  │   ├ quick/solo, think it through → pure planning mode (Claude Code / Codex plan mode — no skill)
-  │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd)
+  │   ├ quick/solo, think it through → planning mode, then lavish for review when the plan is substantive
+  │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd), then lavish for plan review
   │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /lavish-engine install)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
+  │   ├ parallel worktrees / agents ─→ wt / using-git-worktrees (pro-execution)
   │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
   │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
@@ -43,7 +44,7 @@ Task arrives
   └ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
 ```
 
-Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid stop, not a skip — for a quick or solo task, thinking it through in Claude Code / Codex plan mode without invoking any skill is complete, legitimate planning.
+Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
 
 ## Bridges
 
@@ -52,7 +53,7 @@ Some entries are **bridges**, not vendored skills — thin routers that point to
 - **`ui-ux-pro-max` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
-- **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --skill lavish`).
+- **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -61,7 +62,7 @@ When a bridge fires and its engine is missing, run the engine's install command 
 **Solo / default path:**
 1. interview-me → clarify goals and constraints
 2. idea-refine → surface viable approaches
-3. pure planning mode OR writing-plans → commit to an approach
+3. planning mode OR writing-plans → draft the approach, then lavish → review/approve the substantive plan
 4. test-driven-development / subagent-driven-development → build
 5. qa-do / run the suite → verify
 6. requesting-code-review / code-simplification → review
@@ -82,7 +83,7 @@ The pro-dev-specific rules are:
 
 **(a) Branch to open-SPDD when the work is client-facing or needs a shared written artifact trail before any code is written.** If the audience is a client, a stakeholder, or a team that needs written alignment, route through the SPDD branch. For solo or greenfield work with no external audience, stay on the default path.
 
-**(b) Pure planning mode is a valid stop, not a skip.** A quick task thought through in Claude Code / Codex plan mode — using the harness's built-in planning capability, with no skill invoked — is complete planning. Do not treat the absence of a `writing-plans` invocation as skipped planning.
+**(b) Lavish is the default review surface for substantive plans.** Claude Code / Codex plan mode may be used to think and draft, and a tiny plan can stay in plain text. But when the output is a real implementation plan, milestone plan, client plan, task breakdown, or anything the user is expected to approve before execution, invoke `lavish` and render it as an annotatable HTML artifact. If the harness requires a built-in plan-mode response such as `<proposed_plan>`, keep that response concise and point to the Lavish artifact as the review surface. If the engine is unavailable or the session cannot run it, say so explicitly and fall back to plain text instead of silently skipping Lavish.
 
 **(c) The Verify phase delegates to the `qa-suite` bridge → `qa-do` / `qa-start`.** `qa-suite` (pro-testing) routes to the bridged qa-skills library; once installed (`/qa-engine install`), `qa-do` owns the routing logic within testing. Do not re-implement that routing here — hand off and let it drive. If the suite is missing, run `/qa-engine install` first.
 
@@ -92,9 +93,9 @@ The pro-dev-specific rules are:
 |---|---|---|---|
 | Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
 | Define | interview-me, idea-refine, brainstorming | pro-pdd | Clarify → variant → gated ideation |
-| Plan | pure planning mode (harness — no skill), writing-plans, lavish (bridge → lavish-axi, via `/lavish-engine`) | pro-pdd | Think it through, write a TDD plan, or render output as annotatable HTML artifacts |
+| Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/lavish-engine`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
-| Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
+| Build | test-driven-development, subagent-driven-development, wt, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
 | Build | ui-ux-pro-max (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |

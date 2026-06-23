@@ -1,0 +1,137 @@
+{
+  "name": "pro-dev-skillset",
+  "plugins": [
+    {
+      "name": "pro-core",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-core"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-execution",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-execution"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-quality",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-quality"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-nextjs",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-nextjs"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-design",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-design"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-testing",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-testing"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-data",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-data"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-spdd",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-spdd"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-pdd",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-pdd"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-gstack",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-gstack"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "pro-research",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-research"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

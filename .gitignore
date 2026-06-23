@@ -1,6 +1,10 @@
 .DS_Store
 node_modules/
 *.log
+__pycache__/
+*.pyc
+.next/
+coverage/
 .env
 .env.*
 !.env.example

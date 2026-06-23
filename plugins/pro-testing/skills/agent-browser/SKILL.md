@@ -15,16 +15,13 @@ description: >-
   Not for: writing a durable typed E2E test suite — use `playwright-automation`.
   Related: playwright-automation, visual-testing (bridged qa-skills — install via the
   `qa-suite` skill / `/qa-engine`).
-license: Apache-2.0
-metadata:
-  author: vercel-labs
-  version: "1.0"
-  category: automation
 ---
 
 <objective>
 How an expert agent drives a real browser with agent-browser to interact with and verify a live web app — fast, token-efficient, and without flaky waits.
 </objective>
+
+Source: adapted from `vercel-labs/agent-browser` under Apache-2.0.
 
 ## Quick Start
 

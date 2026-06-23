@@ -2,7 +2,7 @@
 """PreToolUse Bash hook — enforce doc freshness before git push.
 
 When the command is a git push, checks that any existing key documentation
-files (README.md, CLAUDE.md, ARCHITECTURE.md, PRODUCT.md, DESIGN.md) were
+files (README.md, AGENTS.md, CLAUDE.md, ARCHITECTURE.md, PRODUCT.md, DESIGN.md) were
 updated alongside code changes. Blocks push if stale docs are detected.
 
 Exits 2 (BLOCK) with a remediation message; exits 0 otherwise.
@@ -15,7 +15,7 @@ import re
 import subprocess
 import sys
 
-KEY_DOCS = ["README.md", "CLAUDE.md", "ARCHITECTURE.md", "PRODUCT.md", "DESIGN.md"]
+KEY_DOCS = ["README.md", "AGENTS.md", "CLAUDE.md", "ARCHITECTURE.md", "PRODUCT.md", "DESIGN.md"]
 PUSH_RE = re.compile(r"\bgit\s+push\b")
 
 

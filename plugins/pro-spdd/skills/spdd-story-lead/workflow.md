@@ -333,8 +333,8 @@ Input can be provided in two ways:
       Then call:
 
       ```
-      mcp__mieruka__spdd_write_story({ story_key, title, file_path, body_md })
-      mcp__mieruka__spdd_set_story_status({ story_key, status: "proposed" })
+      Claude Code adapter: mcp__mieruka__spdd_write_story({ story_key, title, file_path, body_md })
+      Claude Code adapter: mcp__mieruka__spdd_set_story_status({ story_key, status: "proposed" })
       ```
 
       The story now appears in the Mieruka `/spdd` UI as `proposed` and is visible to the client.

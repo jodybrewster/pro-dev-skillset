@@ -1,0 +1,6 @@
+{
+  "name": "pro-core",
+  "version": "0.11.5",
+  "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like ui-ux-pro-max, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
+  "skills": "./skills/"
+}

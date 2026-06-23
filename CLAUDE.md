@@ -1,6 +1,6 @@
 # CLAUDE.md — pro-dev-skillset
 
-Working notes for Claude Code (and Codex) when editing this marketplace repo itself. Not user-facing — see [README.md](./README.md) for that.
+Working notes for Claude Code and Codex when editing this marketplace repo itself. `AGENTS.md` mirrors this file for Codex's project-instruction discovery. Not user-facing — see [README.md](./README.md) for that.
 
 ## What this repo is
 
@@ -52,9 +52,10 @@ When dispatching, give each subagent **self-contained context**: it can't see yo
 
 ## The version-bump law (non-negotiable)
 
-The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. Any content edit without a version bump silently serves stale content on `claude plugin update`. So:
+The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. Codex plugin installs also read the plugin version from `.codex-plugin/plugin.json`. Any content edit without a version bump silently serves stale content on update. So:
 
 - Edit `plugins/<plugin>/.claude-plugin/plugin.json` → bump `version`
+- Edit `plugins/<plugin>/.codex-plugin/plugin.json` → keep `version` aligned with the Claude plugin manifest
 - Edit `.claude-plugin/marketplace.json` → bump matching entry + top-level `metadata.version`
 - If a dep crosses a minor (e.g. `pro-core 0.3 → 0.4`), every dependent plugin's `^0.3.0` constraint must widen to `^0.4.0` and re-tag.
 
@@ -62,17 +63,19 @@ Full procedure: [RELEASING.md](./RELEASING.md).
 
 ## Codex parity is a hard requirement
 
-The README claims forked SKILL.md files load under OpenAI Codex via the Agent Skills standard. When editing skill bodies, scan for:
+The README claims forked SKILL.md files load under OpenAI Codex via the Agent Skills standard. When editing skill bodies, sidecars, and command prose, scan for:
 
-- Hard-coded Claude-Code-only tool names (`Task`, `TodoWrite`) → rewrite as harness-neutral ("dispatch a subagent", "update your task tracker").
+- Hard-coded Claude-Code-only tool names (`Task`, `TodoWrite`) → rewrite as harness-neutral ("dispatch a subagent", "update your task tracker") or explicitly include the Codex/fresh-agent fallback.
 - Missing sidecars referenced by `@filename.md` or "see `filename.md`" — every reference must exist in the same directory.
-- Non-standard frontmatter keys (`harness:`, `claude_code:`) — Agent Skills only guarantees `name`, `description`, optional `tags`/`tools`/`model`.
+- Non-standard skill frontmatter keys — Agent Skills only guarantees `name`, `description`, optional `tags`/`tools`/`model`.
+- Missing or stale `.codex-plugin/plugin.json` files — every concrete skill-bearing plugin needs one, with `skills: "./skills/"`.
 
 ## Plugin layout cheatsheet
 
 ```
 plugins/<name>/
   .claude-plugin/plugin.json     # name, version, description, dependencies
+  .codex-plugin/plugin.json      # Codex plugin manifest, version-aligned
   skills/<slug>/SKILL.md         # frontmatter: name, description; body is the skill
   skills/<slug>/*.md             # optional sidecars referenced from SKILL.md
   commands/<name>.md             # slash commands (frontmatter: description, argument-hint)

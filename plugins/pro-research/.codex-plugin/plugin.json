@@ -1,0 +1,6 @@
+{
+  "name": "pro-research",
+  "version": "0.3.1",
+  "description": "Deep web research engine for any topic. /research <question> decomposes into angles, fans out research subagents over a free-first retrieval ladder (Serper -> Jina/Firecrawl -> agent-browser), verifies citations, and synthesizes a cited report. /lead-research <company|domain|ICP> is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Evidence persisted to .research/ to survive compaction. Mieruka integration: when .mieruka/ is present the skill drives the Research tab via MCP tools (list_research_threads, get_research_thread, update_research_thread) and falls back to file-mirror when the MCP server is unavailable.",
+  "skills": "./skills/"
+}

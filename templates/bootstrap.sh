@@ -14,10 +14,11 @@
 #      --with-companions is passed (installs vercel + figma + playwright from
 #      claude-plugins-official explicitly)
 #   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
-#      default stack: pro-core, pro-execution, pro-quality, pro-nextjs,
-#      pro-design, pro-testing, pro-data, and pro-mieruka)
-#   4. Installs the bridge engines by default — impeccable (behind ui-ux-pro-max)
-#      and qa-skills (behind qa-suite). These are external npx packages, not
+#      default stack: pro-core, pro-pdd, pro-execution, pro-quality,
+#      pro-nextjs, pro-design, pro-testing, pro-data, and pro-research)
+#   4. Installs the bridge engines / project-local skills by default — lavish
+#      (behind plan review), impeccable (behind ui-ux-pro-max), and qa-skills
+#      (behind qa-suite). These are external npx packages / skills, not
 #      marketplace plugins, so they install here. (Mieruka is project-specific;
 #      run /init-mieruka in the project that needs it.)
 #
@@ -58,6 +59,40 @@ fetch() {
   gh api "repos/jodybrewster/pro-dev-skillset/contents/$1" --jq '.content' | base64 -d
 }
 
+install_lavish_project_command() {
+  mkdir -p .claude/commands
+  cat > .claude/commands/lavish.md <<'LAVISH_COMMAND'
+---
+description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /lavish <what to render>"
+argument-hint: "<what the artifact should show>"
+allowed-tools:
+  - "Bash(test -f .claude/skills/lavish/SKILL.md*)"
+  - "Bash(mkdir -p .lavish*)"
+  - "Bash(npx -y lavish-axi*)"
+  - "Bash(npx skills add kunchenguid/lavish-axi*)"
+---
+
+Use Lavish as the review surface for `$ARGUMENTS`.
+
+First verify the project-local upstream skill exists at `.claude/skills/lavish/SKILL.md`. If it is missing, install it from the project root with:
+
+```bash
+npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish
+```
+
+Then follow `.claude/skills/lavish/SKILL.md` exactly:
+
+1. Read every relevant Lavish playbook before writing HTML, starting with `npx -y lavish-axi playbook plan` for plans.
+2. Create the artifact under `.lavish/` unless the user specified another location.
+3. Open or resume the review session with `npx -y lavish-axi <html-file>`.
+4. Poll for feedback with `npx -y lavish-axi poll <html-file>` and fix any reported layout warnings before asking the user to review.
+5. End the session with `npx -y lavish-axi end <html-file>` when review is finished.
+
+Lavish is the default review surface for substantive implementation plans, milestone plans, client-facing plans, decision matrices, diagrams, dense tables, code diffs, and reports. Keep short answers in plain text.
+LAVISH_COMMAND
+  echo "  • /lavish command installed at .claude/commands/lavish.md"
+}
+
 # 1. Drop the project-settings template
 mkdir -p .claude
 if [ -f .claude/settings.json ]; then
@@ -79,14 +114,22 @@ fi
 echo "Installing pro-starter@pro-dev-skillset --scope ${SCOPE}..."
 claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
 
-# 4. Install the bridge engines (default ON; --no-engines to skip). These are
-#    external npx packages the bridge skills route to, not marketplace plugins.
+# 4. Install the bridge engines / project-local skills (default ON; --no-engines
+#    to skip). These are external npx packages / skills the bridge skills route
+#    to, not marketplace plugins.
 #    Failures here are non-fatal — the stack is already installed, and the
 #    per-engine commands (/design-engine, /qa-engine) can finish the job later.
 if [ "$WITH_ENGINES" -eq 1 ]; then
   echo
-  echo "Installing bridge engines (impeccable, qa-skills)..."
+  echo "Installing bridge engines / project-local skills (lavish, impeccable, qa-skills)..."
   if command -v npx >/dev/null 2>&1; then
+    echo "  • lavish     (plan-review engine + project skill)"
+    npx --yes skills add kunchenguid/lavish-axi --skill lavish \
+      || echo "    ! lavish install failed — run /lavish-engine install later"
+    npx --yes skills add kunchenguid/lavish-axi --agent claude-code --skill lavish \
+      || echo "    ! lavish Claude Code skill install failed — run /lavish-engine install later"
+    install_lavish_project_command
+
     echo "  • impeccable  (ui-ux-pro-max engine)"
     npx --yes impeccable skills install \
       || echo "    ! impeccable install failed — run /design-engine install later"
@@ -103,6 +146,7 @@ if [ "$WITH_ENGINES" -eq 1 ]; then
       || echo "    ! qa-skills install failed — run /qa-engine install later"
   else
     echo "  ! npx not found — skipping engines. Install Node, then run /pro-starter engines."
+    install_lavish_project_command
   fi
 fi
 
