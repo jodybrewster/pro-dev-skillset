@@ -95,8 +95,11 @@ if [ "$WITH_ENGINES" -eq 1 ]; then
     QA_SUBSET="qa-do qa-start playwright-automation visual-testing api-testing contract-testing test-reliability test-strategy risk-based-testing test-planning qa-project-context"
     QA_SCOPE_FLAG=""
     [ "$SCOPE" = "user" ] && QA_SCOPE_FLAG="-g"
+    # -y skips the scope/confirm prompt; --agent claude-code copies into
+    # .claude/skills (where Claude Code and /qa-engine check both look);
+    # --skill must come LAST since it greedily consumes the names that follow.
     # shellcheck disable=SC2086
-    npx --yes skills add petrkindlmann/qa-skills $QA_SCOPE_FLAG $QA_SUBSET \
+    npx --yes skills add petrkindlmann/qa-skills -y $QA_SCOPE_FLAG --agent claude-code --skill $QA_SUBSET \
       || echo "    ! qa-skills install failed — run /qa-engine install later"
   else
     echo "  ! npx not found — skipping engines. Install Node, then run /pro-starter engines."
