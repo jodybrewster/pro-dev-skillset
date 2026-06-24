@@ -1,0 +1,6 @@
+{
+  "name": "pro-motion",
+  "version": "0.1.0",
+  "description": "Motion and video skills: remotion (React-based programmatic video rendering), hyperframes (advanced Framer Motion orchestration — variants, useAnimate, scroll-linked, layoutId), and gsap (GSAP timeline + ScrollTrigger animations for marketing and hero surfaces).",
+  "skills": "./skills/"
+}

@@ -1,5 +1,5 @@
 ---
-description: "Check, install, or update the impeccable UI/UX engine that the ui-ux-pro-max bridge routes to — reports installed version and scope, and keeps the pro-design stack current. Usage: /design-engine [check|install|update]"
+description: "Check, install, or update the impeccable UI/UX engine that the impeccable-bridge skill routes to — reports installed version and scope, and keeps the pro-design stack current. Usage: /design-engine [check|install|update]"
 argument-hint: "[check|install|update]"
 allowed-tools:
   - "Bash(npx impeccable skills*)"
@@ -9,7 +9,7 @@ allowed-tools:
   - "Bash(claude plugin update*)"
 ---
 
-Ensure the design engine behind the `ui-ux-pro-max` bridge — the standalone `impeccable` skill — is installed and current. `impeccable` is **not vendored** into this marketplace; it's an external package (homepage https://impeccable.style), so this command manages it in place rather than from the repo.
+Ensure the design engine behind the `impeccable-bridge` bridge — the standalone `impeccable` skill — is installed and current. `impeccable` is **not vendored** into this marketplace; it's an external package (homepage https://impeccable.style), so this command manages it in place rather than from the repo.
 
 Parse the action from `$ARGUMENTS` (default `check`).
 
@@ -43,5 +43,5 @@ Never install the shared build over a newer harness build — that downgrades.
 
 ## Notes
 
-- This command manages the **engine**, not the bridge. The `ui-ux-pro-max` skill (in this plugin) is the thin router — it catches whole-surface design intent and hands off to whatever `impeccable` is installed here.
+- This command manages the **engine**, not the bridge. The `impeccable-bridge` skill (in this plugin) is the thin router — it catches whole-surface design intent and hands off to whatever `impeccable` is installed here.
 - Nothing about `impeccable` is committed to this marketplace; treat it as an external dependency with its own release cadence.

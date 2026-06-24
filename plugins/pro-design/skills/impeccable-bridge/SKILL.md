@@ -1,9 +1,9 @@
 ---
-name: ui-ux-pro-max
+name: impeccable-bridge
 description: The comprehensive, end-to-end UI/UX design pass for production-grade frontend craft — use when the work is "make this genuinely excellent / bolder / more delightful / quieter", a full redesign, a deep design critique or audit, or live in-browser visual iteration, rather than one focused facet. This is a BRIDGE to the standalone `impeccable` skill (which does the heavy lifting); pro-design's focused skills (design-token, accessibility-audit, motion-system, typography-scale, shadcn-ui-composition) cover single facets, this routes to the full engine. Not for backend-only or non-UI tasks.
 ---
 
-# UI/UX Pro Max — bridge to `impeccable`
+# impeccable-bridge
 
 This is a **bridge, not a vendored skill.** The full UI/UX engine is [`impeccable`](https://www.npmjs.com/package/impeccable) — a production-grade frontend-design skill (Apache-2.0, based on Anthropic's frontend-design skill) that ships ~36 reference files, ~30 scripts, a live-browser variant server, and an `npx impeccable` CLI. That tree is **deliberately not copied into this marketplace.** pro-design's own skills handle specific facets; when the task wants the comprehensive, opinionated, end-to-end pass, hand off to `impeccable`.
 
