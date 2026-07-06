@@ -8,6 +8,7 @@
 #   - vercel    : Next.js / Vercel deployment workflows  (paired with pro-nextjs)
 #   - figma     : Figma asset extraction + design lookup (paired with pro-nextjs)
 #   - playwright: browser E2E testing                    (paired with pro-quality/pro-testing)
+#   - worktrunk : parallel worktree management           (paired with pro-execution)
 #
 # Usage:
 #   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-companions.sh --jq .content | base64 -d)
@@ -34,6 +35,16 @@ for plugin in vercel figma playwright; do
   echo "Installing ${plugin}@claude-plugins-official at ${SCOPE} scope..."
   claude plugin install "${plugin}@claude-plugins-official" --scope "${SCOPE}"
 done
+
+# worktrunk requires the worktrunk marketplace to already be registered.
+# If it is not, register it before running this script.
+if claude plugin marketplace list 2>/dev/null | grep -q worktrunk; then
+  echo "Installing worktrunk@worktrunk at ${SCOPE} scope..."
+  claude plugin install "worktrunk@worktrunk" --scope "${SCOPE}"
+else
+  echo "WARNING: worktrunk marketplace not registered — skipping worktrunk install."
+  echo "  Register it first, then re-run this script to pick it up."
+fi
 
 echo
 echo "Done. Run 'claude plugin list' to verify."

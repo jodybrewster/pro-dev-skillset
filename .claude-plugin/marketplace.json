@@ -7,10 +7,11 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.25.0"
+    "version": "1.26.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
-    "claude-plugins-official"
+    "claude-plugins-official",
+    "worktrunk"
   ],
   "plugins": [
     {
@@ -24,8 +25,8 @@
     {
       "name": "pro-execution",
       "source": "./plugins/pro-execution",
-      "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
-      "version": "0.2.1",
+      "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety. Also installs worktrunk from the worktrunk marketplace via install-companions.sh.",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
