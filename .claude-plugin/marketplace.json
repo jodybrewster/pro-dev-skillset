@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.29.0"
+    "version": "1.30.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.11.7",
+      "version": "0.11.8",
       "category": "development",
       "strict": true
     },
@@ -81,8 +81,8 @@
     {
       "name": "pro-pdd",
       "source": "./plugins/pro-pdd",
-      "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
-      "version": "0.3.6",
+      "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, adhd — parallel divergent ideation under cognitive frames via /adhd (forked from UditAkhourii/adhd), and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
+      "version": "0.4.0",
       "category": "development",
       "strict": true
     },
