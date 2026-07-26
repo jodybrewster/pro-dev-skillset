@@ -1,6 +1,6 @@
 ---
-description: "Manage parallel Git worktrees and AI agents with Worktrunk. Usage: /worktrunk list | /worktrunk spawn <n> \"<prompt>\" | /worktrunk done <feature-name> | /worktrunk <n>"
-argument-hint: "list | spawn <n> \"<prompt>\" | done <feature-name> | <n>"
+description: "Manage parallel Git worktrees and AI agents with Worktrunk. Usage: /worktrunk list | /worktrunk spawn <branch-name> | /worktrunk spawn <n> \"<prompt>\" | /worktrunk done <feature-name> | /worktrunk <n>"
+argument-hint: "list | spawn <branch-name> | spawn <n> \"<prompt>\" | done <feature-name> | <n>"
 ---
 
 Manage Git worktrees and tmux-backed AI agent sessions via the `wt` CLI (Worktrunk). This workflow needs shell access to `wt`, `git`, and `tmux`. Parse the subcommand from `$ARGUMENTS`.
@@ -15,6 +15,16 @@ Show all active worktrees with their branches and tmux session status:
 wt list
 ```
 
+### `spawn <branch-name>`
+
+Create a single named worktree with the given branch name and launch a tmux session for it:
+
+```bash
+wt create <branch-name>
+```
+
+Example: `/worktrunk spawn feat/auth` creates a worktree on branch `feat/auth`. Use this for focused feature work.
+
 ### `spawn <n> "<prompt>"`
 
 Create n worktrees from main, launch a tmux session for each, and start a Claude agent in each with the given prompt:
@@ -23,7 +33,9 @@ Create n worktrees from main, launch a tmux session for each, and start a Claude
 wt spawn <n>
 ```
 
-Name each worktree using the feature slug derived from the prompt, e.g. `agent/auth-1`, `agent/auth-2`, `agent/auth-3`. Report all session names after spawning.
+Detect which mode to use: if the first argument after `spawn` looks like a branch name (contains letters, `/`, or `-` but is not a plain integer), use `wt create`. If it is a plain integer, use `wt spawn <n>` with the remaining text as the prompt.
+
+Name each agent worktree using the feature slug derived from the prompt, e.g. `agent/auth-1`, `agent/auth-2`, `agent/auth-3`. Report all session names after spawning.
 
 ### `done <feature-name>`
 

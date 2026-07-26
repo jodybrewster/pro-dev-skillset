@@ -36,6 +36,37 @@ function frontmatter(text) {
   return data;
 }
 
+// Hardcoded routing distractors: real user-level skills that compete for the
+// same prompts in actual sessions but live outside this marketplace, so
+// loadCatalog() below never sees them. Descriptions snapshotted from the
+// user's real environment on 2026-07-17.
+const DISTRACTORS = [
+  {
+    slug: "impeccable",
+    plugin: "external",
+    description:
+      "Use when the user wants to design, redesign, shape, critique, audit, polish, clarify, distill, harden, optimize, adapt, animate, colorize, extract, or otherwise improve a frontend interface. Covers websites, landing pages, dashboards, product UI, app shells, components, forms, settings, onboarding, and empty states. Handles UX review, visual hierarchy, information architecture, cognitive load, accessibility, performance, responsive behavior, theming, anti-patterns, typography, fonts, spacing, layout, alignment, color, motion, micro-interactions, UX copy, error states, edge cases, i18n, and reusable design systems or tokens. Also use for bland designs that need to become bolder or more delightful, loud designs that should become quieter, live browser iteration on UI elements, or ambitious visual effects that should feel technically extraordinary. Not for backend-only or non-UI tasks.",
+  },
+  {
+    slug: "dataviz",
+    plugin: "external",
+    description:
+      "Use this skill whenever you are about to create ANY chart, graph, plot, dashboard, or data visualization, in ANY output medium - an HTML or React artifact, inline SVG, plotting code in any library (matplotlib, plotly, d3, Recharts), an image/PNG you will render, or a chart shared into Slack. Read it BEFORE writing the first line of chart code, choosing chart colors, building a stat tile / meter / KPI row, or laying out a dashboard.",
+  },
+  {
+    slug: "skill-creator",
+    plugin: "external",
+    description:
+      "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
+  },
+  {
+    slug: "humanizer",
+    plugin: "external",
+    description:
+      "Strip the machine fingerprints out of text - both the invisible character-level encoding (em-dashes, smart quotes, zero-width and non-breaking spaces) and the stylistic tells of LLM prose. Use whenever the user asks to humanize, de-AI, remove the AI-isms, make something sound less like ChatGPT, or strip hidden/weird characters from copied text.",
+  },
+];
+
 // build the skill catalog (excluding gstack — that's its own upstream suite)
 function loadCatalog() {
   const catalog = [];
@@ -77,6 +108,7 @@ async function routeOne(prompt, catalog) {
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 32,
+      temperature: 0,
       system,
       messages: [{ role: "user", content: `Catalog:\n${list}\n\nUser message:\n${prompt}` }],
     }),
@@ -88,27 +120,29 @@ async function routeOne(prompt, catalog) {
 
 // ── run ──────────────────────────────────────────────────────────────────────
 const { catalog, slugs } = loadCatalog();
+const fullCatalog = [...catalog, ...DISTRACTORS];
+const allSlugs = new Set([...slugs, ...DISTRACTORS.map((d) => d.slug)]);
 const cases = loadCases();
 
 // static sanity: every referenced slug must exist (catches stale cases)
 let badRefs = 0;
 for (const c of cases) {
   for (const s of [...asArr(c.expect), ...asArr(c.notOneOf)]) {
-    if (!slugs.has(s)) { console.log(`✗ case references unknown skill "${s}" — ${c.prompt.slice(0, 50)}`); badRefs++; }
+    if (!allSlugs.has(s)) { console.log(`✗ case references unknown skill "${s}" — ${c.prompt.slice(0, 50)}`); badRefs++; }
   }
 }
 if (badRefs) { console.log(`\n✗ ${badRefs} stale skill reference(s) in cases`); process.exit(1); }
 
 if (DRY) {
   const why = process.env.ANTHROPIC_API_KEY ? "--dry" : "no ANTHROPIC_API_KEY";
-  console.log(`✓ ${cases.length} cases reference real skills · ${catalog.length} skills in catalog`);
+  console.log(`✓ ${cases.length} cases reference real skills · ${catalog.length} skills in catalog + ${DISTRACTORS.length} distractors`);
   console.log(`(skipped live routing: ${why}. Set ANTHROPIC_API_KEY to run the model.)`);
   process.exit(0);
 }
 
-console.log(`Running ${cases.length} routing cases against ${MODEL} (${catalog.length} skills)…\n`);
+console.log(`Running ${cases.length} routing cases against ${MODEL} (${catalog.length} skills + ${DISTRACTORS.length} distractors)…\n`);
 let failed = 0;
-const results = await Promise.allSettled(cases.map((c) => routeOne(c.prompt, catalog)));
+const results = await Promise.allSettled(cases.map((c) => routeOne(c.prompt, fullCatalog)));
 results.forEach((r, i) => {
   const c = cases[i];
   if (r.status === "rejected") { console.log(`✗ ERROR  ${c.prompt.slice(0, 50)} — ${r.reason.message}`); failed++; return; }

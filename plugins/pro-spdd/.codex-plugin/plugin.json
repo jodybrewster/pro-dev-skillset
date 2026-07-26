@@ -1,6 +1,6 @@
 {
   "name": "pro-spdd",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Structured Prompt-Driven Development workflow: story decomposition, analysis, REASONS Canvas, generation, prompt update, sync, API test, code review, and reverse engineering. Depends on pro-execution for disciplined implementation workflows. Adapted from gszhangwei/open-spdd.",
   "skills": "./skills/"
 }

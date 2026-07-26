@@ -1,6 +1,6 @@
 ---
 name: qa-suite
-description: Entry point for the broad QA-skills testing suite — use when the user wants to run a full QA pass, set up testing for a project, or pick the right testing skill (playwright e2e, visual regression, API/contract testing, test strategy/planning, risk-based testing, flaky-test triage). This is a BRIDGE to the standalone `qa-skills` library (petrkindlmann/qa-skills); it routes to the installed suite and, when it's missing, installs it via /qa-engine. Not for focused Vitest unit tests (use `vitest`) or one-off interactive browser checks (use `agent-browser`).
+description: Entry point for the broad QA-skills testing suite — use when the user wants to run the whole test suite and triage what's failing, run a full QA pass, set up testing for a project, or pick the right testing skill (playwright e2e, visual regression, API/contract testing, test strategy/planning, risk-based testing, flaky-test triage). This is a BRIDGE to the standalone `qa-skills` library (petrkindlmann/qa-skills); it routes to the installed suite and, when it's missing, installs it via /qa-engine. Not for focused Vitest unit tests (use `vitest`) or one-off interactive browser checks (use `agent-browser`).
 ---
 
 # QA Suite — bridge to `qa-skills`

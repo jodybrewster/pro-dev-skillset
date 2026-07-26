@@ -308,6 +308,35 @@ checks.router = (m) => {
   return { failures, warnings };
 };
 
+// pro-starter dependency integrity: all same-marketplace deps resolve, all
+// default-stack plugins are covered (opt-in plugins are explicitly excluded)
+checks["pro-starter"] = (m) => {
+  const failures = [], warnings = [];
+  const starter = m.plugins.find((p) => p.name === "pro-starter");
+  if (!starter?.manifest) {
+    failures.push("pro-starter: missing .claude-plugin/plugin.json");
+    return { failures, warnings };
+  }
+  const deps = starter.manifest.dependencies ?? [];
+  // same-marketplace deps: object form without a `marketplace` key
+  const sameMktDeps = new Set(
+    deps.filter((d) => typeof d === "object" && !d.marketplace).map((d) => d.name)
+  );
+  // every same-marketplace dep must resolve to a real plugin
+  for (const name of sameMktDeps) {
+    if (!m.mpByName.has(name))
+      failures.push(`pro-starter: dependency "${name}" not found in marketplace`);
+  }
+  // opt-in plugins are intentionally excluded from the default stack
+  const OPT_IN = new Set(["pro-spdd", "pro-gstack", "pro-starter"]);
+  for (const p of m.plugins) {
+    if (OPT_IN.has(p.name)) continue;
+    if (!sameMktDeps.has(p.name))
+      warnings.push(`pro-starter: "${p.name}" is in the marketplace but not in pro-starter dependencies`);
+  }
+  return { failures, warnings };
+};
+
 // hook wiring: Claude Code auto-loads ONLY hooks/hooks.json. Extra hook files
 // must be declared in plugin.json "hooks" or they are silently never loaded —
 // which is exactly how eight hooks in this repo sat dead. Also verifies every
@@ -372,7 +401,7 @@ checks.bridges = (m) => {
   for (const p of m.plugins)
     for (const f of (isDir(join(p.dir, "commands")) ? readdirSync(join(p.dir, "commands")) : []))
       if (f.endsWith(".md")) commandFiles.add(f.replace(/\.md$/, ""));
-  const bridges = ["qa-suite", "impeccable-bridge", "lavish"];
+  const bridges = ["qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge"];
   for (const p of m.plugins) for (const s of p.skills) {
     if (!bridges.includes(s.slug)) continue;
     const body = readFileSync(s.path, "utf8");

@@ -15,9 +15,6 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$REPO_ROOT/demo/app"
 MARKETPLACE="pro-dev-skillset"
-# The default stack /pro-dev-doctor expects. pro-core/pro-design carry the
-# skills this landing page exercised; the rest round out the lifecycle.
-STACK=(pro-core pro-execution pro-quality pro-design pro-data pro-testing)
 
 say() { printf "\n\033[1;35m▸ %s\033[0m\n" "$1"; }
 
@@ -34,12 +31,11 @@ else
   claude plugin marketplace add "$REPO_ROOT" --scope project
 fi
 
-say "2/5  Install the default stack (project scope)"
-for plugin in "${STACK[@]}"; do
-  if claude plugin install "$plugin@$MARKETPLACE" --scope project 2>&1 | tail -1; then :; else
-    echo "  ! $plugin failed (often a cross-marketplace official dep) — continuing"
-  fi
-done
+say "2/5  Install the default stack via pro-starter (project scope)"
+if ! claude plugin install "pro-starter@$MARKETPLACE" --scope project 2>&1; then
+  echo "  ! pro-starter install failed — check marketplace registration and version-bump law"
+  exit 1
+fi
 
 say "3/5  Install app dependencies"
 NEXT_TELEMETRY_DISABLED=1 npm install --no-audit --no-fund
