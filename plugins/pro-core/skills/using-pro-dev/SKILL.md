@@ -1,6 +1,6 @@
 ---
 name: using-pro-dev
-description: Routes a task to the right pro-dev phase and skill across the full development lifecycle (Define→Plan/Spec→Build→Verify→Review→Security→Ship). Invoke this at session start, when you're unsure which skill to use, where to begin, what the workflow is, which pro-dev skill applies, or how to approach a problem. This is the cross-lifecycle meta-router for the entire pro-dev-skillset marketplace — it hands off to qa-do (pro-testing) for routing within the Verify phase, and to the open-SPDD branch (pro-spdd) for client-facing or spec-driven work.
+description: "Routes a task to the right pro-dev phase and skill across the full development lifecycle (Define→Plan/Spec→Build→Verify→Review→Security→Ship). This is an orientation skill — invoke it at session start, when you don't know where to begin, when the workflow itself is unclear, or when you're unsure which skill applies. It is not a task-execution skill: when a specific skill already matches the task at hand (a bug to fix, a component to build, a suite to run, a PR to review), use that skill directly instead of routing through here."
 ---
 
 # Using pro-dev

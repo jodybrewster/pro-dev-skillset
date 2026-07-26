@@ -1,6 +1,6 @@
 ---
 name: "spdd-story-lead"
-description: "Decompose high-level feature requirements into INVEST-compliant, business-focused stories with clear scope boundaries and testable acceptance criteria. Use when the user asks for spdd-story, SPDD story, or the corresponding Structured Prompt-Driven Development phase."
+description: "Decompose high-level feature requirements into INVEST-compliant, business-focused stories with clear scope boundaries and testable acceptance criteria — the entry point for producing a written spec a client or stakeholder can review and sign off on before any code is written. Use when the user asks for spdd-story, SPDD story, a client-facing written spec, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-story-lead

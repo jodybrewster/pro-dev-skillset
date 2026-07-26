@@ -7,6 +7,8 @@
     "test": "node tests/check.mjs",
     "test:eval": "node tests/eval.mjs",
     "test:eval:dry": "node tests/eval.mjs --dry",
-    "test:all": "node tests/check.mjs && node tests/eval.mjs --dry"
+    "test:all": "node tests/check.mjs && node tests/eval.mjs --dry",
+    "test:bridge-smoke": "node tests/bridge-install-smoke.mjs",
+    "test:handoff": "node tests/handoff.mjs"
   }
 }

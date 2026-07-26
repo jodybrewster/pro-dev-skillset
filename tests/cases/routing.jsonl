@@ -16,5 +16,11 @@
 {"prompt": "I'm executing an already-approved plan — drive the implementation across subagents.", "expect": "subagent-driven-development"}
 {"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"]}
 {"prompt": "Set up the database schema and migrations with Drizzle.", "expect": ["drizzle-schema-definition", "drizzle-orm-architecture"]}
-{"prompt": "Do a full UI/UX pass on this dashboard and make it polished.", "expect": ["impeccable-bridge"]}
+{"prompt": "Do a full UI/UX pass on this dashboard and make it polished.", "expect": ["impeccable-bridge", "impeccable"]}
 {"prompt": "Render my plan as a reviewable HTML artifact I can annotate in the browser before we start building.", "expect": "lavish"}
+{"prompt": "Generate a brand kit for my startup: logo concepts, a color system, typography, and a few product mockups.", "expect": "taste-skills-bridge"}
+{"prompt": "Before we write any code, generate premium reference images for the marketing site hero and key sections.", "expect": "taste-skills-bridge"}
+{"prompt": "Generate a landing page from this brief that does not look like every other templated AI-built site.", "expect": ["taste-skills-bridge", "impeccable-bridge"]}
+{"prompt": "Add a revenue chart to the analytics dashboard page.", "expect": ["dataviz"], "notOneOf": ["taste-skills-bridge", "impeccable-bridge", "taste-skill"]}
+{"prompt": "This paragraph reads like ChatGPT wrote it - make it sound human.", "expect": ["humanizer"]}
+{"prompt": "Create a new skill that captures our deploy checklist and measure how well it triggers.", "expect": ["skill-creator"], "notOneOf": ["find-skills"]}
