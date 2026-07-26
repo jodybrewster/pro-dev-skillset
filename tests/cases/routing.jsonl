@@ -24,3 +24,9 @@
 {"prompt": "Add a revenue chart to the analytics dashboard page.", "expect": ["dataviz"], "notOneOf": ["taste-skills-bridge", "impeccable-bridge", "taste-skill"]}
 {"prompt": "This paragraph reads like ChatGPT wrote it - make it sound human.", "expect": ["humanizer"]}
 {"prompt": "Create a new skill that captures our deploy checklist and measure how well it triggers.", "expect": ["skill-creator"], "notOneOf": ["find-skills"]}
+{"prompt": "I think this feature is finished. What do I need to check on my end before I sign off on it?", "expect": "user-validation", "note": "handing work back to a human is validation, not the agent's own verification"}
+{"prompt": "Give me a list of things to click through and confirm manually now that this has landed.", "expect": "user-validation", "note": "manual check list for the user"}
+{"prompt": "Run the test suite and confirm it actually passes before you claim this is done.", "expect": "verification-before-completion", "notOneOf": ["user-validation"], "note": "boundary: the agent's own evidence gathering must NOT route to the user handoff"}
+{"prompt": "Write release notes and a migration guide for the changes that just landed on this branch.", "expect": "technical-writer", "note": "developer-facing prose from a real diff"}
+{"prompt": "The setup steps in our README don't work anymore - half the commands fail on a fresh clone.", "expect": "documentation-engineer", "notOneOf": ["research-agent", "systematic-debugging"], "note": "drifted docs / broken onboarding path, not a code bug hunt"}
+{"prompt": "Document these REST endpoints: request and response shapes, auth scopes, and the error codes clients can expect.", "expect": "api-documenter", "note": "consumer-facing API reference from the implementation"}

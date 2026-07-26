@@ -89,8 +89,11 @@ def main() -> int:
     print(
         f"BLOCKED: Code changed ({code_sample}) but these docs were not updated:\n"
         f"{stale_list}\n\n"
-        f"Review each file and update any sections affected by your changes. "
-        f"If a file genuinely needs no changes, add a brief comment in the PR description explaining why.",
+        f"Fix it, don't just acknowledge it. Run /document to have the technical-writer "
+        f"subagent draft the updates from the actual diff, or dispatch it directly. "
+        f"It writes from repository evidence, so give it the changed paths above.\n\n"
+        f"If a doc genuinely needs no change, say which one and why in the PR description "
+        f"before re-running the push. Do not edit a doc cosmetically to clear this gate.",
         file=sys.stderr,
     )
     return 2

@@ -67,7 +67,10 @@ const DISTRACTORS = [
   },
 ];
 
-// build the skill catalog (excluding gstack — that's its own upstream suite)
+// Build the routing catalog (excluding gstack — that's its own upstream suite).
+// Includes agents/*.md as well as skills: a real session routes across both, so
+// a skills-only catalog would score a router that does not exist. It also means
+// an agent that poaches a skill's prompts fails a case instead of failing quietly.
 function loadCatalog() {
   const catalog = [];
   const slugs = new Set();
@@ -77,7 +80,16 @@ function loadCatalog() {
       const p = join(ROOT, "plugins", plugin, "skills", slug, "SKILL.md");
       if (!existsSync(p)) continue;
       const fm = frontmatter(readFileSync(p, "utf8"));
-      catalog.push({ slug, plugin, description: fm.description || "" });
+      catalog.push({ slug, plugin, kind: "skill", description: fm.description || "" });
+      slugs.add(slug);
+    }
+    const agentsDir = join(ROOT, "plugins", plugin, "agents");
+    if (!isDir(agentsDir)) continue;
+    for (const file of readdirSync(agentsDir)) {
+      if (!file.endsWith(".md")) continue;
+      const slug = file.replace(/\.md$/, "");
+      const fm = frontmatter(readFileSync(join(agentsDir, file), "utf8"));
+      catalog.push({ slug, plugin, kind: "subagent", description: fm.description || "" });
       slugs.add(slug);
     }
   }
@@ -92,11 +104,11 @@ function loadCases() {
 const asArr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
 
 async function routeOne(prompt, catalog) {
-  const list = catalog.map((s) => `- ${s.slug}: ${s.description}`).join("\n");
+  const list = catalog.map((s) => `- ${s.slug} (${s.kind || "skill"}): ${s.description}`).join("\n");
   const system =
-    "You are the skill router for the pro-dev-skillset marketplace. Given a user " +
-    "message and a catalog of skills (slug: description), output ONLY the single " +
-    "slug of the best-matching skill, or the literal word none if no skill fits. " +
+    "You are the router for the pro-dev-skillset marketplace. Given a user " +
+    "message and a catalog of skills and subagents (slug (kind): description), output ONLY the single " +
+    "slug of the best-matching entry, or the literal word none if nothing fits. " +
     "No punctuation, no explanation — just the slug.";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",

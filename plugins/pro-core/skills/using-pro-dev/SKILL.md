@@ -46,6 +46,10 @@ Task arrives
   │   ├ unit/component ──────────────→ vitest (pro-testing)
   │   ├ claiming done ───────────────→ verification-before-completion (pro-quality)
   │   └ handing work back to a human → user-validation, /validate (pro-quality)
+  ├ DOCUMENT:
+  │   ├ release notes / migration / README → technical-writer, /document (pro-quality)
+  │   ├ docs drifted from code / setup broken → documentation-engineer (pro-quality)
+  │   └ API reference from real handlers ────→ api-documenter, /api-docs (pro-quality)
   ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
   ├ SECURITY: security-and-hardening / cso (pro-security)
   └ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
