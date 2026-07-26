@@ -1,6 +1,6 @@
 {
   "name": "pro-design",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, motion (Framer Motion implementation + discipline), typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass), plus impeccable-bridge (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
   "author": {
     "name": "Jody Brewster",
