@@ -136,4 +136,4 @@ Wrap dynamic content in `<Suspense>` with a fallback for streaming SSR. Avoid bl
 
 ---
 
-_Adapted from [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills)._
+_Adapted from [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) (Next.js agent skills by Vercel), MIT License. See the repository for full license text._
