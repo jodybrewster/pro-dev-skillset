@@ -29,6 +29,15 @@
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pr-quality-gate.py\""
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/api-doc-drift.py\""
+          }
+        ]
       }
     ],
     "Stop": [

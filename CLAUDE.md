@@ -88,6 +88,10 @@ The README claims forked SKILL.md files load under OpenAI Codex via the Agent Sk
 - Non-standard skill frontmatter keys — Agent Skills only guarantees `name`, `description`, optional `tags`/`tools`/`model`.
 - Missing or stale `.codex-plugin/plugin.json` files — every concrete skill-bearing plugin needs one, with `skills: "./skills/"`.
 
+Subagents are a second parity surface. Claude auto-discovers `agents/*.md`; Codex does not read them at all, and does not auto-spawn custom subagents even when present. Every `agents/<n>.md` should ship a `.codex-plugin/agents/<n>.toml` counterpart (`name`, `description`, `developer_instructions`), which a user installs by copying into `~/.codex/agents/` or `.codex/agents/`. `node tests/check.mjs agents` warns on a missing counterpart and fails on name/file mismatch or a malformed `.toml`. `pro-research`'s four agents predate this rule and are still Claude-only.
+
+When porting an agent from an upstream collection, read the Codex `.toml` variant before the Claude `.md` one. In `VoltAgent/awesome-*-subagents` the `.toml` bodies are markedly better: the `.md` versions are undifferentiated bullet lists carrying invented metrics (`readability_score: 68`, `user_satisfaction: 92%`) and a "delivery notification" template that instructs the agent to state outcome numbers it never measured. That directly contradicts `verification-before-completion`, so it must be stripped rather than reworded.
+
 ## Plugin layout cheatsheet
 
 ```
@@ -99,6 +103,7 @@ plugins/<name>/
   commands/<name>.md             # slash commands (frontmatter: description, argument-hint)
   agents/<name>.md               # subagents (frontmatter: description, tools)
   hooks/hooks.json               # ALL hook configs for the plugin, one file (see the hook-loading law)
+  .codex-plugin/agents/<n>.toml  # Codex counterpart for each agents/<n>.md (see agent parity below)
   LICENSE                        # required when content is forked
 ```
 

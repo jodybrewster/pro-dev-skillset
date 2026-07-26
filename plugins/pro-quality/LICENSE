@@ -1,6 +1,16 @@
 # Attribution notice: Skills in this plugin are forked from obra/superpowers
 # (https://github.com/obra/superpowers) under the MIT License below.
 # No skills were forked from anthropics/skills for this plugin.
+#
+# The documentation subagents in agents/ and .codex-plugin/agents/
+# (technical-writer, documentation-engineer, api-documenter) adapt the role,
+# scope, and tool boundary of the corresponding entries in
+# VoltAgent/awesome-codex-subagents and VoltAgent/awesome-claude-code-subagents
+# (https://github.com/VoltAgent/awesome-codex-subagents), also MIT licensed.
+# Their instruction bodies were substantially rewritten for this marketplace.
+#
+# The user-validation skill, its Stop hook, and all scripts/ in this plugin are
+# original work.
 
 MIT License
 
