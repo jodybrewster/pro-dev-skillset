@@ -34,7 +34,7 @@ const EXTERNAL = new Set([
   "lavish-axi",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -303,6 +303,63 @@ checks.router = (m) => {
     for (const s of p.skills) {
       if (s.slug === "using-pro-dev") continue;
       if (!text.includes(s.slug)) warnings.push(`router never mentions shipped skill ${p.name}/${s.slug}`);
+    }
+  }
+  return { failures, warnings };
+};
+
+// hook wiring: Claude Code auto-loads ONLY hooks/hooks.json. Extra hook files
+// must be declared in plugin.json "hooks" or they are silently never loaded —
+// which is exactly how eight hooks in this repo sat dead. Also verifies every
+// ${CLAUDE_PLUGIN_ROOT} script a hook shells out to actually exists.
+checks.hooks = (m) => {
+  const failures = [], warnings = [];
+  const VALID_EVENTS = new Set([
+    "PreToolUse", "PostToolUse", "UserPromptSubmit", "Notification",
+    "Stop", "SubagentStop", "SessionStart", "SessionEnd", "PreCompact",
+  ]);
+  for (const p of m.plugins) {
+    const hooksDir = join(p.dir, "hooks");
+    const jsonFiles = isDir(hooksDir)
+      ? readdirSync(hooksDir).filter((f) => f.endsWith(".json"))
+      : [];
+    if (!jsonFiles.length) continue;
+
+    // which files does Claude Code actually load?
+    const raw = p.manifest?.hooks;
+    const declared = new Set(
+      (Array.isArray(raw) ? raw : raw ? [raw] : [])
+        .filter((h) => typeof h === "string")
+        .map((h) => h.replace(/^\.\//, ""))
+    );
+    const loaded = new Set([...declared]);
+    if (jsonFiles.includes("hooks.json")) loaded.add("hooks/hooks.json");
+
+    if (!loaded.size)
+      failures.push(`${p.name}: hooks/ has ${jsonFiles.length} config(s) but no hooks/hooks.json and no plugin.json "hooks" entry — none of them ever fire`);
+
+    for (const f of jsonFiles) {
+      if (loaded.has(`hooks/${f}`)) continue;
+      failures.push(`${p.name}: hooks/${f} is never loaded (only hooks/hooks.json is auto-discovered; declare extras in plugin.json "hooks")`);
+    }
+
+    for (const f of jsonFiles) {
+      const cfgPath = join(hooksDir, f);
+      let cfg;
+      try { cfg = readJSON(cfgPath); }
+      catch { failures.push(`${rel(cfgPath)}: invalid JSON`); continue; }
+      const events = cfg.hooks ?? {};
+      if (!Object.keys(events).length)
+        failures.push(`${rel(cfgPath)}: no hook events defined under "hooks"`);
+      for (const event of Object.keys(events)) {
+        if (!VALID_EVENTS.has(event))
+          failures.push(`${rel(cfgPath)}: unknown hook event "${event}" (case-sensitive)`);
+      }
+      // scripts referenced via ${CLAUDE_PLUGIN_ROOT} must be on disk
+      for (const mt of JSON.stringify(cfg).matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([\w./-]+\.(?:py|sh|mjs|js))/g)) {
+        if (!existsSync(join(p.dir, mt[1])))
+          failures.push(`${rel(cfgPath)}: references missing script '${mt[1]}'`);
+      }
     }
   }
   return { failures, warnings };

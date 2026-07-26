@@ -67,11 +67,18 @@ def main() -> int:
     if not code_changed:
         return 0  # Only docs/config changed — no enforcement needed
 
-    # Find key docs that exist in the project but weren't updated
+    # Find key docs that exist in the project but weren't updated.
+    # A symlinked doc (AGENTS.md -> CLAUDE.md is the common case) never shows up
+    # in `git diff --name-only` under its own name, so resolve links and count a
+    # doc as fresh when its target moved. Without this the gate is unsatisfiable
+    # and blocks every push forever.
     changed_set = set(changed)
+    changed_real = {os.path.realpath(os.path.join(cwd, f)) for f in changed}
     stale = [
         doc for doc in KEY_DOCS
-        if os.path.exists(os.path.join(cwd, doc)) and doc not in changed_set
+        if os.path.exists(os.path.join(cwd, doc))
+        and doc not in changed_set
+        and os.path.realpath(os.path.join(cwd, doc)) not in changed_real
     ]
 
     if not stale:

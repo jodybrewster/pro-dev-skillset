@@ -16,6 +16,7 @@ Task arrives
   ├ Don't know what you want? ───────→ interview-me (pro-pdd)
   ├ Rough concept, need variants? ───→ idea-refine (pro-pdd)
   ├ Ideate + design behind a gate? ──→ brainstorming (pro-pdd)
+  ├ Wide open-ended ideation, /adhd ─→ adhd (pro-pdd)
   ├ PLAN:
   │   ├ quick/solo, think it through → planning mode, then lavish for review when the plan is substantive
   │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd), then lavish for plan review
@@ -43,7 +44,8 @@ Task arrives
   │   ├ interactive browser check ───→ agent-browser (pro-testing)
   │   ├ committed e2e suite ─────────→ playwright-automation (bridged via qa-suite / /qa-engine)
   │   ├ unit/component ──────────────→ vitest (pro-testing)
-  │   └ claiming done ───────────────→ verification-before-completion (pro-quality)
+  │   ├ claiming done ───────────────→ verification-before-completion (pro-quality)
+  │   └ handing work back to a human → user-validation, /validate (pro-quality)
   ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
   ├ SECURITY: security-and-hardening / cso (pro-security)
   └ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
@@ -97,7 +99,7 @@ The pro-dev-specific rules are:
 | Phase | Skill(s) | Plugin | One-line |
 |---|---|---|---|
 | Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
-| Define | interview-me, idea-refine, brainstorming | pro-pdd | Clarify → variant → gated ideation |
+| Define | interview-me, idea-refine, brainstorming, adhd | pro-pdd | Clarify → variant → gated ideation → parallel divergent ideation |
 | Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/lavish-engine`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, wt, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |

@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/git-safe.py\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"Default to parallelism. When you dispatch multiple subagents whose work is independent, batch them in ONE assistant turn (multiple Agent tool calls in the same message), not back-to-back. Same rule for independent reads, greps, or validations - issue them in parallel. Only serialize when a later call genuinely depends on an earlier call'\\''s output. If the user phrases work sequentially (\\\"do A then B then C\\\") but A/B/C are independent, run them in parallel anyway.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
