@@ -143,4 +143,4 @@ npx skills init my-xyz-skill
 
 ---
 
-<!-- Source: vercel-labs/skills (https://github.com/vercel-labs/skills) -->
+_Forked from [vercel-labs/skills](https://github.com/vercel-labs/skills), MIT License. See original repository for full license text._

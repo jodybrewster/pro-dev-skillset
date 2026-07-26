@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.31.1"
+    "version": "1.31.2"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.11.10",
+      "version": "0.11.11",
       "category": "development",
       "strict": true
     },
@@ -50,7 +50,7 @@
       "name": "pro-design",
       "source": "./plugins/pro-design",
       "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, motion (Framer Motion implementation + discipline), typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass), plus impeccable-bridge (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "category": "development",
       "strict": true
     },

@@ -179,3 +179,7 @@ Required for exit animations. Wrap the conditional render:
 ## Relationship to motion-system
 
 The `motion-system` skill defines the token vocabulary (duration scales, easing names, choreography rules). This skill governs when and how to use Framer Motion in code. They compose: pull timing values from your motion tokens, implement them here.
+
+---
+
+_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
