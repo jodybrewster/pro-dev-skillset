@@ -46,7 +46,7 @@ Agent(pro-core hook draft)  Agent(pro-data hook draft)  Agent(pro-quality hook d
 Agent(pro-core hook draft) → wait → Agent(pro-data) → wait → Agent(pro-quality)
 ```
 
-When dispatching, give each subagent **self-contained context**: it can't see your conversation. State the file path, the exact change, the schema/format to follow, and what "done" looks like. Don't write "based on the discussion, add the hook" — write "create `plugins/pro-data/hooks/format-schema.json` with a `PostToolUse` matcher on `Write|Edit` targeting `**/schema.prisma`, running `npx prisma format`."
+When dispatching, give each subagent **self-contained context**: it can't see your conversation. State the file path, the exact change, the schema/format to follow, and what "done" looks like. Don't write "based on the discussion, add the hook" — write "add a `PostToolUse` entry to `plugins/pro-data/hooks/hooks.json` with a matcher on `Write|Edit`, running `python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/format-schema.py\"`."
 
 **Model: dispatch these subagents on Sonnet** (`claude-sonnet-4-6`) — it's the right cost/quality tier for repo edits, drafting, validation, and code search. Reserve Opus for the orchestrating turn (planning, synthesis, judgment); use Haiku only for the `pro-research` skill's bounded fetch-and-extract research agents. Default to Sonnet subagents and parallelize whenever the work splits cleanly.
 
@@ -60,6 +60,24 @@ The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. Codex
 - If a dep crosses a minor (e.g. `pro-core 0.3 → 0.4`), every dependent plugin's `^0.3.0` constraint must widen to `^0.4.0` and re-tag.
 
 Full procedure: [RELEASING.md](./RELEASING.md).
+
+## The hook-loading law (non-negotiable)
+
+Claude Code auto-loads exactly one hook file per plugin: `hooks/hooks.json`.
+Any other filename in `hooks/` is silently ignored - no warning, no validation error, `claude plugin validate --strict` still passes.
+
+This bit this repo hard. Eight hook files across `pro-core`, `pro-data`, and `pro-quality` sat completely dead because they were named per-concern (`git-safe.json`, `validation-handoff.json`, ...) instead of being merged into `hooks/hooks.json`. One of them also pointed at a script that was never written. Nothing failed; the hooks just never ran.
+
+So:
+
+- One `hooks/hooks.json` per plugin, holding every event that plugin registers. Group by event, not by file.
+- A plugin may declare *additional* files via a `hooks` field in `plugin.json` (string or array of paths), but prefer the single file - fewer ways to be wrong.
+- Every `${CLAUDE_PLUGIN_ROOT}` script a hook shells out to must exist and be committed.
+- Event names are case-sensitive: `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Notification`, `Stop`, `SubagentStop`, `SessionStart`, `SessionEnd`, `PreCompact`.
+
+`node tests/check.mjs hooks` mechanizes all four rules. It fails loudly on an unloaded hook file, a missing script, and an unknown event name.
+
+A hook that returns `{"decision":"block","reason":"..."}` on `Stop` forces the session to keep working with `reason` injected as instruction. That is the only deterministic way to make something happen at end-of-turn. Always guard it: check `stop_hook_active` so the continuation turn passes through, and track per-session progress so the work the block causes cannot re-trigger the block. `plugins/pro-quality/scripts/user-validation.py` is the reference implementation.
 
 ## Codex parity is a hard requirement
 
@@ -80,7 +98,7 @@ plugins/<name>/
   skills/<slug>/*.md             # optional sidecars referenced from SKILL.md
   commands/<name>.md             # slash commands (frontmatter: description, argument-hint)
   agents/<name>.md               # subagents (frontmatter: description, tools)
-  hooks/<name>.json              # hook configs (PreToolUse/PostToolUse/Stop/SessionStart/UserPromptSubmit)
+  hooks/hooks.json               # ALL hook configs for the plugin, one file (see the hook-loading law)
   LICENSE                        # required when content is forked
 ```
 
@@ -136,5 +154,6 @@ CI runs these automatically on PR (see `.github/workflows/`). All must pass befo
 ## When you're stuck
 
 - Skill not loading after edit? You forgot the version bump.
+- Hook not firing, no error anywhere? It is not in `hooks/hooks.json`. See the hook-loading law. Run `node tests/check.mjs hooks`.
 - Cross-marketplace dependency problems? The marketplace allowlists `claude-plugins-official`, and official dependencies use object-form entries in `plugin.json` (`name`, `marketplace`, `version`). If auto-install misbehaves on a Claude Code version, use `templates/install-companions.sh` as the explicit fallback.
 - `claude plugin validate --strict` failing on a freshly-forked skill? Likely an unrecognized frontmatter key or a missing sidecar `@reference`.

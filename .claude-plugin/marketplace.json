@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.30.0"
+    "version": "1.31.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills and using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.11.8",
+      "version": "0.11.10",
       "category": "development",
       "strict": true
     },
@@ -33,8 +33,8 @@
     {
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
-      "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, validation handoff. Enforces doc freshness before git push and blocks plan saves outside the project directory.",
-      "version": "0.7.1",
+      "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook detects when a session ends with real changes and hands the user a validation checklist (what changed, what was verified, what needs their eyes) written to .pro-dev/validation/latest.md; /validate produces one on demand. Enforces doc freshness before git push and blocks plan saves outside the project directory.",
+      "version": "0.8.0",
       "category": "development",
       "strict": true
     },
@@ -66,7 +66,7 @@
       "name": "pro-data",
       "source": "./plugins/pro-data",
       "description": "Data & auth skills: Drizzle ORM (architecture + schema), Prisma schema patterns, NextAuth/Auth.js patterns",
-      "version": "0.4.4",
+      "version": "0.4.5",
       "category": "development",
       "strict": true
     },

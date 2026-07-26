@@ -1,6 +1,6 @@
 {
   "name": "pro-quality",
-  "version": "0.7.1",
-  "description": "Quality gate skills: requesting + receiving code review, verification-before-completion.",
+  "version": "0.8.0",
+  "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. Stop hook hands the user a validation checklist when a session ends with real changes; /validate produces one on demand.",
   "skills": "./skills/"
 }

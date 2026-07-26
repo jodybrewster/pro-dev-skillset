@@ -1,12 +1,12 @@
 {
   "hooks": {
-    "PreToolUse": [
+    "PostToolUse": [
       {
         "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/docs-to-project.py"
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/format-schema.py\""
           }
         ]
       }
