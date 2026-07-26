@@ -31,6 +31,21 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `wikilinks` | every `[[slug]]` resolves to a real skill or a known bridge target | broken memory-style links |
 | `router` | every route target in `using-pro-dev`'s diagram is a real/planned/external/command slug; warns on shipped skills the router never mentions | router drift |
 | `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
+| `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist; event names are valid | an unloaded hook file, a missing hook script, a misspelled event |
+| `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
+| `eval-coverage` | every shipped skill and subagent is named by at least one `expect` in `routing.jsonl` | never fails; warns so untested routing stays visible |
+
+### Coverage reality
+
+`eval-coverage` currently warns on ~32 skills and subagents with no routing case
+against 32 cases covering the rest. Routing coverage is partial by design at the
+edges (SPDD leads route as a pipeline, `pro-motion` and `pro-nextjs` skills are
+picked by file context more than by prompt), but the warnings are the honest list
+of what no eval asserts.
+
+The **live** eval never runs in CI - `.github/workflows/validate.yml` runs
+`eval.mjs --dry`, which only proves cases reference real slugs. Run
+`node tests/eval.mjs` locally with a key before shipping routing-visible changes.
 
 Roadmap skills the router intentionally names (pro-security, pro-ship, the
 Phase 4–7 build folds) live in the `PLANNED` allowlist at the top of

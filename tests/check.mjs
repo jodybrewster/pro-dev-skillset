@@ -34,7 +34,7 @@ const EXTERNAL = new Set([
   "lavish-axi",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -102,6 +102,7 @@ function loadModel() {
   const mpByName = new Map(marketplace.plugins.map((p) => [p.name, p]));
   const plugins = [];
   const skillSlugs = new Set();
+  const agentSlugs = new Set();
   for (const name of listDirs(PLUGINS_DIR)) {
     const dir = join(PLUGINS_DIR, name);
     const manifestPath = join(dir, ".claude-plugin", "plugin.json");
@@ -116,9 +117,19 @@ function loadModel() {
         skillSlugs.add(slug);
       }
     }
-    plugins.push({ name, dir, manifestPath, manifest, codexManifestPath, codexManifest, skills });
+    const agents = [];
+    const agentsDir = join(dir, "agents");
+    if (isDir(agentsDir)) {
+      for (const f of readdirSync(agentsDir)) {
+        if (!f.endsWith(".md")) continue;
+        const slug = f.replace(/\.md$/, "");
+        agents.push({ slug, plugin: name, path: join(agentsDir, f) });
+        agentSlugs.add(slug);
+      }
+    }
+    plugins.push({ name, dir, manifestPath, manifest, codexManifestPath, codexManifest, skills, agents });
   }
-  return { marketplace, mpByName, plugins, skillSlugs };
+  return { marketplace, mpByName, plugins, skillSlugs, agentSlugs };
 }
 
 // ── checks ──────────────────────────────────────────────────────────────────
@@ -291,6 +302,7 @@ checks.router = (m) => {
     if (t.startsWith("pro-")) continue;                  // plugin names
     if (!t.includes("-") && !m.skillSlugs.has(t)) continue; // bare prose word (pure/open)
     if (m.skillSlugs.has(t)) continue;                   // real skill
+    if (m.agentSlugs.has(t)) continue;                   // real subagent
     if (m.skillSlugs.has(`${t}-lead`)) continue;         // spdd-* family alias
     if (PLANNED.has(t) || EXTERNAL.has(t) || COMMANDS.has(t)) continue;
     failures.push(`router references "${t}" — not a skill, planned, external, or command (drift?)`);
@@ -390,6 +402,68 @@ checks.hooks = (m) => {
           failures.push(`${rel(cfgPath)}: references missing script '${mt[1]}'`);
       }
     }
+  }
+  return { failures, warnings };
+};
+
+// subagents: frontmatter sanity, name/file agreement, and Codex parity. Claude
+// auto-discovers agents/*.md; Codex needs a hand-installed .toml, so a Claude-only
+// doc agent silently halves the marketplace's cross-tool promise.
+checks.agents = (m) => {
+  const failures = [], warnings = [];
+  for (const p of m.plugins) {
+    for (const a of p.agents ?? []) {
+      const { data } = parseFrontmatter(readFileSync(a.path, "utf8"));
+      if (!data.name) failures.push(`${rel(a.path)}: frontmatter missing 'name'`);
+      if (!data.description) failures.push(`${rel(a.path)}: frontmatter missing 'description'`);
+      if (data.name && data.name !== a.slug)
+        failures.push(`${rel(a.path)}: frontmatter name "${data.name}" != file "${a.slug}"`);
+
+      const toml = join(p.dir, ".codex-plugin", "agents", `${a.slug}.toml`);
+      if (!existsSync(toml)) {
+        warnings.push(`${p.name}/${a.slug}: no Codex counterpart at .codex-plugin/agents/${a.slug}.toml`);
+        continue;
+      }
+      const t = readFileSync(toml, "utf8");
+      const nameLine = t.match(/^name\s*=\s*"([^"]+)"/m);
+      if (!nameLine) failures.push(`${rel(toml)}: missing top-level name = "..."`);
+      else if (nameLine[1] !== a.slug)
+        failures.push(`${rel(toml)}: name "${nameLine[1]}" != file "${a.slug}"`);
+      if (!/^description\s*=/m.test(t)) failures.push(`${rel(toml)}: missing description`);
+      if (!/^developer_instructions\s*=/m.test(t))
+        failures.push(`${rel(toml)}: missing developer_instructions body`);
+    }
+  }
+  return { failures, warnings };
+};
+
+// eval coverage: a shipped skill or subagent with no routing case is untested
+// routing. Twice now, a feature landed with a green board because nothing
+// asserted it was reachable. Warning-level — not every skill earns a case —
+// but the gap should be visible rather than silent.
+checks["eval-coverage"] = (m) => {
+  const failures = [], warnings = [];
+  const casesPath = join(ROOT, "tests", "cases", "routing.jsonl");
+  if (!existsSync(casesPath)) {
+    failures.push("tests/cases/routing.jsonl missing");
+    return { failures, warnings };
+  }
+  const covered = new Set();
+  for (const line of readFileSync(casesPath, "utf8").split("\n")) {
+    const t = line.trim();
+    if (!t) continue;
+    let c;
+    try { c = JSON.parse(t); }
+    catch { failures.push(`routing.jsonl: unparseable case — ${t.slice(0, 70)}`); continue; }
+    for (const s of [].concat(c.expect ?? [])) covered.add(s);
+  }
+  // gstack is its own upstream suite and is excluded from the eval catalog
+  for (const p of m.plugins) {
+    if (p.name === "pro-gstack") continue;
+    for (const s of p.skills)
+      if (!covered.has(s.slug)) warnings.push(`no routing eval case expects skill ${p.name}/${s.slug}`);
+    for (const a of p.agents ?? [])
+      if (!covered.has(a.slug)) warnings.push(`no routing eval case expects subagent ${p.name}/${a.slug}`);
   }
   return { failures, warnings };
 };
