@@ -3,7 +3,10 @@ MIT License
 This plugin contains skills forked from the following MIT-licensed upstream repositories:
 
 - PaulRBerg/agent-skills (https://github.com/PaulRBerg/agent-skills) — used for: vitest
+  Copyright (c) 2025 Paul Razvan Berg
+
 - peterknezek/skills (https://github.com/peterknezek/skills) — used for: storybook-interactions
+  Copyright (c) 2026 Peter Knezek
 
 It also BRIDGES to the following MIT-licensed library without vendoring any of its
 content. The `qa-suite` skill is an original pointer and `/qa-engine` installs the library
