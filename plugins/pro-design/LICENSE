@@ -14,6 +14,17 @@ The ui-ux-pro-max skill is an original BRIDGE file (no upstream content vendored
 It points to the standalone `impeccable` skill (Apache-2.0, based on Anthropic's
 frontend-design skill), which is installed and licensed separately.
 
+The taste-skills-bridge and design-eng-bridge skills are original BRIDGE files
+(no upstream content vendored). They point to, respectively:
+
+- Leonxlnx/taste-skill (https://github.com/Leonxlnx/taste-skill), MIT
+- emilkowalski/skills (https://github.com/emilkowalski/skills), MIT
+  Copyright (c) 2026 Emil Kowalski
+
+Those libraries are installed separately via `npx skills add` (see the
+/taste-skills and /design-eng-skills commands) and are governed by their own
+license terms.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

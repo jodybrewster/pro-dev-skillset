@@ -30,3 +30,9 @@
 {"prompt": "Write release notes and a migration guide for the changes that just landed on this branch.", "expect": "technical-writer", "note": "developer-facing prose from a real diff"}
 {"prompt": "The setup steps in our README don't work anymore - half the commands fail on a fresh clone.", "expect": "documentation-engineer", "notOneOf": ["research-agent", "systematic-debugging"], "note": "drifted docs / broken onboarding path, not a code bug hunt"}
 {"prompt": "Document these REST endpoints: request and response shapes, auth scopes, and the error codes clients can expect.", "expect": "api-documenter", "note": "consumer-facing API reference from the implementation"}
+{"prompt": "Review the animations in this diff - are the easings and durations any good?", "expect": "design-eng-bridge"}
+{"prompt": "Audit all the motion across the app and give me a prioritized roadmap of animation fixes.", "expect": "design-eng-bridge"}
+{"prompt": "What's it called when a popover does that bouncy thing as it opens?", "expect": "design-eng-bridge"}
+{"prompt": "This sheet should drag and settle like an iOS sheet - it feels stiff and can't be grabbed mid-animation.", "expect": ["design-eng-bridge", "motion"]}
+{"prompt": "Which library should I use for toasts?", "expect": "design-eng-bridge"}
+{"prompt": "Implement this modal enter/exit animation with Framer Motion.", "expect": "motion", "notOneOf": ["design-eng-bridge"]}

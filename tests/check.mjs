@@ -32,9 +32,13 @@ const PLANNED = new Set([
 const EXTERNAL = new Set([
   "qa-do", "qa-start", "playwright-automation", "visual-testing", "impeccable",
   "lavish-axi",
+  // emilkowalski/skills, bridged by pro-design/design-eng-bridge via /design-eng-skills
+  "emil-design-eng", "review-animations", "improve-animations",
+  "find-animation-opportunities", "animation-vocabulary", "apple-design",
+  "pick-ui-library", "prototype",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-eng-skills"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -475,7 +479,7 @@ checks.bridges = (m) => {
   for (const p of m.plugins)
     for (const f of (isDir(join(p.dir, "commands")) ? readdirSync(join(p.dir, "commands")) : []))
       if (f.endsWith(".md")) commandFiles.add(f.replace(/\.md$/, ""));
-  const bridges = ["qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge"];
+  const bridges = ["qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge", "design-eng-bridge"];
   for (const p of m.plugins) for (const s of p.skills) {
     if (!bridges.includes(s.slug)) continue;
     const body = readFileSync(s.path, "utf8");

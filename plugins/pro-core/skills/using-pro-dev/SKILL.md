@@ -35,6 +35,12 @@ Task arrives
   │   ├ video / programmatic render ──→ remotion (pro-motion)
   │   ├ complex animation sequence ───→ hyperframes (pro-motion)
   │   ├ marketing / hero animation ───→ gsap (pro-motion)
+  │   ├ is this animation any good? ──→ design-eng-bridge → review-animations (pro-design, bridge)
+  │   ├ audit motion across the app ──→ design-eng-bridge → improve-animations (pro-design, bridge)
+  │   ├ what should animate here? ────→ design-eng-bridge → find-animation-opportunities (pro-design, bridge)
+  │   ├ name this motion effect ──────→ design-eng-bridge → animation-vocabulary (pro-design, bridge)
+  │   ├ gesture / Apple-feeling UI ───→ design-eng-bridge → apple-design (pro-design, bridge)
+  │   ├ which library for X? ─────────→ design-eng-bridge → pick-ui-library (pro-design, bridge)
   │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
   │   ├ better context ──────────────→ context-engineering (pro-core)
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
@@ -65,6 +71,7 @@ Some entries are **bridges**, not vendored skills — thin routers that point to
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 - **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
+- **`design-eng-bridge` (pro-design) → `emilkowalski/skills`** - animation *judgment* rather than animation implementation: strict motion review (`review-animations`), codebase-wide motion audits that emit executable plans (`improve-animations`), where motion is missing and where to refuse it (`find-animation-opportunities`), naming an effect from a description (`animation-vocabulary`), Apple fluid-interface principles (`apple-design`), curated library picks (`pick-ui-library`), and UI variants behind a live picker (`prototype`). Install/update with **`/design-eng-skills [check|install|update]`** (`npx skills@latest add emilkowalski/skills`). `review-animations`, `pick-ui-library`, and `prototype` are explicit-invoke-only upstream - name them or they will not fire.
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -111,6 +118,7 @@ The pro-dev-specific rules are:
 | Build | impeccable-bridge (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
 | Build | stitch-skill (DESIGN.md), taste-skill (targeted polish) | pro-design | Design documentation + visual polish pass |
 | Build | remotion (video render), hyperframes (complex animation), gsap (marketing animation) | pro-motion | Motion and video |
+| Build | design-eng-bridge → review-animations / improve-animations / find-animation-opportunities / animation-vocabulary / apple-design / pick-ui-library / prototype | pro-design | Animation judgment, not implementation (bridge, via `/design-eng-skills`) |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
 | Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/qa-engine`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
