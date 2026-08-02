@@ -1,11 +1,13 @@
-# Attribution notice: Most skills in this plugin are forked from
-# obra/superpowers (https://github.com/obra/superpowers) under the MIT License.
-# The `grill-me` skill is forked from mattpocock/skills
-# (https://github.com/mattpocock/skills) under the MIT License.
-
 MIT License
 
-Copyright (c) 2025 Jesse Vincent
+The `find-skills` skill in this plugin is forked from the following MIT-licensed
+upstream repository:
+
+- vercel-labs/skills (https://github.com/vercel-labs/skills)
+  Copyright (c) 2026 Vercel, Inc.
+
+All other content in this plugin, including the `using-pro-dev` skill, is original
+work, Copyright (c) 2026 Jody Brewster.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
