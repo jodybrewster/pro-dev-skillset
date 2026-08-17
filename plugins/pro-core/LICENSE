@@ -2,6 +2,9 @@
 # obra/superpowers (https://github.com/obra/superpowers) under the MIT License.
 # The `grill-me` skill is forked from mattpocock/skills
 # (https://github.com/mattpocock/skills) under the MIT License.
+# The `dream` skill is forked from grandamenium/dream-skill
+# (https://github.com/grandamenium/dream-skill) under the MIT License, which
+# upstream declares in its README without shipping a license file.
 
 MIT License
 
