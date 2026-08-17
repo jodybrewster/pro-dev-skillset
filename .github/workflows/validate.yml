@@ -26,7 +26,7 @@ jobs:
       - name: Verify Claude Code install
         run: claude --version
 
-      - name: Static checks (manifests, frontmatter, version-bump law, router)
+      - name: Static checks and hook behaviour cases (manifests, frontmatter, version-bump law, router, git-safe)
         run: node tests/check.mjs
 
       - name: Routing eval cases reference real skills (dry)

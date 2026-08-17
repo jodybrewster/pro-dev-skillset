@@ -12,6 +12,9 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+
+import { runGitSafeCases } from "./git-safe.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -349,12 +352,50 @@ checks["pro-starter"] = (m) => {
   return { failures, warnings };
 };
 
+// Ask git which of these repo-relative paths are tracked, in one batched call.
+// `git ls-files -z -- <paths>` prints cwd-relative, NUL-separated, never-quoted
+// paths for exactly the tracked subset, so its output compares directly against
+// what we pass in. Returns `{ reason }` instead of an answer when git cannot
+// answer at all - no git binary, not a repository, or a hung call - so the
+// caller can degrade to a warning rather than crash the gate on a question
+// nothing in the environment can settle.
+function gitTrackedPaths(relPaths) {
+  if (!relPaths.length) return { tracked: new Set() };
+  const res = spawnSync("git", ["ls-files", "-z", "--", ...relPaths], {
+    cwd: ROOT, encoding: "utf8", timeout: 10_000, maxBuffer: 8 << 20,
+  });
+  if (res.error) {
+    const code = res.error.code;
+    if (code === "ENOENT") return { reason: "git is not on PATH" };
+    if (code === "ETIMEDOUT") return { reason: "git ls-files did not answer within 10s" };
+    return { reason: `git ls-files failed (${code ?? res.error.message})` };
+  }
+  if (res.signal) return { reason: `git ls-files was killed (${res.signal}) after 10s` };
+  if (res.status !== 0) {
+    const why = String(res.stderr ?? "").split("\n").find((l) => l.trim()) ?? "no stderr";
+    return { reason: `git ls-files exited ${res.status}: ${why.trim()}` };
+  }
+  return { tracked: new Set(res.stdout.split("\0").filter(Boolean)) };
+}
+
+// An existing-but-untracked hook script is a normal transient state on a working
+// branch - the script was just written and has not been staged yet - so failing
+// on it would make this gate red for every in-progress branch. In CI the working
+// tree is a fresh checkout that contains tracked files and nothing else, so the
+// same finding there means the reference is genuinely unshippable. Hence: warn
+// locally, fail in CI. `CI` is set by GitHub Actions (which is what runs this
+// gate) and by every other mainstream provider; unset/empty/0/false = local.
+const CI_ENV = String(process.env.CI ?? "").trim().toLowerCase();
+const IN_CI = CI_ENV !== "" && CI_ENV !== "0" && CI_ENV !== "false";
+
 // hook wiring: Claude Code auto-loads ONLY hooks/hooks.json. Extra hook files
 // must be declared in plugin.json "hooks" or they are silently never loaded —
 // which is exactly how eight hooks in this repo sat dead. Also verifies every
-// ${CLAUDE_PLUGIN_ROOT} script a hook shells out to actually exists.
+// ${CLAUDE_PLUGIN_ROOT} script a hook shells out to actually exists *and* is
+// tracked by git, because "exists" is only true of the tree you are standing in.
 checks.hooks = (m) => {
   const failures = [], warnings = [];
+  const referenced = [];   // { cfgPath, script, repoPath } per hook script on disk
   const VALID_EVENTS = new Set([
     "PreToolUse", "PostToolUse", "UserPromptSubmit", "Notification",
     "Stop", "SubagentStop", "SessionStart", "SessionEnd", "PreCompact",
@@ -398,10 +439,64 @@ checks.hooks = (m) => {
       }
       // scripts referenced via ${CLAUDE_PLUGIN_ROOT} must be on disk
       for (const mt of JSON.stringify(cfg).matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([\w./-]+\.(?:py|sh|mjs|js))/g)) {
-        if (!existsSync(join(p.dir, mt[1])))
+        if (!existsSync(join(p.dir, mt[1]))) {
           failures.push(`${rel(cfgPath)}: references missing script '${mt[1]}'`);
+          continue;
+        }
+        referenced.push({ cfgPath, script: mt[1], repoPath: rel(join(p.dir, mt[1])) });
       }
     }
+  }
+
+  // ...and being on disk is not the same as being in the repository. An install
+  // resolves ${CLAUDE_PLUGIN_ROOT} against a clone of this marketplace, so a
+  // script that only ever lived in someone's working tree is simply absent
+  // there: the hook command dies with a Python "can't open file" and exit 2 -
+  // which on Stop is Claude Code's *block* code, so every turn-end would loop
+  // with that error injected as the instruction.
+  const unique = [...new Map(referenced.map((r) => [`${r.cfgPath}::${r.script}`, r])).values()];
+  const { tracked, reason } = gitTrackedPaths([...new Set(unique.map((r) => r.repoPath))]);
+  if (reason) {
+    warnings.push(`hook scripts not checked for git tracking - ${reason}`);
+  } else {
+    for (const r of unique) {
+      if (tracked.has(r.repoPath)) continue;
+      const msg = `${rel(r.cfgPath)}: references untracked script '${r.script}' - ${r.repoPath} exists here but is not in git, so an installed copy of this plugin has a hook command with no script to run${IN_CI ? "" : " (git add it before pushing)"}`;
+      (IN_CI ? failures : warnings).push(msg);
+    }
+  }
+  return { failures, warnings };
+};
+
+// git-safe hook behaviour. The `hooks` check above proves the PreToolUse hook is
+// wired into hooks/hooks.json and points at a script that exists; it says nothing
+// about whether the script decides correctly. This runs the real git-safe.py once
+// per case - the PreToolUse payload on stdin, exit code read back - and asserts
+// the block/allow call. Both directions are real defects, so both FAIL: a false
+// negative lets an irreversible command through, a false positive wedges the
+// session on safe work.
+//
+// The case table lives in tests/git-safe.mjs (also runnable standalone, with
+// --only=<substring>); this imports its runner so the cases exist in one place.
+// No python3 / no hook script is a warning-level skip, so a runner without a
+// Python interpreter never turns the gate red over a missing dependency.
+checks["git-safe"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runGitSafeCases();
+  if (skipped) {
+    warnings.push(`git-safe hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/git-safe.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) {
+    if (r.ok) continue;
+    const verb = r.actual === "block" ? "blocked" : "allowed";
+    failures.push(
+      `git-safe.py ${r.id}: expected ${r.expect}, hook ${verb} it (exit ${r.status}) - command: ${JSON.stringify(r.command)}`
+    );
   }
   return { failures, warnings };
 };
