@@ -1,6 +1,6 @@
 {
   "name": "pro-quality",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. Documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs. Stop hook hands the user a validation checklist when a session ends with real changes; doc-freshness and API-contract-drift hooks.",
   "author": {
     "name": "Jody Brewster",
