@@ -52,7 +52,8 @@ Task arrives
   │   └ API reference from real handlers ────→ api-documenter, /api-docs (pro-quality)
   ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
   ├ SECURITY: security-and-hardening / cso (pro-security)
-  └ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
+  ├ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
+  └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```
 
 Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
@@ -103,6 +104,7 @@ The pro-dev-specific rules are:
 | Phase | Skill(s) | Plugin | One-line |
 |---|---|---|---|
 | Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
+| Meta | [[dream]], /dream | pro-core | Consolidate piled-up memory into a lean MEMORY.md; not for saving a single new fact |
 | Define | interview-me, idea-refine, brainstorming, adhd | pro-pdd | Clarify → variant → gated ideation → parallel divergent ideation |
 | Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/lavish-engine`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |

@@ -1,17 +1,19 @@
 # tests/ — marketplace test + eval harness
 
-Zero-dependency checks for `pro-dev-skillset`. The marketplace ships no runtime
-code, so these validate the **content contract**: Claude and Codex manifests,
-frontmatter, the version-bump law, cross-skill references, and the
-`using-pro-dev` router.
+Zero-dependency checks for `pro-dev-skillset`. Most of what the marketplace
+ships is content, so these mostly validate the **content contract**: Claude and
+Codex manifests, frontmatter, the version-bump law, cross-skill references, and
+the `using-pro-dev` router. The hook scripts are the exception - they are real
+executable code, so `git-safe.py` also gets a **behaviour** test that runs it.
 
 Everything runs on plain Node ≥ 18 — no `npm install`, no toolchain.
 
 ## Run it here (the marketplace repo)
 
 ```bash
-node tests/check.mjs          # all static checks  (alias: npm test)
+node tests/check.mjs          # every check         (alias: npm test)
 node tests/check.mjs versions # one check by name
+node tests/git-safe.mjs       # the git-safe hook cases, standalone + verbose
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
 ```
@@ -31,7 +33,8 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `wikilinks` | every `[[slug]]` resolves to a real skill or a known bridge target | broken memory-style links |
 | `router` | every route target in `using-pro-dev`'s diagram is a real/planned/external/command slug; warns on shipped skills the router never mentions | router drift |
 | `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
-| `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist; event names are valid | an unloaded hook file, a missing hook script, a misspelled event |
+| `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist and are tracked by git; event names are valid | an unloaded hook file, a missing hook script, a misspelled event; an existing-but-untracked hook script warns locally and fails when `CI` is set |
+| `git-safe` | runs the real `pro-core/scripts/git-safe.py` once per case (PreToolUse payload on stdin) and asserts its block/allow exit code | a wrong block or allow decision; no `python3` = warning-level skip |
 | `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
 | `eval-coverage` | every shipped skill and subagent is named by at least one `expect` in `routing.jsonl` | never fails; warns so untested routing stays visible |
 
@@ -50,6 +53,23 @@ The **live** eval never runs in CI - `.github/workflows/validate.yml` runs
 Roadmap skills the router intentionally names (pro-security, pro-ship, the
 Phase 4–7 build folds) live in the `PLANNED` allowlist at the top of
 `check.mjs` — trim each as it lands so drift re-arms.
+
+### Hook behaviour test (`git-safe.mjs`)
+
+The `hooks` check proves `git-safe.py` is wired into `hooks/hooks.json` and exists on disk.
+It cannot prove the script decides correctly, and this is the one hook where a wrong decision is expensive in both directions: a false negative lets an irreversible command through, a false positive wedges the session on safe work.
+
+So `git-safe.mjs` drives the real script the way Claude Code does - one `python3` process per case, the PreToolUse JSON payload on stdin, exit code read back (2 = blocked, anything else = allowed).
+
+```bash
+node tests/git-safe.mjs                # every case  (alias: npm run test:git-safe)
+node tests/git-safe.mjs --only=heredoc # substring filter on case id
+node tests/check.mjs git-safe          # the same cases, as the gated check
+```
+
+The case table lives in `git-safe.mjs` only.
+`check.mjs` imports its `runGitSafeCases()` runner and reports the results as the `git-safe` check, so the cases are part of the required PR gate rather than something you have to remember to run.
+Failures are real failures; a missing `python3` is a warning-level skip, so a runner without a Python interpreter never goes red over a missing dependency.
 
 ### Routing evals (`eval.mjs`)
 

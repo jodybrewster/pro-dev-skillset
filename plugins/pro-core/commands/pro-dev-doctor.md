@@ -8,6 +8,11 @@ allowed-tools:
   - "Bash(ls .claude/plugins*)"
   - "Bash(ls ~/.claude/skills*)"
   - "Bash(ls .claude/skills*)"
+  - "Bash(python3 *dream-timer.py*)"
+  - "Bash(ls ~/.claude/projects*)"
+  - "Bash(wc -l*)"
+  - "Bash(cat ~/.claude/plugins*)"
+  - "Bash(cat .claude/plugins*)"
 ---
 
 Verify that the `pro-dev-skillset` marketplace is correctly installed and coherent in the current environment. This is the install-time counterpart to the repo's `tests/check.mjs` — it can't assume Node or a checkout of the marketplace, so it works from what Claude Code has installed.
@@ -39,6 +44,23 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 - `impeccable-bridge` → `impeccable` (manage with `/design-engine`) and `qa-suite` → `qa-skills` (manage with `/qa-engine`) route to engines installed *outside* this marketplace. Report whether each engine is present if its plugin is installed.
 - Mieruka ships its own plugin (`/init-mieruka` from the mieruka npm package). Report it separately if the project uses it.
 
+## 5. Memory consolidation
+
+- Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dream-timer.py" --status` from the project root.
+  It prints the resolved auto-memory directory, the interval, the last consolidation timestamp, whether one is due and why, and whether a pending flag is waiting for the next session start.
+  `PRO_DEV_DREAM_DISABLED` and `PRO_DEV_DREAM_INTERVAL_HOURS` are already reflected there, so take the interval and the `due:` verdict from that output rather than inferring them.
+- If the `memory:` line reports none, this project has no auto-memory directory yet.
+  Report that as informational, not a failure - the `dream` skill and both its hooks are deliberate no-ops until Claude Code writes memory for this project.
+- When the directory exists, count its memory files (`ls`) and measure the index with `wc -l` on its `MEMORY.md`.
+  The skill's target is under 200 lines, so report the count and flag anything above it as **needs attention** with `/dream dry-run` as the next step.
+- Confirm both `dream` hooks are actually registered.
+  Read the installed `pro-core/hooks/hooks.json` (under `~/.claude/plugins/` or the project `.claude/plugins/`) and check that `Stop` runs `scripts/dream-flag.py` and `SessionStart` runs `scripts/dream-nudge.py`.
+  Claude Code loads exactly one hook file per plugin, `hooks/hooks.json`, and silently ignores hook configs in any other file - a missing entry there means the hook never fires, with nothing anywhere reporting it.
+  Report a missing entry as **needs attention** and note that `/dream` still works by hand.
+
 ## Summary
 
 Print a compact report: default-stack coverage (n/10), whether `.claude/skills/lavish/SKILL.md` exists, any validation failures, any routing mismatches, and a one-line verdict (`healthy` / `needs attention`). Point the user at `claude plugin update` to refresh stale plugins and at the relevant `/...-engine` command for any missing bridge engine.
+
+Add one memory line from step 5: whether this project has auto-memory, the `MEMORY.md` line count against the 200-line target, whether consolidation is due, and whether both `dream` hooks are registered.
+Recommend `/dream dry-run` when consolidation is due or the index is over budget, since consolidation rewrites memory files.

@@ -6,7 +6,7 @@ a known-dangerous pattern, prints `BLOCKED: <reason>` to stderr and exits 2
 (Claude Code's BLOCK exit code). Otherwise exits 0. Malformed payloads
 default to allow so a parser glitch can never wedge the session.
 
-The denylist is intentionally small — it covers irreversible mistakes
+The denylist is intentionally small - it covers irreversible mistakes
 (force-push to a protected branch, rm -rf on root/home, secret leaks,
 privilege escalation) without blocking common safe variants. Edge cases
 err on the side of allowing; this is a guard rail, not a sandbox.
@@ -117,11 +117,26 @@ FULL_RULES: list[Callable[[str], Optional[str]]] = [
 
 
 def _normalize(cmd: str) -> str:
-    return re.sub(r"\s+", " ", cmd.strip())
+    # Bash splices a trailing-backslash line into the next one before it parses
+    # anything, so splice here too. Otherwise splitting on newlines would put
+    # `rm -rf \` and its target in different segments and neither half would
+    # match on its own - a hole, not a false positive.
+    spliced = re.sub(r"\\\r?\n", " ", cmd)
+    # Collapse horizontal whitespace only; newlines survive for _segments.
+    return re.sub(r"[^\S\n]+", " ", spliced).strip()
 
 
 def _segments(cmd: str) -> list[str]:
-    return [s.strip() for s in re.split(r"&&|\|\||;|\|", cmd) if s.strip()]
+    # A newline separates commands in bash exactly like `;` does. Splitting only
+    # on operators joined a safe `rm -rf ./some/path` to every following line, so
+    # any later `/ ` (even inside an echo string) tripped the rm -rf root rule
+    # that neither line trips alone.
+    #
+    # Heredoc bodies stay in scope on purpose: `bash <<EOF` and `ssh host <<EOF`
+    # execute their body, so treating heredoc text as inert data would be a hole.
+    # Over-blocking a heredoc that merely quotes a dangerous command is the
+    # cheaper mistake.
+    return [s.strip() for s in re.split(r"&&|\|\||;|\||\n", cmd) if s.strip()]
 
 
 def evaluate(command: str) -> Optional[str]:

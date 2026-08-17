@@ -30,3 +30,6 @@
 {"prompt": "Write release notes and a migration guide for the changes that just landed on this branch.", "expect": "technical-writer", "note": "developer-facing prose from a real diff"}
 {"prompt": "The setup steps in our README don't work anymore - half the commands fail on a fresh clone.", "expect": "documentation-engineer", "notOneOf": ["research-agent", "systematic-debugging"], "note": "drifted docs / broken onboarding path, not a code bug hunt"}
 {"prompt": "Document these REST endpoints: request and response shapes, auth scopes, and the error codes clients can expect.", "expect": "api-documenter", "note": "consumer-facing API reference from the implementation"}
+{"prompt": "Go back through my recent sessions and fold what you learned into my project memory - the corrections I made, the decisions we settled on, the preferences I keep repeating.", "expect": "dream", "note": "consolidation across many transcripts, not saving one fact"}
+{"prompt": "Memory consolidation is due for this project - it has been over 24h since the last one. Run it and rebuild the MEMORY.md index.", "expect": "dream", "note": "phrased the way the SessionStart nudge phrases it"}
+{"prompt": "Remember that I always want the dev server on port 4000.", "notOneOf": ["dream"], "note": "boundary: saving a single fact is the normal auto-memory path, not a consolidation pass"}
