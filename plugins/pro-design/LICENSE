@@ -4,15 +4,41 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
 
 - Owl-Listener/designer-skills (https://github.com/Owl-Listener/designer-skills)
   Copyright (c) 2026 MC Dean
-  Used for: design-token, accessibility-audit, motion-system, typography-scale
+  Used for: design-token, accessibility-audit, motion-system, typography-scale,
+  screen-critique (and its critique sidecars), perception-laws (and its
+  Gestalt / Von Restorff / visual-hierarchy sidecars)
 
 - agents-inc/skills (https://github.com/agents-inc/skills)
   Copyright (c) 2025 Vincent
   Used for: shadcn-ui-composition (from src/skills/web-ui-shadcn-ui/)
 
-The ui-ux-pro-max skill is an original BRIDGE file (no upstream content vendored).
-It points to the standalone `impeccable` skill (Apache-2.0, based on Anthropic's
-frontend-design skill), which is installed and licensed separately.
+- emilkowalski/skills (https://github.com/emilkowalski/skills)
+  Copyright (c) 2026 Emil Kowalski
+  Used for: emil-design-eng, animate (and RECIPES.md), apple-design,
+  animation-vocabulary
+
+- elayadesign/ai-design-skills (https://github.com/elayadesign/ai-design-skills)
+  Copyright (c) 2026 Elaya
+  Used for: landing-page-design
+
+- MengTo/Skills (https://github.com/MengTo/Skills)
+  Copyright (c) 2026 Meng To
+  Used for: build-awwwards-quality-sites
+
+- jakubkrehel/skills (https://github.com/jakubkrehel/skills)
+  Copyright (c) 2026 Jakub Krehel
+  Used for: interface-review (and its sidecars), better-interface (holistic
+  review and verdict layer), better-layout (and its sidecars)
+
+The `impeccable-bridge` skill is an original BRIDGE file (no upstream content
+vendored). It points to the standalone `impeccable` skill (Apache-2.0, based on
+Anthropic's frontend-design skill), which is installed and licensed separately.
+
+`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, and
+`taste-skills-bridge` are original BRIDGE files as well (no upstream content
+vendored). They point at ConardLi/garden-skills (web-design-engineer),
+codeswithroh/tastemaker, MengTo/Skills, and Leonxlnx/taste-skill respectively -
+all MIT, all installed and licensed separately in the target project.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

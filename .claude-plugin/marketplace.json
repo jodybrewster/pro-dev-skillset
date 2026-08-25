@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.35.0"
+    "version": "1.36.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "category": "development",
       "strict": true
     },
@@ -49,8 +49,8 @@
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills: design tokens, accessibility audit (WCAG 2.2 POUR), motion system, motion (Framer Motion implementation + discipline), typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass), taste-skills-bridge (routes to the Leonxlnx taste-skill library of anti-slop, visual-style, image-gen, and brand-kit skills via /taste-skills; not vendored), plus impeccable-bridge (a thin bridge to the standalone impeccable engine for the full end-to-end UI/UX pass — not vendored) and the /design-engine command to check, install, or update that engine. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.8.0",
+      "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /design-engine, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /taste-skills, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with the /design-skills command. Install figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.9.0",
       "category": "development",
       "strict": true
     },

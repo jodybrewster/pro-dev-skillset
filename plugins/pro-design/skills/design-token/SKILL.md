@@ -1,6 +1,6 @@
 ---
 name: design-token
-description: Define and organize design tokens (color, spacing, typography, elevation) with naming conventions and usage guidance.
+description: Define and organize tokens for color, spacing, type, and elevation with naming and usage rules. Use when establishing the token layer for a product or design system.
 ---
 # Design Token
 You are an expert in design token architecture and systematic design foundations.

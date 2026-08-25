@@ -28,10 +28,18 @@ Task arrives
   │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
   │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
-  │   ├ UI (full pass) ──────────────→ impeccable-bridge → impeccable engine (pro-design, bridge)
+  │   ├ UI, build new product UI ────→ emil-design-eng (pro-design; start here for components and screens)
+  │   ├ UI, conversion landing page ─→ landing-page-design (pro-design)
+  │   ├ UI, immersive marketing site → build-awwwards-quality-sites (pro-design), mengto-skills-bridge → video-to-superprompt and effect recipes (bridge: /design-skills install mengto)
+  │   ├ UI, reference-grounded look ─→ web-design-engineer-bridge → web-design-engineer engine (pro-design, bridge: /design-skills install garden)
+  │   ├ UI, match a reference's pixels → tastemaker-bridge → tastemaker engine (pro-design, bridge: /design-skills install tastemaker)
+  │   ├ UI, anti-slop styles / brand kit → taste-skills-bridge (pro-design, bridge: /taste-skills install)
+  │   ├ UI (full pass / redesign) ───→ impeccable-bridge → impeccable engine (pro-design, bridge: /design-engine install)
   │   ├ UI (one facet) ──────────────→ frontend-ui-engineering + pro-design skills
+  │   ├ UI, add motion to a built site → animate (pro-design); vague motion words → animation-vocabulary
+  │   ├ UI, Apple HIG feel ──────────→ apple-design (pro-design)
   │   ├ design doc (DESIGN.md) ──────→ stitch-skill (pro-design)
-  │   ├ UI polish (targeted) ─────────→ taste-skill (pro-design)
+  │   ├ UI polish (targeted) ────────→ taste-skill (pro-design)
   │   ├ video / programmatic render ──→ remotion (pro-motion)
   │   ├ complex animation sequence ───→ hyperframes (pro-motion)
   │   ├ marketing / hero animation ───→ gsap (pro-motion)
@@ -51,6 +59,10 @@ Task arrives
   │   ├ docs drifted from code / setup broken → documentation-engineer (pro-quality)
   │   └ API reference from real handlers ────→ api-documenter, /api-docs (pro-quality)
   ├ REVIEW: requesting/receiving-code-review, code-simplification, /code-review, /simplify (pro-quality)
+  │   ├ judge a rendered screen ─────→ screen-critique, /critique-screen (pro-design)
+  │   ├ review UI changes in a diff ─→ interface-review (pro-design)
+  │   ├ whole screen, one ranked verdict → better-interface (pro-design; uninstalled domains come back as Not reviewed)
+  │   └ fix spacing / alignment ─────→ better-layout (pro-design); grouping reads wrong → perception-laws
   ├ SECURITY: security-and-hardening / cso (pro-security)
   ├ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
@@ -63,9 +75,15 @@ Two branches in this router reference **planned plugins not yet built**: SECURIT
 Some entries are **bridges**, not vendored skills — thin routers that point to a heavier engine installed *outside* this marketplace. They only do work once that engine is present, so they ship an install/update command:
 
 - **`impeccable-bridge` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
+- **`taste-skills-bridge` (pro-design) → `Leonxlnx/taste-skill`** - anti-slop styles, visual-style presets, image generation, and brand kits. Install/update with **`/taste-skills [check|install|update]`**.
+- **`web-design-engineer-bridge` (pro-design) → `web-design-engineer`** - ConardLi/garden-skills' design engineer: it grounds a design in real references, carries style recipes for Apple, Linear, Vercel, Stripe and their neighbours, and scores the result so you can iterate against a number. Install/update with **`/design-skills [check|install|update] garden`**.
+- **`tastemaker-bridge` (pro-design) → `tastemaker`** - codeswithroh/tastemaker pulls tokens out of a reference image's real pixels with scripts, locks that style across the whole project, and gates the usual AI slop. Needs Python 3. Install/update with **`/design-skills [check|install|update] tastemaker`**.
+- **`mengto-skills-bridge` (pro-design) → `MengTo/Skills`** - a 130-skill library: scroll storytelling, WebGL, shader and 3D effects, style recipes, and `video-to-superprompt`, which turns a screen recording of a site into a prompt. Install/update with **`/design-skills [check|install|update] mengto`**.
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 - **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
+
+`/design-skills [check|install|update] [collection] [skill]` is the shared installer for the design collections. Its collection aliases are `emil`, `jakub`, `garden`, `mengto`, `tastemaker`, `elaya`, and `owl`, and it also installs the parts of each collection that pro-design does not vendor.
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -110,7 +128,10 @@ The pro-dev-specific rules are:
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, wt, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
+| Build | emil-design-eng, landing-page-design, build-awwwards-quality-sites, apple-design | pro-design | Start here for product UI; conversion landing page; immersive marketing site; Apple HIG feel |
+| Build | animate, animation-vocabulary, motion, motion-system | pro-design | Add motion to a built site, name it precisely, implement it, systematize it |
 | Build | impeccable-bridge (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
+| Build | web-design-engineer-bridge, tastemaker-bridge, mengto-skills-bridge, taste-skills-bridge | pro-design | Bridged engines: reference-grounded visuals, pixel-exact style lock, the Meng To effect library, anti-slop styles and brand kits (via `/design-skills`, `/taste-skills`) |
 | Build | stitch-skill (DESIGN.md), taste-skill (targeted polish) | pro-design | Design documentation + visual polish pass |
 | Build | remotion (video render), hyperframes (complex animation), gsap (marketing animation) | pro-motion | Motion and video |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
@@ -118,7 +139,8 @@ The pro-dev-specific rules are:
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
 | Verify | verification-before-completion | pro-quality | Gate before claiming done |
 | Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |
+| Review | screen-critique + /critique-screen, interface-review, better-interface, better-layout, perception-laws | pro-design | Judge a rendered screen, review UI changes in a diff, one ranked whole-screen verdict, fix layout, fix grouping |
 | Security | security-and-hardening, cso | pro-security (planned) | Hardening and security officer review |
 | Ship | ci-cd-and-automation, shipping-and-launch, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, launch, document, retire |
 | Research | lead-research | pro-research | ICP and lead profiling |
-| Design | design-token, motion, typography, shadcn, a11y | pro-design | Token system, animation, type, components, accessibility |
+| Design | design-token, typography-scale, shadcn-ui-composition, accessibility-audit | pro-design | Token system, type scale, components, accessibility |

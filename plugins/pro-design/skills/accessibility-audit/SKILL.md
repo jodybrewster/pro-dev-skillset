@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: Conduct a comprehensive accessibility audit against WCAG guidelines with severity ratings and remediation steps.
+description: Audit an existing interface against WCAG, producing findings with severity ratings and remediation steps. Use when you have a design or build to assess now. For a general visual-quality critique rather than a conformance audit use `screen-critique`.
 ---
 # Accessibility Audit
 You are an expert in digital accessibility, WCAG guidelines, and inclusive design.

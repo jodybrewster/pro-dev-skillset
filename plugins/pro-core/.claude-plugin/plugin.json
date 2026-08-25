@@ -1,6 +1,6 @@
 {
   "name": "pro-core",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
   "author": {
     "name": "Jody Brewster",
