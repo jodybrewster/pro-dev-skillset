@@ -86,4 +86,17 @@ TODO (recurring): check `obra/superpowers` for upstream changes to the forked sk
 - using-git-worktrees
 - subagent-driven-development
 
+`pro-design` skills are forked from six MIT upstreams and also do NOT auto-update.
+Check these once a quarter too:
+
+- [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) - `design-token`, `accessibility-audit`, `motion-system`, `typography-scale`, plus `screen-critique` (7 critique sidecars) and `perception-laws` (6 Gestalt laws, Von Restorff, visual hierarchy sidecars)
+- [emilkowalski/skills](https://github.com/emilkowalski/skills) - `emil-design-eng`, `animate` (+ `RECIPES.md`), `apple-design`, `animation-vocabulary`
+- [elayadesign/ai-design-skills](https://github.com/elayadesign/ai-design-skills) - `landing-page-design`
+- [MengTo/Skills](https://github.com/MengTo/Skills) - `build-awwwards-quality-sites`
+- [jakubkrehel/skills](https://github.com/jakubkrehel/skills) - `interface-review` (+ sidecars), `better-interface`, `better-layout` (+ sidecars)
+- [agents-inc/skills](https://github.com/agents-inc/skills) - `shadcn-ui-composition`
+
+Bridged engines are deliberately absent from this list.
+`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, and `taste-skills-bridge` vendor nothing, and `/design-skills check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
+
 If upstream has meaningful changes, port them in, bump the plugin version, and re-tag per the law above.

@@ -12,7 +12,7 @@
 {"prompt": "I want to write a durable committed end-to-end regression suite for CI.", "expect": "qa-suite", "notOneOf": ["agent-browser"]}
 {"prompt": "Before I tell the user this is done, double-check it really is.", "expect": "verification-before-completion"}
 {"prompt": "The app keeps crashing on save — help me find the root cause.", "expect": "systematic-debugging"}
-{"prompt": "Review my pull request and the diff on this branch.", "expect": ["requesting-code-review", "receiving-code-review"]}
+{"prompt": "Review my pull request and the diff on this branch.", "expect": ["requesting-code-review", "receiving-code-review"], "notOneOf": ["interface-review"], "note": "boundary: a code-diff review is not the pro-design UI-change review"}
 {"prompt": "I'm executing an already-approved plan — drive the implementation across subagents.", "expect": "subagent-driven-development"}
 {"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"]}
 {"prompt": "Set up the database schema and migrations with Drizzle.", "expect": ["drizzle-schema-definition", "drizzle-orm-architecture"]}
@@ -20,7 +20,7 @@
 {"prompt": "Render my plan as a reviewable HTML artifact I can annotate in the browser before we start building.", "expect": "lavish"}
 {"prompt": "Generate a brand kit for my startup: logo concepts, a color system, typography, and a few product mockups.", "expect": "taste-skills-bridge"}
 {"prompt": "Before we write any code, generate premium reference images for the marketing site hero and key sections.", "expect": "taste-skills-bridge"}
-{"prompt": "Generate a landing page from this brief that does not look like every other templated AI-built site.", "expect": ["taste-skills-bridge", "impeccable-bridge"]}
+{"prompt": "Generate a landing page from this brief that does not look like every other templated AI-built site.", "expect": ["taste-skills-bridge", "impeccable-bridge", "landing-page-design", "tastemaker-bridge"]}
 {"prompt": "Add a revenue chart to the analytics dashboard page.", "expect": ["dataviz"], "notOneOf": ["taste-skills-bridge", "impeccable-bridge", "taste-skill"]}
 {"prompt": "This paragraph reads like ChatGPT wrote it - make it sound human.", "expect": ["humanizer"]}
 {"prompt": "Create a new skill that captures our deploy checklist and measure how well it triggers.", "expect": ["skill-creator"], "notOneOf": ["find-skills"]}
@@ -33,3 +33,17 @@
 {"prompt": "Go back through my recent sessions and fold what you learned into my project memory - the corrections I made, the decisions we settled on, the preferences I keep repeating.", "expect": "dream", "note": "consolidation across many transcripts, not saving one fact"}
 {"prompt": "Memory consolidation is due for this project - it has been over 24h since the last one. Run it and rebuild the MEMORY.md index.", "expect": "dream", "note": "phrased the way the SessionStart nudge phrases it"}
 {"prompt": "Remember that I always want the dev server on port 4000.", "notOneOf": ["dream"], "note": "boundary: saving a single fact is the normal auto-memory path, not a consolidation pass"}
+{"prompt": "I'm building the settings screen for our app - components, empty and loading states, the whole thing. Make it look properly designed, not default.", "expect": "emil-design-eng", "notOneOf": ["impeccable-bridge", "landing-page-design"], "note": "start-here build of new product UI, not a redesign pass and not a marketing page"}
+{"prompt": "Design a landing page for our scheduling tool that actually converts - one clear call to action.", "expect": "landing-page-design", "note": "single-CTA conversion page"}
+{"prompt": "I want the marketing site to feel like an Awwwards winner - big immersive scroll storytelling, section by section.", "expect": ["build-awwwards-quality-sites", "mengto-skills-bridge"], "note": "immersive scroll-storytelling site"}
+{"prompt": "Add a custom cursor trail and a WebGL shader background to the hero, and turn this screen recording of a site I like into a prompt I can reuse.", "expect": "mengto-skills-bridge", "note": "specific effects plus video-to-superprompt from the Meng To library"}
+{"prompt": "Design this dashboard in the style of Linear, ground it in real reference sites rather than guessing, and score the result so I can iterate.", "expect": ["web-design-engineer-bridge", "impeccable-bridge"], "note": "reference-grounded visuals with a style recipe and a score"}
+{"prompt": "Here is a screenshot I love - pull its exact palette and spacing out of the image and keep that style locked across every screen we build.", "expect": "tastemaker-bridge", "notOneOf": ["taste-skills-bridge"], "note": "token extraction from a reference image's real pixels plus a project-wide style lock, not the anti-slop/brand-kit library"}
+{"prompt": "My site is already built. Add animations to it - work out what should move and what should stay still.", "expect": "animate", "notOneOf": ["motion-system", "gsap"], "note": "adding motion to an existing site, not defining a motion token scale or a GSAP marketing timeline"}
+{"prompt": "I want this to feel snappy but not bouncy. What does that actually mean in easing and duration terms?", "expect": "animation-vocabulary", "note": "vague motion words to exact animation terms"}
+{"prompt": "Make this screen follow Apple's design guidelines.", "expect": "apple-design", "note": "Apple HIG principles"}
+{"prompt": "Review the UI changes on this branch and tell me what regressed visually.", "expect": "interface-review", "notOneOf": ["requesting-code-review"], "note": "UI-change review over a diff with regression detection, not a code review"}
+{"prompt": "Critique this screenshot for me - what's wrong with the hierarchy and the spacing?", "expect": "screen-critique", "note": "judge a rendered screen"}
+{"prompt": "Nothing lines up on this page. Fix the spacing and the alignment.", "expect": "better-layout", "note": "pixel-level spacing and alignment fixes"}
+{"prompt": "Users keep misreading which items belong together on this screen. Apply proper grouping principles.", "expect": ["perception-laws", "better-layout"], "note": "Gestalt grouping and visual hierarchy; better-layout is defensible since the two cross-reference each other"}
+{"prompt": "Review this whole screen across accessibility, layout, typography, colour, and copy and give me one ranked verdict.", "expect": ["better-interface", "screen-critique"], "note": "holistic consolidation across the better-* family into a single verdict"}

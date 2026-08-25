@@ -32,7 +32,7 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `references` | every `@sidecar.md` and relative `.md` link resolves on disk | dangling sidecar references |
 | `wikilinks` | every `[[slug]]` resolves to a real skill or a known bridge target | broken memory-style links |
 | `router` | every route target in `using-pro-dev`'s diagram is a real/planned/external/command slug; warns on shipped skills the router never mentions | router drift |
-| `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
+| `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`, `web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
 | `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist and are tracked by git; event names are valid | an unloaded hook file, a missing hook script, a misspelled event; an existing-but-untracked hook script warns locally and fails when `CI` is set |
 | `git-safe` | runs the real `pro-core/scripts/git-safe.py` once per case (PreToolUse payload on stdin) and asserts its block/allow exit code | a wrong block or allow decision; no `python3` = warning-level skip |
 | `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
@@ -97,9 +97,12 @@ Distractor slugs are valid in `expect`/`notOneOf`.
 
 ### Bridge install smoke test (`bridge-install-smoke.mjs`)
 
-Network-dependent: proves `npx skills add https://github.com/Leonxlnx/taste-skill`
-(the vercel-labs/agent-skills CLI behind `taste-skills-bridge`) actually
-installs its 13 skills with valid frontmatter into a fresh temp dir.
+Network-dependent: proves the `npx skills add` targets behind the pro-design
+bridges actually install with valid frontmatter into a fresh temp dir. It now
+covers several collections, not only the original one:
+`Leonxlnx/taste-skill` (13 skills, behind `taste-skills-bridge`),
+`ConardLi/garden-skills` `web-design-engineer`, `MengTo/Skills`
+`video-to-superprompt`, and `codeswithroh/tastemaker`.
 
 ```bash
 node tests/bridge-install-smoke.mjs
