@@ -29,8 +29,10 @@ from Claude Code, not introduced here.
 
 The trigger is time-based only: due when the interval has elapsed since the last
 successful consolidation, and only for a project that has memory notes to fold
-in. The MEMORY.md index is not notes - it is what consolidation writes - so a
-directory holding nothing else is never due. There is no session counting.
+in. Neither the MEMORY.md index nor the daily/ session ledger is notes - one is
+what consolidation writes, the other records where signal is rather than what it
+says - so a directory holding nothing else is never due. There is no session
+counting.
 
 Environment:
     PRO_DEV_DREAM_INTERVAL_HOURS   interval override, float hours (default 24)
@@ -67,6 +69,7 @@ PROJECTS_HOME = "~/.claude/projects"
 STATE_HOME = "~/.claude/pro-dev/dream"
 MARKER_NAME = ".last-dream"
 INDEX_NAME = "MEMORY.md"
+DAILY_DIR_NAME = "daily"
 
 
 def disabled() -> bool:
@@ -129,17 +132,30 @@ def memory_dir(project_dir: str) -> str | None:
 def has_memory_content(mem_dir: str) -> bool:
     """True when there is at least one memory note worth consolidating.
 
-    MEMORY.md does not count. It is the index a consolidation writes, not input
-    it reads, so a directory holding only the index has nothing to fold in.
-    Counting it left such a project due forever: it nudged, the run had nothing
-    to do, and the next session start nudged again. Narrowing what counts as
-    content can only ever make a project quieter, never noisier. The name is
-    compared case-insensitively because case-insensitive filesystems will hand
-    back memory.md for the same file.
+    Two things in this directory do not count, for the same reason: neither is
+    something a consolidation can fold in.
+
+    MEMORY.md is the index a consolidation writes, not input it reads, so a
+    directory holding only the index has nothing to do. Counting it left such a
+    project due forever: it nudged, the run had nothing to do, and the next
+    session start nudged again. The name is compared case-insensitively because
+    case-insensitive filesystems hand back memory.md for the same file.
+
+    The `daily/` ledger written by daily-log.py is an index of which sessions
+    ran and where their transcripts were. It records where signal is, not what
+    was learned, so promoting it yields nothing and it would reintroduce exactly
+    the same forever-nudge. Only the top-level ledger directory is pruned, so a
+    real note filed deeper under that name still counts.
+
+    Narrowing what counts as content can only ever make a project quieter, never
+    noisier.
     """
     index = INDEX_NAME.lower()
+    root_dir = os.path.abspath(mem_dir)
     try:
-        for _root, _dirs, files in os.walk(mem_dir):
+        for root, dirs, files in os.walk(mem_dir):
+            if os.path.abspath(root) == root_dir:
+                dirs[:] = [d for d in dirs if d != DAILY_DIR_NAME]
             for name in files:
                 if name.endswith(".md") and name.lower() != index:
                     return True
