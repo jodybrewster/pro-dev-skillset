@@ -169,6 +169,28 @@ checks.versions = (m) => {
         failures.push(`${p.name}: dependency ${depName}@${range} not satisfied by installed ${have}`);
     }
   }
+  // Cross-marketplace deps must not use a "*" constraint.
+  //
+  // When an upstream plugin.json omits `version`, Claude Code falls back to the
+  // marketplace's git commit SHA as the plugin's version string. The dependency
+  // resolver cannot match a SHA against any range - "*" included - so the
+  // dependent plugin fails to load with "Requires <dep> *, installed version
+  // unknown" even though the dependency is installed and enabled. This bit
+  // pro-execution and pro-starter via worktrunk@worktrunk.
+  //
+  // Install cross-marketplace companions explicitly from
+  // templates/install-companions.sh instead of declaring a hard dependency.
+  for (const p of m.plugins) {
+    for (const dep of p.manifest?.dependencies ?? []) {
+      if (typeof dep !== "object" || !dep.marketplace) continue;
+      if (dep.marketplace === "pro-dev-skillset") continue;
+      if (dep.version === "*" || dep.version == null)
+        failures.push(
+          `${p.name}: cross-marketplace dependency ${dep.name}@${dep.marketplace} uses a "*" constraint - ` +
+          `it resolves to "unknown" and blocks plugin load. Install it via templates/install-companions.sh instead.`
+        );
+    }
+  }
   return { failures, warnings };
 };
 

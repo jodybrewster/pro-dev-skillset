@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
-# Install pro-dev-skillset's official cross-marketplace dependencies.
+# Install pro-dev-skillset's cross-marketplace companion plugins.
 #
-# The pro-* plugins declare these as dependencies. This script is useful as an
-# explicit pre-install/fallback path for Claude Code versions that do not
-# auto-install cross-marketplace dependencies correctly:
+# The pro-* plugins declare the claude-plugins-official ones as dependencies.
+# This script is useful as an explicit pre-install/fallback path for Claude Code
+# versions that do not auto-install cross-marketplace dependencies correctly:
 #
 #   - vercel    : Next.js / Vercel deployment workflows  (paired with pro-nextjs)
 #   - figma     : Figma asset extraction + design lookup (paired with pro-nextjs)
 #   - playwright: browser E2E testing                    (paired with pro-quality/pro-testing)
+#
+# worktrunk is deliberately NOT declared as a dependency by any pro-* plugin.
+# The worktrunk marketplace's plugin.json ships no `version` field, so Claude
+# Code falls back to the marketplace git commit SHA as the version string. The
+# dependency resolver cannot match a SHA against any range - "*" included - so
+# a plugin that depends on it fails to load with "Requires worktrunk@worktrunk
+# *, installed version unknown" even when worktrunk is installed and enabled.
+# This script installs it explicitly instead, which sidesteps the resolver.
+#
 #   - worktrunk : parallel worktree management           (paired with pro-execution)
 #
 # Usage:

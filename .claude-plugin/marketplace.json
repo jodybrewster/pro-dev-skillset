@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.37.0"
+    "version": "1.38.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -25,8 +25,8 @@
     {
       "name": "pro-execution",
       "source": "./plugins/pro-execution",
-      "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety. Also installs worktrunk from the worktrunk marketplace via install-companions.sh.",
-      "version": "0.3.2",
+      "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety. worktrunk is an optional companion, not a hard dependency - install it with templates/install-companions.sh or `brew install worktrunk`.",
+      "version": "0.3.3",
       "category": "development",
       "strict": true
     },
@@ -113,8 +113,8 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, and research) plus worktrunk",
-      "version": "1.10.0",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, and research). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
+      "version": "1.10.1",
       "category": "development",
       "strict": true
     }
