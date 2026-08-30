@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 import { runGitSafeCases } from "./git-safe.mjs";
+import { runMemoryHookCases } from "./memory-hooks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -520,6 +521,41 @@ checks["git-safe"] = () => {
     failures.push(
       `git-safe.py ${r.id}: expected ${r.expect}, hook ${verb} it (exit ${r.status}) - command: ${JSON.stringify(r.command)}`
     );
+  }
+  return { failures, warnings };
+};
+
+// memory hook behaviour (pro-core's dream/session-ledger hooks). The `hooks`
+// check above proves these hooks are wired into hooks/hooks.json and point at
+// scripts that exist on disk; it says nothing about whether those scripts
+// decide correctly. This runs the real case table against the actual hook
+// scripts - the same payload-in / exit-code-out shape as git-safe above - and
+// asserts each expected outcome. It locks down one regression that was
+// invisible to every existing check: the daily session ledger lives inside
+// the memory directory itself, so if dream-timer.has_memory_content() counted
+// the ledger file as memory content, every project would fall due at every
+// interval and nudge forever with nothing ever eligible to promote - a
+// permanently-firing false positive that no check on file wiring could catch,
+// because the ledger file genuinely exists and the hook genuinely runs.
+//
+// The case table lives in tests/memory-hooks.mjs (also runnable standalone);
+// this imports its runner so the cases exist in one place. No python3 / no
+// hook scripts is a warning-level skip, so a runner without a Python
+// interpreter never turns the gate red over a missing dependency.
+checks["memory-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runMemoryHookCases();
+  if (skipped) {
+    warnings.push(`memory hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/memory-hooks.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) {
+    if (r.ok) continue;
+    failures.push(`memory-hooks ${r.id}: ${r.detail}`);
   }
   return { failures, warnings };
 };
