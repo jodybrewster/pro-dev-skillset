@@ -199,6 +199,22 @@ Find what recent sessions established that memory does not yet know.
 
 Scope to transcripts modified inside your window, default seven days.
 
+There are two ways to find them, and the ledger is the precise one.
+
+`daily-log.py` writes `<memory dir>/daily/YYYY-MM-DD.md` at every turn end.
+Each file lists the sessions that ran that day, with the transcript path recorded while that transcript still existed.
+Reading the ledger files inside your window names exactly the sessions to scan, already dated, with no inference from file mtimes.
+
+```bash
+ls "$MEM/daily"/*.md 2>/dev/null | sort | tail -7
+```
+
+The ledger records where signal is, never what was learned.
+A shell hook has no model, so it does not summarise and it never claims a session decided anything.
+It narrows the search; it does not replace the reading.
+
+Fall back to the filesystem when there is no ledger, which is every project that has not run a session since the ledger shipped.
+
 ```bash
 find "$PROJ" -maxdepth 2 -name '*.jsonl' -mtime -7 | sort
 ```
@@ -264,8 +280,17 @@ Writing rules:
 - Keep existing frontmatter intact. `name`, `description`, and the provenance keys survive every rewrite, in the shape the file already uses - `metadata.originSessionId` for the nested shape, top-level `type` and `originSessionId` for the flat one. When merging, keep the surviving file's `originSessionId` and name the merged session in the body.
 - One claim per memory file. If a file has grown two unrelated claims, split it.
 - New files follow the local naming convention - `<type>_<slug>.md` under native.
-- `description` is one line and says what the memory is for, so future retrieval finds it.
+- `description` is one line and says what the memory is for, so future retrieval finds it. It is also what the recall hook ranks against, so write it as the question it should answer.
+- Preserve the deciding words. A correction or a decision keeps one verbatim sentence from the session that settled it, quoted, beside your paraphrase.
 - Read a file before editing it.
+
+That last rule is the one most easily lost, because consolidation is compression and the exact wording of a decision is the first thing compression throws away.
+It is also the wording someone goes looking for months later, when the question is what we decided and why rather than what the rule currently is.
+The paraphrase carries the conclusion; the quote carries the reasoning, in the words of whoever settled it.
+
+Quote one sentence, not a passage, and attribute it with the session id and the absolute date Phase 2 already recorded.
+Never invent, tidy, or reconstruct a quote from memory of the gist.
+If you cannot find the exact sentence in the transcript, write the paraphrase alone and leave the quote out - a fabricated quote is worse than no quote, because it reads as evidence.
 
 ## Phase 4 - prune and index
 
