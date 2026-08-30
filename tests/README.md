@@ -1,4 +1,4 @@
-# tests/ — marketplace test + eval harness
+# tests/ - marketplace test + eval harness
 
 Zero-dependency checks for `pro-dev-skillset`. Most of what the marketplace
 ships is content, so these mostly validate the **content contract**: Claude and
@@ -6,7 +6,7 @@ Codex manifests, frontmatter, the version-bump law, cross-skill references, and
 the `using-pro-dev` router. The hook scripts are the exception - they are real
 executable code, so `git-safe.py` also gets a **behaviour** test that runs it.
 
-Everything runs on plain Node ≥ 18 — no `npm install`, no toolchain.
+Everything runs on plain Node ≥ 18 - no `npm install`, no toolchain.
 
 ## Run it here (the marketplace repo)
 
@@ -14,6 +14,7 @@ Everything runs on plain Node ≥ 18 — no `npm install`, no toolchain.
 node tests/check.mjs          # every check         (alias: npm test)
 node tests/check.mjs versions # one check by name
 node tests/git-safe.mjs       # the git-safe hook cases, standalone + verbose
+node tests/memory-hooks.mjs   # the memory-hook cases (recall + ledger), standalone
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
 ```
@@ -35,6 +36,7 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`, `web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
 | `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist and are tracked by git; event names are valid | an unloaded hook file, a missing hook script, a misspelled event; an existing-but-untracked hook script warns locally and fails when `CI` is set |
 | `git-safe` | runs the real `pro-core/scripts/git-safe.py` once per case (PreToolUse payload on stdin) and asserts its block/allow exit code | a wrong block or allow decision; no `python3` = warning-level skip |
+| `memory-hooks` | runs the real `memory-recall.py` and `daily-log.py` once per case (hook JSON payload on stdin, sandboxed `HOME`) and asserts recall/ledger/timer-gate behaviour | a wrong recall or ledger decision, or `dream-timer.has_memory_content()` counting the daily ledger as memory content; no `python3` = warning-level skip |
 | `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
 | `eval-coverage` | every shipped skill and subagent is named by at least one `expect` in `routing.jsonl` | never fails; warns so untested routing stays visible |
 
@@ -52,7 +54,7 @@ The **live** eval never runs in CI - `.github/workflows/validate.yml` runs
 
 Roadmap skills the router intentionally names (pro-security, pro-ship, the
 Phase 4–7 build folds) live in the `PLANNED` allowlist at the top of
-`check.mjs` — trim each as it lands so drift re-arms.
+`check.mjs` - trim each as it lands so drift re-arms.
 
 ### Hook behaviour test (`git-safe.mjs`)
 
@@ -70,6 +72,36 @@ node tests/check.mjs git-safe          # the same cases, as the gated check
 The case table lives in `git-safe.mjs` only.
 `check.mjs` imports its `runGitSafeCases()` runner and reports the results as the `git-safe` check, so the cases are part of the required PR gate rather than something you have to remember to run.
 Failures are real failures; a missing `python3` is a warning-level skip, so a runner without a Python interpreter never goes red over a missing dependency.
+
+### Hook behaviour test (`memory-hooks.mjs`)
+
+The `hooks` check proves `memory-recall.py` and `daily-log.py` are wired into `hooks/hooks.json` and point at scripts that exist on disk.
+It cannot prove either script decides correctly - that recall actually ranks and injects the right memory note, or that the ledger actually writes what it claims to write.
+
+So `memory-hooks.mjs` drives the real `memory-score.py`, `memory-recall.py`, and `daily-log.py` scripts the way Claude Code does - one `python3` process per case, the hook's JSON payload on stdin, stdout and exit code read back.
+
+Cases split into three families.
+Recall behaviour: a prompt relevant to a stored memory note injects that note's body, an unrelated prompt injects nothing, an archived memory is excluded even when it would otherwise score highest, and `MEMORY.md` itself is never injected, since it is the index and not a note.
+Ledger behaviour: a session writes exactly one dated entry under `<memory dir>/daily/YYYY-MM-DD.md`, a later turn in the same session increments that entry's turn count instead of duplicating it, and the hook never creates a memory directory that did not already exist.
+The timer regression is the reason this suite exists: the daily ledger lives inside the memory directory it logs for, and if `dream-timer.has_memory_content()` counted the ledger file as memory content, every project would fall due at every interval and nudge forever with nothing ever eligible to promote.
+That is the exact failure the content gate in `dream-timer.py` was written to prevent, and no existing check would have caught it - `hooks` only proves the script is wired up, not that it counts correctly.
+
+`--plugin-root` matters because the same case table runs against two different trees.
+`check.mjs` runs it against the source tree in `plugins/pro-core/scripts/`, on every PR, which proves the logic itself is correct.
+`demo/setup.sh` runs it again with `--plugin-root` pointed at the installed copy in the plugin cache, which proves the version-bump law actually served fresh content into a real install rather than a stale cached copy.
+
+```bash
+node tests/memory-hooks.mjs                            # every case
+node tests/memory-hooks.mjs --only=ledger              # substring filter on case id
+node tests/memory-hooks.mjs --plugin-root=/abs/path    # run against an installed copy
+node tests/check.mjs memory-hooks                      # the same cases, as the gated check
+```
+
+The case table lives in `memory-hooks.mjs` only.
+`check.mjs` imports its `runMemoryHookCases()` runner and reports the results as the `memory-hooks` check, so the cases are part of the required PR gate rather than something you have to remember to run.
+Failures are real failures; a missing `python3` is a warning-level skip, same as `git-safe`.
+
+All cases run inside a disposable sandbox `HOME` and never touch the developer's real `~/.claude` memory files.
 
 ### Routing evals (`eval.mjs`)
 

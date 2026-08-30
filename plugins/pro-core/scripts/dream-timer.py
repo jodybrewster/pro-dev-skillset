@@ -144,21 +144,29 @@ def has_memory_content(mem_dir: str) -> bool:
     The `daily/` ledger written by daily-log.py is an index of which sessions
     ran and where their transcripts were. It records where signal is, not what
     was learned, so promoting it yields nothing and it would reintroduce exactly
-    the same forever-nudge. Only the top-level ledger directory is pruned, so a
-    real note filed deeper under that name still counts.
+    the same forever-nudge.
+
+    Only the ledger's own files are skipped - the ones daily-log.py writes, which
+    sit directly in `<mem_dir>/daily/`. The walk still descends past them, so a
+    real note filed at `daily/sub/note.md` counts. Pruning the directory out of
+    os.walk's `dirs` instead would stop the descent entirely and silently hide
+    anything nested under it, which is the wrong way to be wrong: an extra nudge
+    costs one dry run, while memory that consolidation cannot see is lost.
 
     Narrowing what counts as content can only ever make a project quieter, never
     noisier.
     """
     index = INDEX_NAME.lower()
-    root_dir = os.path.abspath(mem_dir)
+    ledger_dir = os.path.join(os.path.abspath(mem_dir), DAILY_DIR_NAME)
     try:
-        for root, dirs, files in os.walk(mem_dir):
-            if os.path.abspath(root) == root_dir:
-                dirs[:] = [d for d in dirs if d != DAILY_DIR_NAME]
+        for root, _dirs, files in os.walk(mem_dir):
+            in_ledger = os.path.abspath(root) == ledger_dir
             for name in files:
-                if name.endswith(".md") and name.lower() != index:
-                    return True
+                if not name.endswith(".md") or name.lower() == index:
+                    continue
+                if in_ledger:
+                    continue  # a dated ledger file, not a note
+                return True
     except OSError:
         return False
     return False
