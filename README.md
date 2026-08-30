@@ -51,13 +51,20 @@ Then open Codex in the project and run `/skills` to confirm the pro-dev skills a
 
 ### Optional
 
-These `claude-plugins-official` plugins are declared as cross-marketplace dependencies by the relevant `pro-*` plugins. They install automatically with the corresponding plugin — or manually via the helper script.
+These `claude-plugins-official` plugins are declared as cross-marketplace dependencies by the relevant `pro-*` plugins. They install automatically with the corresponding plugin - or manually via the helper script.
 
 | Tool | Installed by | When you need it |
 |---|---|---|
 | `vercel@claude-plugins-official` | `pro-nextjs` | Next.js / Vercel deployment workflows |
 | `figma@claude-plugins-official` | `pro-design`, `pro-nextjs` | Design lookup and asset extraction |
 | `playwright@claude-plugins-official` | `pro-quality`, `pro-testing` | Browser E2E testing |
+| `worktrunk@worktrunk` | install script only (see below) | Activity tracking and config guidance for the `wt` CLI |
+
+`worktrunk@worktrunk` is installed by the helper script but is deliberately **not** declared as a dependency of any `pro-*` plugin.
+The worktrunk marketplace's `plugin.json` ships no `version` field, so Claude Code falls back to the marketplace git commit SHA as the version string.
+The dependency resolver cannot match a SHA against any range, `*` included, so any plugin depending on it fails to load with `Requires worktrunk@worktrunk *, installed version unknown` even when worktrunk is installed and enabled.
+Installing it explicitly sidesteps the resolver entirely.
+`node tests/check.mjs versions` fails if a `*` cross-marketplace dependency is ever reintroduced.
 
 If a Claude Code version does not auto-install cross-marketplace dependencies correctly, run the helper script explicitly:
 
