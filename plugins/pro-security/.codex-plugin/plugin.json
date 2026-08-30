@@ -1,0 +1,6 @@
+{
+  "name": "pro-security",
+  "version": "0.1.0",
+  "description": "The Security phase: security-audit, a read-only whole-repository audit covering secrets archaeology, dependency supply chain, CI/CD exposure, container and IaC misconfiguration, webhook and integration gaps, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10, and STRIDE threat modeling. Findings carry a confidence score, quoted evidence, and a concrete exploit path. Ships the security-auditor subagent for independent finding verification. Adapted from the cso skill in garrytan/gstack.",
+  "skills": "./skills/"
+}

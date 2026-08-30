@@ -28,7 +28,7 @@ const PLANNED = new Set([
   "api-and-interface-design", "source-driven-development",
   "context-engineering", "doubt-driven-development",
   "frontend-ui-engineering", "code-simplification",
-  "performance-optimization", "security-and-hardening",
+  "performance-optimization",
   "ci-cd-and-automation", "shipping-and-launch",
   "documentation-and-adrs", "deprecation-and-migration",
 ]);
@@ -39,7 +39,7 @@ const EXTERNAL = new Set([
   "web-design-engineer", "tastemaker", "ideagram", "video-to-superprompt",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills", "security-audit", "security-review"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.

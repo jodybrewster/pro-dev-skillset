@@ -47,3 +47,9 @@
 {"prompt": "Nothing lines up on this page. Fix the spacing and the alignment.", "expect": "better-layout", "note": "pixel-level spacing and alignment fixes"}
 {"prompt": "Users keep misreading which items belong together on this screen. Apply proper grouping principles.", "expect": ["perception-laws", "better-layout"], "note": "Gestalt grouping and visual hierarchy; better-layout is defensible since the two cross-reference each other"}
 {"prompt": "Review this whole screen across accessibility, layout, typography, colour, and copy and give me one ranked verdict.", "expect": ["better-interface", "screen-critique"], "note": "holistic consolidation across the better-* family into a single verdict"}
+{"prompt": "Can you do a security audit of this repo?", "expect": "security-audit"}
+{"prompt": "I want a threat model for this service before we launch.", "expect": "security-audit"}
+{"prompt": "Check whether we've ever committed an API key to git history.", "expect": "security-audit"}
+{"prompt": "Run an OWASP Top 10 review over the codebase.", "expect": "security-audit"}
+{"prompt": "Are any of the Claude skills I have installed doing anything sketchy with my env vars?", "expect": "security-audit"}
+{"prompt": "The scanner flagged api/webhooks.ts:24 as a vulnerability. Is that actually real or a false positive?", "expect": "security-auditor"}

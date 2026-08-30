@@ -1,0 +1,9 @@
+{
+  "name": "pro-security",
+  "version": "0.1.0",
+  "description": "The Security phase: security-audit, a read-only whole-repository audit covering secrets archaeology in git history, dependency supply chain, CI/CD pipeline exposure, container and IaC misconfiguration, webhook and integration gaps, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10, and STRIDE threat modeling. Findings carry a confidence score, a quoted line of evidence, and a concrete exploit path, filtered through hard false-positive rules so the report stays short enough to read. Ships the security-auditor subagent, which judges each candidate finding independently without seeing the reasoning that produced it, plus /security-audit. Adapted from the cso skill in garrytan/gstack.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  }
+}

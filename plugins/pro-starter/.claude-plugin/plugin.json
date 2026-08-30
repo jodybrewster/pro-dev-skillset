@@ -1,7 +1,7 @@
 {
   "name": "pro-starter",
-  "version": "1.10.1",
-  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + nextjs + design + motion + testing + data + research",
+  "version": "1.11.0",
+  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + nextjs + design + motion + testing + data + research + security",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
@@ -16,6 +16,7 @@
     { "name": "pro-motion", "version": "*" },
     { "name": "pro-testing", "version": "*" },
     { "name": "pro-data", "version": "*" },
-    { "name": "pro-research", "version": "*" }
+    { "name": "pro-research", "version": "*" },
+    { "name": "pro-security", "version": "*" }
   ]
 }

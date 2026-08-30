@@ -22,7 +22,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 ## 1. Installed plugin inventory
 
 - Run `claude plugin list` and capture which `pro-*` plugins from this marketplace are installed and at what version.
-- The **default stack** that should be present: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-data`, `pro-testing`, `pro-research`, and `pro-starter`. Opt-in plugins (`pro-spdd`, `pro-gstack`) are present only if the user chose them — note them, don't fail on absence.
+- The **default stack** that should be present: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`, and `pro-starter`. Opt-in plugins (`pro-spdd`, `pro-gstack`) are present only if the user chose them — note them, don't fail on absence.
 - Report each as installed (with version) or missing.
 
 ## 2. Strict validation
@@ -60,7 +60,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 
 ## Summary
 
-Print a compact report: default-stack coverage (n/10), whether `.claude/skills/lavish/SKILL.md` exists, any validation failures, any routing mismatches, and a one-line verdict (`healthy` / `needs attention`). Point the user at `claude plugin update` to refresh stale plugins and at the relevant `/...-engine` command for any missing bridge engine.
+Print a compact report: default-stack coverage (n/12), whether `.claude/skills/lavish/SKILL.md` exists, any validation failures, any routing mismatches, and a one-line verdict (`healthy` / `needs attention`). Point the user at `claude plugin update` to refresh stale plugins and at the relevant `/...-engine` command for any missing bridge engine.
 
 Add one memory line from step 5: whether this project has auto-memory, the `MEMORY.md` line count against the 200-line target, whether consolidation is due, and whether both `dream` hooks are registered.
 Recommend `/dream dry-run` when consolidation is due or the index is over budget, since consolidation rewrites memory files.
