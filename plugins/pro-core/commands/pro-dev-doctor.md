@@ -22,7 +22,7 @@ Run the steps below and report a short pass/fail summary at the end. Do not modi
 ## 1. Installed plugin inventory
 
 - Run `claude plugin list` and capture which `pro-*` plugins from this marketplace are installed and at what version.
-- The **default stack** that should be present: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`, and `pro-starter`. Opt-in plugins (`pro-spdd`, `pro-legal`) are present only if the user chose them — note them, don't fail on absence.
+- The **default stack** that should be present: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`, and `pro-starter`. Opt-in plugins (`pro-spdd`, `pro-legal`) are present only if the user chose them — note them, don't fail on absence.
 - Report each as installed (with version) or missing.
 
 ## 2. Strict validation

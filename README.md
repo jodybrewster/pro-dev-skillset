@@ -27,7 +27,7 @@ One-line bootstrap for Claude Code inside a fresh project:
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-This installs `pro-starter` — the meta-plugin that pulls the full default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, and the `pro-nextjs` marker plugin. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
+This installs `pro-starter`, the meta-plugin that pulls the full default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, `pro-security` and the `pro-nextjs` and `pro-astro` framework plugins. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
 
@@ -57,10 +57,14 @@ Install them with `templates/install-companions.sh` or `bootstrap.sh --with-comp
 
 | Tool | Pairs with | When you need it |
 |---|---|---|
-| `vercel@claude-plugins-official` | `pro-nextjs` | Next.js / Vercel deployment workflows |
+| `vercel@claude-plugins-official` | `pro-nextjs`, `pro-astro` | Next.js and Astro deployment workflows on Vercel |
 | `figma@claude-plugins-official` | `pro-design`, `pro-nextjs` | Design lookup and asset extraction |
 | `playwright@claude-plugins-official` | `pro-quality`, `pro-testing` | Browser E2E testing |
 | `worktrunk@worktrunk` | `pro-execution` | Activity tracking and config guidance for the `wt` CLI |
+
+The official Cloudflare plugin pairs with `pro-astro`'s `astro-on-cloudflare` skill (Wrangler, Workers best practices, web-perf and the Cloudflare MCP server).
+It lives in its own marketplace and is not installed by `install-companions.sh`; add it by hand when a project deploys to Cloudflare: `/plugin marketplace add cloudflare/skills` then `/plugin install cloudflare@cloudflare`.
+The `pro-astro` skills also use the official Astro Docs MCP server when it is configured: `claude mcp add --transport http astro-docs https://mcp.docs.astro.build/mcp`.
 
 `worktrunk@worktrunk` is not a declared dependency either.
 The worktrunk marketplace's `plugin.json` ships no `version` field, so Claude Code falls back to the marketplace git commit SHA as the version string.
@@ -103,7 +107,7 @@ bash templates/codex-bootstrap.sh --source /Users/jodybrewster/Projects/pro-dev-
 The script clones or updates this private repository through `gh` at
 `~/.codex/marketplaces/pro-dev-skillset`, adds that local checkout as a Codex plugin marketplace,
 installs the default stack
-(`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-motion`,
+(`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`,
 `pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`, `pro-legal`)
 disabled unless you pass `--with-opt-in`. It also installs project-local Lavish at
 `.claude/skills/lavish/SKILL.md` and the project command at `.claude/commands/lavish.md` unless you
@@ -120,6 +124,7 @@ codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
 codex plugin add pro-nextjs@pro-dev-skillset
+codex plugin add pro-astro@pro-dev-skillset
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset
@@ -229,13 +234,14 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-pdd`** — Define + Plan skills included in `pro-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
-**Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
+**Framework plugins (skills trigger from file context in projects that use the framework):**
 
-- **`pro-nextjs`** — Next.js / Vercel projects. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
+- **`pro-nextjs`** - Next.js projects: `next-best-practices`, `next-upgrade`, `next-cache-components` and `shadcn`, adapted from vercel-labs/next-skills. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
+- **`pro-astro`** - Astro projects: `astro-best-practices` (auto-applied guardrails), `astro-upgrade` (Astro 5 to 6 to 7 and adapter majors), `astro-on-cloudflare` (`@astrojs/cloudflare` on Workers) and `astro-on-vercel` (`@astrojs/vercel`). The content is original, written from the official Astro, Cloudflare and Vercel docs. Pairs with the official Astro Docs MCP server and, on Cloudflare, the official `cloudflare/skills` plugin.
 
 **Meta:**
 
-- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd` is opt-in.
+- **`pro-starter`** - pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-nextjs` + `pro-astro`. One install ⇒ the full default stack. `pro-spdd` is opt-in.
 
 ### Layout
 
@@ -246,7 +252,8 @@ plugins/
   pro-core/                          # universal base skills + hooks
   pro-execution/                     # TDD/debug/worktree/subagent execution skills
   pro-quality/                       # quality skills + review/verify commands
-  pro-nextjs/                        # marker plugin, no skills
+  pro-nextjs/                        # Next.js skills
+  pro-astro/                         # Astro skills (core, upgrade, Cloudflare, Vercel)
   pro-design/                        # design skills
   pro-testing/                       # testing skills
   pro-data/                          # data/auth skills + schema formatting hook
@@ -312,6 +319,7 @@ codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
 codex plugin add pro-nextjs@pro-dev-skillset
+codex plugin add pro-astro@pro-dev-skillset
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset

@@ -109,7 +109,7 @@ plugins/<name>/
   LICENSE                        # required when content is forked
 ```
 
-Empty marker plugins (`pro-nextjs`, `pro-starter`) intentionally have no `skills/` — they exist as category slots / dep aggregators.
+The `pro-starter` meta-plugin intentionally has no `skills/` - it exists as a dependency aggregator.
 
 ## Pre-commit install test (required before every commit + push)
 
