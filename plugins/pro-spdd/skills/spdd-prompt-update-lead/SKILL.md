@@ -1,6 +1,6 @@
 ---
 name: "spdd-prompt-update-lead"
-description: "Update an existing SPDD prompt file with new requirements or architectural changes while preserving the REASONS Canvas structure. Use when the user asks for spdd-prompt-update, SPDD prompt update, or the corresponding Structured Prompt-Driven Development phase."
+description: "Update an existing SPDD prompt file with new requirements or architectural changes while preserving the REASONS Canvas structure. Use when the user runs /spdd-prompt-update or asks for SPDD prompt update, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-prompt-update-lead

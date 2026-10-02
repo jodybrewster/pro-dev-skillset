@@ -1,6 +1,6 @@
 ---
 name: "spdd-code-review-lead"
-description: "Review AI-generated code against REASONS-Canvas structured prompts, detecting intent drift, safeguard violations, and scope boundary issues to reduce human reviewer cognitive load. Use when the user asks for spdd-code-review, SPDD code review, or the corresponding Structured Prompt-Driven Development phase."
+description: "Review AI-generated code against REASONS-Canvas structured prompts, detecting intent drift, safeguard violations, and scope boundary issues to reduce human reviewer cognitive load. Use when the user runs /spdd-code-review or asks for SPDD code review, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-code-review-lead

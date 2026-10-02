@@ -1,6 +1,6 @@
 ---
 name: "spdd-api-test-lead"
-description: "Generate a self-contained shell script with cURL commands to test API endpoints based on generated code and acceptance criteria. Use when the user asks for spdd-api-test, SPDD api test, or the corresponding Structured Prompt-Driven Development phase."
+description: "Generate a self-contained shell script with cURL commands to test API endpoints based on generated code and acceptance criteria. Use when the user runs /spdd-api-test or asks for SPDD api test, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-api-test-lead

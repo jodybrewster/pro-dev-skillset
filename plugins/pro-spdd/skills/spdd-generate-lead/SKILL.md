@@ -1,6 +1,6 @@
 ---
 name: "spdd-generate-lead"
-description: "Generate code from a structured SPDD prompt file following the REASONS Canvas methodology. Use when the user asks for spdd-generate, SPDD generate, or the corresponding Structured Prompt-Driven Development phase."
+description: "Generate code from a structured SPDD prompt file following the REASONS Canvas methodology. Use when the user runs /spdd-generate or asks for SPDD generate, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-generate-lead

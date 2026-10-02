@@ -1,0 +1,9 @@
+{
+  "name": "pro-legal",
+  "version": "0.1.0",
+  "description": "The Legal phase: software-counsel, an in-house product counsel persona that spots legal issues in plans and releases. Plan mode reviews an idea, plan or spec before code exists and returns a ## Legal review section; release mode reviews what is about to ship. Covers open-source licensing and attribution, privacy and data protection, AI regulation and model terms, scraping and third-party API terms, consumer protection and auto-renewal, children's data, health and financial data, export controls, accessibility, trademarks in names and client IP for consulting work. Ships the software-counsel subagent and /legal-review. Hooks enforce it: an ExitPlanMode gate and a plan-document gate require an independent review on plans that touch legal surface, a UserPromptSubmit nudge flags legal surface while an idea is cheap to change, and a release gate holds git tag, gh release, npm publish, production deploys, PR creation and dependency-manifest commits once for review. A dated legal-landscape reference is kept current by a staleness check. Issue spotting, not legal advice.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  }
+}

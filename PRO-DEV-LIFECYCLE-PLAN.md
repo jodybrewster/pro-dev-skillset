@@ -26,6 +26,7 @@ Outcome: a `using-pro-dev` meta-skill (the router), the qa-skills-wrapped `pro-t
 | **Verify** | `qa-do`/`qa-start` (vendored router), `agent-browser`, `playwright-automation`, `vitest`, + vendored qa-skills (this plan); `systematic-debugging` (pro-execution); `verification-before-completion` (pro-quality) | pro-testing, pro-execution, pro-quality | **qa-skills wrap = built now** |
 | **Review** | `requesting`/`receiving-code-review`; `code-simplification`, `performance-optimization` (planned Ph5); built-in `/code-review`, `/simplify` | pro-quality | mix |
 | **Security** | `security-and-hardening`, `security-auditor`, `cso` | pro-security | shipped: `security-audit`, `security-auditor`, `security-architect`, `/security-audit`, `/threat-model`; `security-and-hardening` still planned |
+| **Legal** | `software-counsel`, `/legal-review` | pro-legal (opt-in) | shipped as opt-in: plan and release review, ExitPlanMode, plan-document and release hooks; not in `pro-starter` |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | pro-ship (planned Ph2) | planned |
 | **Research / Data / Design** | lead-research; drizzle/prisma/nextauth; design-token/motion/typography/shadcn/a11y | pro-research, pro-data, pro-design | exist (domain, cross-cutting) |
 
@@ -60,6 +61,7 @@ Updated 2026-06-03. Parts A, B, C shipped. Part D is the remaining in-scope work
 
 ### 🔜 Separate efforts (out of scope here; the router already points at these as "planned")
 - [x] **pro-security** plugin - shipped `security-audit`, `security-auditor`, `security-architect`, `/security-audit` and `/threat-model`; `security-and-hardening` is still planned
+- [x] **pro-legal** plugin - shipped as opt-in: `software-counsel`, `/legal-review`, planning and release gates; not part of `pro-starter`
 - [ ] **pro-ship** plugin — `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration`
 - [ ] **Build-skill folds** referenced by the router but not yet installed: `context-engineering`, `doubt-driven-development` (pro-core); `api-and-interface-design`, `source-driven-development` (pro-execution); `frontend-ui-engineering` (pro-design)
 - [ ] **Review-skill folds**: `code-simplification`, `performance-optimization` (pro-quality) — currently only the `/code-review` + `/simplify` built-ins cover this

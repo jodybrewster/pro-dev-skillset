@@ -1,6 +1,6 @@
 ---
 name: "spdd-sync-lead"
-description: "Sync code changes back to the structured SPDD prompt file following the REASONS Canvas methodology. Use when the user asks for spdd-sync, SPDD sync, or the corresponding Structured Prompt-Driven Development phase."
+description: "Sync code changes back to the structured SPDD prompt file following the REASONS Canvas methodology. Use when the user runs /spdd-sync or asks for SPDD sync, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-sync-lead

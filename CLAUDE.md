@@ -20,13 +20,15 @@ This marketplace is actively testing multiple workflow layers — `pro-core`/`pr
 
 **Use case 1: Solo developer building a full application.**
 A single developer uses `pro-pdd` for brainstorming and written plans, `pro-execution` for implementation and `pro-quality` for review and validation. `pro-security` challenges plans and diffs through the `security-architect`, enforced by hooks during planning and at commit, and adds whole-repo audits through `security-audit`.
+The opt-in `pro-legal` has `software-counsel` review plans and releases for legal issues such as licensing, privacy, AI use and client IP.
 
 **Use case 2: Consulting team delivering for a client.**
 A team of consultants uses SPDD's structured prompt-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
+The opt-in `pro-legal` helps here too: it flags client IP and licensing questions before a deliverable ships.
 
 **The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, structured prompts, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
 
-The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-security`) works without them.
+The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). `pro-legal` is opt-in too. The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-security`) works without them.
 
 ## Use subagents to parallelize — aggressively
 

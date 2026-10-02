@@ -22,6 +22,7 @@ Task arrives
   │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd), then lavish for plan review
   │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /lavish-engine install)
   │   ├ plan touches auth/data/input → security-architect, /threat-model (pro-security; hooks require a `## Security challenge` section before approval)
+  │   ├ plan touches licensing/personal data/AI/scraping/payments → software-counsel, /legal-review (pro-legal, opt-in; hooks require a `## Legal review` section before approval)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
@@ -70,9 +71,15 @@ Task arrives
   │   ├ whole-repo audit / posture ─────→ security-audit, /security-audit (pro-security)
   │   ├ is one finding real? ───────────→ security-auditor (pro-security)
   │   └ hardening while building ───────→ security-and-hardening (planned)
+  ├ LEGAL (pro-legal, opt-in):
+  │   ├ plan touches licensing / data / AI / scraping / payments → software-counsel, /legal-review (hooks require a `## Legal review` section before approval)
+  │   ├ legal check before a release / publish / PR ────────────→ software-counsel release mode
+  │   └ can I use this library? / license question ─────────────→ software-counsel
   ├ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```
+
+The LEGAL branch needs the opt-in `pro-legal` plugin, which is not in `pro-starter`. If it is not installed, say so and suggest installing it. `software-counsel` spots legal issues and is not legal advice.
 
 One branch in this router references a **planned plugin not yet built**: SHIP (pro-ship) is on the roadmap — when the user reaches that phase, surface what is planned and recommend the closest available substitute (e.g. the existing git workflow). The SECURITY branch splits by scope: `security-architect` challenges a specific idea, plan, spec or diff before it ships (pro-security hooks enforce this when a plan or commit touches security surface), while `security-audit` audits the whole repository and its infrastructure (git history, lockfiles, workflows, containers, IaC, installed skills). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
 
@@ -148,6 +155,7 @@ The pro-dev-specific rules are:
 | Review | screen-critique + /critique-screen, interface-review, better-interface, better-layout, perception-laws | pro-design | Judge a rendered screen, review UI changes in a diff, one ranked whole-screen verdict, fix layout, fix grouping |
 | Security | security-architect, /threat-model | pro-security | Challenge ideas, plans and diffs; enforced by planning and commit hooks |
 | Security | security-audit, security-auditor, /security-audit | pro-security | Whole-repo audit: secrets, supply chain, CI/CD, OWASP, STRIDE |
+| Legal | software-counsel, /legal-review | pro-legal (opt-in) | Issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by planning and release hooks |
 | Ship | ci-cd-and-automation, shipping-and-launch, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, launch, document, retire |
 | Research | lead-research | pro-research | ICP and lead profiling |
 | Design | design-token, typography-scale, shadcn-ui-composition, accessibility-audit | pro-design | Token system, type scale, components, accessibility |

@@ -16,6 +16,7 @@ import { spawnSync } from "node:child_process";
 
 import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
+import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -368,7 +369,7 @@ checks["pro-starter"] = (m) => {
       failures.push(`pro-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-spdd", "pro-starter"]);
+  const OPT_IN = new Set(["pro-spdd", "pro-legal", "pro-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -546,6 +547,61 @@ checks["security-hooks"] = () => {
     if (r.ok) continue;
     failures.push(`security hook ${r.id}: expected ${r.expect}, got ${r.actual}${r.reason ? ` - ${r.reason}` : ""}`);
   }
+  return { failures, warnings };
+};
+
+// pro-legal hook behaviour. Same shape as security-hooks above: the planning
+// gates, the ideation nudge and the release gate (tag, release, publish, deploy,
+// PR, dependency-manifest commits) key off one classifier, and both directions
+// FAIL. A miss ships a license or privacy problem unreviewed, a false positive
+// nags on ordinary LLM, hook and subagent work until the hook gets turned off.
+// The case table, including the false-positive corpus, lives in tests/legal-hooks.mjs.
+checks["legal-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runLegalHookCases();
+  if (skipped) {
+    warnings.push(`legal hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/legal-hooks.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) {
+    if (r.ok) continue;
+    failures.push(`legal hook ${r.id}: expected ${r.expect}, got ${r.actual}${r.reason ? ` - ${r.reason}` : ""}`);
+  }
+  return { failures, warnings };
+};
+
+// pro-legal's legal-landscape.md carries law and platform-policy facts that go
+// stale. It must declare `Last verified: YYYY-MM-DD` on a line of its own; a
+// missing file, a missing line or a future date fails, and a date more than 90
+// days old warns. PRO_LEGAL_LANDSCAPE_FILE points the check at a fixture.
+const LANDSCAPE_MAX_AGE_DAYS = 90;
+checks["legal-landscape"] = () => {
+  const failures = [], warnings = [];
+  const file = process.env.PRO_LEGAL_LANDSCAPE_FILE || join(ROOT, "plugins", "pro-legal", "skills", "software-counsel", "legal-landscape.md");
+  const shown = process.env.PRO_LEGAL_LANDSCAPE_FILE ? file : rel(file);
+  if (!existsSync(file)) {
+    failures.push(`${shown}: missing - software-counsel needs a dated legal landscape reference`);
+    return { failures, warnings };
+  }
+  const m = readFileSync(file, "utf8").match(/^Last verified: (\d{4}-\d{2}-\d{2})$/m);
+  if (!m) {
+    failures.push(`${shown}: no line matching "Last verified: YYYY-MM-DD"`);
+    return { failures, warnings };
+  }
+  const verified = new Date(`${m[1]}T00:00:00Z`);
+  if (Number.isNaN(verified.getTime()) || verified.toISOString().slice(0, 10) !== m[1]) {
+    failures.push(`${shown}: "Last verified: ${m[1]}" is not a real date`);
+    return { failures, warnings };
+  }
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const age = Math.floor((today - verified) / 86_400_000);
+  if (age < 0) failures.push(`${shown}: "Last verified: ${m[1]}" is in the future`);
+  else if (age > LANDSCAPE_MAX_AGE_DAYS) warnings.push(`${shown}: last verified ${m[1]}, ${age} days ago (over ${LANDSCAPE_MAX_AGE_DAYS}) - re-check the laws and platform terms it cites, then bump the date`);
   return { failures, warnings };
 };
 

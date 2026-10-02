@@ -1,6 +1,6 @@
 ---
 name: "spdd-reasons-canvas-lead"
-description: "Generate REASONS-Canvas structured prompts from business context without external template. Use when the user asks for spdd-reasons-canvas, SPDD reasons canvas, or the corresponding Structured Prompt-Driven Development phase."
+description: "Generate REASONS-Canvas structured prompts from business context without external template. Use when the user runs /spdd-reasons-canvas or asks for SPDD reasons canvas, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-reasons-canvas-lead

@@ -104,7 +104,7 @@ The script clones or updates this private repository through `gh` at
 `~/.codex/marketplaces/pro-dev-skillset`, adds that local checkout as a Codex plugin marketplace,
 installs the default stack
 (`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-motion`,
-`pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`)
+`pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`, `pro-legal`)
 disabled unless you pass `--with-opt-in`. It also installs project-local Lavish at
 `.claude/skills/lavish/SKILL.md` and the project command at `.claude/commands/lavish.md` unless you
 pass `--no-lavish`. The bootstrap runs both the generic skill installer and the `--agent claude-code`
@@ -126,6 +126,7 @@ codex plugin add pro-data@pro-dev-skillset
 codex plugin add pro-motion@pro-dev-skillset
 codex plugin add pro-research@pro-dev-skillset
 codex plugin add pro-security@pro-dev-skillset
+codex plugin add pro-legal@pro-dev-skillset   # opt-in
 ```
 
 Codex reads project instructions from `AGENTS.md`. Add one to the target repo root for project
@@ -173,6 +174,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Document** | `technical-writer`, `documentation-engineer`, `api-documenter` subagents, `/document` + `/api-docs` | `pro-quality` |
 | **Review** | `requesting-code-review`, `receiving-code-review`, `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
 | **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; enforced by hooks), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
+| **Legal** | `software-counsel` + `/legal-review` (issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by hooks) | `pro-legal` *(opt-in)* |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 
@@ -214,6 +216,16 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   Exiting plan mode with a plan that touches auth, data, input handling, payments, secrets, LLM tools or CI is denied until the plan carries a `## Security challenge` section produced by an independent `security-architect` pass (a section the author writes alone does not count), and plan documents under `docs/plans/`, `docs/superpowers/specs/` and `spdd/` get the same check.
   Security-sensitive ideation prompts get a nudge to challenge the idea, and a commit or `gh pr create` whose diff touches security surface is held once for a diff review.
   The audit and the threat framing are adapted from the `cso` skill in [garrytan/gstack](https://github.com/garrytan/gstack) (MIT); the challenge procedure and hooks are original.
+- **`pro-legal`** - the Legal phase, opt-in and not in `pro-starter`.
+  `software-counsel` is an in-house product counsel persona that spots legal issues in a plan or a release.
+  It is issue spotting and not legal advice.
+  In `plan` mode it reviews an idea, plan or spec and returns a `## Legal review` section to fold into the plan (`/legal-review`).
+  In `release` mode it reviews what is about to ship.
+  Hooks make it hard to skip.
+  Exiting plan mode with a plan that touches licensing, personal data, AI, scraping or payments is denied until the plan carries a `## Legal review` section produced by an independent `software-counsel` pass.
+  A release gate holds `git tag`, `gh release create`, package publishes, production deploys, `gh pr create` and commits that add problematically licensed dependencies or change LICENSE and NOTICE files.
+  A dated `legal-landscape.md` baseline backs the review, with a CI staleness check.
+  The content is original.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
 - **`pro-pdd`** — Define + Plan skills included in `pro-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
@@ -241,6 +253,7 @@ plugins/
   pro-motion/                        # video and animation skills
   pro-research/                      # deep-research and lead-research engines
   pro-security/                      # security architect, whole-repo audit, planning/commit hooks
+  pro-legal/                         # opt-in software counsel, legal review plan and release gates
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-pdd/                           # default define + plan-driven development skills
@@ -305,6 +318,7 @@ codex plugin add pro-data@pro-dev-skillset
 codex plugin add pro-motion@pro-dev-skillset
 codex plugin add pro-research@pro-dev-skillset
 codex plugin add pro-security@pro-dev-skillset
+codex plugin add pro-legal@pro-dev-skillset   # opt-in
 codex exec --skip-git-repo-check "enumerate available pro-dev skills"
 ```
 
