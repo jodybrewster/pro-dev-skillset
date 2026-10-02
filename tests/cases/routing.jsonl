@@ -64,3 +64,7 @@
 {"prompt": "Any legal problems with this plan to train our model on customer support chats?", "expect": "software-counsel", "notOneOf": ["security-architect", "writing-plans"], "note": "AI training data on personal data"}
 {"prompt": "We're building a kids' learning app - what do I need to worry about legally?", "expect": "software-counsel", "notOneOf": ["brainstorming", "security-architect"], "note": "children's privacy, issue spotting"}
 {"prompt": "Is this design secure? Users paste a webhook URL and our server fetches it.", "expect": "security-architect", "notOneOf": ["software-counsel"], "note": "pure security question stays with security"}
+{"prompt": "Upgrade my Astro 5 site to Astro 7 and bump the adapters.", "expect": "astro-upgrade"}
+{"prompt": "I want to move my Astro site from Vercel to Cloudflare Workers and use a KV binding for sessions.", "expect": "astro-on-cloudflare"}
+{"prompt": "My Astro API route on Vercel times out while streaming; how do I raise maxDuration in the adapter?", "expect": "astro-on-vercel"}
+{"prompt": "Review this Astro component: should this island be client:load or client:visible, and should the data come from a content collection?", "expect": "astro-best-practices"}

@@ -1,0 +1,6 @@
+{
+  "name": "pro-astro",
+  "version": "0.1.0",
+  "description": "Astro skills: astro-best-practices (auto-applied guardrails for routing, output modes, islands and server islands, the content layer, actions, sessions, astro:env, images, view transitions and agent-friendly dev servers), astro-upgrade (major-version upgrade workflow for Astro 5 to 6 to 7 and its adapters), astro-on-cloudflare (@astrojs/cloudflare on Workers: cloudflare:workers env, wrangler bindings, sessions on KV, Pages-to-Workers migration) and astro-on-vercel (@astrojs/vercel: on-demand routes, maxDuration, ISR, redirects, images). Points agents at the official Astro Docs MCP for lookups. Pairs with the optional cloudflare/skills and vercel@claude-plugins-official companions.",
+  "skills": "./skills/"
+}

@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.40.0"
+    "version": "1.41.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.14.3",
+      "version": "0.14.4",
       "category": "development",
       "strict": true
     },
@@ -43,6 +43,14 @@
       "source": "./plugins/pro-nextjs",
       "description": "Next.js skills: next-best-practices (auto-applied guardrails for file conventions, RSC boundaries, async APIs, data patterns, error handling, metadata, image/font), next-upgrade (structured upgrade workflow with codemods), next-cache-components (PPR, use cache, cacheLife, cacheTag), shadcn (component installation, theming, composition patterns). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
       "version": "0.8.1",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-astro",
+      "source": "./plugins/pro-astro",
+      "description": "Astro skills: astro-best-practices (auto-applied guardrails for routing, output modes, islands and server islands, the content layer, actions, sessions, astro:env, images, view transitions and agent-friendly dev servers), astro-upgrade (major-version upgrade workflow for Astro 5 to 6 to 7 and its adapters), astro-on-cloudflare (@astrojs/cloudflare on Workers: cloudflare:workers env, wrangler bindings, sessions on KV, Pages-to-Workers migration) and astro-on-vercel (@astrojs/vercel: on-demand routes, maxDuration, ISR, redirects, images). Points agents at the official Astro Docs MCP for lookups. Pairs with the optional cloudflare/skills and vercel@claude-plugins-official companions.",
+      "version": "0.1.0",
       "category": "development",
       "strict": true
     },
@@ -121,8 +129,8 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
-      "version": "1.11.0",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
+      "version": "1.12.0",
       "category": "development",
       "strict": true
     }

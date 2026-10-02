@@ -73,6 +73,7 @@ DEFAULT_PLUGINS=(
   pro-execution
   pro-quality
   pro-nextjs
+  pro-astro
   pro-design
   pro-motion
   pro-testing

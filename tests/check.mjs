@@ -339,7 +339,7 @@ checks.router = (m) => {
   // inverse drift: shipped skills that the router never mentions
   for (const p of m.plugins) {
     // skip plugins the router references by family/abbreviation, not exact slug
-    if (["pro-starter", "pro-nextjs",
+    if (["pro-starter", "pro-nextjs", "pro-astro",
          "pro-data", "pro-design", "pro-spdd", "pro-research"].includes(p.name)) continue;
     for (const s of p.skills) {
       if (s.slug === "using-pro-dev") continue;

@@ -15,7 +15,7 @@
 #      claude-plugins-official explicitly)
 #   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
 #      default stack: pro-core, pro-pdd, pro-execution, pro-quality,
-#      pro-nextjs, pro-design, pro-motion, pro-testing, pro-data, pro-research
+#      pro-nextjs, pro-astro, pro-design, pro-motion, pro-testing, pro-data, pro-research
 #      and pro-security)
 #   4. Installs the bridge engines / project-local skills by default — lavish
 #      (behind plan review), impeccable (behind ui-ux-pro-max), and qa-skills

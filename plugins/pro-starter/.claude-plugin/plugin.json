@@ -1,7 +1,7 @@
 {
   "name": "pro-starter",
-  "version": "1.11.0",
-  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + nextjs + design + motion + testing + data + research + security",
+  "version": "1.12.0",
+  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + nextjs + astro + design + motion + testing + data + research + security",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
@@ -12,6 +12,7 @@
     { "name": "pro-execution", "version": "*" },
     { "name": "pro-quality", "version": "*" },
     { "name": "pro-nextjs", "version": "*" },
+    { "name": "pro-astro", "version": "*" },
     { "name": "pro-design", "version": "*" },
     { "name": "pro-motion", "version": "*" },
     { "name": "pro-testing", "version": "*" },
