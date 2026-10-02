@@ -10,7 +10,7 @@
 #                      Use an explicit local checkout path for local development, e.g.
 #                      --source /Users/jodybrewster/Projects/pro-dev-skillset
 #   --default-only     Install only the default stack.
-#   --with-opt-in      Also install pro-spdd.
+#   --with-opt-in      Also install pro-spdd and pro-legal.
 #   --no-lavish        Skip project-local lavish skill install.
 
 set -euo pipefail
@@ -83,6 +83,7 @@ DEFAULT_PLUGINS=(
 
 OPT_IN_PLUGINS=(
   pro-spdd
+  pro-legal
 )
 
 install_plugin() {

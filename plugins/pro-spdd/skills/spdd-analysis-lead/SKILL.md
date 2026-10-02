@@ -1,6 +1,6 @@
 ---
 name: "spdd-analysis-lead"
-description: "Analyze business requirements against codebase context at a strategic level, producing enriched context (business + domain concepts + strategic direction + risks) for REASONS Canvas generation. Use when the user asks for spdd-analysis, SPDD analysis, or the corresponding Structured Prompt-Driven Development phase."
+description: "Analyze business requirements against codebase context at a strategic level, producing enriched context (business + domain concepts + strategic direction + risks) for REASONS Canvas generation. Use when the user runs /spdd-analysis or asks for SPDD analysis, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-analysis-lead

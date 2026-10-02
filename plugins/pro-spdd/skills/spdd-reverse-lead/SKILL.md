@@ -1,6 +1,6 @@
 ---
 name: "spdd-reverse-lead"
-description: "Reverse-engineer existing code into a REASONS-Canvas structured prompt, enabling the SPDD bidirectional sync workflow for previously unspecified implementations. Use when the user asks for spdd-reverse, SPDD reverse, or the corresponding Structured Prompt-Driven Development phase."
+description: "Reverse-engineer existing code into a REASONS-Canvas structured prompt, enabling the SPDD bidirectional sync workflow for previously unspecified implementations. Use when the user runs /spdd-reverse or asks for SPDD reverse, or the corresponding Structured Prompt-Driven Development phase."
 ---
 
 # spdd-reverse-lead
