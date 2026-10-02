@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+description: Use when finished work on a branch or PR needs a code review against its requirements - after completing a task or major feature, or before merging - by dispatching a fresh-context code reviewer subagent. Reviews correctness and quality of the code; it does not write docs or release notes about the change (technical-writer) or do a security review (security-architect).
 ---
 
 # Requesting Code Review

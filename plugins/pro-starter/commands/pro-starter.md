@@ -42,7 +42,7 @@ them — that's what `install`/`engines` add.
 Report, without changing anything:
 - **Stack coverage** — run `claude plugin list` and confirm the default stack
   (`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`,
-  `pro-data`, `pro-testing`) is installed and enabled. (`/pro-dev-doctor` does the deeper
+  `pro-data`, `pro-testing`, `pro-security`) is installed and enabled. (`/pro-dev-doctor` does the deeper
   version-and-routing check.)
 - **lavish** — require `.claude/skills/lavish/SKILL.md` to exist. A user-scope
   copy at `~/.claude/skills/lavish/SKILL.md` is useful but does not satisfy the

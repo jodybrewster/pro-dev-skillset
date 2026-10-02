@@ -105,7 +105,7 @@ All cases run inside a disposable sandbox `HOME` and never touch the developer's
 
 ### Routing evals (`eval.mjs`)
 
-Feeds every non-gstack skill's `name`+`description` to Claude as the router and
+Feeds every skill's `name`+`description` to Claude as the router and
 checks it picks the expected skill per case. Cases are in
 [`cases/routing.jsonl`](cases/routing.jsonl):
 

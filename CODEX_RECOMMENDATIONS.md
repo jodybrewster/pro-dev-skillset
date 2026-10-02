@@ -33,7 +33,7 @@ The research supports this repo's current direction, but the repo should stay cu
    - stale private-repo install commands
 
 7. **Keep wholesale imports isolated.**
-   This recommendation was superseded for GStack by the opt-in `pro-gstack` comparison plugin. The default stack should still stay curated: `pro-gstack` vendors the full upstream source for traceability, exposes prefixed harness-neutral adapters, and remains outside `pro-starter`. Treat ECC and any future large imports the same way unless they earn promotion through repeated use.
+   GStack was evaluated and removed; its security workflow became pro-security. The default stack should still stay curated. Treat ECC and any future large imports the same way unless they earn promotion through repeated use.
 
 ## Practical Next Steps
 

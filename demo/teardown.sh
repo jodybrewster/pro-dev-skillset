@@ -21,7 +21,7 @@ done < <(node -e '
 if [ "${#STACK[@]}" -eq 0 ]; then
   echo "! could not read plugin list from marketplace.json — falling back to a static list"
   STACK=(pro-starter pro-core pro-pdd pro-execution pro-quality pro-nextjs \
-         pro-design pro-motion pro-testing pro-data pro-research pro-spdd pro-gstack)
+         pro-design pro-motion pro-testing pro-data pro-research pro-spdd)
 fi
 
 cd "$APP"

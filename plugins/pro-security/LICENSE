@@ -11,6 +11,11 @@
 # adaptation does not carry), the `.pro-dev/security/` storage path, the
 # security-auditor subagent and its Codex counterpart, the /security-audit
 # command, and all manifests.
+#
+# The security-architect skill and agent draw on cso Phases 0, 10 and 11 (mental
+# model, STRIDE, data classification), its confidence calibration and pre-emit
+# gate, and gstack's review security specialist checklist. The challenge
+# procedure, the hooks and the scripts are original to this marketplace.
 
 MIT License
 

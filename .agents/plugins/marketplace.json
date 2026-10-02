@@ -110,18 +110,6 @@
       "category": "Development"
     },
     {
-      "name": "pro-gstack",
-      "source": {
-        "source": "local",
-        "path": "./plugins/pro-gstack"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Development"
-    },
-    {
       "name": "pro-research",
       "source": {
         "source": "local",

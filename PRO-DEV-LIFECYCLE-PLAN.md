@@ -25,8 +25,8 @@ Outcome: a `using-pro-dev` meta-skill (the router), the qa-skills-wrapped `pro-t
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` (pro-execution); `api-and-interface-design`, `source-driven-development` (pro-execution, planned Ph6); `context-engineering`, `doubt-driven-development` (pro-core, planned Ph4); `frontend-ui-engineering` + design skills (pro-design, planned Ph7); data skills (pro-data) | multiple | mix of existing + integration-doc phases |
 | **Verify** | `qa-do`/`qa-start` (vendored router), `agent-browser`, `playwright-automation`, `vitest`, + vendored qa-skills (this plan); `systematic-debugging` (pro-execution); `verification-before-completion` (pro-quality) | pro-testing, pro-execution, pro-quality | **qa-skills wrap = built now** |
 | **Review** | `requesting`/`receiving-code-review`; `code-simplification`, `performance-optimization` (planned Ph5); built-in `/code-review`, `/simplify` | pro-quality | mix |
-| **Security** | `security-and-hardening`, `security-auditor`, `cso` | pro-security (planned Ph1) | planned |
-| **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` + gstack ship workflows | pro-ship (planned Ph2) | planned |
+| **Security** | `security-and-hardening`, `security-auditor`, `cso` | pro-security | shipped: `security-audit`, `security-auditor`, `security-architect`, `/security-audit`, `/threat-model`; `security-and-hardening` still planned |
+| **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | pro-ship (planned Ph2) | planned |
 | **Research / Data / Design** | lead-research; drizzle/prisma/nextauth; design-token/motion/typography/shadcn/a11y | pro-research, pro-data, pro-design | exist (domain, cross-cutting) |
 
 ## Status (living checklist)
@@ -59,7 +59,7 @@ Updated 2026-06-03. Parts A, B, C shipped. Part D is the remaining in-scope work
 - [x] **Lifecycle slash commands — DEFERRED** by decision (no `/spec /plan /build /test /review /ship`); revisit once owning plugins exist
 
 ### 🔜 Separate efforts (out of scope here; the router already points at these as "planned")
-- [ ] **pro-security** plugin — `security-and-hardening`, `security-auditor`, `cso` (router SECURITY branch is a planned target)
+- [x] **pro-security** plugin - shipped `security-audit`, `security-auditor`, `security-architect`, `/security-audit` and `/threat-model`; `security-and-hardening` is still planned
 - [ ] **pro-ship** plugin — `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration`
 - [ ] **Build-skill folds** referenced by the router but not yet installed: `context-engineering`, `doubt-driven-development` (pro-core); `api-and-interface-design`, `source-driven-development` (pro-execution); `frontend-ui-engineering` (pro-design)
 - [ ] **Review-skill folds**: `code-simplification`, `performance-optimization` (pro-quality) — currently only the `/code-review` + `/simplify` built-ins cover this
@@ -119,7 +119,7 @@ Reverses the integration doc's earlier "skip" for these two. Fork from `/tmp/age
 
 ## Part C — Verify phase: the qa-skills wrap (concrete near-term build)
 
-This is the part ready to build now. **Vendor-and-adapt** `petrkindlmann/qa-skills` (already cloned at `/tmp/qa-skills`, 43 skills) into `pro-testing`, mirroring the repo's existing gstack pattern.
+This is the part ready to build now. **Vendor-and-adapt** `petrkindlmann/qa-skills` (already cloned at `/tmp/qa-skills`, 43 skills) into `pro-testing`, using the same vendor-and-adapt pattern as the other forked plugins.
 
 - **Mechanism:** clone into `plugins/pro-testing/upstream/qa-skills/` intact (skills + references + LICENSE + AGENTS.md). Expose chosen skills via thin shim `plugins/pro-testing/skills/<name>/SKILL.md` (frontmatter `description` copied verbatim for triggering; body = "Follow `../../upstream/qa-skills/skills/<name>/SKILL.md` and its references; adapt host tools; no upstream CLI bootstrap"; attribution footer). Relative `references/` paths resolve inside the vendored tree. Sync = re-pull tree + re-copy changed descriptions + version bump.
 - **Scope:** vendor all 43; **expose only the testing-core subset.**
@@ -159,7 +159,7 @@ Failure modes: double-triggering and territory theft. Per exposed skill: read it
 - EDIT: `plugins/pro-testing/skills/{agent-browser,vitest}/SKILL.md`; DELETE forks after diff.
 - EDIT: `plugins/pro-testing/LICENSE`, all touched `.claude-plugin/plugin.json` (**version-bump law**), `.claude-plugin/marketplace.json` (entries + top-level `metadata.version`).
 - EDIT: `README.md` (phase reorganization, Part D).
-- Pattern references: `plugins/pro-gstack/skills/gstack-plan-tune/{SKILL.md,workflow.md}`, `/tmp/agent-skills/skills/using-agent-skills/SKILL.md`.
+- Pattern references: `/tmp/agent-skills/skills/using-agent-skills/SKILL.md`.
 
 ## Sequencing
 

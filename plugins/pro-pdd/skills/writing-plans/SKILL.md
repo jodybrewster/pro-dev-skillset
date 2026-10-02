@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when the user wants a written implementation plan for a multi-step task, before touching code - turns a spec or requirements into a step-by-step plan document with a test-first task breakdown, saved under docs/plans/. Writing the plan, not writing the tests or the code (that is test-driven-development) and not executing an approved plan (that is subagent-driven-development).
 ---
 
 # Writing Plans

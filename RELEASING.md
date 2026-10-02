@@ -99,4 +99,8 @@ Check these once a quarter too:
 Bridged engines are deliberately absent from this list.
 `web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, and `taste-skills-bridge` vendor nothing, and `/design-skills check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
 
+`pro-security` adapts the `cso` skill from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT) into `security-audit` (+ `phases.md`, `false-positives.md`, `report-format.md`) and draws on it for `security-architect`.
+Check upstream `cso/SKILL.md` once a quarter for new phases, exclusions or precedents worth porting.
+GStack itself is no longer vendored, so read it on GitHub rather than from this repo.
+
 If upstream has meaningful changes, port them in, bump the plugin version, and re-tag per the law above.
