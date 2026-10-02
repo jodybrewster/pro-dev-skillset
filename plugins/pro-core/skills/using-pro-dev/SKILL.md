@@ -21,6 +21,7 @@ Task arrives
   │   ├ quick/solo, think it through → planning mode, then lavish for review when the plan is substantive
   │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd), then lavish for plan review
   │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /lavish-engine install)
+  │   ├ plan touches auth/data/input → security-architect, /threat-model (pro-security; hooks require a `## Security challenge` section before approval)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
@@ -63,12 +64,17 @@ Task arrives
   │   ├ review UI changes in a diff ─→ interface-review (pro-design)
   │   ├ whole screen, one ranked verdict → better-interface (pro-design; uninstalled domains come back as Not reviewed)
   │   └ fix spacing / alignment ─────→ better-layout (pro-design); grouping reads wrong → perception-laws
-  ├ SECURITY: security-and-hardening / cso (pro-security)
+  ├ SECURITY:
+  │   ├ challenge an idea / plan / spec → security-architect, /threat-model (pro-security)
+  │   ├ review a diff before commit ────→ security-architect (pro-security; the built-in /security-review also covers a PR)
+  │   ├ whole-repo audit / posture ─────→ security-audit, /security-audit (pro-security)
+  │   ├ is one finding real? ───────────→ security-auditor (pro-security)
+  │   └ hardening while building ───────→ security-and-hardening (planned)
   ├ SHIP: ci-cd-and-automation, shipping-and-launch, docs, deprecation (pro-ship)
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```
 
-Two branches in this router reference **planned plugins not yet built**: SECURITY (pro-security) and SHIP (pro-ship) are on the roadmap — when the user reaches those phases, surface what is planned and recommend the closest available substitute (e.g. a manual checklist or the existing git workflow). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
+One branch in this router references a **planned plugin not yet built**: SHIP (pro-ship) is on the roadmap — when the user reaches that phase, surface what is planned and recommend the closest available substitute (e.g. the existing git workflow). The SECURITY branch splits by scope: `security-architect` challenges a specific idea, plan, spec or diff before it ships (pro-security hooks enforce this when a plan or commit touches security surface), while `security-audit` audits the whole repository and its infrastructure (git history, lockfiles, workflows, containers, IaC, installed skills). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
 
 ## Bridges
 
@@ -140,7 +146,8 @@ The pro-dev-specific rules are:
 | Verify | verification-before-completion | pro-quality | Gate before claiming done |
 | Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |
 | Review | screen-critique + /critique-screen, interface-review, better-interface, better-layout, perception-laws | pro-design | Judge a rendered screen, review UI changes in a diff, one ranked whole-screen verdict, fix layout, fix grouping |
-| Security | security-and-hardening, cso | pro-security (planned) | Hardening and security officer review |
+| Security | security-architect, /threat-model | pro-security | Challenge ideas, plans and diffs; enforced by planning and commit hooks |
+| Security | security-audit, security-auditor, /security-audit | pro-security | Whole-repo audit: secrets, supply chain, CI/CD, OWASP, STRIDE |
 | Ship | ci-cd-and-automation, shipping-and-launch, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, launch, document, retire |
 | Research | lead-research | pro-research | ICP and lead profiling |
 | Design | design-token, typography-scale, shadcn-ui-composition, accessibility-audit | pro-design | Token system, type scale, components, accessibility |

@@ -105,6 +105,12 @@ def main() -> int:
             return 0
         if "MEMORY.md" in expanded:
             return 0
+        # Plan mode lets Claude write exactly one file: the plan file the harness
+        # assigns under ~/.claude/plans/. Blocking it leaves the session unable to
+        # produce a plan at all, so it is the one doc that may live outside the repo.
+        plans_dir = os.path.join(claude_dir, "plans") + os.sep
+        if payload.get("permission_mode") == "plan" and expanded.startswith(plans_dir):
+            return 0
         print(
             f"BLOCKED: Plans, analysis, and documentation must be saved in the project "
             f"directory, not in ~/.claude/.\n"

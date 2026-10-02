@@ -19,12 +19,12 @@ External tools such as Figma, Webflow, and Magicpath can be used through MCP ada
 `pro-dev-skillset` is experimenting with three upstream workflow frameworks to serve two distinct use cases, and Mieruka is the client-facing surface for both.
 
 **Use case 1: Solo developer building a full application.**
-A single developer uses GStack's (`pro-gstack`) persona-driven planning and review workflows alongside Superpowers' (`pro-core`, `pro-quality`) brainstorming, TDD, and debugging skills. GStack handles structured thinking — office hours, CEO/engineering/design review, QA, ship readiness. Superpowers handles execution. Together they give one person the planning and quality leverage of a small team. Mieruka receives workstream updates from these skills and can show the developer a live dashboard of phase, risk, decisions, and drift without them having to read artifacts manually.
+A single developer uses Superpowers' (`pro-core`, `pro-quality`) brainstorming, TDD, and debugging skills, with `pro-security` challenging plans and diffs before they land. Together they give one person the planning and quality leverage of a small team. Mieruka receives workstream updates from these skills and can show the developer a live dashboard of phase, risk, decisions, and drift without them having to read artifacts manually.
 
 **Use case 2: Consulting team delivering for a client.**
 A team of consultants uses SPDD's (`pro-spdd`) spec-driven workflow — story decomposition, REASONS canvas, analysis, and prompt-driven generation — to align a client on what is being built before implementation starts. Skills write stories, specs, and canvas artifacts into `.mieruka/` or push updates via Mieruka MCP tools. Mieruka then surfaces these to the client as readable governance: saved stories, approved specs, REASONS canvases, approval gates, and daily progress summaries. The client sees structured evidence of progress without needing to read code or talk to Claude directly.
 
-**The three frameworks are opt-in.** `pro-spdd` and `pro-gstack` are separate plugins. The default skill stack works without them. Mieruka's role as a client-facing surface applies to either approach — it observes `.mieruka/` file changes and MCP calls regardless of which framework drove them.
+**The three frameworks are opt-in.** `pro-spdd` is a separate plugin. The default skill stack works without them. Mieruka's role as a client-facing surface applies to either approach — it observes `.mieruka/` file changes and MCP calls regardless of which framework drove them.
 
 ## Mieruka App
 
@@ -1137,32 +1137,3 @@ Canonical SPDD commands:
 ```
 
 Mieruka can later index or display these artifacts, but `pro-spdd` itself should stay OpenSPDD-compatible and should not depend on the Mieruka app.
-
-## pro-gstack Comparison Plugin
-
-`pro-gstack` is an opt-in plugin copied/adapted from GStack (`garrytan/gstack`). It is for testing GStack's persona/command operating model beside SPDD, not for changing the default Mieruka lifecycle yet.
-
-How it differs from `pro-spdd`:
-
-```text
-pro-spdd    = story -> analysis -> REASONS canvas -> generate -> sync
-pro-gstack  = office-hours/personas -> reviewed plan -> review/QA/ship specialists
-```
-
-Local command policy:
-
-```text
-/gstack-office-hours
-/gstack-plan-ceo-review
-/gstack-plan-eng-review
-/gstack-plan-design-review
-/gstack-review
-/gstack-qa-only
-/gstack-qa
-/gstack-cso
-/gstack-ship
-```
-
-All GStack-derived commands are prefixed as `/gstack-*` so they can be tested without colliding with existing commands like `/spec`, `/review`, `/qa`, or `/ship`.
-
-Mieruka can later observe or display outputs from either approach. For now, `pro-spdd` remains the structured artifact pipeline and `pro-gstack` remains the persona/review/QA/ship comparison layer.

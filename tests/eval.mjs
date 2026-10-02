@@ -67,7 +67,7 @@ const DISTRACTORS = [
   },
 ];
 
-// Build the routing catalog (excluding gstack — that's its own upstream suite).
+// Build the routing catalog.
 // Includes agents/*.md as well as skills: a real session routes across both, so
 // a skills-only catalog would score a router that does not exist. It also means
 // an agent that poaches a skill's prompts fails a case instead of failing quietly.
@@ -75,7 +75,6 @@ function loadCatalog() {
   const catalog = [];
   const slugs = new Set();
   for (const plugin of listDirs(join(ROOT, "plugins"))) {
-    if (plugin === "pro-gstack") continue;
     for (const slug of listDirs(join(ROOT, "plugins", plugin, "skills"))) {
       const p = join(ROOT, "plugins", plugin, "skills", slug, "SKILL.md");
       if (!existsSync(p)) continue;

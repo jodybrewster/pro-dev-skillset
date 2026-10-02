@@ -1,0 +1,6 @@
+{
+  "name": "pro-security",
+  "version": "0.1.0",
+  "description": "The Security phase: security-audit, a read-only whole-repository audit covering secrets archaeology, dependency supply chain, CI/CD exposure, container and IaC misconfiguration, webhook and integration gaps, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10, and STRIDE threat modeling, with confidence-scored findings, quoted evidence and a concrete exploit path. Also ships the security-architect skill and subagent, which challenge a plan, idea or set of code changes before it ships, and /threat-model. Planning and commit hooks (an ExitPlanMode gate, a plan-document gate, an ideation nudge on UserPromptSubmit and a commit/PR gate, all keyed on a security-surface classifier) dispatch the architect when security surface is touched. The security-auditor subagent verifies findings independently. Adapted from the cso skill in garrytan/gstack.",
+  "skills": "./skills/"
+}

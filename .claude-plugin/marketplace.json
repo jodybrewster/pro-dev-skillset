@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.38.1"
+    "version": "1.39.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -18,7 +18,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.14.1",
+      "version": "0.14.2",
       "category": "development",
       "strict": true
     },
@@ -34,7 +34,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook detects when a session ends with real changes and hands the user a validation checklist (what changed, what was verified, what needs their eyes) written to .pro-dev/validation/latest.md; /validate produces one on demand. Ships three documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs, adapted from VoltAgent/awesome-codex-subagents. Enforces doc freshness before git push (the block routes into /document), nudges api-documenter when an OpenAPI/GraphQL/proto contract changes, and blocks plan saves outside the project directory.",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "category": "development",
       "strict": true
     },
@@ -82,15 +82,7 @@
       "name": "pro-pdd",
       "source": "./plugins/pro-pdd",
       "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, adhd — parallel divergent ideation under cognitive frames via /adhd (forked from UditAkhourii/adhd), and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
-      "version": "0.4.0",
-      "category": "development",
-      "strict": true
-    },
-    {
-      "name": "pro-gstack",
-      "source": "./plugins/pro-gstack",
-      "description": "Opt-in GStack workflow adapters: persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Adapted from garrytan/gstack.",
-      "version": "0.1.1",
+      "version": "0.4.1",
       "category": "development",
       "strict": true
     },
@@ -111,10 +103,18 @@
       "strict": true
     },
     {
+      "name": "pro-security",
+      "source": "./plugins/pro-security",
+      "description": "The Security phase. security-architect challenges a specific idea, plan, spec or diff before it ships: trust boundaries, unstated assumptions and the attack that breaks each, returned as a ## Security challenge section (/threat-model, plus a read-only security-architect subagent). security-audit is a read-only whole-repository audit covering secrets in git history, dependency supply chain, CI/CD, containers and IaC, webhooks, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE, with confidence-scored findings and the security-auditor subagent judging each one independently (/security-audit). Hooks enforce it: an ExitPlanMode gate and a plan-document gate require an independent security-architect challenge on plans that touch security surface, a UserPromptSubmit nudge challenges security-sensitive ideas, and a commit/PR gate holds a security-sensitive diff once for review. Adapted from the cso skill in garrytan/gstack.",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, and research). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
-      "version": "1.10.1",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
+      "version": "1.11.0",
       "category": "development",
       "strict": true
     }

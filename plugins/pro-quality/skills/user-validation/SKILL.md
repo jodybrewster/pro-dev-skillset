@@ -1,6 +1,6 @@
 ---
 name: user-validation
-description: Use when work has landed and the user needs to check it themselves - produces a validation handoff listing what changed, what was actually verified, and the concrete steps the user should perform on their end. Fires automatically from the Stop hook when a session ends with real changes, and on demand via /validate.
+description: Use when work has landed and the user needs to check it themselves ('what do I need to check on my end', 'before I sign off', 'what should I click through') - produces a validation handoff listing what changed, what was actually verified, and the concrete steps the user should perform on their end. Fires automatically from the Stop hook when a session ends with real changes, and on demand via /validate.
 ---
 
 # User validation

@@ -16,17 +16,17 @@ The plugins are **skills-only by design** — historically. Hooks, commands, and
 
 ## What this repo is experimenting with
 
-This marketplace is actively testing multiple workflow layers — `pro-gstack` (GStack), `pro-core`/`pro-execution`/`pro-quality`/`pro-pdd` (Superpowers-derived), and `pro-spdd` (SPDD) — to answer two different real-world questions:
+This marketplace is actively testing multiple workflow layers — `pro-core`/`pro-execution`/`pro-quality`/`pro-pdd` (Superpowers-derived), and `pro-spdd` (SPDD) — to answer two different real-world questions:
 
 **Use case 1: Solo developer building a full application.**
-A single developer uses GStack's persona-driven planning and review workflows combined with Superpowers-derived execution and optional PDD skills. GStack handles structured thinking — office hours, CEO/engineering/design reviews, QA, ship readiness. `pro-execution` handles the implementation muscle. `pro-pdd` is opt-in when conversational brainstorming and written implementation plans are desired.
+A single developer uses `pro-pdd` for brainstorming and written plans, `pro-execution` for implementation and `pro-quality` for review and validation. `pro-security` challenges plans and diffs through the `security-architect`, enforced by hooks during planning and at commit, and adds whole-repo audits through `security-audit`.
 
 **Use case 2: Consulting team delivering for a client.**
 A team of consultants uses SPDD's structured prompt-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
 
 **The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, structured prompts, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
 
-The client/team frameworks are opt-in (`pro-spdd`, `pro-gstack`, and `pro-pdd` are separate plugins). The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`) works without them.
+The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-security`) works without them.
 
 ## Use subagents to parallelize — aggressively
 

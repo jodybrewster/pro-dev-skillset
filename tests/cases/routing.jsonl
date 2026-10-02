@@ -14,7 +14,7 @@
 {"prompt": "The app keeps crashing on save — help me find the root cause.", "expect": "systematic-debugging"}
 {"prompt": "Review my pull request and the diff on this branch.", "expect": ["requesting-code-review", "receiving-code-review"], "notOneOf": ["interface-review"], "note": "boundary: a code-diff review is not the pro-design UI-change review"}
 {"prompt": "I'm executing an already-approved plan — drive the implementation across subagents.", "expect": "subagent-driven-development"}
-{"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"]}
+{"prompt": "Harden this endpoint against SQL injection and audit it for security holes.", "expect": ["security-architect", "security-audit"], "notOneOf": ["agent-browser", "vitest", "qa-suite", "storybook-interactions"], "note": "specific endpoint: architect or audit, never a test skill"}
 {"prompt": "Set up the database schema and migrations with Drizzle.", "expect": ["drizzle-schema-definition", "drizzle-orm-architecture"]}
 {"prompt": "Do a full UI/UX pass on this dashboard and make it polished.", "expect": ["impeccable-bridge", "impeccable"]}
 {"prompt": "Render my plan as a reviewable HTML artifact I can annotate in the browser before we start building.", "expect": "lavish"}
@@ -47,3 +47,13 @@
 {"prompt": "Nothing lines up on this page. Fix the spacing and the alignment.", "expect": "better-layout", "note": "pixel-level spacing and alignment fixes"}
 {"prompt": "Users keep misreading which items belong together on this screen. Apply proper grouping principles.", "expect": ["perception-laws", "better-layout"], "note": "Gestalt grouping and visual hierarchy; better-layout is defensible since the two cross-reference each other"}
 {"prompt": "Review this whole screen across accessibility, layout, typography, colour, and copy and give me one ranked verdict.", "expect": ["better-interface", "screen-critique"], "note": "holistic consolidation across the better-* family into a single verdict"}
+{"prompt": "Can you do a security audit of this repo?", "expect": "security-audit"}
+{"prompt": "I want a threat model for this service before we launch.", "expect": ["security-audit", "security-architect"], "note": "whole-service threat model: either security skill"}
+{"prompt": "Check whether we've ever committed an API key to git history.", "expect": "security-audit"}
+{"prompt": "Run an OWASP Top 10 review over the codebase.", "expect": "security-audit"}
+{"prompt": "Are any of the Claude skills I have installed doing anything sketchy with my env vars?", "expect": "security-audit"}
+{"prompt": "The scanner flagged api/webhooks.ts:24 as a vulnerability. Is that actually real or a false positive?", "expect": "security-auditor"}
+{"prompt": "Poke holes in my plan for a magic-link login flow. What am I missing security-wise?", "expect": "security-architect", "notOneOf": ["requesting-code-review", "security-audit", "brainstorming"], "note": "challenge a plan before code"}
+{"prompt": "Here's my design for letting users upload avatars straight to S3 with presigned URLs. Is it secure?", "expect": "security-architect", "notOneOf": ["security-audit"], "note": "design-level challenge, not a repo audit"}
+{"prompt": "Before I commit, review the auth changes on this branch for security issues.", "expect": "security-architect", "notOneOf": ["requesting-code-review", "security-audit"], "note": "diff mode, not whole-repo"}
+{"prompt": "Red-team the spec in docs/plans/2026-10-02-billing-webhooks.md with fresh eyes - assume I missed the attacks.", "expect": "security-architect", "notOneOf": ["writing-plans", "security-auditor"], "note": "fresh-context adversarial pass on a plan file (skill or subagent)"}

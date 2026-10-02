@@ -101,8 +101,8 @@ bash templates/codex-bootstrap.sh --source /Users/jodybrewster/Projects/pro-dev-
 The script clones or updates this private repository through `gh` at
 `~/.codex/marketplaces/pro-dev-skillset`, adds that local checkout as a Codex plugin marketplace,
 installs the default stack
-(`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-testing`,
-`pro-data`, `pro-research`), and leaves opt-in plugins (`pro-spdd`, `pro-gstack`)
+(`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-design`, `pro-motion`,
+`pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`)
 disabled unless you pass `--with-opt-in`. It also installs project-local Lavish at
 `.claude/skills/lavish/SKILL.md` and the project command at `.claude/commands/lavish.md` unless you
 pass `--no-lavish`. The bootstrap runs both the generic skill installer and the `--agent claude-code`
@@ -121,7 +121,9 @@ codex plugin add pro-nextjs@pro-dev-skillset
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset
+codex plugin add pro-motion@pro-dev-skillset
 codex plugin add pro-research@pro-dev-skillset
+codex plugin add pro-security@pro-dev-skillset
 ```
 
 Codex reads project instructions from `AGENTS.md`. Add one to the target repo root for project
@@ -168,10 +170,9 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Verify** | `user-validation`, `/validate` — hands *you* the checklist when work lands | `pro-quality` |
 | **Document** | `technical-writer`, `documentation-engineer`, `api-documenter` subagents, `/document` + `/api-docs` | `pro-quality` |
 | **Review** | `requesting-code-review`, `receiving-code-review`, `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
-| **Security** | `security-and-hardening`, `cso` | `pro-security` *(planned)* |
+| **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; enforced by hooks), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
-| **Workflows** *(cross-cutting)* | GStack persona-driven planning/review/QA/ship/security/docs | `pro-gstack` *(opt-in)* |
 
 *(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/lavish-engine`, `impeccable-bridge` → `impeccable` via `/design-engine`).
 
@@ -204,8 +205,14 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   Depends on `figma@claude-plugins-official` for Figma-MCP integration.
 - **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via the `/qa-engine` command (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Depends on `playwright@claude-plugins-official`.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
+- **`pro-security`** - the Security phase, in the default stack.
+  `security-architect` challenges a specific idea, plan, spec or diff: it restates the plan as a system, draws the trust boundaries, names the unstated assumptions and the attack that breaks each, and returns a `## Security challenge` section to fold into the plan (`/threat-model`, plus a read-only `security-architect` subagent for a fresh-context pass).
+  `security-audit` is the whole-repo posture audit (`/security-audit`), with the `security-auditor` subagent judging each finding independently.
+  Hooks make it hard to skip.
+  Exiting plan mode with a plan that touches auth, data, input handling, payments, secrets, LLM tools or CI is denied until the plan carries a `## Security challenge` section produced by an independent `security-architect` pass (a section the author writes alone does not count), and plan documents under `docs/plans/`, `docs/superpowers/specs/` and `spdd/` get the same check.
+  Security-sensitive ideation prompts get a nudge to challenge the idea, and a commit or `gh pr create` whose diff touches security surface is held once for a diff review.
+  The audit and the threat framing are adapted from the `cso` skill in [garrytan/gstack](https://github.com/garrytan/gstack) (MIT); the challenge procedure and hooks are original.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
-- **`pro-gstack`** — opt-in GStack workflow adapters adapted from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT): persona-driven planning, review, QA, shipping, browser, security, documentation, and memory workflows. Commands are prefixed as `/gstack-*` to avoid collisions. Not included in `pro-starter` yet.
 - **`pro-pdd`** — Define + Plan skills included in `pro-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Stack markers (no own skills — depend on `pro-core`, exist as category slots):**
@@ -214,7 +221,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd` and `pro-gstack` are opt-in.
+- **`pro-starter`** — pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + the `pro-nextjs` marker plugin. One install ⇒ the full default stack. `pro-spdd` is opt-in.
 
 ### Layout
 
@@ -229,9 +236,11 @@ plugins/
   pro-design/                        # design skills
   pro-testing/                       # testing skills
   pro-data/                          # data/auth skills + schema formatting hook
+  pro-motion/                        # video and animation skills
+  pro-research/                      # deep-research and lead-research engines
+  pro-security/                      # security architect, whole-repo audit, planning/commit hooks
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
-  pro-gstack/                        # opt-in GStack workflow adapters + upstream snapshot
   pro-pdd/                           # default define + plan-driven development skills
 templates/
   project-settings.json              # drop-in for any new project's .claude/
@@ -291,7 +300,9 @@ codex plugin add pro-nextjs@pro-dev-skillset
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset
+codex plugin add pro-motion@pro-dev-skillset
 codex plugin add pro-research@pro-dev-skillset
+codex plugin add pro-security@pro-dev-skillset
 codex exec --skip-git-repo-check "enumerate available pro-dev skills"
 ```
 
@@ -306,5 +317,5 @@ See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.j
 
 ## License
 
-- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-execution, pro-pdd, pro-quality), `grandamenium/dream-skill` (dream in pro-core), `addyosmani/agent-skills` (interview-me + idea-refine in pro-pdd), `UditAkhourii/adhd` (adhd in pro-pdd), `Owl-Listener/designer-skills` + `emilkowalski/skills` + `elayadesign/ai-design-skills` + `MengTo/Skills` + `jakubkrehel/skills` + `agents-inc/skills` (pro-design; the `ConardLi/garden-skills`, `codeswithroh/tastemaker`, `MengTo/Skills`, and `Leonxlnx/taste-skill` collections are **bridged** via `/design-skills` and `/taste-skills`, not vendored), `PaulRBerg/agent-skills` + `peterknezek/skills` (pro-testing; the `petrkindlmann/qa-skills` library is **bridged** via `/qa-engine`, not vendored), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (pro-gstack). The `agent-browser` skill in pro-testing is forked from `vercel-labs/agent-browser` under Apache-2.0. Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
+- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-execution, pro-pdd, pro-quality), `grandamenium/dream-skill` (dream in pro-core), `addyosmani/agent-skills` (interview-me + idea-refine in pro-pdd), `UditAkhourii/adhd` (adhd in pro-pdd), `Owl-Listener/designer-skills` + `emilkowalski/skills` + `elayadesign/ai-design-skills` + `MengTo/Skills` + `jakubkrehel/skills` + `agents-inc/skills` (pro-design; the `ConardLi/garden-skills`, `codeswithroh/tastemaker`, `MengTo/Skills`, and `Leonxlnx/taste-skill` collections are **bridged** via `/design-skills` and `/taste-skills`, not vendored), `PaulRBerg/agent-skills` + `peterknezek/skills` (pro-testing; the `petrkindlmann/qa-skills` library is **bridged** via `/qa-engine`, not vendored), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (the `cso` skill, adapted into `security-audit` and `security-architect` in pro-security). The `agent-browser` skill in pro-testing is forked from `vercel-labs/agent-browser` under Apache-2.0. Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
 - Manifests, templates, hooks, and tooling in this repo are original work.

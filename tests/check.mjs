@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 import { runGitSafeCases } from "./git-safe.mjs";
+import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -39,7 +40,7 @@ const EXTERNAL = new Set([
   "web-design-engineer", "tastemaker", "ideagram", "video-to-superprompt",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills", "security-audit", "security-review", "threat-model"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -334,10 +335,10 @@ checks.router = (m) => {
     if (PLANNED.has(t) || EXTERNAL.has(t) || COMMANDS.has(t)) continue;
     failures.push(`router references "${t}" — not a skill, planned, external, or command (drift?)`);
   }
-  // inverse drift: shipped non-gstack skills that the router never mentions
+  // inverse drift: shipped skills that the router never mentions
   for (const p of m.plugins) {
     // skip plugins the router references by family/abbreviation, not exact slug
-    if (["pro-gstack", "pro-starter", "pro-nextjs",
+    if (["pro-starter", "pro-nextjs",
          "pro-data", "pro-design", "pro-spdd", "pro-research"].includes(p.name)) continue;
     for (const s of p.skills) {
       if (s.slug === "using-pro-dev") continue;
@@ -367,7 +368,7 @@ checks["pro-starter"] = (m) => {
       failures.push(`pro-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-spdd", "pro-gstack", "pro-starter"]);
+  const OPT_IN = new Set(["pro-spdd", "pro-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -525,6 +526,29 @@ checks["git-safe"] = () => {
   return { failures, warnings };
 };
 
+// pro-security hook behaviour. The planning gates (ExitPlanMode, plan documents),
+// the ideation nudge and the commit/PR gate all key off one classifier, and a
+// gate that fires on design or LLM work gets turned off, so both directions FAIL:
+// a miss lets a security-sensitive plan or diff through unchallenged, a false
+// positive nags on benign work. The case table lives in tests/security-hooks.mjs.
+checks["security-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runSecurityHookCases();
+  if (skipped) {
+    warnings.push(`security hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/security-hooks.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) {
+    if (r.ok) continue;
+    failures.push(`security hook ${r.id}: expected ${r.expect}, got ${r.actual}${r.reason ? ` - ${r.reason}` : ""}`);
+  }
+  return { failures, warnings };
+};
+
 // memory hook behaviour (pro-core's dream/session-ledger hooks). The `hooks`
 // check above proves these hooks are wired into hooks/hooks.json and point at
 // scripts that exist on disk; it says nothing about whether those scripts
@@ -611,9 +635,7 @@ checks["eval-coverage"] = (m) => {
     catch { failures.push(`routing.jsonl: unparseable case — ${t.slice(0, 70)}`); continue; }
     for (const s of [].concat(c.expect ?? [])) covered.add(s);
   }
-  // gstack is its own upstream suite and is excluded from the eval catalog
   for (const p of m.plugins) {
-    if (p.name === "pro-gstack") continue;
     for (const s of p.skills)
       if (!covered.has(s.slug)) warnings.push(`no routing eval case expects skill ${p.name}/${s.slug}`);
     for (const a of p.agents ?? [])

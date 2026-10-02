@@ -1,5 +1,7 @@
 # Plan: wrap qa-skills, absorb agent-skills, salvage gstack, then remove gstack
 
+Status (2026-10): GStack has been removed. `cso` landed as `pro-security`'s `security-audit` skill, and a new `security-architect` skill plus planning and commit hooks were added. Paths below that point into `plugins/pro-gstack/` are historical.
+
 ## Context
 
 Three related goals:
