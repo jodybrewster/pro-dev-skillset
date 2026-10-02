@@ -28,7 +28,7 @@ The opt-in `pro-legal` helps here too: it flags client IP and licensing question
 
 **The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, structured prompts, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
 
-The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). `pro-legal` is opt-in too. The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-data`, `pro-testing`, `pro-security`) works without them.
+The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). `pro-legal` is opt-in too. The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.
 
 ## Use subagents to parallelize — aggressively
 

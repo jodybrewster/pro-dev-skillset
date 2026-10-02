@@ -44,7 +44,7 @@ gate CI runs (`.github/workflows/validate.yml`).
 
 `eval-coverage` currently warns on ~32 skills and subagents with no routing case
 against 32 cases covering the rest. Routing coverage is partial by design at the
-edges (SPDD leads route as a pipeline, `pro-motion` and `pro-nextjs` skills are
+edges (SPDD leads route as a pipeline, `pro-motion`, `pro-nextjs` and `pro-astro` skills are
 picked by file context more than by prompt), but the warnings are the honest list
 of what no eval asserts.
 
