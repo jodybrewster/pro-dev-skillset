@@ -237,7 +237,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Framework plugins (skills trigger from file context in projects that use the framework):**
 
-- **`pro-nextjs`** - Next.js projects: `next-best-practices`, `next-upgrade`, `next-cache-components` and `shadcn`, adapted from vercel-labs/next-skills. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
+- **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/next-skills`, and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
 - **`pro-astro`** - Astro projects: `astro-best-practices` (auto-applied guardrails), `astro-upgrade` (Astro 5 to 6 to 7 and adapter majors), `astro-on-cloudflare` (`@astrojs/cloudflare` on Workers) and `astro-on-vercel` (`@astrojs/vercel`). The content is original, written from the official Astro, Cloudflare and Vercel docs. Pairs with the official Astro Docs MCP server and, on Cloudflare, the official `cloudflare/skills` plugin.
 
 **Meta:**

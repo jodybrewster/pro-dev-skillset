@@ -1,112 +1,105 @@
 ---
 name: next-upgrade
-description: Upgrade Next.js to the latest version following official migration guides and codemods. Use when asked to upgrade Next.js or when the `next` version in package.json is behind the latest.
+description: Upgrade a Next.js app to a newer version (latest, canary or a named release) with the official upgrade command and codemods, one major version at a time, then fix what the codemods leave and verify the build. Use when asked to upgrade or migrate Next.js, or when package.json pins a `next` version behind the latest. Written from the official Next.js upgrade guides.
 ---
 
-# Next.js Upgrade
+# Upgrading Next.js
 
-Structured approach for upgrading Next.js projects to the latest (or a specified) version.
+Say at the start that you are using the next-upgrade skill.
+Each step names the docs page it comes from; the per-version guide is the authority for anything this page leaves out.
 
-**Announce at start:** "I'm using the next-upgrade skill to upgrade Next.js."
+## 1. Find where the app is and where it is going
 
-## Step 1 — Detect current versions
+- Read `package.json` for the installed `next`, `react`, `react-dom`, `eslint-config-next` and `typescript` versions, and the lockfile for the package manager.
+- The target is the version the user named, else the latest stable (`npm view next version`; `npm view next dist-tags` lists canary too).
+- Check the runtime floor for the target.
+  Next.js 16 needs Node.js 20.9.0 or later and TypeScript 5.1.0 or later; the App Router has needed React 19 since Next.js 15.
+- Work on a clean branch so the codemod diff can be reviewed on its own.
 
-Read `package.json` and identify:
-- Current `next` version
-- Current `react` and `react-dom` versions
-- Current TypeScript version (if applicable)
-- Target version (from skill argument, or latest if unspecified)
+Sources: [Upgrading](https://nextjs.org/docs/app/getting-started/upgrading), [Version 16](https://nextjs.org/docs/app/guides/upgrading/version-16), [Version 15](https://nextjs.org/docs/app/guides/upgrading/version-15).
 
-```bash
-cat package.json | grep -E '"next"|"react"'
-npm show next version          # latest stable
-npm show next@canary version   # latest canary
-```
+## 2. Plan one major at a time
 
-## Step 2 — Plan the upgrade path
+- Crossing several majors (say 14 to 16) goes one hop per major: upgrade, verify, commit, then take the next hop.
+- Read the guide for each hop before running anything: [version 14](https://nextjs.org/docs/app/guides/upgrading/version-14), [version 15](https://nextjs.org/docs/app/guides/upgrading/version-15), [version 16](https://nextjs.org/docs/app/guides/upgrading/version-16).
+- Optionally run `npx @next/codemod@canary agents-md` first, so `AGENTS.md` points at the docs bundled with the installed version in `node_modules/next/dist/docs/`.
 
-For upgrades spanning multiple major versions (e.g., 13 → 15), upgrade one major at a time:
-- 13 → 14, verify, then 14 → 15
+Source: [Upgrade guides](https://nextjs.org/docs/app/guides/upgrading).
 
-Fetch the official migration guide for each hop from `https://nextjs.org/docs/upgrading`.
+## 3. Run the upgrade command
 
-## Step 3 — Apply codemods
+- On Next.js 16.1 and later, run the built-in command with the project's package manager: `npx next upgrade` (or `pnpm next upgrade`, `yarn next upgrade`, `bunx next upgrade`).
+  `--revision <version>` picks a target such as `latest`, `canary` or `16.4.0`.
+- Before 16.1 the command does not exist; use `npx @next/codemod@canary upgrade latest`, which bumps the packages and runs the codemods for that release.
+  `--skip-react-upgrade`, `--skip-eslint-upgrade` and `-y` control what it touches.
+- To hand the whole upgrade to a coding agent instead, the docs offer `npx next@canary upgrade --agent=latest` (experimental).
 
-Run the official codemods before touching code manually:
+Sources: [Upgrading](https://nextjs.org/docs/app/getting-started/upgrading), [next CLI: next upgrade](https://nextjs.org/docs/app/api-reference/cli/next), [Upgrade with a coding agent](https://nextjs.org/docs/app/guides/upgrading/agent-upgrade).
 
-```bash
-npx @next/codemod@latest <transform> <path>
-```
+## 4. Run the codemods the upgrade command skips
 
-Common transforms by version:
-| Version | Codemod | What it does |
-|---------|---------|--------------|
-| 15 | `next-async-request-api` | Converts `params`, `searchParams`, `cookies()`, `headers()` to async |
-| 15 | `next-og-import` | Migrates `ImageResponse` import path |
-| 14 | `next-dynamic-imports` | Converts `import()` expressions |
-| 15 | `geo-ip-deprecated` | Removes deprecated `geo` and `ip` properties |
+A single codemod runs as `npx @next/codemod <transform> <path>`; add `--dry` to preview and `--print` to see the output.
 
-Run the full codemod suite with:
-```bash
-npx @next/codemod@latest upgrade latest
-```
+| Target | Codemod | What it changes |
+|---|---|---|
+| 16.0 | `middleware-to-proxy` | Renames `middleware` to `proxy` |
+| 16.0 | `next-lint-to-eslint-cli` | Replaces `next lint` with the ESLint CLI |
+| 16.0 | `remove-unstable-prefix` | Drops `unstable_` from APIs that are now stable |
+| 16.0 | `remove-experimental-ppr` | Removes the `experimental_ppr` segment config |
+| 15.0 | `next-async-request-api` | Makes `params`, `searchParams`, `cookies()`, `headers()` and `draftMode()` async |
+| 15.0 | `app-dir-runtime-config-experimental-edge` | Turns `runtime = 'experimental-edge'` into `'edge'` |
+| 15.0 | `next-request-geo-ip` | Replaces the removed `geo` and `ip` on `NextRequest` |
+| 14.0 | `next-og-import` | Moves `ImageResponse` imports to `next/og` |
+| 14.0 | `metadata-to-viewport-export` | Splits viewport fields out of `metadata` |
 
-## Step 4 — Update dependencies
+The 16 upgrade does not run `next-async-request-api`.
+If the code still reads request APIs synchronously from the Next.js 15 compatibility period, run `npx @next/codemod@canary next-async-request-api .` and resolve every `@next-codemod-error` comment it leaves.
 
-```bash
-npm install next@latest react@latest react-dom@latest
-```
+Sources: [Codemods](https://nextjs.org/docs/app/guides/upgrading/codemods), [Version 16: using the codemod](https://nextjs.org/docs/app/guides/upgrading/version-16).
 
-If using TypeScript:
-```bash
-npm install --save-dev @types/react@latest @types/react-dom@latest @types/node@latest
-```
+## 5. Upgrade packages by hand when needed
 
-For a specific version:
-```bash
-npm install next@15.0.0
-```
+When the upgrade command is not an option, install the packages directly with the project's package manager, for example `npm i next@latest react@latest react-dom@latest eslint-config-next@latest`.
+With TypeScript, update `@types/react` and `@types/react-dom` in the same step.
 
-## Step 5 — Address breaking changes manually
+Source: [Upgrading](https://nextjs.org/docs/app/getting-started/upgrading).
 
-Review the migration guide for changes codemods don't cover:
-- Config option renames in `next.config.ts`
-- Deprecated APIs removed in this version
-- New required file conventions
-- Changed default behaviors (caching, rendering, etc.)
+## 6. Work through the breaking changes
 
-Key changes by major version:
+Go through the target's guide top to bottom; the codemods cover only part of it.
 
-**Next.js 15:**
-- `cookies()`, `headers()`, `params`, `searchParams` are now async (codemod handles most)
-- Caching defaults changed: `fetch()` is no longer cached by default
-- `unstable_cache` → `'use cache'` directive (with `cacheComponents: true`)
-- `experimental.ppr` → `cacheComponents: true` for PPR
+Next.js 16:
 
-**Next.js 14:**
-- Stable App Router, stable Server Actions
-- `next/font` replaces `@next/font`
+- Turbopack is the default for `next dev` and `next build`; a project that still needs webpack opts out with the `--webpack` flag.
+- Synchronous request API access is gone.
+- `middleware` is deprecated in favor of `proxy`.
+- Every parallel-route slot needs a `default` file.
+- `next lint`, AMP support and runtime config (`serverRuntimeConfig`, `publicRuntimeConfig`) are removed.
+- `next/image` defaults changed (`minimumCacheTTL`, `imageSizes`, `qualities`, local images with query strings) and `priority` is deprecated in favor of `preload`.
+- `revalidateTag` takes a `cacheLife` profile as its second argument.
+- Cache Components (`cacheComponents: true`) replaces `experimental.ppr` and stays opt-in; adopting it is separate work for `next-skills-bridge`.
 
-## Step 6 — Update TypeScript config (if applicable)
+Next.js 15:
 
-Ensure `tsconfig.json` targets are compatible. Next.js 15+ requires TypeScript 5+.
+- Request APIs became async (with temporary synchronous access).
+- The App Router requires React 19.
+- `fetch` requests and `GET` Route Handlers are no longer cached by default, and the client router cache no longer reuses page segments.
+- `@next/font` is removed in favor of `next/font`.
 
-## Step 7 — Validate
+Sources: [Version 16](https://nextjs.org/docs/app/guides/upgrading/version-16), [Version 15](https://nextjs.org/docs/app/guides/upgrading/version-15).
 
-```bash
-npm run build       # Check for build errors
-npm run dev         # Check for runtime warnings
-```
+## 7. Verify
 
-Fix any remaining TypeScript or ESLint errors. Check the browser for hydration errors or console warnings.
+- Run the type check, the linter (through the ESLint CLI from 16), the test suite, `next build` and `next dev`.
+- Load the main routes in a browser and watch the console for hydration and deprecation warnings.
+- For runtime checks against a running `next dev`, `next-skills-bridge` routes to the upstream `next-dev-loop` skill.
 
-## Step 8 — Commit
+Source: [Version 16](https://nextjs.org/docs/app/guides/upgrading/version-16).
 
-```bash
-git add package.json package-lock.json
-git commit -m "chore: upgrade Next.js to vX.Y.Z"
-```
+## 8. Commit each hop
+
+Commit `package.json`, the lockfile and the codemod changes for each major as its own commit (for example `chore: upgrade Next.js to 16.4.2`), so a regression can be bisected to one hop.
 
 ---
 
-_Adapted from [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills) by Vercel, whose skills have since moved to [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) (MIT License). The source repository carries no license file; see this plugin's LICENSE._
+_Written from the [Next.js documentation](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) (MIT, Copyright (c) 2025 Vercel, Inc.); each step cites its page. See this plugin's LICENSE._
