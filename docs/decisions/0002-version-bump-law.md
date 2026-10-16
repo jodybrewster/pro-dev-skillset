@@ -8,7 +8,7 @@ accepted
 
 ## Context
 
-The Claude Code plugin cache is keyed by (marketplace, plugin, version).
+Claude Code keys its plugin cache on the marketplace, the plugin and the version.
 A content edit that keeps the old version leaves the cache key unchanged, so `claude plugin update` serves the cached copy and nothing warns.
 Codex installs read the plugin version from `.codex-plugin/plugin.json`.
 The rule was written down in the first commit, in RELEASING.md, before any plugin had shipped a second version.

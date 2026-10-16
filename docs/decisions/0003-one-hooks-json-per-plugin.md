@@ -8,7 +8,7 @@ accepted
 
 ## Context
 
-Claude Code auto-loads exactly one hook file per plugin, hooks/hooks.json.
+Claude Code loads one hook file per plugin on its own, hooks/hooks.json.
 Any other filename in hooks/ is silently ignored.
 There is no warning and no validation error, and `claude plugin validate --strict` still passes.
 
@@ -16,8 +16,7 @@ Commit 8597453 found eight hook files across pro-core, pro-data and pro-quality 
 They were named per concern, like git-safe.json and validation-handoff.json, instead of being merged into hooks/hooks.json.
 The git-safe guard, the doc-freshness push gate, the PR quality gate and the parallel-subagent nudge were all dead.
 One pro-data hook also pointed at scripts/format-schema.py, which was never written.
-Nothing failed.
-The hooks just never ran.
+No check failed and no hook ran.
 
 ## Decision
 

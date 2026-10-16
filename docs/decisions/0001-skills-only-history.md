@@ -16,7 +16,7 @@ It stopped being enough once some behavior had to happen every time.
 Hooks and slash commands arrived within the first day (c22c205, 2026-05-24, "Phase 4: hooks, slash commands, CI validation").
 The first plugin agents followed on 2026-06-02 with the four pro-research researchers (ef447db, the pro-research 0.2.0 commit).
 By 2026-06-07 a hook gated pull request quality with an automatic code review (da0f024, "feat(pro-quality): add PR quality gate hook with auto code review").
-CLAUDE.md records the result: the plugins are skills-only by design, historically, and the other components are layered in where deterministic triggering beats description matching.
+The agent file recorded the outcome: the marketplace was built from skills at first, and other components are added where deterministic triggering beats description matching.
 
 ## Decision
 
