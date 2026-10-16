@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.42.1"
+    "version": "1.42.2"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -66,7 +66,7 @@
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
       "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via the /qa-engine command (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/qa-engine), not as a hard plugin dependency.",
-      "version": "0.5.6",
+      "version": "0.5.7",
       "category": "development",
       "strict": true
     },
@@ -130,7 +130,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
-      "version": "1.12.1",
+      "version": "1.12.2",
       "category": "development",
       "strict": true
     }

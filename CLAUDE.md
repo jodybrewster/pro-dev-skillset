@@ -24,7 +24,7 @@ A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md
 ## The three laws
 
 - Version-bump law: a content change under `plugins/<name>/` bumps that plugin in both manifests and its marketplace entry, plus `metadata.version`, in the same commit ([ADR-0002](./docs/decisions/0002-version-bump-law.md), [detail](./docs/version-bump-law.md)).
-- Hook-loading law: every hook a plugin registers lives in its one `hooks/hooks.json`, and every script a hook runs exists and is tracked by git ([ADR-0003](./docs/decisions/0003-one-hooks-json-per-plugin.md), [detail](./docs/hook-loading.md)).
+- Hook-loading law: every hook a plugin registers lives in its one `hooks/hooks.json` and every script a hook runs exists and is tracked by git ([ADR-0003](./docs/decisions/0003-one-hooks-json-per-plugin.md), [detail](./docs/hook-loading.md)).
 - Codex parity: every skill-bearing plugin also loads under Codex, with harness-neutral prose, standard frontmatter, a version-aligned `.codex-plugin/plugin.json` and a `.toml` per agent ([ADR-0004](./docs/decisions/0004-codex-parity.md), [detail](./docs/codex-parity.md)).
 
 Other decisions are in [docs/decisions/](./docs/decisions/README.md).
@@ -60,8 +60,8 @@ node tests/check.mjs && node tests/eval.mjs --dry
 # 2. Full marketplace + strict validation (Claude)
 claude plugin validate . --strict
 
-# 3. Every plugin, strict (the loop CI runs)
-for p in plugins/*/; do claude plugin validate "${p%/}" --strict || break; done
+# 3. Every plugin, strict (the loop CI runs); the subshell exits 1 on the first failure
+( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
 Expected output, from a real run on 2026-10-16 (the 36 warnings are skills and agents with no routing case):

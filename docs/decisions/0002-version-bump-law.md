@@ -24,7 +24,11 @@ When a dependency crosses a minor, every dependent widens its caret constraint t
 - A missed bump means a stale cache on update, with no error from Claude Code or Codex.
 - The two plugin manifests stay aligned because Codex reads its version from `.codex-plugin/plugin.json`.
 - Docs outside `plugins/` need no bump.
-- Under npm semver `^0.1.0` accepts `0.1.*` but not `0.2.0`, so a minor bump cascades through the `^0.x` constraints of all dependents and through any meta-plugin that depends on them.
+- Under npm semver `^0.1.0` accepts `0.1.*` but not `0.2.0`; a minor bump therefore cascades through the `^0.x` constraints of all dependents.
+- Any bump of a plugin the `pro-starter` meta-plugin depends on, patch bumps included, also bumps `pro-starter` and its marketplace entry.
+  While the meta-plugin's own version is unchanged, `claude plugin update pro-starter` reports it up to date and re-resolves nothing.
+- The item above was corrected on 2026-10-16.
+  It first tied the meta-plugin bump to minor bumps only, which contradicted RELEASING.md and let PR 51 patch ten plugins while `pro-starter` stayed at 1.12.1.
 - Each bump is followed by a tag `<plugin>--v<semver>`, made with `claude plugin tag`, which refuses to tag when `plugin.json` and the marketplace entry disagree.
 - Small edits cost a release, which is the price of a cache that can be trusted.
 
