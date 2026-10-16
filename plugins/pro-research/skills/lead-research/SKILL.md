@@ -137,3 +137,7 @@ general runs use the synthesis output in `references/methodology.md`.
 The `scripts/browse.sh` path can combine a private browser session, untrusted web content, and actions —
 the "lethal trifecta." Keep it read-only, public targets only; auth-vault usage is out of scope. See the
 security section in `references/methodology.md`.
+
+---
+
+_Original skill for pro-dev-skillset (Jody Brewster). MIT License._

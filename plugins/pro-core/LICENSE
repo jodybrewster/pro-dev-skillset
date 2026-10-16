@@ -1,14 +1,18 @@
-# Attribution notice: Most skills in this plugin are forked from
-# obra/superpowers (https://github.com/obra/superpowers) under the MIT License.
-# The `grill-me` skill is forked from mattpocock/skills
-# (https://github.com/mattpocock/skills) under the MIT License.
-# The `dream` skill is forked from grandamenium/dream-skill
-# (https://github.com/grandamenium/dream-skill) under the MIT License, which
-# upstream declares in its README without shipping a license file.
-
 MIT License
 
-Copyright (c) 2025 Jesse Vincent
+This plugin contains skills forked from the following upstream repositories:
+
+- vercel-labs/skills (https://github.com/vercel-labs/skills)
+  Copyright (c) 2026 Vercel, Inc.
+  Used for: find-skills
+
+- grandamenium/dream-skill (https://github.com/grandamenium/dream-skill)
+  Used for: dream
+  Upstream declares the MIT License in its README and ships no license file,
+  so there is no upstream copyright line to reproduce.
+
+All other content in this plugin, including the `using-pro-dev` skill, the commands
+and the hook scripts, is original work, Copyright (c) 2026 Jody Brewster.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
