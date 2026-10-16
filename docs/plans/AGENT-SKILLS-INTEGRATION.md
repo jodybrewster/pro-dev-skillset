@@ -373,7 +373,7 @@ vs existing `plugins/pro-execution/skills/{test-driven-development,systematic-de
 
 ## Fresh-context handoff (read this first in a new session)
 
-- **This plan:** `AGENT-SKILLS-INTEGRATION.md` (`docs/plans/`) — canonical copy also at `~/.claude/plans/snuggly-zooming-giraffe.md`.
+- **This plan:** `AGENT-SKILLS-INTEGRATION.md` (`docs/plans/`) — canonical copy also at `<your plan file>`.
 - **Superseded plan:** `QA-SKILLS-WRAP-PLAN.md` is now only a pointer to this merged document.
 - **qa-skills source:** clone at `/tmp/qa-skills` (currently present; **ephemeral** — re-create with `git clone --depth 1 https://github.com/petrkindlmann/qa-skills.git /tmp/qa-skills`).
 - **agent-skills source:** clone at `/tmp/agent-skills` (currently present; **ephemeral** — re-create with `git clone --depth 1 https://github.com/addyosmani/agent-skills.git /tmp/agent-skills`).

@@ -17,12 +17,13 @@ PR 51 (cc48aad) bumped ten plugins and left `pro-starter` at 1.12.1.
 RELEASING.md says a dependency bump always bumps the meta-plugin, while ADR-0002's Consequences narrow that to minor bumps.
 With `pro-starter` unchanged, `claude plugin update pro-starter` reports up to date and re-resolves nothing.
 
-The verify loop in CLAUDE.md ends in `|| break`, which does not carry the failing status, so the chain exits 0 after a plugin fails validation.
+The verify loop in CLAUDE.md ends in `|| break`, which does not carry the failing status.
+The chain exits 0 after a plugin fails validation.
 
 `plugins/pro-testing/LICENSE` points at the Apache-2.0 text by URL.
 Section 4(a) of the Apache License requires a copy of the license to accompany the work.
 
-The review also listed nits: an em dash in `.claude/commands/research.md`, a home-directory path in `docs/plans/AGENT-SKILLS-INTEGRATION.md`, commas before a conjunction in ADR-0004, `docs/licenses.md`, CLAUDE.md and README.md, and no check for tilde-prefixed home paths in REVIEW.md.
+The review also listed nits: an em dash in `.claude/commands/research.md`, a home-directory path in `docs/plans/AGENT-SKILLS-INTEGRATION.md`, commas before a conjunction (in ADR-0004, `docs/licenses.md`, CLAUDE.md and README.md) and no check for tilde-prefixed home paths in REVIEW.md.
 
 ## Proposed outcome
 
@@ -44,4 +45,7 @@ The version-bump law applies to every content change under `plugins/`.
 
 ## Check
 
-`node tests/check.mjs` reports 17 checks and 0 failures, `node tests/eval.mjs --dry` passes, `claude plugin validate --strict` passes for the marketplace, `pro-starter` and `pro-testing`, and `claude plugin tag --dry-run` names `pro-starter--v1.12.2` and `pro-testing--v0.5.7`.
+`node tests/check.mjs` reports 17 checks and 0 failures.
+`node tests/eval.mjs --dry` passes.
+`claude plugin validate --strict` passes for the marketplace, `pro-starter` and `pro-testing`.
+`claude plugin tag --dry-run` names `pro-starter--v1.12.2` and `pro-testing--v0.5.7`.

@@ -10,7 +10,9 @@ accepted
 
 The README promises that the skills in this marketplace load under OpenAI Codex as well as Claude Code, through the Agent Skills standard.
 Forked skills drifted from that promise in small ways.
-Bodies named Claude-only tools such as Task and TodoWrite, sidecar files were referenced but missing, and some frontmatter used keys the standard does not guarantee.
+Bodies named Claude-only tools such as Task and TodoWrite.
+Sidecar files were referenced but missing.
+Some frontmatter used keys the standard does not guarantee.
 Commit f689820 (2026-05-24, "Phase 3 polish: pro-design 0.3.0 adds shadcn/ui composition + Codex parity docs") wrote the parity docs.
 Commit 29c0a98 (2026-05-24, "Phase 3 finish: real skills for testing/data/spec, Codex parity fixes") fixed the drift that had built up.
 
@@ -28,7 +30,7 @@ Every agents/<n>.md ships a .codex-plugin/agents/<n>.toml counterpart with name,
 Agent parity came later.
 Commit e98db62 (2026-07-26, "feat(pro-quality): documentation subagents, doc hooks, and eval coverage for agents (#40)") added the .toml rule, because Codex does not read agents/*.md and does not auto-spawn custom subagents.
 Users install the .toml files by copying them into ~/.codex/agents/ or .codex/agents/.
-The four pro-research agents predate that rule and are still Claude-only, so they are a known gap.
+The four pro-research agents predate that rule and are still Claude-only; they are a known gap.
 When porting an agent from an upstream collection, read the Codex .toml variant first.
 In VoltAgent/awesome-*-subagents the .toml bodies are better, while the .md versions carry invented metrics and a delivery template that contradicts verification-before-completion.
 Each version bump now touches two manifests that must agree.

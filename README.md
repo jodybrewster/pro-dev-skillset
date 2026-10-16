@@ -342,5 +342,6 @@ See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.j
 
 ## License
 
-Manifests, templates, hooks, scripts and tooling in this repo are original work under the MIT [LICENSE](./LICENSE), and so are the skills whose footer says so.
+Manifests, templates, hooks, scripts and tooling in this repo are original work under the MIT [LICENSE](./LICENSE).
+So are the skills whose footer says so.
 Forked, adapted and bridged skills keep their upstream license, recorded per plugin in `plugins/<name>/LICENSE` and listed with every upstream and copyright line in [docs/licenses.md](./docs/licenses.md).

@@ -26,6 +26,8 @@ Secrets and personal data:
 
 - No credentials in tracked files: AWS keys (`AKIA`, `ASIA`), Anthropic keys (`sk-ant-`), GitHub tokens (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`), Slack tokens (`xoxb-`, `xoxp-`, `xoxa-`, `xapp-`) and private key blocks (`-----BEGIN ... PRIVATE KEY-----`).
 - No absolute personal paths (`/Users/<name>`, `/home/<name>`) outside fictional fixtures; use a path relative to the repo root or a placeholder such as `<path-to-pro-dev-skillset>`.
+- No tilde-prefixed home paths to one person's files: grep the diff for `~/.claude/` and `~/Projects/`.
+  A documented location every user has, such as `~/.claude/settings.json` or `~/.codex/agents/`, is fine; a plan file, a checkout or a session folder is a finding.
 - No email addresses outside the `author` or `owner` fields of manifests.
 - Gathered evidence (`.research/`, `handoff.jsonl`, `routing.jsonl`) never enters a commit.
 

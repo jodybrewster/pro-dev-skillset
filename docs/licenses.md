@@ -1,7 +1,8 @@
 # Licenses and attribution
 
 Every skill, agent or engine in this marketplace that is not original work, with its upstream and the copyright line from the upstream's own LICENSE file.
-Each plugin that ships forked or adapted content carries `plugins/<name>/LICENSE` with the same lines, and each forked file ends with a footer naming its upstream.
+Each plugin that ships forked or adapted content carries `plugins/<name>/LICENSE` with the same lines.
+Each forked file ends with a footer naming its upstream.
 Manifests, templates, hooks, scripts, CI and the test harness are original work, MIT, Copyright (c) 2026 Jody Brewster (see the root [`LICENSE`](../LICENSE)).
 
 How it entered:
@@ -82,7 +83,7 @@ The choices are to rewrite the three skills from the MIT vercel/next.js skills o
 | pro-astro | original, written from the public Astro, Cloudflare and Vercel docs | 5b09a01 (PR 49); no upstream in git history; no matching skill in withastro/astro, withastro/docs, cloudflare/skills, vercel-labs/agent-skills or vercel-labs/skills; no shared prose with incluud/astro-agent-skills or ianshk/astro-skills |
 | pro-legal | original | 9ee43b0 (PR 48); code search for distinctive phrases finds only this repo; no shared eight-word sequence with VoltAgent legal-advisor or anthropics/knowledge-work-plugins legal skills |
 | pro-motion | original | c4460d3 (2026-06-23), added whole; overlap with greensock/gsap-skills, remotion-dev/skills and heygen-com/hyperframes is code fragments only; the `hyperframes` skill covers Framer Motion and shares only a name with HeyGen's HyperFrames |
-| pro-research | original | ef447db (2026-06-02); agent names match langchain-ai company-researcher and people-researcher, but no text is shared |
+| pro-research | original | ef447db (2026-06-02); agent names match langchain-ai company-researcher and people-researcher but no text is shared |
 | pro-starter | original | a dependency aggregator and one `/pro-starter` command; f0887bd and c19635c |
 
 Original skills inside plugins that also ship forked content: pro-core `using-pro-dev`; pro-design `motion`, `stitch-skill` and `taste-skill`; pro-nextjs `shadcn`; pro-quality `user-validation`.
