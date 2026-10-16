@@ -1,6 +1,6 @@
 {
   "name": "pro-starter",
-  "version": "1.12.1",
+  "version": "1.12.2",
   "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + nextjs + astro + design + motion + testing + data + research + security",
   "author": {
     "name": "Jody Brewster",
