@@ -101,7 +101,7 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-boots
 For local development against this checkout instead of the GitHub source:
 
 ```bash
-bash templates/codex-bootstrap.sh --source /Users/jodybrewster/Projects/pro-dev-skillset
+bash templates/codex-bootstrap.sh --source <path-to-pro-dev-skillset>
 ```
 
 The script clones or updates this private repository through `gh` at
@@ -118,7 +118,7 @@ installer so Codex gets `.agents/skills/lavish/SKILL.md` and Claude Code gets
 Manual equivalent when you already have a local checkout:
 
 ```bash
-codex plugin marketplace add /Users/jodybrewster/Projects/pro-dev-skillset
+codex plugin marketplace add <path-to-pro-dev-skillset>
 codex plugin add pro-core@pro-dev-skillset
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset

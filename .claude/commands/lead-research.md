@@ -14,8 +14,8 @@ You are the orchestrator. Lead/account path — fans out the company/signals/peo
 - Engine: `plugins/pro-research/skills/lead-research/references/methodology.md`
 - Scoring: `.../references/scoring.md` · Sources: `.../references/sources.md` · Mieruka: `.../references/mieruka.md`
 
-**Scripts directory** (pass to every subagent):
-`/Users/jodybrewster/Projects/pro-dev-skillset/plugins/pro-research/skills/lead-research/scripts`
+**Scripts directory** (pass to every subagent; paths are relative to the repo root, so run from the repo root):
+`plugins/pro-research/skills/lead-research/scripts`
 
 Agents: `plugins/pro-research/agents/{company,signals,people}-researcher.md`.
 
