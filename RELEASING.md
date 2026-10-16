@@ -40,6 +40,11 @@ claude plugin tag plugins/pro-core --push -m "pro-core v%s"
 
 Tag scheme: `{plugin-name}--v{semver}` (e.g. `pro-core--v0.1.0`).
 
+## Release table
+
+Every bump adds or updates that plugin's row in [docs/releases.md](./docs/releases.md) (plugin, version, date, what shipped) in the same PR as the bump.
+Tagging resumed in October 2026, so after the PR merges each bumped plugin is tagged at its new version.
+
 ## Pre-tag checklist
 
 ```bash
