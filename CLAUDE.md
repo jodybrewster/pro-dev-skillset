@@ -60,8 +60,8 @@ node tests/check.mjs && node tests/eval.mjs --dry
 # 2. Full marketplace + strict validation (Claude)
 claude plugin validate . --strict
 
-# 3. Every plugin, strict (the loop CI runs)
-for p in plugins/*/; do claude plugin validate "${p%/}" --strict || break; done
+# 3. Every plugin, strict (the loop CI runs); the subshell exits 1 on the first failure
+( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
 Expected output, from a real run on 2026-10-16 (the 36 warnings are skills and agents with no routing case):
