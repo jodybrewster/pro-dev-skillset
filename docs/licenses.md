@@ -49,9 +49,9 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-execution | systematic-debugging | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | test-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | using-git-worktrees | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
-| pro-nextjs | next-best-practices | [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills), moved to [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) | none on the source; vercel/next.js is MIT | Vercel; vercel/next.js: Copyright (c) 2025 Vercel, Inc. | adapted |
-| pro-nextjs | next-cache-components | [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills), moved to [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) | none on the source; vercel/next.js is MIT | Vercel; vercel/next.js: Copyright (c) 2025 Vercel, Inc. | adapted |
-| pro-nextjs | next-upgrade | [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills), moved to [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) | none on the source; vercel/next.js is MIT | Vercel; vercel/next.js: Copyright (c) 2025 Vercel, Inc. | adapted |
+| pro-nextjs | next-best-practices | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
+| pro-nextjs | next-skills-bridge | [vercel/next.js `skills/`](https://github.com/vercel/next.js/tree/canary/skills) | MIT | Copyright (c) 2025 Vercel, Inc. | bridged |
+| pro-nextjs | next-upgrade | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
 | pro-pdd | brainstorming | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | writing-plans | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | interview-me | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
@@ -72,9 +72,8 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-testing | agent-browser | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | Apache-2.0; no NOTICE file upstream | Copyright 2025 Vercel Inc. | forked |
 | pro-testing | qa-suite | [petrkindlmann/qa-skills](https://github.com/petrkindlmann/qa-skills) | MIT | Copyright (c) 2026 Petr Kindlmann | bridged |
 
-The three pro-nextjs rows are open.
-The source repository never carried a license file, and the skills now in vercel/next.js are different documents, so the MIT grant there does not clearly cover the adapted text.
-The choices are to rewrite the three skills from the MIT vercel/next.js skills or the Next.js docs, to replace them with the vercel/next.js skills under MIT, or to ask Vercel to license the old repository.
+The pro-nextjs rows were closed on 2026-10-16.
+The three skills first adapted from vercel-labs/next-skills, a repository with no license file, are gone or rewritten: `next-cache-components` was removed in favor of the bridge, and `next-best-practices` and `next-upgrade` were rewritten from the MIT Next.js docs with no line left verbatim from the old source ([intent](../intent/2026-10-16-next-skills-bridge/intent.md)).
 
 ## Original plugins
 

@@ -1,18 +1,18 @@
 MIT License
 
-The `next-best-practices`, `next-cache-components` and `next-upgrade` skills in this
-plugin are adapted from the Next.js agent skills written by Vercel, as published in:
+The `next-best-practices` and `next-upgrade` skills in this plugin are written from
+the Next.js documentation (https://nextjs.org/docs), whose source lives in
+vercel/next.js (https://github.com/vercel/next.js/tree/canary/docs) under the
+MIT License:
 
-- vercel-labs/next-skills (https://github.com/vercel-labs/next-skills)
-  That repository carries no license file. Its README says the skills moved to
-  vercel/next.js (https://github.com/vercel/next.js/tree/canary/skills), which is
-  MIT licensed:
   Copyright (c) 2025 Vercel, Inc.
 
-The adapted text matches the files in vercel-labs/next-skills before the move.
-The skills now in vercel/next.js are different documents, so the notice above
-credits the author and the new home and is not a claim that the MIT grant there
-covers the adapted text.
+Each section of those two skills cites the documentation page it was written from.
+
+The `next-skills-bridge` skill and the `/next-skills` command vendor nothing; they
+install the Next.js agent skills from vercel/next.js
+(https://github.com/vercel/next.js/tree/canary/skills), which are governed by that
+repository's MIT License.
 
 The `shadcn` skill is original work written from the public shadcn/ui documentation
 (https://ui.shadcn.com/docs). All other content in this plugin is original work,

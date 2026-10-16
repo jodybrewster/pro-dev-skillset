@@ -68,3 +68,5 @@
 {"prompt": "I want to move my Astro site from Vercel to Cloudflare Workers and use a KV binding for sessions.", "expect": "astro-on-cloudflare"}
 {"prompt": "My Astro API route on Vercel times out while streaming; how do I raise maxDuration in the adapter?", "expect": "astro-on-vercel"}
 {"prompt": "Review this Astro component: should this island be client:load or client:visible, and should the data come from a content collection?", "expect": "astro-best-practices"}
+{"prompt": "Turn on Cache Components in our Next.js app and work through the blocking-route errors the build throws.", "expect": "next-skills-bridge", "notOneOf": ["next-upgrade"], "note": "Cache Components adoption is an upstream vercel/next.js skill reached through the bridge"}
+{"prompt": "Upgrade this app from Next.js 15 to 16 and run the codemods.", "expect": "next-upgrade", "notOneOf": ["next-skills-bridge"]}

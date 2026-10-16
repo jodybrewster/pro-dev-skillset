@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Network-dependent smoke test for the external-skill install paths that
-// pro-design's bridge skills route to.
+// the bridge skills in pro-design and pro-nextjs route to.
 //
 // A bridge skill is a router, not vendored content: the real engine lives in
 // an external repo and is installed on demand with `npx skills add` (the
@@ -15,6 +15,7 @@
 //   ConardLi/garden-skills    -> web-design-engineer-bridge   (1 skill)
 //   MengTo/Skills             -> mengto-skills-bridge          (1 of 130)
 //   codeswithroh/tastemaker   -> tastemaker-bridge             (1 skill + tree)
+//   vercel/next.js skills/    -> next-skills-bridge            (6 skills)
 //
 // Opt-in. Needs network + npx. Not part of tests/check.mjs or the PR gate -
 // it runs on demand (workflow_dispatch) and on a weekly schedule via
@@ -100,6 +101,26 @@ const TARGETS = [
         "ideagram/SKILL.md",
         "scripts/extract_palette.py",
       ],
+    },
+  },
+  {
+    bridge: "next-skills-bridge",
+    // Point at the skills/ folder, not the repo root: the root also holds
+    // maintainer-only skills under .agents/skills/. Keep in sync with the
+    // catalog in plugins/pro-nextjs/skills/next-skills-bridge/SKILL.md.
+    repo: "https://github.com/vercel/next.js/tree/canary/skills",
+    args: [],
+    expected: [
+      "next-cache-components-adoption",
+      "next-cache-components-optimizer",
+      "next-partial-prefetching-adoption",
+      "next-partial-prefetching-optimizer",
+      "next-bundle-optimizer",
+      "next-dev-loop",
+    ],
+    contents: {
+      "next-cache-components-optimizer": ["rig-template.md", "test-template.md"],
+      "next-partial-prefetching-adoption": ["rig-template.md"],
     },
   },
 ];

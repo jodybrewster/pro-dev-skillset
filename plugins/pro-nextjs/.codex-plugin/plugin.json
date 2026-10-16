@@ -1,6 +1,6 @@
 {
   "name": "pro-nextjs",
-  "version": "0.8.2",
-  "description": "Next.js skills: next-best-practices (auto-applied guardrails), next-upgrade, next-cache-components (PPR/use cache), shadcn (component reference + theming). Adapted from vercel-labs/next-skills. Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
+  "version": "0.9.0",
+  "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs), next-upgrade (version upgrades with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js - Cache Components, Partial Prefetching, bundle and dev-loop work - installed with /next-skills), shadcn (component reference and theming). Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
   "skills": "./skills/"
 }

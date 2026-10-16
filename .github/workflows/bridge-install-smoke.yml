@@ -1,8 +1,9 @@
-name: taste-skills-bridge install (network)
+name: bridge skills install (network)
 
-# Network-dependent smoke test for the taste-skills-bridge install path.
-# Not part of the required PR gate - it needs network access to reach the
-# external Leonxlnx/taste-skill repo, so it runs on demand and weekly.
+# Network-dependent smoke test for the bridge install paths: taste-skills-bridge,
+# web-design-engineer-bridge, mengto-skills-bridge, tastemaker-bridge and
+# next-skills-bridge. Not part of the required PR gate - it needs network access
+# to reach the external repos, so it runs on demand and weekly.
 on:
   workflow_dispatch:
   schedule:
@@ -11,13 +12,13 @@ on:
 
 jobs:
   install-smoke:
-    name: npx skills add Leonxlnx/taste-skill
+    name: npx skills add for every bridge (taste-skill, garden-skills, MengTo, tastemaker, vercel/next.js)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install the taste-skill library into a temp dir and verify
+      - name: Install each bridged library into a temp dir and verify
         run: node tests/bridge-install-smoke.mjs

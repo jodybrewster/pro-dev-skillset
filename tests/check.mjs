@@ -41,7 +41,7 @@ const EXTERNAL = new Set([
   "web-design-engineer", "tastemaker", "ideagram", "video-to-superprompt",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills", "security-audit", "security-review", "threat-model"]);
+const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills", "next-skills", "security-audit", "security-review", "threat-model"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -710,6 +710,7 @@ checks.bridges = (m) => {
   const bridges = [
     "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
     "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
+    "next-skills-bridge",
   ];
   for (const p of m.plugins) for (const s of p.skills) {
     if (!bridges.includes(s.slug)) continue;

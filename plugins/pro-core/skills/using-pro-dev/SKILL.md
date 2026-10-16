@@ -45,6 +45,7 @@ Task arrives
   │   ├ video / programmatic render ──→ remotion (pro-motion)
   │   ├ complex animation sequence ───→ hyperframes (pro-motion)
   │   ├ marketing / hero animation ───→ gsap (pro-motion)
+  │   ├ Next.js Cache Components / prefetching / bundle → next-skills-bridge → upstream Next.js skills (pro-nextjs, bridge: /next-skills install)
   │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
   │   ├ better context ──────────────→ context-engineering (pro-core)
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
@@ -92,6 +93,7 @@ Some entries are **bridges**, not vendored skills — thin routers that point to
 - **`web-design-engineer-bridge` (pro-design) → `web-design-engineer`** - ConardLi/garden-skills' design engineer: it grounds a design in real references, carries style recipes for Apple, Linear, Vercel, Stripe and their neighbours, and scores the result so you can iterate against a number. Install/update with **`/design-skills [check|install|update] garden`**.
 - **`tastemaker-bridge` (pro-design) → `tastemaker`** - codeswithroh/tastemaker pulls tokens out of a reference image's real pixels with scripts, locks that style across the whole project, and gates the usual AI slop. Needs Python 3. Install/update with **`/design-skills [check|install|update] tastemaker`**.
 - **`mengto-skills-bridge` (pro-design) → `MengTo/Skills`** - a 130-skill library: scroll storytelling, WebGL, shader and 3D effects, style recipes, and `video-to-superprompt`, which turns a screen recording of a site into a prompt. Install/update with **`/design-skills [check|install|update] mengto`**.
+- **`next-skills-bridge` (pro-nextjs) → the Next.js agent skills in vercel/next.js** - Cache Components and Partial Prefetching adoption and optimization, bundle reduction and the `next dev` verify loop. Install/update with **`/next-skills [check|install|update]`**.
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
 - **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
 - **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
@@ -147,6 +149,7 @@ The pro-dev-specific rules are:
 | Build | web-design-engineer-bridge, tastemaker-bridge, mengto-skills-bridge, taste-skills-bridge | pro-design | Bridged engines: reference-grounded visuals, pixel-exact style lock, the Meng To effect library, anti-slop styles and brand kits (via `/design-skills`, `/taste-skills`) |
 | Build | stitch-skill (DESIGN.md), taste-skill (targeted polish) | pro-design | Design documentation + visual polish pass |
 | Build | remotion (video render), hyperframes (complex animation), gsap (marketing animation) | pro-motion | Motion and video |
+| Build | next-best-practices, next-upgrade, next-skills-bridge (bridge → vercel/next.js skills, via `/next-skills`), shadcn | pro-nextjs | Next.js conventions, upgrades, Cache Components, prefetching and bundle work, shadcn/ui |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
 | Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/qa-engine`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
