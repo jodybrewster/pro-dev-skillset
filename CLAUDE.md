@@ -1,98 +1,33 @@
-# CLAUDE.md — pro-dev-skillset
+# CLAUDE.md - pro-dev-skillset
 
-Working notes for Claude Code and Codex when editing this marketplace repo itself. `AGENTS.md` mirrors this file for Codex's project-instruction discovery. Not user-facing — see [README.md](./README.md) for that.
+Working notes for Claude Code and Codex when editing this marketplace repo itself.
+`AGENTS.md` mirrors this file for Codex's project-instruction discovery.
+Not user-facing - see [README.md](./README.md) for that.
 
 ## What this repo is
 
-`pro-dev-skillset` is a private Claude Code plugin marketplace — a standalone collection of skills, hooks, commands, and agents that a user installs into their Claude Code setup. It is **not an app**. It has no UI, no server, and no database. It ships workflow intelligence to Claude Code sessions.
+`pro-dev-skillset` is a private Claude Code plugin marketplace - a standalone collection of skills, hooks, commands and agents that a user installs into their Claude Code setup.
+It is not an app.
+It has no UI, no server and no database.
+It ships workflow intelligence to Claude Code sessions.
+The longer version, the Mieruka bridge and the two use cases it is testing are in [docs/overview.md](./docs/overview.md).
 
-A user installs skills from this repo once, and those skills become available in every project they work on. The skills are independent — they work in any repo without requiring any other tool.
+Work enters through an intent: `intent/<date>-<slug>/` holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
+A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md](./RELEASING.md).
 
-**How it relates to Mieruka:** Mieruka is a separate Storybook-like app that installs into a user's target repo as `.mieruka/` (similar to how Storybook installs as `.storybook/`). If a user has both `pro-dev-skillset` skills installed in Claude Code and Mieruka installed in their working repo, the skills can communicate with Mieruka via MCP tools or by writing to the `.mieruka/` directory. But the two systems are independent by design — skills work without Mieruka, and Mieruka works without these skills.
+## Model split
 
-This repo hosts a private plugin marketplace with 10+ plugins and 20+ skills. Skills are forked from MIT-licensed upstreams (`obra/superpowers`, `Owl-Listener/designer-skills`, `PaulRBerg/agent-skills`, etc.) with per-file attribution footers. Manifests, templates, hooks, CI, and scripts in this repo are original.
+- Opus runs the orchestrating session: planning, synthesis and judgment.
+- Sonnet runs the subagents: per-plugin edits, drafting, validation and code search, dispatched in parallel in one turn with self-contained prompts ([docs/subagents.md](./docs/subagents.md)).
+- Haiku runs only the bounded fetch-and-extract agents of `pro-research`.
 
-The plugins are **skills-only by design** — historically. Hooks, commands, and agents are now being layered in where deterministic triggering beats description-matching.
+## The three laws
 
-## What this repo is experimenting with
+- Version-bump law: a content change under `plugins/<name>/` bumps that plugin in both manifests and its marketplace entry, plus `metadata.version`, in the same commit ([ADR-0002](./docs/decisions/0002-version-bump-law.md), [detail](./docs/version-bump-law.md)).
+- Hook-loading law: every hook a plugin registers lives in its one `hooks/hooks.json`, and every script a hook runs exists and is tracked by git ([ADR-0003](./docs/decisions/0003-one-hooks-json-per-plugin.md), [detail](./docs/hook-loading.md)).
+- Codex parity: every skill-bearing plugin also loads under Codex, with harness-neutral prose, standard frontmatter, a version-aligned `.codex-plugin/plugin.json` and a `.toml` per agent ([ADR-0004](./docs/decisions/0004-codex-parity.md), [detail](./docs/codex-parity.md)).
 
-This marketplace is actively testing multiple workflow layers — `pro-core`/`pro-execution`/`pro-quality`/`pro-pdd` (Superpowers-derived), and `pro-spdd` (SPDD) — to answer two different real-world questions:
-
-**Use case 1: Solo developer building a full application.**
-A single developer uses `pro-pdd` for brainstorming and written plans, `pro-execution` for implementation and `pro-quality` for review and validation. `pro-security` challenges plans and diffs through the `security-architect`, enforced by hooks during planning and at commit, and adds whole-repo audits through `security-audit`.
-The opt-in `pro-legal` has `software-counsel` review plans and releases for legal issues such as licensing, privacy, AI use and client IP.
-
-**Use case 2: Consulting team delivering for a client.**
-A team of consultants uses SPDD's structured prompt-driven workflow — story decomposition, REASONS canvas, analysis, prompt-driven generation, and code review — to align a client on what is being built before anything is implemented. The structure gives clients visibility and consultants a shared artifact trail.
-The opt-in `pro-legal` helps here too: it flags client IP and licensing questions before a deliverable ships.
-
-**The Mieruka bridge.** In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP server running in the client's or developer's working repo. Skills write workstream status, stories, structured prompts, and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly. This lets Mieruka surface live progress to clients — saved stories, REASONS canvases, approval gates, and daily progress summaries — without requiring them to read code or talk to Claude directly.
-
-The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins). `pro-legal` is opt-in too. The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.
-
-## Use subagents to parallelize — aggressively
-
-This repo has many plugins. Almost any cross-plugin task (add a hook to N plugins, draft commands for M skills, audit drift, port an upstream change) is **embarrassingly parallel**. Default to subagents whenever the work splits cleanly:
-
-- **Per-plugin edits**: dispatch one subagent per plugin in a single message (multiple Agent tool calls in one assistant turn). Don't serialize unless edits depend on each other.
-- **Independent research**: spawn `Explore` subagents in parallel — one per question — instead of grepping sequentially.
-- **Drafting + validating**: while one subagent drafts a hook, another can run `claude plugin validate --strict` on the rest of the marketplace.
-
-Concrete pattern:
-
-```
-# Good — one assistant turn, N concurrent subagents
-Agent(pro-core hook draft)  Agent(pro-data hook draft)  Agent(pro-quality hook draft)
-
-# Bad — serialized, 3× the wall clock
-Agent(pro-core hook draft) → wait → Agent(pro-data) → wait → Agent(pro-quality)
-```
-
-When dispatching, give each subagent **self-contained context**: it can't see your conversation. State the file path, the exact change, the schema/format to follow, and what "done" looks like. Don't write "based on the discussion, add the hook" — write "add a `PostToolUse` entry to `plugins/pro-data/hooks/hooks.json` with a matcher on `Write|Edit`, running `python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/format-schema.py\"`."
-
-**Model: dispatch these subagents on Sonnet** (`claude-sonnet-4-6`) — it's the right cost/quality tier for repo edits, drafting, validation, and code search. Reserve Opus for the orchestrating turn (planning, synthesis, judgment); use Haiku only for the `pro-research` skill's bounded fetch-and-extract research agents. Default to Sonnet subagents and parallelize whenever the work splits cleanly.
-
-## The version-bump law (non-negotiable)
-
-The Claude Code plugin cache is keyed by `(marketplace, plugin, version)`. Codex plugin installs also read the plugin version from `.codex-plugin/plugin.json`. Any content edit without a version bump silently serves stale content on update. So:
-
-- Edit `plugins/<plugin>/.claude-plugin/plugin.json` → bump `version`
-- Edit `plugins/<plugin>/.codex-plugin/plugin.json` → keep `version` aligned with the Claude plugin manifest
-- Edit `.claude-plugin/marketplace.json` → bump matching entry + top-level `metadata.version`
-- If a dep crosses a minor (e.g. `pro-core 0.3 → 0.4`), every dependent plugin's `^0.3.0` constraint must widen to `^0.4.0` and re-tag.
-
-Full procedure: [RELEASING.md](./RELEASING.md).
-
-## The hook-loading law (non-negotiable)
-
-Claude Code auto-loads exactly one hook file per plugin: `hooks/hooks.json`.
-Any other filename in `hooks/` is silently ignored - no warning, no validation error, `claude plugin validate --strict` still passes.
-
-This bit this repo hard. Eight hook files across `pro-core`, `pro-data`, and `pro-quality` sat completely dead because they were named per-concern (`git-safe.json`, `validation-handoff.json`, ...) instead of being merged into `hooks/hooks.json`. One of them also pointed at a script that was never written. Nothing failed; the hooks just never ran.
-
-So:
-
-- One `hooks/hooks.json` per plugin, holding every event that plugin registers. Group by event, not by file.
-- A plugin may declare *additional* files via a `hooks` field in `plugin.json` (string or array of paths), but prefer the single file - fewer ways to be wrong.
-- Every `${CLAUDE_PLUGIN_ROOT}` script a hook shells out to must exist and be **tracked by git**.
-- Event names are case-sensitive: `PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Notification`, `Stop`, `SubagentStop`, `SessionStart`, `SessionEnd`, `PreCompact`.
-
-`node tests/check.mjs hooks` mechanizes these rules. It fails loudly on an unloaded hook file, a missing script, and an unknown event name. A referenced script that exists locally but is not tracked by git warns during development and fails when `CI` is set, since a fresh CI checkout holds tracked files only.
-
-A hook that returns `{"decision":"block","reason":"..."}` on `Stop` forces the session to keep working with `reason` injected as instruction. That is the only deterministic way to make something happen at end-of-turn. Always guard it: check `stop_hook_active` so the continuation turn passes through, and track per-session progress so the work the block causes cannot re-trigger the block. `plugins/pro-quality/scripts/user-validation.py` is the reference implementation.
-
-## Codex parity is a hard requirement
-
-The README claims forked SKILL.md files load under OpenAI Codex via the Agent Skills standard. When editing skill bodies, sidecars, and command prose, scan for:
-
-- Hard-coded Claude-Code-only tool names (`Task`, `TodoWrite`) → rewrite as harness-neutral ("dispatch a subagent", "update your task tracker") or explicitly include the Codex/fresh-agent fallback.
-- Missing sidecars referenced by `@filename.md` or "see `filename.md`" — every reference must exist in the same directory.
-- Non-standard skill frontmatter keys — Agent Skills only guarantees `name`, `description`, optional `tags`/`tools`/`model`.
-- Missing or stale `.codex-plugin/plugin.json` files — every concrete skill-bearing plugin needs one, with `skills: "./skills/"`.
-
-Subagents are a second parity surface. Claude auto-discovers `agents/*.md`; Codex does not read them at all, and does not auto-spawn custom subagents even when present. Every `agents/<n>.md` should ship a `.codex-plugin/agents/<n>.toml` counterpart (`name`, `description`, `developer_instructions`), which a user installs by copying into `~/.codex/agents/` or `.codex/agents/`. `node tests/check.mjs agents` warns on a missing counterpart and fails on name/file mismatch or a malformed `.toml`. `pro-research`'s four agents predate this rule and are still Claude-only.
-
-When porting an agent from an upstream collection, read the Codex `.toml` variant before the Claude `.md` one. In `VoltAgent/awesome-*-subagents` the `.toml` bodies are markedly better: the `.md` versions are undifferentiated bullet lists carrying invented metrics (`readability_score: 68`, `user_satisfaction: 92%`) and a "delivery notification" template that instructs the agent to state outcome numbers it never measured. That directly contradicts `verification-before-completion`, so it must be stripped rather than reworded.
+Other decisions are in [docs/decisions/](./docs/decisions/README.md).
 
 ## Plugin layout cheatsheet
 
@@ -105,15 +40,17 @@ plugins/<name>/
   commands/<name>.md             # slash commands (frontmatter: description, argument-hint)
   agents/<name>.md               # subagents (frontmatter: description, tools)
   hooks/hooks.json               # ALL hook configs for the plugin, one file (see the hook-loading law)
-  .codex-plugin/agents/<n>.toml  # Codex counterpart for each agents/<n>.md (see agent parity below)
+  .codex-plugin/agents/<n>.toml  # Codex counterpart for each agents/<n>.md (see docs/codex-parity.md)
   LICENSE                        # required when content is forked
 ```
 
 The `pro-starter` meta-plugin intentionally has no `skills/` - it exists as a dependency aggregator.
+Forked content keeps its footer and its row in [docs/licenses.md](./docs/licenses.md).
 
-## Pre-commit install test (required before every commit + push)
+## Verifying your work
 
-Run all five steps. All must pass — don't commit if any fail.
+Run before every commit and push.
+All must pass - do not commit if any fail.
 
 ```bash
 # 1. Static checks: manifests, frontmatter, version-bump law, routing cases,
@@ -123,45 +60,36 @@ node tests/check.mjs && node tests/eval.mjs --dry
 # 2. Full marketplace + strict validation (Claude)
 claude plugin validate . --strict
 
-# 3. Install into demo/app and build + vitest
-./demo/setup.sh
-
-# 4. Test pro-starter (the user-facing meta-install) from inside demo/app
-cd demo/app
-claude plugin install pro-starter@pro-dev-skillset --scope project
-
-# 5. Codex install smoke test (requires Codex access — run after 6:10 PM if at daily limit)
-#    Install the touched plugin(s) via Codex and confirm skills load without errors.
-#    Use the .agents/plugins/marketplace.json Codex marketplace, not the Claude one.
+# 3. Every plugin, strict (the loop CI runs)
+for p in plugins/*/; do claude plugin validate "${p%/}" --strict || break; done
 ```
 
-Step 4 installs `pro-starter` on top of the individual plugins already put down by `setup.sh`.
-It exercises the dependency resolution cascade (`pro-core`, `pro-design`, `pro-nextjs`, etc.) and confirms that the meta-plugin resolves cleanly without loader rejection.
-Verify the output shows all plugins loaded with no errors.
+Expected output, from a real run on 2026-10-16 (the 36 warnings are skills and agents with no routing case):
 
-Step 5 is gated on Codex access — `check.mjs` already catches static Codex parity failures (non-portable frontmatter keys, Claude-Code-only tool names, missing `.codex-plugin/plugin.json`, version drift between Claude and Codex manifests) so steps 1-4 are sufficient for a quick check.
-Run step 5 whenever Codex access is available before pushing.
-
-If step 4 fails, check: version-bump law violated, `*` version constraint on a cross-marketplace dep (they report `"unknown"` — drop the hard dep instead), or a missing sidecar file.
-
-## Pre-tag checklist
-
-```bash
-claude plugin validate . --strict
-claude plugin validate plugins/<plugin> --strict   # per touched plugin
+```
+✓ 17 checks · 0 failures · 36 warnings
+✓ 70 cases reference real skills · 83 skills in catalog + 4 distractors
+(skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
+✔ Validation passed
 ```
 
-CI runs these automatically on PR (see `.github/workflows/`). All must pass before tagging.
+Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin, 15 times.
+CI runs these automatically on PR (see `.github/workflows/`).
+All must pass before tagging.
+The full install test (demo app, `pro-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
 
-## Private repo gotchas
+## Things Claude gets wrong
 
-- Bootstrap uses `gh api` (not `curl`) because the repo is private — `raw.githubusercontent.com` 404s without auth.
-- `claude -p` (headless) does NOT trigger the folder-trust prompt; CI must either drop `templates/project-settings.json` and run an explicit `claude plugin install`, or pre-trust the directory. See README "Headless / CI gotcha."
+- Editing plugin content without a version bump.
+  The plugin cache serves the stale copy on update and nothing warns; bump per the version-bump law.
+- Naming a hook file per concern.
+  Eight hook files in pro-core, pro-data and pro-quality never ran until 8597453 (PR 34) merged them into `hooks/hooks.json`.
+- Declaring a hard dependency on a plugin from another marketplace.
+  The `worktrunk@worktrunk` dependency blocked pro-execution and pro-starter from loading until 4337f0a (PR 44) dropped it, because an upstream with no `version` resolves to `unknown` and a `*` constraint cannot match it.
+  Install companions from `templates/install-companions.sh` instead.
+- Returning `block` from a `Stop` hook without checking `stop_hook_active`, which loops the session ([docs/hook-loading.md](./docs/hook-loading.md)).
+- Writing a home-directory path into a command or doc; use a path relative to the repo root.
 
-## When you're stuck
-
-- Skill not loading after edit? You forgot the version bump.
-- Hook not firing, no error anywhere? It is not in `hooks/hooks.json`. See the hook-loading law. Run `node tests/check.mjs hooks`.
-- Cross-marketplace dependency problems? No `pro-*` plugin declares a `claude-plugins-official` dependency any more: those plugins report version `unknown`, which fails every range, so vercel, figma and playwright are optional companions installed by `templates/install-companions.sh`. The marketplace still allowlists `claude-plugins-official` in case a future official plugin ships a real semver.
-- `failed to load ... Requires <dep> *, installed version unknown`, but the dependency is installed and enabled? The upstream `plugin.json` has no `version` field, so Claude Code uses the marketplace git commit SHA as the version string, and the resolver cannot match a SHA against any range - `*` included. Drop the hard dependency and install that plugin explicitly from `templates/install-companions.sh`. `node tests/check.mjs versions` now fails on any `*` cross-marketplace dependency, which is how `worktrunk@worktrunk` silently broke `pro-execution` and `pro-starter`.
-- `claude plugin validate --strict` failing on a freshly-forked skill? Likely an unrecognized frontmatter key or a missing sidecar `@reference`.
+More symptoms and fixes: [docs/troubleshooting.md](./docs/troubleshooting.md).
+Private repo gotchas (bootstrap through `gh api`, headless folder trust): [docs/private-repo.md](./docs/private-repo.md).
+Everything else under `docs/` is indexed in [docs/README.md](./docs/README.md).

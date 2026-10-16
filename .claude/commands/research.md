@@ -12,8 +12,8 @@ You are the orchestrator. General-purpose path — any topic, no scoring, output
 Engine detail (loop, effort scaling, escalation ladder, evidence schema, verification, synthesis,
 security) is in `plugins/pro-research/skills/lead-research/references/methodology.md` — read it on demand.
 
-**Scripts directory** (pass to every subagent):
-`/Users/jodybrewster/Projects/pro-dev-skillset/plugins/pro-research/skills/lead-research/scripts`
+**Scripts directory** (pass to every subagent; paths are relative to the repo root, so run from the repo root):
+`plugins/pro-research/skills/lead-research/scripts`
 
 The generic angle agent is `plugins/pro-research/agents/research-agent.md` — dispatch subagents with
 that role (give each its angle, the run directory, and the scripts directory above).
@@ -35,7 +35,7 @@ that role (give each its angle, the run directory, and the scripts directory abo
 2. **Dispatch one research-agent per angle, in parallel** — on a lower-tier / faster model (e.g. Claude
    Haiku); they do bounded fetch-and-extract work. Give each its angle + run dir + scripts dir.
    They append evidence/claims to `.research/<run-id>/*.jsonl` and return compact JSON summaries.
-3. **Verify.** `node /Users/jodybrewster/Projects/pro-dev-skillset/plugins/pro-research/skills/lead-research/scripts/verify_citations.mjs .research/<run-id>` — drop/label failures.
+3. **Verify.** `node plugins/pro-research/skills/lead-research/scripts/verify_citations.mjs .research/<run-id>` — drop/label failures.
 4. **Synthesize** → write `.research/<run-id>/report.md` and present it: direct answer up top, sections
    by theme, inline `[n]` citations into `sources.jsonl`, plus an honest "Open questions / disagreements /
    unverified" section. If `.mieruka/` exists, optionally mirror per mieruka.md.

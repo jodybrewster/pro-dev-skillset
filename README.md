@@ -101,7 +101,7 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-boots
 For local development against this checkout instead of the GitHub source:
 
 ```bash
-bash templates/codex-bootstrap.sh --source /Users/jodybrewster/Projects/pro-dev-skillset
+bash templates/codex-bootstrap.sh --source <path-to-pro-dev-skillset>
 ```
 
 The script clones or updates this private repository through `gh` at
@@ -118,7 +118,7 @@ installer so Codex gets `.agents/skills/lavish/SKILL.md` and Claude Code gets
 Manual equivalent when you already have a local checkout:
 
 ```bash
-codex plugin marketplace add /Users/jodybrewster/Projects/pro-dev-skillset
+codex plugin marketplace add <path-to-pro-dev-skillset>
 codex plugin add pro-core@pro-dev-skillset
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
@@ -342,5 +342,5 @@ See [RELEASING.md](./RELEASING.md). TL;DR: bump `plugin.json` AND `marketplace.j
 
 ## License
 
-- Skill content is forked from MIT-licensed upstream repos: `obra/superpowers` (pro-core, pro-execution, pro-pdd, pro-quality), `grandamenium/dream-skill` (dream in pro-core), `addyosmani/agent-skills` (interview-me + idea-refine in pro-pdd), `UditAkhourii/adhd` (adhd in pro-pdd), `Owl-Listener/designer-skills` + `emilkowalski/skills` + `elayadesign/ai-design-skills` + `MengTo/Skills` + `jakubkrehel/skills` + `agents-inc/skills` (pro-design; the `ConardLi/garden-skills`, `codeswithroh/tastemaker`, `MengTo/Skills`, and `Leonxlnx/taste-skill` collections are **bridged** via `/design-skills` and `/taste-skills`, not vendored), `PaulRBerg/agent-skills` + `peterknezek/skills` (pro-testing; the `petrkindlmann/qa-skills` library is **bridged** via `/qa-engine`, not vendored), `Yoraexe/ceobe` + `Intense-Visions/harness-engineering` + `a5c-ai/babysitter` + `IvanTorresEdge/molcajete.ai` (pro-data), `gszhangwei/open-spdd` (pro-spdd), `garrytan/gstack` (the `cso` skill, adapted into `security-audit` and `security-architect` in pro-security). The `agent-browser` skill in pro-testing is forked from `vercel-labs/agent-browser` under Apache-2.0. Per-plugin `LICENSE` files document attribution. Per-file footers cite the upstream repo on each SKILL.md where applicable.
-- Manifests, templates, hooks, and tooling in this repo are original work.
+Manifests, templates, hooks, scripts and tooling in this repo are original work under the MIT [LICENSE](./LICENSE), and so are the skills whose footer says so.
+Forked, adapted and bridged skills keep their upstream license, recorded per plugin in `plugins/<name>/LICENSE` and listed with every upstream and copyright line in [docs/licenses.md](./docs/licenses.md).

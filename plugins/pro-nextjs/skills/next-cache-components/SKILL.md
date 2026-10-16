@@ -371,4 +371,4 @@ async function DynamicContent() {
 
 ---
 
-_Adapted from [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills)._
+_Adapted from [vercel-labs/next-skills](https://github.com/vercel-labs/next-skills) by Vercel, whose skills have since moved to [vercel/next.js](https://github.com/vercel/next.js/tree/canary/skills) (MIT License). The source repository carries no license file; see this plugin's LICENSE._

@@ -179,3 +179,5 @@ Hop 6 to 7 for this shape:
 ---
 
 _Written from the official Astro documentation (docs.astro.build), verified October 2026._
+
+_Original skill for pro-dev-skillset (Jody Brewster). MIT License._

@@ -3,7 +3,10 @@ MIT License
 This plugin contains skills forked from the following MIT-licensed upstream repositories:
 
 - PaulRBerg/agent-skills (https://github.com/PaulRBerg/agent-skills) — used for: vitest
+  Copyright (c) 2025 Paul Razvan Berg
+
 - peterknezek/skills (https://github.com/peterknezek/skills) — used for: storybook-interactions
+  Copyright (c) 2026 Peter Knezek
 
 It also BRIDGES to the following MIT-licensed library without vendoring any of its
 content. The `qa-suite` skill is an original pointer and `/qa-engine` installs the library
@@ -37,6 +40,7 @@ The `agent-browser` skill — `skills/agent-browser/SKILL.md` and the files in
 `skills/agent-browser/references/` — is forked from:
 
 - vercel-labs/agent-browser (https://github.com/vercel-labs/agent-browser)
+  Copyright 2025 Vercel Inc.
 
 which is licensed under the Apache License, Version 2.0. The reference files are
 adapted from the CLI's bundled `skill-data/core`. You may obtain a copy of the

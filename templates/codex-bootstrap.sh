@@ -8,7 +8,7 @@
 #   --source <s>       Marketplace source. Defaults to a gh-authenticated local clone at
 #                      ~/.codex/marketplaces/pro-dev-skillset.
 #                      Use an explicit local checkout path for local development, e.g.
-#                      --source /Users/jodybrewster/Projects/pro-dev-skillset
+#                      --source <path-to-pro-dev-skillset>
 #   --default-only     Install only the default stack.
 #   --with-opt-in      Also install pro-spdd and pro-legal.
 #   --no-lavish        Skip project-local lavish skill install.

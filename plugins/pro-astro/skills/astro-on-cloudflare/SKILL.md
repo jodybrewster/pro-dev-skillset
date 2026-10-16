@@ -167,3 +167,5 @@ At the time of writing:
   Non-production branches get preview URLs.
 
 _Written from the official Astro and Cloudflare documentation, verified October 2026._
+
+_Original skill for pro-dev-skillset (Jody Brewster). MIT License._

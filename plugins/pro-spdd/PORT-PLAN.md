@@ -139,7 +139,7 @@ Run in a scratch directory at `/tmp/openspdd-test/` so it doesn't pollute the re
 
 ```bash
 cd /tmp && rm -rf openspdd-test && mkdir openspdd-test && cd openspdd-test
-PLUGIN=/Users/jodybrewster/Projects/pro-dev-skillset/plugins/pro-spdd
+PLUGIN=<path-to-pro-dev-skillset>/plugins/pro-spdd
 
 # 1. version
 node $PLUGIN/bin/openspdd.mjs version

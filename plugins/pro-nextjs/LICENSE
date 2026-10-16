@@ -1,0 +1,37 @@
+MIT License
+
+The `next-best-practices`, `next-cache-components` and `next-upgrade` skills in this
+plugin are adapted from the Next.js agent skills written by Vercel, as published in:
+
+- vercel-labs/next-skills (https://github.com/vercel-labs/next-skills)
+  That repository carries no license file. Its README says the skills moved to
+  vercel/next.js (https://github.com/vercel/next.js/tree/canary/skills), which is
+  MIT licensed:
+  Copyright (c) 2025 Vercel, Inc.
+
+The adapted text matches the files in vercel-labs/next-skills before the move.
+The skills now in vercel/next.js are different documents, so the notice above
+credits the author and the new home and is not a claim that the MIT grant there
+covers the adapted text.
+
+The `shadcn` skill is original work written from the public shadcn/ui documentation
+(https://ui.shadcn.com/docs). All other content in this plugin is original work,
+Copyright (c) 2026 Jody Brewster, under the license below.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

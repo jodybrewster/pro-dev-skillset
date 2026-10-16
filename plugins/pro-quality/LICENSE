@@ -6,7 +6,9 @@
 # (technical-writer, documentation-engineer, api-documenter) adapt the role,
 # scope, and tool boundary of the corresponding entries in
 # VoltAgent/awesome-codex-subagents and VoltAgent/awesome-claude-code-subagents
-# (https://github.com/VoltAgent/awesome-codex-subagents), also MIT licensed.
+# (https://github.com/VoltAgent/awesome-codex-subagents), also MIT licensed:
+#   VoltAgent/awesome-codex-subagents: Copyright (c) 2026 VoltAgent
+#   VoltAgent/awesome-claude-code-subagents: Copyright (c) 2025 VoltAgent
 # Their instruction bodies were substantially rewritten for this marketplace.
 #
 # The user-validation skill, its Stop hook, and all scripts/ in this plugin are

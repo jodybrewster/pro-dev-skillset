@@ -102,3 +102,7 @@ The single issue-spotting note goes at the end of the section or report, once.
 - [plan-review.md](./plan-review.md) - the plan and idea review procedure, checklists and `## Legal review` template.
 - [release-review.md](./release-review.md) - the release procedure, hygiene checks, finding template and verdict rules.
 - [legal-landscape.md](./legal-landscape.md) - the dated baseline of laws, licenses and platform terms.
+
+---
+
+_Original skill for pro-dev-skillset (Jody Brewster). MIT License._

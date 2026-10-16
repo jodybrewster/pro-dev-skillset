@@ -1,13 +1,24 @@
-# Attribution notice: Skills in this plugin are forked from obra/superpowers
-# (https://github.com/obra/superpowers) under the MIT License below.
-# interview-me and idea-refine are forked from addyosmani/agent-skills
-# (https://github.com/addyosmani/agent-skills) under the MIT License.
-# adhd is forked from UditAkhourii/adhd
-# (https://github.com/UditAkhourii/adhd) under the MIT License.
-
 MIT License
 
-Copyright (c) 2025 Jesse Vincent
+This plugin contains skills forked from the following MIT-licensed upstream repositories:
+
+- obra/superpowers (https://github.com/obra/superpowers)
+  Copyright (c) 2025 Jesse Vincent
+  Used for: brainstorming, writing-plans
+
+- addyosmani/agent-skills (https://github.com/addyosmani/agent-skills)
+  Copyright (c) 2025 Addy Osmani
+  Used for: interview-me, idea-refine
+
+- UditAkhourii/adhd (https://github.com/UditAkhourii/adhd)
+  Copyright (c) 2026 ADHD contributors
+  Used for: adhd
+
+It also BRIDGES to the following without vendoring any of its content. The `lavish`
+skill is an original pointer/router; install and license terms are governed by the
+upstream repo:
+
+- kunchenguid/lavish-axi (https://github.com/kunchenguid/lavish-axi)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

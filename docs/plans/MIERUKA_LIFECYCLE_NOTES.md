@@ -419,7 +419,7 @@ Example:
   "id": "2026-05-26-moodboard-collections",
   "title": "Moodboard Collections",
   "branch": "feature/moodboard-collections",
-  "workspace_path": "/Users/jodybrewster/Projects/mieruka",
+  "workspace_path": "/path/to/mieruka",
   "phase": "Build",
   "state": "in_progress",
   "risk": "medium",

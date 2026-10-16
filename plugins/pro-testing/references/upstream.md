@@ -11,7 +11,7 @@ suite is installed on demand from upstream; this plugin ships only a thin router
 
 History: this library was previously **vendored** under `upstream/qa-skills/` (43 skills,
 ~1.8 MB) with 11 delegating shims. It was converted to a bridge to eliminate the
-re-pull/re-copy/version-bump sync tax. See `QA-SKILLS-BRIDGE-PLAN.md` at the repo root.
+re-pull/re-copy/version-bump sync tax. See `docs/plans/QA-SKILLS-BRIDGE-PLAN.md` in the pro-dev-skillset repo.
 
 ## How the bridge works
 
