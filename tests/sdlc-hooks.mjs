@@ -114,6 +114,8 @@ export function runSdlcHookCases() {
     writeFileSync(join(repo, "app.js"), "2\n");
     r = run("plan-sync.py", stop(repo));
     add("ps2 warn mode flags code changed without plan.md and does not block", "warn", r, warned(r) && !r.json?.decision);
+    const keys = r.json ? Object.keys(r.json).sort().join(",") : "";
+    add("ps2b warn output for Stop is a user message only, never model feedback", "systemMessage only", r, keys === "systemMessage" && !r.stdout.includes("additionalContext") && !r.stdout.includes("hookSpecificOutput") && !r.stdout.includes("reason") && !r.stdout.includes("continue"));
     r = run("plan-sync.py", stop(repo), { mode: "enforce" });
     add("ps3 enforce mode blocks once", "block", r, r.json?.decision === "block");
     r = run("plan-sync.py", stop(repo, { stop_hook_active: true }), { mode: "enforce" });

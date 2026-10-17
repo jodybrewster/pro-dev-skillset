@@ -60,8 +60,13 @@ def warn(hook: str, event: str, verb: str, summary: str, detail: str, cwd: str) 
     """Warn-mode output: log, tell the user and the model, allow."""
     log(hook, "would-" + verb, detail, cwd)
     msg = f"[{hook}] warn mode: would {verb} {summary} (logged to warn.log, allowed)"
-    print(json.dumps({
-        "systemMessage": msg,
-        "hookSpecificOutput": {"hookEventName": event, "additionalContext": msg},
-    }))
+    if event == "Stop":
+        # A Stop hook's context goes back to the model and would force another turn.
+        # Warn mode shows the user a message and nothing else.
+        print(json.dumps({"systemMessage": msg}))
+    else:
+        print(json.dumps({
+            "systemMessage": msg,
+            "hookSpecificOutput": {"hookEventName": event, "additionalContext": msg},
+        }))
     sys.exit(0)
