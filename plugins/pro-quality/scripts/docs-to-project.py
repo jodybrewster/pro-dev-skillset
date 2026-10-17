@@ -3,8 +3,9 @@
 
 Reads {"tool_input": {"file_path": "..."}} from stdin. Blocks writes to
 ~/.claude/ (except the auto-memory directory) and doc files that belong to
-some other repository or to no repository at all. Exits 2 (BLOCK) with a
-redirect message; exits 0 otherwise.
+some other repository or to no repository at all. Agent instruction files
+(CLAUDE.md, AGENTS.md, CLAUDE.local.md) and temp or scratchpad paths are always
+allowed. Exits 2 (BLOCK) with a redirect message; exits 0 otherwise.
 """
 from __future__ import annotations
 
@@ -12,6 +13,11 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
+
+# Agent instruction files are meant to live where the tool looks for them,
+# including the user-level ~/.claude/CLAUDE.md.
+AGENT_FILES = {"CLAUDE.md", "AGENTS.md", "CLAUDE.local.md"}
 
 # A PreToolUse hook sits in front of the user's turn, so every git call is bounded.
 GIT_TIMEOUT_SECONDS = 2
@@ -64,6 +70,23 @@ def is_within(path: str, root: str) -> bool:
         return False
 
 
+def in_scratch_space(path: str) -> bool:
+    """True for the system temp dir, $TMPDIR and the Claude session scratchpad.
+
+    The scratchpad is /tmp/claude-<uid>/... (/private/tmp on macOS). It is
+    throwaway by design, so nothing written there is a doc that went astray.
+    """
+    real = os.path.realpath(path)
+    roots = {tempfile.gettempdir(), os.environ.get("TMPDIR") or ""}
+    if any(r and is_within(real, os.path.realpath(r)) for r in roots):
+        return True
+    for base in ("/tmp", "/private/tmp"):
+        rel = os.path.relpath(real, os.path.realpath(base))
+        if not rel.startswith("..") and rel.split(os.sep)[0].startswith("claude-"):
+            return True
+    return False
+
+
 def belongs_to_session_repository(target: str, cwd: str) -> bool:
     """True when target lives in the same repository as the session.
 
@@ -98,6 +121,9 @@ def main() -> int:
     # cwd rather than fall through the containment check as "outside the project".
     expanded = os.path.abspath(os.path.expanduser(file_path))
     cwd = os.getcwd()
+
+    if os.path.basename(expanded) in AGENT_FILES or in_scratch_space(expanded):
+        return 0
 
     if expanded.startswith(claude_dir):
         # Allow writes to the auto-memory directory (intentional system behavior)
