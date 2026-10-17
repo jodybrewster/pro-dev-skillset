@@ -54,3 +54,8 @@ Status: implemented.
 - The command is `/pr-babysit`, the user-scope name, not `/babysit-pr`.
 - `tests/check.mjs` gained `sdlc-hooks` and `sdlc-contract` checks.
 - No eval cases for commands: the eval runner's case format is routing for skills; `sdlc-contract` checks the /intent file contract statically and the live run needs a model.
+- Review fixes after the Opus review at c8611eb: warn mode for Stop hooks now emits only a user message (never model feedback), with test ps2b.
+- The kit-derived templates, the researcher agent and the plan command were rewritten in our own words from section names and ideas; the eight intent.md headings are unchanged.
+- `sdlc-contract` also pins the anchors mieruka parses from `commands/intent.md` and the eight template headings.
+- pro-ai-sdlc is MIT with the repo root's LICENSE text (pro-core's LICENSE carries fork attributions, so it was not copied); the manifests carry no `license` field, so none was added.
+- Nits: the `/sdlc-init` lead-in sentence deduplicated, `.claude/fix-mode` added to its `.gitignore` lines, the pro-starter marketplace description lists ai-sdlc, and the README says the hooks need python3.

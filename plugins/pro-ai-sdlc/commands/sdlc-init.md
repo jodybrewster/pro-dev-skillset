@@ -32,12 +32,10 @@ Write into `CLAUDE.md`, or `AGENTS.md` if that is the repo's file.
 If neither exists, create `CLAUDE.md` with the sections below, filled from step 1 and kept under one page.
 If the file exists, add only the sections that are missing, change nothing already there and report what differs.
 
-Sections, in this order: Commands (build, test, lint, a single test, e2e if any, each with its healthy output), Verifying your work (run build, test and lint before reporting done and paste the output; fix the code, not the test), Conventions, Architecture (including "Lifecycle artifacts: intent, then spec, then plan, then PR, see REVIEW.md"), How work flows here and Things Claude gets wrong.
+Sections, in this order: Commands (build, test, lint, a single test, e2e if any, each with its healthy output), Verification (run the build, tests and linter before calling anything finished and paste what they print; a failing test means fixing the code), Conventions, Architecture (including "Lifecycle artifacts: intent, then spec, then plan, then PR, see REVIEW.md"), How work flows here and Things Claude gets wrong.
 Leave a placeholder in angle brackets for anything step 1 could not find.
 
 The "How work flows here" section says, in short sentences, one per line:
-
-The section says, in short sentences, one per line:
 
 - Work enters through `intent/<date>-<slug>/intent.md`, written by `/intent`.
 - `/spec` writes spec.md beside it, `/plan` writes plan.md, and plan.md is committed before the first change and kept true afterwards.
@@ -56,7 +54,7 @@ The section says, in short sentences, one per line:
 - If `.claude/settings.json` does not exist, write team settings: `permissions.allow` for the read-only git commands and the repo's build, test and lint commands, and `permissions.deny` for reading `.env`, `.env.*` and `secrets/` and for forced git pushes.
   If it exists, show the entries to merge and do not edit it.
   The guard hooks are not written here; the plugin supplies them.
-- Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/` and `.claude/.fix-task`; append only the missing lines.
+- Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/`, `.claude/.fix-task` and `.claude/fix-mode`; append only the missing lines.
 
 ### 4. Report
 

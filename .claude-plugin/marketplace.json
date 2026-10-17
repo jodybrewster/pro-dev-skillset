@@ -137,7 +137,7 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
       "version": "1.13.0",
       "category": "development",
       "strict": true

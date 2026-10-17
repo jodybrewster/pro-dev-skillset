@@ -51,3 +51,6 @@ They read `~/.claude/hooks/mode` and `~/.claude/hooks/mode.<hook>` (`warn` or `e
 - `production-gate` flags a push to the default branch, a production deploy, a publish, a PR merge and a release; in enforce mode it asks, and `RELEASE_APPROVAL=1` in the starting environment lets it through.
 
 A payload the hooks cannot parse is logged and allowed.
+
+The hooks need `python3` on the PATH.
+Without it a hook command errors, which Claude Code reports as a non-blocking hook error, so nothing is blocked.

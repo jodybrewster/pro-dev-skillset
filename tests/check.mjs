@@ -761,6 +761,13 @@ checks["sdlc-contract"] = () => {
   if (!intentC.includes("${CLAUDE_PLUGIN_ROOT}/templates/intent.md")) failures.push("pro-ai-sdlc: /intent does not read templates/intent.md");
   if (!/intent\/<YYYY-MM-DD>-<slug>\/intent\.md/.test(intentC)) failures.push("pro-ai-sdlc: /intent does not name intent/<date>-<slug>/intent.md");
   for (const w of want) if (!intentC.toLowerCase().includes(w.toLowerCase())) failures.push(`pro-ai-sdlc: /intent does not mention section "${w}"`);
+  // mieruka parses these anchors out of commands/intent.md; a reword must fail here.
+  for (const a of ["Rules for the interview:", "If the idea is empty, ask for it first.", "### 3. Read it back and commit"])
+    if (!intentC.split("\n").includes(a)) failures.push(`pro-ai-sdlc: commands/intent.md lost the anchor line "${a}"`);
+  const ruleBlock = intentC.split("Rules for the interview:")[1]?.split("If the idea is empty")[0] ?? "";
+  if (!ruleBlock.includes("Let the person describe the problem in their own words.")) failures.push("pro-ai-sdlc: commands/intent.md interview rules lost their first rule");
+  const wantHeadings = ["## Problem", "## Proposed outcome", "## Affected users and systems", "## Constraints", "## Out of scope", "## Success looks like", "## Open questions", "## Evidence"];
+  for (const h of wantHeadings) if (!intentT.split("\n").includes(h)) failures.push(`pro-ai-sdlc: templates/intent.md lost the exact heading line "${h}"`);
   for (const [c, t] of [["spec", "spec.md"], ["plan", "plan.md"], ["review", "REVIEW.md"], ["sdlc-init", "REVIEW.md"]])
     if (!(read(`commands/${c}.md`) ?? "").includes(`\${CLAUDE_PLUGIN_ROOT}/templates/${t}`)) failures.push(`pro-ai-sdlc: /${c} does not read templates/${t}`);
   return { failures, warnings };
