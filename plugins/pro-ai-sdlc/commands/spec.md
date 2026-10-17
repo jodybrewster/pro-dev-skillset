@@ -48,8 +48,8 @@ Read the template at `${CLAUDE_PLUGIN_ROOT}/templates/spec.md` and write `<inten
 List the policy files and skills you loaded under "Skills and policies in force".
 Every requirement is testable and traces to a line of the intent.
 Flagged concerns is mandatory: write one row per conflict between the intent or design and a policy, or "None found" with the sources checked.
-Do not resolve a flagged concern yourself; surface it.
-Carry forward or answer every open question from the intent.
+Never settle a flagged concern on your own; show it to the person.
+Bring each open question from the intent across, answered or still open.
 Follow the user's writing rules if they have any: by default no em dashes, no Oxford comma and straight quotes.
 
 ### 4. Commit

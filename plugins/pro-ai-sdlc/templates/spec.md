@@ -8,64 +8,61 @@ author: <name>
 
 # Spec: <short title>
 
-From: `intent.md` in this folder (commit <sha>).
+Built from `intent.md` in this folder (commit <sha>).
 Status: draft | accepted | superseded.
-Skills and policies in force: <list the policy files and skills loaded when this was written>.
+Policies and skills consulted: <the files and skills read before writing this>.
 
 ## Summary
 
-One paragraph: what will exist when this ships, and for whom.
+One paragraph on what exists once this ships and who gets it.
 
 ## Requirements
 
 ### Functional
 
-- R1. <requirement, testable>
+- R1. <a statement a test or a command can check>
 
 ### Non-functional
 
-- N1. <performance, availability, data retention, accessibility>
+- N1. <speed, uptime, retention, accessibility or similar>
 
 ### Policy constraints applied
 
-- <brand, security, compliance or UX rule>: <how the spec satisfies it>
+- <rule from design, security, compliance or UX>: <how this spec honors it>
 
 ## Design
 
 ### User experience
 
-Flows, states and copy direction.
+The flows, the states and the tone of the copy.
 
 ### System
 
-Components touched, data model changes, APIs, integration points and migration notes.
-Reuse what exists and name it.
+What is touched: components, data, interfaces, hooks into other systems and any migration.
+Reuse what is there and name it.
 
 ### Alternatives considered
 
-- <option>: <why rejected>
+- <option>: <reason it lost>
 
 ## Flagged concerns
 
-Reviewers work these first.
-One row per conflict between the intent or design and a policy.
-Write "None found" and list the sources checked if there are none.
+Anything where the intent or the design collides with a policy, or where two policies disagree.
+Reviewers start here.
+Write "None found" and name the sources read when there is nothing to flag.
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | <what conflicts> | <file or owner> | open, or resolved: <how> |
+| 1 | <the collision> | <file or person> | open, or resolved: <how> |
 
 ## Open questions
 
-The intent's open questions carried forward, answered here or still open with an owner.
+Each question the intent left open, answered here or still waiting on a named owner.
 
 ## Acceptance criteria
 
-- AC1. <observable, testable>
+- AC1. <something observable that a person or a test can confirm>
 
 ## Out of scope
 
-<!--
-Accepting this spec starts plan mode. Do not write a plan here.
-Adapted from the AI-native SDLC kit's specs/TEMPLATE.md.
--->
+<!-- Accepting this spec is the signal to start planning. Leave the plan to plan.md. -->

@@ -16,45 +16,44 @@ Created: <YYYY-MM-DD>.
 
 ## Problem
 
-What cannot be done today, in the originator's own words.
-Who feels it and how often.
+The need, told the way the person told it.
+Say who runs into it and how often.
 
 ## Proposed outcome
 
-What better looks like.
-Observable, not a solution design.
+The state of the world once this is solved, described so someone could see it.
+No solution design here.
 
 ## Affected users and systems
 
-Roles, teams, services, repos and data.
+The people, teams, services, repos and data this reaches.
 
 ## Constraints
 
-Policy, security, compliance, budget, time, "existing authentication only", "no new PII".
-Approaches the person already ruled in or out are recorded here, not designed.
+Rules the work must respect: policy, security, compliance, money, dates, "reuse the existing login", "no new personal data".
+An approach the person already favors or ruled out is noted here as a constraint.
 
 ## Out of scope
 
-What this intent deliberately does not cover.
+What this intent leaves alone on purpose.
 
 ## Success looks like
 
-How the person will know it worked, as something observable or measurable.
+The sign, observable or measurable, that tells the person it worked.
 
 ## Open questions
 
-Things the product owner or a policy owner must answer before or during design.
+What still needs an answer, and who can give it, before or during design.
 
 ## Evidence
 
-Required for a ticket or an incident: the source ID, a link, the metric, the baseline, the window and links to logs or traces.
+For a ticket or an incident: the source ID, a link, and any numbers or logs that back the claim.
 Write "None" for an idea.
 
 <!--
 Lifecycle:
-  draft     the originator corrects what was misunderstood
-  accepted  the person accepts it in person; a spec pass starts
-  rejected  dropped; the reason goes in the file
-Location: intent/<YYYY-MM-DD>-<slug>/intent.md. The spec and plan sit beside it.
-Adapted from the AI-native SDLC kit's intent/TEMPLATE.md with this marketplace's frontmatter and folder layout.
+  draft     the person corrects what the interview got wrong
+  accepted  the person accepts it in person; a spec pass can start
+  rejected  dropped; the reason is written into the file
+Location: intent/<YYYY-MM-DD>-<slug>/intent.md, with spec.md and plan.md beside it.
 -->

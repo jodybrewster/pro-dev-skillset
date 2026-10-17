@@ -1,43 +1,39 @@
 # Review
 
-How a pull request in this repo is reviewed, by a person or by an agent (`/review`, the `reviewer` subagent).
-Read the change's brief first: the `intent.md`, `spec.md` and `plan.md` under `intent/` that the PR names.
-Findings inform a human; they never approve or block on their own.
+How pull requests are reviewed in this repo, by a person or by an agent (`/review`, the `reviewer` subagent).
+Start from the change's brief: the `intent.md`, `spec.md` and `plan.md` under `intent/` that the PR points to.
+A review informs a human decision and never approves or rejects by itself.
 
-## Passes
+## Three passes
 
-Run three passes and tag each finding with its pass.
+Go through the diff three times and label every finding with its pass.
 
-- Bugs: logic errors, broken edge cases, subtle regressions, unhandled failure paths.
-- Security: injection, authentication and authorization gaps, personal data in logs or error messages, secrets in the diff, unsafe deserialization, SSRF.
-- Compliance: the change matches its spec and plan, follows the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
-  Flag a diff that departs from the plan without plan.md being updated in the same PR.
+1. Bugs: wrong logic, unhandled edge cases, regressions, error paths that go nowhere.
+2. Security: injection, missing authentication or authorization checks, secrets or personal data landing in the diff or in logs, unsafe parsing, requests an attacker can steer.
+3. Compliance: the diff does what the spec and plan say, follows the agent file and `DESIGN.md` when present, and any departure from the plan is written into plan.md in the same PR.
 
-## What Important means here
+## Severity
 
-Reserve Important for findings that would break behavior, leak data or breach a policy.
-Style, naming and formatting are nits.
+A finding is Important when it breaks behavior, exposes data or violates a policy.
+Everything about style, naming or formatting is a nit.
+Report five nits at most and give a count for the rest.
 
-## Cap the nits
+## Leave out
 
-Report at most five nits per review and summarize the rest as a count.
+- Generated output: <src/gen/, dist/, *.generated.*>.
+- Whatever CI already checks: lint, types, formatting.
+- Edits to test files in a fix PR are themselves an Important compliance finding, so do not review the tests as if they were expected to change.
 
-## Do not report
+## Learning from repeats
 
-- Generated files under <src/gen/, dist/, *.generated.*>.
-- Anything CI already enforces (lint, type-check, formatting).
-- Test files in a fix PR are not to be changed; if they are, that is an Important compliance finding.
+When the same kind of mistake is flagged a second time, add a line to the agent file's "Things Claude gets wrong" and say that you did.
+If the change makes a line of the agent file stale, flag that too.
 
-## Feedback into the agent file
+## Output format
 
-If a finding is the second time this class of mistake has been flagged in this repo, add the correction to the agent file under "Things Claude gets wrong" and say so.
-Also flag when a change has made a line of the agent file outdated.
-
-## Output
-
-Rank findings most severe first.
-For each: pass, severity (Important or nit), file and line, a one-sentence claim and a concrete failure scenario.
-End with a machine-readable tally:
+List findings from most to least severe.
+Each entry gives the pass, the severity, the file and line, a one-sentence claim and the concrete way it fails.
+Close with a tally in this form:
 
 ```
 important: <n>  nits: <n>  skipped: <n>

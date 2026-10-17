@@ -52,9 +52,9 @@ def main() -> None:
     guard.log(HOOK, "block", detail, cwd)
     print(json.dumps({
         "decision": "block",
-        "reason": "Code changed but no plan.md was updated this session. If the implementation departed from "
-                  "the approved plan, record the departure under 'Departures from plan' before stopping. "
-                  "If the diff matches the plan exactly, say so and stop.",
+        "reason": "Files outside the docs changed this session, yet no plan.md was touched. "
+                  "If the work strayed from the approved plan, write down how under Departures from plan, "
+                  "then stop. If it followed the plan, say that and stop.",
     }))
 
 

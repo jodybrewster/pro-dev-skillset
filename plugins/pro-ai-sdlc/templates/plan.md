@@ -1,44 +1,43 @@
 # Plan: <short title>
 
-From: `spec.md` (commit <sha>) and `intent.md` in this folder.
+Built from `spec.md` (commit <sha>) and `intent.md` in this folder.
 Status: draft | approved | implemented.
-Approved by: <engineer; lead or architect if high-risk>.
-Date: <YYYY-MM-DD>.
+Approver: <the engineer, plus a lead or architect when the risk is high>.
+Dated: <YYYY-MM-DD>.
 
 ## Files that change
 
-- `<path>` (new | modified | deleted): <why>
+- `<path>` (new, modified or deleted): <reason>
 
 ## Order of work
 
-1. <step, small enough to verify on its own>
+1. <a step small enough to check by itself>
 
 ## Tests that prove it
 
-- `<test file>` covers <cases>
-- <screenshot or e2e check> matches <mock>
+- `<test file>` covers <the cases>
+- <visual or end-to-end check> against <the reference>
 
 ## Risks
 
-What could break, the riskiest step, the blast radius, rate limits and migrations.
+The step most likely to go wrong, what it could break, how far the damage would reach, and anything irreversible such as a migration.
 
 ## Options not taken
 
-- <alternative>: <why not>
+- <alternative>: <why it lost>
 
 ## Proof of done
 
-The exact commands and expected output that make this done: tests green, lint clean, build ok, screenshot match.
+The exact commands to run and the output that counts as finished: tests, lint, build, visual comparison.
 
 ## Departures from plan
 
-Filled in during implementation, in the same commit as the departure.
-Empty means the diff matches the plan.
+Added in the same commit as the change that departs.
+An empty section tells the reviewer the diff follows the plan.
 
 <!--
-Produced in plan mode from the accepted spec. Interrogate before approving:
-  What could this change break? Which step is riskiest? What did you choose not to do, and why?
-Iterate until an engineer who never saw the conversation could implement from this file alone.
-The PR review checks the eventual diff against this file.
-Adapted from the AI-native SDLC kit's plans/TEMPLATE.md.
+Write this in plan mode from an accepted spec, then question it before approval:
+what might break, where the weakest step is, and what was skipped on purpose.
+Revise until someone who missed the conversation could build from this file alone.
+Review compares the final diff with this file.
 -->
