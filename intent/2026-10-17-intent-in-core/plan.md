@@ -59,3 +59,4 @@ Status: implemented.
 - `sdlc-contract` also pins the anchors mieruka parses from `commands/intent.md` and the eight template headings.
 - pro-ai-sdlc is MIT with the repo root's LICENSE text (pro-core's LICENSE carries fork attributions, so it was not copied); the manifests carry no `license` field, so none was added.
 - Nits: the `/sdlc-init` lead-in sentence deduplicated, `.claude/fix-mode` added to its `.gitignore` lines, the pro-starter marketplace description lists ai-sdlc, and the README says the hooks need python3.
+- Licensing wording corrected: the kit and sample repo are the author's own generated output from Anthropic's public playbook, so the pro-ai-sdlc row in `docs/licenses.md` says original, adapted from the author's own kit, ideas credited to the playbook. The rewritten text stays.
