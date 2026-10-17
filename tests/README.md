@@ -15,6 +15,7 @@ node tests/check.mjs          # every check         (alias: npm test)
 node tests/check.mjs versions # one check by name
 node tests/git-safe.mjs       # the git-safe hook cases, standalone + verbose
 node tests/memory-hooks.mjs   # the memory-hook cases (recall + ledger), standalone
+node tests/doc-hooks.mjs      # the pro-quality doc-hook cases (push freshness, write location), standalone
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
 ```

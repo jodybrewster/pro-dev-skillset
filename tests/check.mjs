@@ -19,6 +19,7 @@ import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
+import { runDocHookCases } from "./doc-hooks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -638,6 +639,23 @@ checks["memory-hooks"] = () => {
     if (r.ok) continue;
     failures.push(`memory-hooks ${r.id}: ${r.detail}`);
   }
+  return { failures, warnings };
+};
+
+// pro-quality doc hooks (docs-before-push, docs-to-project): the case table lives
+// in tests/doc-hooks.mjs. A missing python3 or git is a warning-level skip.
+checks["doc-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runDocHookCases();
+  if (skipped) {
+    warnings.push(`doc hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/doc-hooks.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) if (!r.ok) failures.push(`doc-hooks ${r.id}: ${r.detail}`);
   return { failures, warnings };
 };
 
