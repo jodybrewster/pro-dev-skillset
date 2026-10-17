@@ -1,6 +1,7 @@
 ---
 name: technical-writer
 description: Use when a change needs developer-facing prose derived from real code - release notes, migration guides, changelog entries, onboarding material, or README updates. Writes from repository evidence, not from the feature description it was handed. Dispatch after the code lands, not before.
+model: sonnet
 tools: Read, Glob, Grep, Write, Edit, WebFetch, WebSearch
 ---
 

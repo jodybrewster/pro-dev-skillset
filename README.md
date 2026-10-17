@@ -27,7 +27,7 @@ One-line bootstrap for Claude Code inside a fresh project:
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-This installs `pro-starter`, the meta-plugin that pulls the full default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, `pro-security` and the `pro-nextjs` and `pro-astro` framework plugins. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
+This installs `pro-starter`, the meta-plugin that pulls the full default stack: `pro-core`, `pro-ai-sdlc`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, `pro-security` and the `pro-nextjs` and `pro-astro` framework plugins. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
 
@@ -120,6 +120,7 @@ Manual equivalent when you already have a local checkout:
 ```bash
 codex plugin marketplace add <path-to-pro-dev-skillset>
 codex plugin add pro-core@pro-dev-skillset
+codex plugin add pro-ai-sdlc@pro-dev-skillset
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
@@ -191,6 +192,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Skill-bearing plugins:**
 
+- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/review`, `/pr-babysit` and `/sdlc-init`, the intent, spec, plan and REVIEW templates, the `researcher`, `verifier`, `simplifier` and `reviewer` agents, and warn-mode hooks for protected tests, plan drift and production actions.
 - **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/gh` GitHub workflow command, `dream` memory consolidation, and safety/parallelism hooks.
   `dream` (forked from [`grandamenium/dream-skill`](https://github.com/grandamenium/dream-skill), MIT) reads this project's Claude Code auto-memory at `~/.claude/projects/<project-slug>/memory/`, scans the project's session transcripts for corrections, decisions, preferences, and patterns, merges what it finds into the memory files, and rebuilds `MEMORY.md` as a lean index under 200 lines.
   Run it with `/dream`; `/dream dry-run` previews the proposed merges, rewrites, and deletions without writing, and `/dream status` reports the timer.
@@ -242,7 +244,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-starter`** - pulls the full default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-nextjs` + `pro-astro`. One install ⇒ the full default stack. `pro-spdd` is opt-in.
+- **`pro-starter`** - pulls the full default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-nextjs` + `pro-astro`. One install ⇒ the full default stack. `pro-spdd` is opt-in.
 
 ### Layout
 
@@ -250,6 +252,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 .claude-plugin/marketplace.json      # marketplace manifest
 .agents/plugins/marketplace.json     # Codex marketplace manifest
 plugins/
+  pro-ai-sdlc/                       # SDLC stage commands, templates, agents, warn-mode hooks
   pro-core/                          # universal base skills + hooks
   pro-execution/                     # TDD/debug/worktree/subagent execution skills
   pro-quality/                       # quality skills + review/verify commands
@@ -316,6 +319,7 @@ frontmatter, sidecar references, Codex manifests, and a repo-local Codex marketp
 ```bash
 codex plugin marketplace add jodybrewster/pro-dev-skillset
 codex plugin add pro-core@pro-dev-skillset
+codex plugin add pro-ai-sdlc@pro-dev-skillset
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset

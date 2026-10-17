@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.42.3"
+    "version": "1.43.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official",
@@ -23,6 +23,14 @@
       "strict": true
     },
     {
+      "name": "pro-ai-sdlc",
+      "source": "./plugins/pro-ai-sdlc",
+      "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<date>-<slug>/intent.md), /spec, /plan, /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge) and /sdlc-init (set a repo up for the loop, commits nothing). The templates the commands read ship as files under templates/ (intent, spec, plan, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Three hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update) and production-gate (flags push to main, deploys, publishes and merges).",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
       "name": "pro-execution",
       "source": "./plugins/pro-execution",
       "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety. worktrunk is an optional companion, not a hard dependency - install it with templates/install-companions.sh or `brew install worktrunk`.",
@@ -34,7 +42,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook detects when a session ends with real changes and hands the user a validation checklist (what changed, what was verified, what needs their eyes) written to .pro-dev/validation/latest.md; /validate produces one on demand. Ships three documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs, adapted from VoltAgent/awesome-codex-subagents. Enforces doc freshness before git push (the block routes into /document), nudges api-documenter when an OpenAPI/GraphQL/proto contract changes, and blocks plan saves outside the project directory.",
-      "version": "0.9.3",
+      "version": "0.9.4",
       "category": "development",
       "strict": true
     },
@@ -98,7 +106,7 @@
       "name": "pro-research",
       "source": "./plugins/pro-research",
       "description": "Deep web research engine for any topic. /research <question> runs an adaptive intake interview, then decomposes into angles, fans out research subagents over a free-first retrieval ladder (Serper -> Jina/Firecrawl -> agent-browser), verifies citations, and synthesizes a cited report. /lead-research <company|domain|ICP> is the lead/account specialization: same engine plus ICP scoring and cited lead profiles. Domain memory + evidence persisted to .research/ to survive compaction. Mieruka integration: drives the Research tab via MCP tools (list_research_threads, get_research_thread, update_research_thread) when .mieruka/ is present; falls back to file-mirror.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "category": "development",
       "strict": true
     },
@@ -114,7 +122,7 @@
       "name": "pro-security",
       "source": "./plugins/pro-security",
       "description": "The Security phase. security-architect challenges a specific idea, plan, spec or diff before it ships: trust boundaries, unstated assumptions and the attack that breaks each, returned as a ## Security challenge section (/threat-model, plus a read-only security-architect subagent). security-audit is a read-only whole-repository audit covering secrets in git history, dependency supply chain, CI/CD, containers and IaC, webhooks, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE, with confidence-scored findings and the security-auditor subagent judging each one independently (/security-audit). Hooks enforce it: an ExitPlanMode gate and a plan-document gate require an independent security-architect challenge on plans that touch security surface, a UserPromptSubmit nudge challenges security-sensitive ideas, and a commit/PR gate holds a security-sensitive diff once for review. Adapted from the cso skill in garrytan/gstack.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "development",
       "strict": true
     },
@@ -122,15 +130,15 @@
       "name": "pro-legal",
       "source": "./plugins/pro-legal",
       "description": "The Legal phase: software-counsel, an in-house product counsel persona that spots legal issues in plans and releases. Plan mode reviews an idea, plan or spec before code exists and returns a ## Legal review section; release mode reviews what is about to ship. Covers open-source licensing and attribution, privacy and data protection, AI regulation and model terms, scraping and third-party API terms, consumer protection and auto-renewal, children's data, health and financial data, export controls, accessibility, trademarks in names and client IP for consulting work. Ships the software-counsel subagent and /legal-review. Hooks enforce it: an ExitPlanMode gate and a plan-document gate require an independent review on plans that touch legal surface, a UserPromptSubmit nudge flags legal surface while an idea is cheap to change, and a release gate holds git tag, gh release, npm publish, production deploys, PR creation and dependency-manifest commits once for review. A dated legal-landscape reference is kept current by a staleness check. Issue spotting, not legal advice.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
-      "version": "1.12.2",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). worktrunk is an optional companion installed via install-companions.sh, not a dependency.",
+      "version": "1.13.0",
       "category": "development",
       "strict": true
     }

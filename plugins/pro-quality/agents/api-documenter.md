@@ -1,6 +1,7 @@
 ---
 name: api-documenter
 description: Use when consumer-facing API documentation must be produced or corrected from the real implementation - endpoint references, request/response examples, auth and error models, versioning and deprecation notes, OpenAPI specs. Reads the handler and the schema, never the wishful description. Dispatch on API surface changes.
+model: sonnet
 tools: Read, Glob, Grep, Write, Edit, Bash, WebFetch
 ---
 

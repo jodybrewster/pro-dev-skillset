@@ -1,6 +1,7 @@
 ---
 name: documentation-engineer
 description: Use when documentation has drifted from the code, or when the docs themselves need engineering - structure, ownership, cross-references, generation, or a setup guide that no longer works. Fixes the system that produces docs, not just the prose. Dispatch for doc audits, onboarding-path repair, and drift cleanup.
+model: sonnet
 tools: Read, Glob, Grep, Write, Edit, Bash, WebFetch
 ---
 

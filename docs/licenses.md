@@ -58,6 +58,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-pdd | idea-refine | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
 | pro-pdd | adhd | [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) | MIT | Copyright (c) 2026 ADHD contributors | forked |
 | pro-pdd | lavish | [kunchenguid/lavish-axi](https://github.com/kunchenguid/lavish-axi) | MIT | Copyright (c) 2026 Kun Chen | bridged |
+| pro-ai-sdlc | all content (commands, templates, agents, hooks) | original to this repo, adapted from the author's own AI-native SDLC kit and sample repo | MIT | Copyright (c) 2026 Jody Brewster | original; the ideas are credited to Anthropic's [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook), and no third-party text is included |
 | pro-quality | receiving-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | requesting-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | verification-before-completion | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |

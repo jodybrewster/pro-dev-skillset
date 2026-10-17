@@ -6,6 +6,7 @@ description: >-
   bundled retrieval ladder. Dispatched by the /research orchestrator, one instance per angle.
   Returns a compact JSON summary; writes evidence to the run directory. Domain-agnostic — for
   lead/account specifics use company-researcher / signals-researcher / people-researcher instead.
+model: haiku
 tools: Bash, Read, Write
 ---
 

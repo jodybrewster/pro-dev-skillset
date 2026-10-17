@@ -1,6 +1,7 @@
 ---
 name: security-architect
 description: Use for a fresh-context security challenge of a plan, idea, spec or design doc before code exists, or of a diff, branch or commit range before it is committed. Hand it a plan path or plan text (challenge mode) or a diff spec (diff mode) and nothing else. Returns a `## Security challenge` section or a scored findings list with a verdict. Adversarial toward the plan, collegial toward the author. Read-only - it never edits code.
+model: opus
 tools: Read, Glob, Grep, Bash, WebSearch
 ---
 

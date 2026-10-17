@@ -1,6 +1,7 @@
 ---
 name: security-auditor
 description: Use to independently judge whether a candidate security finding is real, with fresh context and no access to the reasoning that produced it. Dispatch one per finding during a security audit, or whenever a vulnerability claim needs a skeptical second opinion before it reaches a report or a ticket. Returns a 1-10 confidence score and, below the bar, the reason it is not real. Read-only - it never edits code.
+model: opus
 tools: Read, Glob, Grep, Bash
 ---
 

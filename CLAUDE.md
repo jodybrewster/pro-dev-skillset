@@ -15,11 +15,17 @@ The longer version, the Mieruka bridge and the two use cases it is testing are i
 Work enters through an intent: `intent/<date>-<slug>/` holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
 A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md](./RELEASING.md).
 
+## How work flows here
+
+The AI-native SDLC playbook is the guide and `pro-ai-sdlc` is where it is encoded, so the whole loop works from Claude Code alone in any repo with the plugin installed.
+Mieruka is only a UI over it and reads the plugin's templates and rules.
+
 ## Model split
 
 - Opus runs the orchestrating session: planning, synthesis and judgment.
 - Sonnet runs the subagents: per-plugin edits, drafting, validation and code search, dispatched in parallel in one turn with self-contained prompts ([docs/subagents.md](./docs/subagents.md)).
-- Haiku runs only the bounded fetch-and-extract agents of `pro-research`.
+- Haiku runs the bounded fetch-and-extract agents of `pro-research` and the read-only `researcher` of `pro-ai-sdlc`.
+- Every agent declares `model:` for its role in frontmatter: readers and explorers on haiku, builders on sonnet, reviewers on opus.
 
 ## The three laws
 
