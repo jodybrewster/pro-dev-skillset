@@ -7,6 +7,7 @@ description: >-
   lead-research orchestrator, one instance per entity. Returns a compact JSON summary; writes
   evidence to the run directory. Not for static firmographics (company-researcher) or contacts
   (people-researcher).
+model: haiku
 tools: Bash, Read, Write
 ---
 

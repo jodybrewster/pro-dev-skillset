@@ -3,11 +3,11 @@
 Read [intent.md](./intent.md) first.
 The brief is `~/Projects/hq/initiatives/2026-10-17-one-click-intent/intent.md`, slice PR B.
 The intent states the checks, so this change has no `spec.md` ([intent/README.md](../README.md)).
-Status: draft.
+Status: implemented.
 
 ## Files that change
 
-- `plugins/pro-ai-sdlc/` (new): manifests, `commands/` (intent, spec, plan, review, babysit-pr, sdlc-init), `templates/` (intent, spec, plan, REVIEW), `agents/` (researcher, verifier, simplifier, reviewer), `hooks/hooks.json`, `scripts/` (protect-tests, plan-sync, production-gate, a shared guard module) and `LICENSE`.
+- `plugins/pro-ai-sdlc/` (new): manifests, `commands/` (intent, spec, plan, review, pr-babysit, sdlc-init), `templates/` (intent, spec, plan, REVIEW), `agents/` (researcher, verifier, simplifier, reviewer), `hooks/hooks.json`, `scripts/` (protect-tests, plan-sync, production-gate, a shared guard module) and `LICENSE`.
 - `plugins/pro-{quality,research,security,legal}/agents/*.md` (modified, 10 files): a `model:` line each.
 - The manifests of those four plugins, `pro-starter`, the marketplace (both files), `docs/releases.md`, `README.md`, `.agents/plugins/marketplace.json`.
 - `tests/sdlc-hooks.mjs` (new) and a check in `tests/check.mjs`: behaviour cases for the three hooks.
@@ -16,7 +16,7 @@ Status: draft.
 
 1. Commit this intent and plan before any change under `plugins/`.
 2. Templates: the kit's intent, spec, plan and REVIEW templates adapted, with our frontmatter and folder layout.
-3. Commands: `/intent` carries the analyst rules, `/spec` and `/plan` read their templates, `/review` runs REVIEW.md's passes, `/babysit-pr` moves from user scope, `/sdlc-init` drafts the repo setup and commits nothing.
+3. Commands: `/intent` carries the analyst rules, `/spec` and `/plan` read their templates, `/review` runs REVIEW.md's passes, `/pr-babysit` moves from user scope, `/sdlc-init` drafts the repo setup and commits nothing.
 4. Agents: move `verifier` and `simplifier`, add `researcher` and `reviewer`, with `model:` by role.
 5. Hooks: port the three user-scope hooks to Python, read `~/.claude/hooks/mode` and `mode.<hook>` (default warn) and log to `warn.log`, with a `stop_hook_active` guard on the Stop hook.
 6. Add `model:` to the ten agents in the other plugins.
@@ -48,4 +48,9 @@ Status: draft.
 
 ## Departures from plan
 
-None yet.
+- Codex parity: a `.codex-plugin/plugin.json` and a `.toml` per agent were added for pro-ai-sdlc, which the plan did not list, because the parity law requires them.
+- `protect-tests` also honours `.claude/.fix-task` and `SDLC_TASK_KIND=fix` and covers `_test.py`, `_test.go` and `/test/`, taken from the sample repo's hook.
+- `/sdlc-init` follows the sample repo's layout (agent file sections, team `.claude/settings.json`, `.gitignore` lines), added after the plan was written.
+- The command is `/pr-babysit`, the user-scope name, not `/babysit-pr`.
+- `tests/check.mjs` gained `sdlc-hooks` and `sdlc-contract` checks.
+- No eval cases for commands: the eval runner's case format is routing for skills; `sdlc-contract` checks the /intent file contract statically and the live run needs a model.

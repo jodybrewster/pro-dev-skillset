@@ -22,7 +22,7 @@ Agents in the other plugins do not say which model their role needs.
 ## Proposed outcome
 
 One plugin, pro-ai-sdlc, carries the SDLC stage by stage and stays stack-agnostic.
-It ships commands (`/intent`, `/spec`, `/plan`, `/review`, `/babysit-pr`, `/sdlc-init`), templates the commands read (`intent`, `spec`, `plan`, `REVIEW`), agents (`researcher`, `verifier`, `simplifier`, `reviewer`) and three hooks in warn mode (`protect-tests`, `plan-sync`, `production-gate`).
+It ships commands (`/intent`, `/spec`, `/plan`, `/review`, `/pr-babysit`, `/sdlc-init`), templates the commands read (`intent`, `spec`, `plan`, `REVIEW`), agents (`researcher`, `verifier`, `simplifier`, `reviewer`) and three hooks in warn mode (`protect-tests`, `plan-sync`, `production-gate`).
 pro-starter installs it.
 Every agent in the other plugins declares `model:` for its role.
 

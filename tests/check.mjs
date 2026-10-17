@@ -16,6 +16,7 @@ import { spawnSync } from "node:child_process";
 
 import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
+import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 
@@ -719,6 +720,49 @@ checks.bridges = (m) => {
     const named = cmds.find((c) => commandFiles.has(c));
     if (!named) warnings.push(`bridge ${p.name}/${s.slug}: no install command found among ${[...new Set(cmds)].join(", ") || "(none)"}`);
   }
+  return { failures, warnings };
+};
+
+// pro-ai-sdlc hook behaviour. protect-tests, plan-sync and production-gate ship in
+// warn mode, so a hook that crashes or blocks on a bad payload is the failure to
+// catch. The case table lives in tests/sdlc-hooks.mjs.
+checks["sdlc-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runSdlcHookCases();
+  if (skipped) {
+    warnings.push(`sdlc hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/sdlc-hooks.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`sdlc hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// pro-ai-sdlc contract: the whole SDLC works from Claude Code alone, and mieruka
+// only reads the plugin. So the templates are plain files at stable paths, each
+// stage command reads its template from ${CLAUDE_PLUGIN_ROOT}/templates, and the
+// /intent command names every section of the intent template, so a fresh repo with
+// only the plugin produces intent/<date>-<slug>/intent.md with all of them.
+// (A live run of /intent needs a model; this proves the file contract it follows.)
+checks["sdlc-contract"] = () => {
+  const failures = [], warnings = [];
+  const dir = join(ROOT, "plugins", "pro-ai-sdlc");
+  if (!isDir(dir)) return { failures, warnings };
+  const read = (p) => (existsSync(join(dir, p)) ? readFileSync(join(dir, p), "utf8") : null);
+  for (const t of ["intent.md", "spec.md", "plan.md", "REVIEW.md"])
+    if (read(`templates/${t}`) === null) failures.push(`pro-ai-sdlc: templates/${t} missing`);
+  const intentT = read("templates/intent.md") ?? "";
+  const sections = [...intentT.matchAll(/^## (.+)$/gm)].map((m) => m[1].trim());
+  const want = ["Problem", "Proposed outcome", "Affected users and systems", "Constraints", "Out of scope", "Success looks like", "Open questions", "Evidence"];
+  for (const w of want) if (!sections.includes(w)) failures.push(`pro-ai-sdlc: templates/intent.md lacks section "${w}"`);
+  const fm = intentT.split("---")[1] ?? "";
+  for (const k of ["kind:", "risk:", "status:", "source:"]) if (!fm.includes(k)) failures.push(`pro-ai-sdlc: templates/intent.md frontmatter lacks ${k}`);
+  const intentC = read("commands/intent.md") ?? "";
+  if (!intentC.includes("${CLAUDE_PLUGIN_ROOT}/templates/intent.md")) failures.push("pro-ai-sdlc: /intent does not read templates/intent.md");
+  if (!/intent\/<YYYY-MM-DD>-<slug>\/intent\.md/.test(intentC)) failures.push("pro-ai-sdlc: /intent does not name intent/<date>-<slug>/intent.md");
+  for (const w of want) if (!intentC.toLowerCase().includes(w.toLowerCase())) failures.push(`pro-ai-sdlc: /intent does not mention section "${w}"`);
+  for (const [c, t] of [["spec", "spec.md"], ["plan", "plan.md"], ["review", "REVIEW.md"], ["sdlc-init", "REVIEW.md"]])
+    if (!(read(`commands/${c}.md`) ?? "").includes(`\${CLAUDE_PLUGIN_ROOT}/templates/${t}`)) failures.push(`pro-ai-sdlc: /${c} does not read templates/${t}`);
   return { failures, warnings };
 };
 

@@ -1,6 +1,7 @@
 ---
 name: software-counsel
 description: Use for a fresh-context legal review of a plan, idea, spec or design doc before code exists (plan mode) or of what is about to ship - a diff, branch, range, tag, release, package publish, deploy or PR (release mode). Hand it a plan path or text or a release spec with a reproduce command and the release kind and nothing else. Returns a `## Legal review` section or severity-graded findings with a verdict. Direct and practical and it verifies time-sensitive law against primary sources. Read-only - it never edits code.
+model: opus
 tools: Read, Glob, Grep, Bash, WebSearch, WebFetch
 ---
 

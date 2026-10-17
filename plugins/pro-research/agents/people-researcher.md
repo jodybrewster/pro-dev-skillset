@@ -6,6 +6,7 @@ description: >-
   talks) from free public sources only. Dispatched by the lead-research orchestrator, one instance
   per entity. Returns a compact JSON summary; writes evidence to the run directory. Never scrapes
   gated PII, login-walled networks, or paid contact data — that enrichment layer is deferred.
+model: haiku
 tools: Bash, Read, Write
 ---
 
