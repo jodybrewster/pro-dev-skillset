@@ -1,4 +1,4 @@
-# Plan: /intent, /spec and /plan ship from pro-core
+# Plan: pro-ai-sdlc, the SDLC as one plugin
 
 Read [intent.md](./intent.md) first.
 The brief is `~/Projects/hq/initiatives/2026-10-17-one-click-intent/intent.md`, slice PR B.
@@ -7,43 +7,44 @@ Status: draft.
 
 ## Files that change
 
-- `plugins/pro-core/references/intent-template.md` (new): the kit's intent fields with our frontmatter, read by `/intent` and later by mieruka.
-- `plugins/pro-core/references/plan-template.md` (new): the kit's plan sections, read by `/plan`.
-- `plugins/pro-core/commands/intent.md`, `spec.md`, `plan.md` (new): the three commands.
-- `plugins/pro-*/agents/*.md` (modified, 10 files): a `model:` line each.
-- Both pro-core manifests, the marketplace entry and `metadata.version`, `docs/releases.md`, `README.md`.
+- `plugins/pro-ai-sdlc/` (new): manifests, `commands/` (intent, spec, plan, review, babysit-pr, sdlc-init), `templates/` (intent, spec, plan, REVIEW), `agents/` (researcher, verifier, simplifier, reviewer), `hooks/hooks.json`, `scripts/` (protect-tests, plan-sync, production-gate, a shared guard module) and `LICENSE`.
+- `plugins/pro-{quality,research,security,legal}/agents/*.md` (modified, 10 files): a `model:` line each.
+- The manifests of those four plugins, `pro-starter`, the marketplace (both files), `docs/releases.md`, `README.md`, `.agents/plugins/marketplace.json`.
+- `tests/sdlc-hooks.mjs` (new) and a check in `tests/check.mjs`: behaviour cases for the three hooks.
 
 ## Order of work
 
 1. Commit this intent and plan before any change under `plugins/`.
-2. Add the two templates under `plugins/pro-core/references/`, so they do not register as commands.
-3. Add `/intent` (user-scope behaviour plus the template and the kit's Source and Evidence fields), `/spec` (user-scope behaviour kept) and `/plan` (the kit's plan-from-spec steps and interrogation questions).
-4. Set `model:` on every agent: haiku for the four pro-research agents, sonnet for the three pro-quality writers, opus for security-architect, security-auditor and software-counsel.
-5. Bump pro-core 0.15.2 to 0.16.0 (three commands added), marketplace entry, `metadata.version` 1.42.3 to 1.43.0, the pro-core manifest descriptions and the releases table.
-   pro-starter depends on pro-core with `*`, so no constraint changes and it is not bumped.
-6. Run the gate.
+2. Templates: the kit's intent, spec, plan and REVIEW templates adapted, with our frontmatter and folder layout.
+3. Commands: `/intent` carries the analyst rules, `/spec` and `/plan` read their templates, `/review` runs REVIEW.md's passes, `/babysit-pr` moves from user scope, `/sdlc-init` drafts the repo setup and commits nothing.
+4. Agents: move `verifier` and `simplifier`, add `researcher` and `reviewer`, with `model:` by role.
+5. Hooks: port the three user-scope hooks to Python, read `~/.claude/hooks/mode` and `mode.<hook>` (default warn) and log to `warn.log`, with a `stop_hook_active` guard on the Stop hook.
+6. Add `model:` to the ten agents in the other plugins.
+7. Manifests and versions: pro-ai-sdlc 0.1.0, pro-quality, pro-research, pro-security and pro-legal patch bumps, pro-starter 1.12.2 to 1.13.0 with the new dependency, marketplace `metadata.version` 1.42.3 to 1.43.0, releases table, README, Codex marketplace.
+8. Run the gate.
 
 ## Tests that prove it
 
-- `node tests/check.mjs` covers manifests, version equality, agent frontmatter and Codex parity.
-- A grep proves every agent file carries one `model:` line and no `effort` line changed.
-- The eval runner's case format is routing for skills only, so no command cases are added.
+- `tests/sdlc-hooks.mjs` drives each hook with a payload in warn and enforce mode: flagged, not flagged, malformed payload, and a second Stop with `stop_hook_active`.
+- `node tests/check.mjs` covers manifests, versions, hooks.json wiring and agent frontmatter.
+- The eval runner's case format is routing for skills, so no command cases are added.
 
 ## Risks
 
-- The plugin commands and the user-scope files share names until Jody deletes the user-scope ones; the user-scope file wins on a bare `/intent`, so behaviour stays the same until then.
-- A `model:` in agent frontmatter pins the agent regardless of the session model; a user on a plan without opus gets a fallback or an error.
-- The reference path must resolve from an installed plugin, so commands use `${CLAUDE_PLUGIN_ROOT}`.
+- The user-scope commands and agents share names until Jody deletes them; the user-scope file wins on a bare name, so behaviour stays the same until then.
+- A `model:` in agent frontmatter pins the agent regardless of the session model.
+- Hooks read the same mode files as the user-scope ones, so a user with both installed gets two warnings per flagged call until the user-scope ones are removed.
+- Hooks run in every consumer session: a payload that cannot be parsed must allow.
 
 ## Options not taken
 
-- Keep the template inside the command body: mieruka could not read it.
-- Name the template path in a skill instead of `references/`: a skill would register for routing and add a warning.
-- Add a Codex `model` to the `.toml` files: Codex uses other model names and the brief names Claude roles only.
+- Put the commands in pro-core: Jody wants the SDLC as one plugin.
+- Port the bash hooks as they are: the repo's hooks are Python and need no `jq`.
+- Add `/incident` and `/review` triggers from the kit's CI: out of scope.
 
 ## Proof of done
 
-`node tests/check.mjs && node tests/eval.mjs --dry`, `claude plugin validate . --strict` and the per-plugin strict loop all pass.
+`node tests/check.mjs && node tests/eval.mjs --dry && node tests/sdlc-hooks.mjs`, `claude plugin validate . --strict` and the per-plugin strict loop all pass.
 
 ## Departures from plan
 
