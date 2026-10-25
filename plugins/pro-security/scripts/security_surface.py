@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
-"""Shared security-surface classifier for the pro-security hooks.
+"""Shared security-surface classifier for the pro-security push gate.
 
 Two pure functions do the classification:
 
-  text_hits(text)  -> sorted unique categories matched in prose (plans, prompts)
+  diff_files(diff) -> {category: [paths]} for a unified diff
   diff_hits(diff)  -> sorted unique categories matched in a unified diff
 
-The hooks import this module (each script puts its own directory on sys.path).
-Below the classifier sit a few small I/O helpers shared by the hooks (state
-file, git root, hook output). They are kept apart so the classifier stays pure.
+push-gate.py imports this module (it puts its own directory on sys.path).
+Below the classifier sit a few small I/O helpers (state file, git root, hook
+output). They are kept apart so the classifier stays pure.
 
-Both classifiers err toward silence: a hook that cries wolf on design or LLM
-work gets turned off, so every category needs at least one strong term and
-common false friends (design tokens, LLM token budgets, git hashes, session
-ledgers) are scrubbed before matching.
+The classifier errs toward silence: a hook that cries wolf gets turned off, so
+documentation, lockfiles and example env files never count.
 
 Manual testing:
-  echo "add magic-link login" | python3 security_surface.py
-  git diff --cached | python3 security_surface.py --diff
+  git diff origin/main...HEAD | python3 security_surface.py
 """
 from __future__ import annotations
 
@@ -28,131 +25,6 @@ import re
 import subprocess
 import sys
 import tempfile
-
-# ---------------------------------------------------------------------------
-# Prose classifier
-
-_I = re.IGNORECASE
-
-# Phrases that look security-adjacent but are not. Removed before matching.
-_SCRUB = [
-    r"\bdesign[- ]tokens?\b",
-    r"\b(?:colou?r|spacing|typography|type|font|size|radius|shadow|motion|theme|css|brand)[- ]tokens?\b",
-    r"\btokens?[- ](?:budgets?|counts?|usage|limits?|costs?|windows?|estimates?|savings?|efficien\w+)\b",
-    r"\b(?:input|output|context|prompt|completion|max|total|cached|reasoning|thinking)[- ]tokens?\b",
-    r"\btokens? (?:per|used|consumed|spent)\b",
-    r"\bcontext windows?\b",
-    r"\bsession[- ](?:start|end|ledger|transcript|summary|memory|log|notes?|handoff)\b",
-    r"\b(?:this|current|previous|last|claude(?: code)?|agent|coding) sessions?\b",
-    r"\bgit (?:commit )?hash(?:es)?\b",
-    r"\b(?:content|file|commit|build|cache) hash(?:es)?\b",
-]
-_SCRUB_RE = re.compile("|".join(_SCRUB), _I)
-
-_CATEGORIES: dict[str, list[str]] = {
-    "auth": [
-        r"\blogins?\b", r"\blog-in\b", r"\blog in (?:to|as|with)\b",
-        r"\bsign[- ]?(?:up|in)s?\b", r"\bsignups?\b",
-        r"\bpasswords?\b", r"\bpassphrases?\b", r"\bpasswordless\b",
-        r"\bsession (?:cookies?|tokens?|ids?|fixation|hijack\w*|management|store|expiry|timeouts?)\b",
-        r"\b(?:user|login|auth(?:enticated)?) sessions?\b",
-        r"\bcookies?\b", r"\bJWTs?\b", r"\bOAuth ?2?\b", r"\bOIDC\b", r"\bSSO\b",
-        r"\bmagic[- ]?links?\b", r"\bMFA\b", r"\b2FA\b", r"\btwo[- ]factor\b",
-        r"\bAPI[- ]keys?\b",
-        r"\b(?:access|refresh|bearer|auth|id|api|csrf|personal access) tokens?\b",
-        r"\bbearer\b", r"\bauthenticat\w+",
-    ],
-    "authz": [
-        r"\bpermissions?\b", r"\bRBAC\b", r"\broles? and permissions?\b",
-        r"\b(?:user|admin|team|org\w*) roles?\b", r"\brole[- ]based\b",
-        r"\badmin (?:panel|page|route|role|user|dashboard|only|endpoint|access|area|console)s?\b",
-        r"\b(?:an?|the|for|as|by|only) admins?\b", r"\badmins\b", r"\bsuperusers?\b",
-        r"\bmulti[- ]?tenan\w+", r"\btenant (?:isolation|boundar\w+|id)\b", r"\btenants?\b",
-        r"\bownership (?:check|model|rules?)\b", r"\baccess[- ]control\b", r"\bIDOR\b",
-        r"\bauthoriz\w+", r"\bunauthori[sz]ed\b", r"\bunauthenticated\b",
-        r"\bpublic (?:API )?endpoints?\b",
-        r"\b(?:API )?(?:routes?|endpoints?) that accepts? (?:user|untrusted|external) (?:input|data)\b",
-    ],
-    "injection": [
-        r"\bSQL injection\b", r"\braw (?:SQL|quer(?:y|ies))\b", r"\bdynamic SQL\b",
-        r"\bSQL (?:quer(?:y|ies)|strings?|statements?) (?:built|constructed|concatenat\w+)\b",
-        r"\bshell (?:commands?|out|exec\w*|injection)\b", r"\bcommand injection\b",
-        r"\bexec(?:ute)? (?:a |an |the )?(?:shell|commands?|subprocess)\b",
-        r"\bchild_process\b", r"\beval\b", r"\bdeserializ\w+", r"\bunpickl\w+", r"\bpickle\b",
-        r"\brender(?:ing)? (?:of )?user (?:input|content|supplied)\b",
-        r"\btemplate (?:rendering|injection)\b", r"\bSSTI\b",
-        r"\buntrusted (?:input|data|content)\b", r"\buser[- ]supplied\b",
-    ],
-    "ssrf-urls": [
-        r"\bSSRF\b", r"\b(?:user|client)[- ](?:supplied|provided|controlled) URLs?\b",
-        r"\bfetch\w* (?:a |the |any )?(?:user|external|arbitrary|remote) URLs?\b",
-        r"\bwebhook URLs?\b", r"\bopen redirects?\b", r"\bredirect_uri\b",
-        r"\bredirect(?:s|ing)? (?:the user )?(?:to|back to) (?:a |the )?(?:user|url|returnTo|next|callback)\w*",
-        r"\bcallback URLs?\b", r"\bproxy(?:ing)? (?:requests?|user|arbitrary)\b",
-    ],
-    "uploads": [
-        r"\bfile[- ]?uploads?\b", r"\bimage uploads?\b", r"\bmultipart\b",
-        r"\bpresigned\b", r"\bpre-signed\b",
-        r"\busers? upload\w*", r"\buploads? (?:an? |the )?(?:avatar|image|file|photo|document|attachment|csv|pdf)s?\b",
-        r"\buploaded (?:files?|images?|documents?)\b",
-    ],
-    "webhooks": [r"\bwebhooks?\b"],
-    "payments": [
-        r"\bstripe\b", r"\bcheckout (?:flow|page|session)s?\b", r"\bbilling\b",
-        r"\bpayments?\b", r"\bcredit[- ]cards?\b", r"\bcard (?:number|details|data)s?\b", r"\bPCI\b",
-    ],
-    "pii": [
-        r"\bPII\b", r"\bpersonal (?:data|information)\b", r"\bemail addresses\b",
-        r"\bphone numbers?\b", r"\b(?:home|street|billing|mailing) address(?:es)?\b",
-        r"\bSSNs?\b", r"\bsocial security\b", r"\bGDPR\b", r"\bhealth data\b",
-        r"\bHIPAA\b", r"\bmedical records?\b",
-    ],
-    "secrets": [
-        r"\bsecrets?\b", r"\bcredentials?\b", r"(?<![\w/])\.env\b", r"\bprivate keys?\b",
-        r"\bencryption keys?\b", r"\bKMS\b", r"\b(?:hashicorp|secrets?) vault\b",
-    ],
-    "crypto": [
-        r"\bencrypt\w*", r"\bdecrypt\w*", r"\bhash(?:ing|ed)? (?:the |user |user's )?passwords?\b",
-        r"\bpassword hash\w*", r"\bbcrypt\b", r"\bargon2\b", r"\bscrypt\b", r"\bHMACs?\b",
-        r"\b(?:verify|verifying|verification of|sign|signing|validate|validating|check|checking) (?:the |each |request |webhook )*signatures?\b",
-        r"\bsignature (?:verification|validation|check)\b", r"\bTLS\b", r"\bSSL\b",
-        r"\bcertificates?\b", r"\bcert pinning\b",
-    ],
-    "web-headers": [
-        r"\bCORS\b", r"\bCSP\b", r"\bcontent[- ]security[- ]policy\b", r"\bCSRF\b", r"\bXSS\b",
-        r"\bSameSite\b", r"\bHttpOnly\b", r"\bsecurity headers?\b", r"\bclickjacking\b",
-    ],
-    "llm": [
-        r"\bsystem prompts?\b", r"\bprompt[- ]injections?\b", r"\bjailbreak\w*",
-        r"\btool[- ]calling\b", r"\btool[- ]use by (?:the )?(?:model|agent)\b",
-        r"\bagents? with (?:tool|shell|file|network|browser|filesystem)s?\b",
-        r"\bagents? with (?:\w+ )?(?:tool|shell|file|network|browser) access\b",
-        r"\bRAG\b", r"\bretrieval[- ]augmented\b",
-        r"\b(?:LLM|model|AI) output (?:is |gets |being )?(?:rendered|inserted|injected|executed)\b",
-        r"\brender(?:ing)? (?:the )?(?:LLM|model|AI) output\b",
-        r"\buser (?:input|content|text) (?:into|in|to) (?:the |a )?(?:system )?prompt\b",
-        r"\buntrusted (?:content|input|text) (?:into|in) (?:the )?(?:prompt|context)\b",
-    ],
-    "ci-infra": [
-        r"\bGitHub Actions?\b", r"\.github/workflows\b", r"\bCI secrets?\b", r"\bDockerfiles?\b",
-        r"\bTerraform\b", r"\bIAM\b", r"\bKubernetes\b", r"\bk8s\b", r"\bdeploy keys?\b",
-        r"\bdocker-compose\b", r"\bpull_request_target\b",
-    ],
-    "dependencies": [
-        r"\b(?:add|adding|install|installing|introduc\w+|pull(?:ing)? in|bring(?:ing)? in|adopt\w*) (?:an? |the |one )?(?:new )?(?:third[- ]party |open[- ]source |npm |pip |pypi |python |node )?(?:dependency|package|library|SDK)\b",
-        r"\bnew (?:dependenc(?:y|ies)|packages|librar(?:y|ies)|SDKs?)\b",
-    ],
-}
-_COMPILED = {k: [re.compile(p, _I) for p in v] for k, v in _CATEGORIES.items()}
-
-
-def text_hits(text: str) -> list[str]:
-    """Categories matched in prose. Sorted, unique. Empty for benign text."""
-    if not text or not isinstance(text, str):
-        return []
-    clean = _SCRUB_RE.sub(" ", text)
-    return sorted(c for c, pats in _COMPILED.items() if any(p.search(clean) for p in pats))
-
 
 # ---------------------------------------------------------------------------
 # Diff classifier
@@ -335,53 +207,10 @@ def diff_hits(diff_text: str) -> list[str]:
 # ---------------------------------------------------------------------------
 # Shared hook helpers (I/O). Not part of the pure classifier above.
 
-PLAN_SECTION_RE = re.compile(r"^##\s+Security challenge\b", re.I | re.M)
 AGENT_HINT = (
     "Dispatch the `security-architect` subagent "
     "(if subagents are unavailable, apply the security-architect skill yourself)"
 )
-
-
-ARCHITECT_TRANSCRIPT_MAX_BYTES = 64 * 1024 * 1024
-SELF_REVIEW_NOTE = (
-    "A `## Security challenge` section the plan's author wrote does not count: the point is an "
-    "independent pass by someone who did not write the plan. "
-)
-
-
-def architect_ran(transcript_path: str | None) -> bool:
-    """True when this session dispatched the security-architect subagent or skill.
-
-    Without a readable transcript the gate cannot tell, so it answers True and
-    trusts the section heading alone (fail open, never wedge on missing data).
-    """
-    if not transcript_path:
-        return True
-    try:
-        if os.path.getsize(transcript_path) > ARCHITECT_TRANSCRIPT_MAX_BYTES:
-            return True
-        with open(transcript_path, errors="replace") as fh:
-            for line in fh:
-                if "security-architect" not in line and "threat-model" not in line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                except Exception:
-                    continue
-                msg = entry.get("message")
-                content = msg.get("content") if isinstance(msg, dict) else None
-                for block in content if isinstance(content, list) else []:
-                    if not isinstance(block, dict) or block.get("type") != "tool_use":
-                        continue
-                    inp = block.get("input") if isinstance(block.get("input"), dict) else {}
-                    name = block.get("name")
-                    if name in ("Agent", "Task") and str(inp.get("subagent_type", "")).endswith("security-architect"):
-                        return True
-                    if name == "Skill" and any(k in str(inp.get("skill", "")) for k in ("security-architect", "threat-model")):
-                        return True
-    except OSError:
-        return True
-    return False
 
 
 def read_payload() -> dict | None:
@@ -442,10 +271,6 @@ def session_state(payload: dict) -> tuple[str, dict]:
     return path, load_state(path)
 
 
-def plans_dir() -> str:
-    return os.environ.get("PRO_DEV_PLANS_DIR") or os.path.expanduser("~/.claude/plans")
-
-
 def emit(obj: dict) -> None:
     sys.stdout.write(json.dumps(obj))
     sys.stdout.flush()
@@ -458,6 +283,4 @@ def deny_pretool(reason: str) -> None:
 
 
 if __name__ == "__main__":
-    data = sys.stdin.read()
-    hits = diff_hits(data) if "--diff" in sys.argv[1:] else text_hits(data)
-    print("\n".join(hits))
+    print("\n".join(diff_hits(sys.stdin.read())))

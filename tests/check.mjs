@@ -529,11 +529,11 @@ checks["git-safe"] = () => {
   return { failures, warnings };
 };
 
-// pro-security hook behaviour. The planning gates (ExitPlanMode, plan documents),
-// the ideation nudge and the commit/PR gate all key off one classifier, and a
-// gate that fires on design or LLM work gets turned off, so both directions FAIL:
-// a miss lets a security-sensitive plan or diff through unchallenged, a false
-// positive nags on benign work. The case table lives in tests/security-hooks.mjs.
+// pro-security hook behaviour. One push gate (git push, gh pr create) keys off a
+// diff classifier, and a gate that fires on benign work gets turned off, so both
+// directions FAIL: a miss lets a security-sensitive diff leave the machine
+// unreviewed, a false positive nags on benign work or on `git commit`. The case
+// table lives in tests/security-hooks.mjs.
 checks["security-hooks"] = () => {
   const failures = [], warnings = [];
   const { skipped, results } = runSecurityHookCases();

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""PreToolUse Bash hook - run a security diff review before commit / PR creation.
+"""PreToolUse Bash hook - run a security diff review before a push / PR creation.
 
-Detects `git commit` and `gh pr create` in a Bash command, computes the diff that
-would ship, and if it touches security surface denies once per distinct diff per
-session, asking Claude to dispatch the security-architect subagent in diff mode.
-The identical retry passes. Markdown-only changes never trigger (see
-security_surface.diff_hits). Fails open on any error.
+Detects `git push` and `gh pr create` in a Bash command, computes the diff that
+would leave the machine (`git diff <upstream>...HEAD`), and if it touches security
+surface denies once per distinct diff per session, asking Claude to dispatch the
+security-architect subagent in diff mode on that diff and nothing else. The
+identical retry passes. `git commit` is never gated, `git push --dry-run` is not
+gated and Markdown-only changes never trigger (see security_surface.diff_files).
+Fails open on any error.
 """
 from __future__ import annotations
 
@@ -17,9 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import security_surface as ss  # noqa: E402
 
 OPS = {"&&", "||", ";", "|", "\n", "&"}
-VALUE_FLAGS = {"-m", "-F", "-C", "-c", "-t", "--message", "--file", "--author", "--date",
-               "--reuse-message", "--reedit-message", "--template", "--cleanup", "--fixup", "--squash"}
-VALUE_LETTERS = "mFCct"
+BASE_REFS = ("origin/HEAD", "origin/main", "main")
 
 
 def tokenize(cmd: str) -> list[list[str]]:
@@ -72,14 +72,14 @@ def tokenize(cmd: str) -> list[list[str]]:
 
 
 def classify(tokens: list[str]) -> dict | None:
-    """Return {"kind": "commit"|"pr", "dir": str|None, "all": bool} or None."""
+    """Return {"kind": "push"|"pr", "dir": str|None, "dry_run": bool} or None."""
     t = list(tokens)
     while t and "=" in t[0] and t[0].split("=", 1)[0].replace("_", "").isalnum():
         t.pop(0)
     if not t:
         return None
     if t[0] == "gh":
-        return {"kind": "pr", "dir": None, "all": False} if t[1:3] == ["pr", "create"] else None
+        return {"kind": "pr", "dir": None, "dry_run": False} if t[1:3] == ["pr", "create"] else None
     if t[0] != "git":
         return None
     i, gdir = 1, None
@@ -91,27 +91,23 @@ def classify(tokens: list[str]) -> dict | None:
             i += 2
         else:
             i += 1
-    if i >= len(t) or t[i] != "commit":
+    if i >= len(t) or t[i] != "push":
         return None
-    all_flag, skip = False, False
-    for tok in t[i + 1:]:
-        if skip:
-            skip = False
-            continue
-        if tok == "--all":
-            all_flag = True
-        elif tok in VALUE_FLAGS:
-            skip = True
-        elif tok.startswith("--"):
-            continue
-        elif tok.startswith("-") and len(tok) > 1 and tok[1:].isalpha():
-            for ch in tok[1:]:
-                if ch == "a":
-                    all_flag = True
-                if ch in VALUE_LETTERS:
-                    skip = tok.endswith(ch)
-                    break
-    return {"kind": "commit", "dir": gdir, "all": all_flag}
+    dry_run = any(tok == "--dry-run" or (tok.startswith("-") and not tok.startswith("--") and "n" in tok[1:])
+                  for tok in t[i + 1:])
+    return {"kind": "push", "dir": gdir, "dry_run": dry_run}
+
+
+def resolve_base(root: str, use_upstream: bool) -> str | None:
+    """The ref the diff is taken against: @{upstream} when asked for and set, else the first BASE_REFS hit."""
+    if use_upstream:
+        ok, out = ss.run_git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], root)
+        if ok and out.strip():
+            return out.strip()
+    for ref in BASE_REFS:
+        if ss.run_git(["rev-parse", "--verify", "--quiet", ref + "^{commit}"], root)[0]:
+            return ref
+    return None
 
 
 def main() -> int:
@@ -122,14 +118,14 @@ def main() -> int:
     cmd = tool_input.get("command") if isinstance(tool_input, dict) else None
     if not isinstance(cmd, str) or not cmd.strip():
         return 0
-    if "commit" not in cmd and "pr" not in cmd:
+    if "push" not in cmd and "pr" not in cmd:
         return 0
     op = None
     for seg in tokenize(cmd):
         op = classify(seg)
         if op:
             break
-    if not op:
+    if not op or op["dry_run"]:
         return 0
 
     cwd = payload.get("cwd") or os.getcwd()
@@ -142,19 +138,11 @@ def main() -> int:
         return 0
     root = top.strip()
 
-    if op["kind"] == "commit":
-        gargs = ["diff", "HEAD"] if op["all"] else ["diff", "--cached"]
-        what = "commit"
-    else:
-        base = None
-        for ref in ("origin/HEAD", "origin/main", "main"):
-            if ss.run_git(["rev-parse", "--verify", "--quiet", ref + "^{commit}"], root)[0]:
-                base = ref
-                break
-        if not base:
-            return 0
-        gargs = ["diff", f"{base}...HEAD"]
-        what = "PR"
+    base = resolve_base(root, op["kind"] == "push")
+    if not base:
+        return 0
+    gargs = ["diff", f"{base}...HEAD"]
+    what = "push" if op["kind"] == "push" else "PR"
     ok, diff = ss.run_git(["--no-pager", *gargs, "--no-color", "--no-ext-diff"], root)
     if not ok or not diff.strip():
         return 0
@@ -176,7 +164,7 @@ def main() -> int:
     repro = "git -C {} {}".format(root, " ".join(gargs))
     ss.deny_pretool(
         f"This {what} touches security surface: {', '.join(cats)} in {shown}. "
-        f"{ss.AGENT_HINT} in diff mode on this exact diff (reproduce it with `{repro}`). "
+        f"{ss.AGENT_HINT} in diff mode on this diff and nothing else (reproduce it with `{repro}`). "
         "Fix Blocking findings, or tell the user what you are knowingly shipping, then retry the same command."
     )
     return 0

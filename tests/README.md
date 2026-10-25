@@ -15,6 +15,7 @@ node tests/check.mjs          # every check         (alias: npm test)
 node tests/check.mjs versions # one check by name
 node tests/git-safe.mjs       # the git-safe hook cases, standalone + verbose
 node tests/memory-hooks.mjs   # the memory-hook cases (recall + ledger), standalone
+node tests/security-hooks.mjs # the pro-security push-gate cases, standalone
 node tests/doc-hooks.mjs      # the pro-quality doc-hook cases (push freshness, write location), standalone
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
@@ -37,6 +38,7 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `bridges` | bridge skills (`qa-suite`, `impeccable-bridge`, `lavish`, `taste-skills-bridge`, `web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`) name an install command that exists | a bridge pointing at a missing command |
 | `hooks` | only `hooks/hooks.json` is auto-loaded, so every hook config is either that file or declared in `plugin.json` `hooks`; referenced `${CLAUDE_PLUGIN_ROOT}` scripts exist and are tracked by git; event names are valid | an unloaded hook file, a missing hook script, a misspelled event; an existing-but-untracked hook script warns locally and fails when `CI` is set |
 | `git-safe` | runs the real `pro-core/scripts/git-safe.py` once per case (PreToolUse payload on stdin) and asserts its block/allow exit code | a wrong block or allow decision; no `python3` = warning-level skip |
+| `security-hooks` | runs the real pro-security `push-gate.py` and `security_surface.py` once per case (PreToolUse payload on stdin, throwaway git repos with a bare `origin`) and asserts deny or pass | a push or `gh pr create` that touches security surface slipping through, a `git commit`, dry run or docs-only push being held, or a retry being denied; no `python3` or `git` = warning-level skip |
 | `memory-hooks` | runs the real `memory-recall.py` and `daily-log.py` once per case (hook JSON payload on stdin, sandboxed `HOME`) and asserts recall/ledger/timer-gate behaviour | a wrong recall or ledger decision, or `dream-timer.has_memory_content()` counting the daily ledger as memory content; no `python3` = warning-level skip |
 | `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
 | `eval-coverage` | every shipped skill and subagent is named by at least one `expect` in `routing.jsonl` | never fails; warns so untested routing stays visible |

@@ -2,18 +2,22 @@
 
 Use this when code exists.
 The input is a diff, a branch, a commit range, a PR or staged changes.
-The goal is to catch security problems before they are committed.
+The goal is to catch security problems before they are pushed.
 
 ## 1. Get the diff
 
+- Push or PR: `git diff <upstream>...HEAD`, the exact command the push gate hands over.
 - Staged changes: `git diff --cached`.
 - Working tree: `git diff` plus untracked files from `git status`.
 - Branch: `git diff $(git merge-base HEAD <base>)...HEAD`, where `<base>` is the default branch.
 - Range or PR: the range or the PR's base and head as given.
 
-Read each changed file in full, not only the hunks.
-Then read enough callers, middleware, route registration and schema to know what actually reaches each changed line.
-A hunk read alone misses both the control that already exists and the one that is missing.
+The scope is the diff you were handed and nothing else.
+Read the hunks and each changed file in full.
+For every changed or added symbol, run `Grep` on that symbol's name to find its direct callers and read those files, at most five.
+Never list or walk the tree with `Glob`.
+A file the diff does not touch is out of scope unless it calls a changed symbol.
+Whole-repo posture work belongs to the `security-audit` skill.
 
 ## 2. Ask the design question first
 
@@ -70,8 +74,8 @@ When subagents are not available, re-read the code with a skeptic's eye and mark
 
 End with one of:
 
-- Safe to commit: nothing at 8 or above.
-- Fix before commit: list the findings that must change, in priority order.
+- Safe to push: nothing at 8 or above.
+- Fix before push: list the findings that must change, in priority order.
 
 Keep the report short.
 Do not add a disclaimer block.

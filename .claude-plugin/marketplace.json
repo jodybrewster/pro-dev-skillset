@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.46.0"
+    "version": "1.47.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -120,8 +120,8 @@
     {
       "name": "pro-security",
       "source": "./plugins/pro-security",
-      "description": "The Security phase. security-architect challenges a specific idea, plan, spec or diff before it ships: trust boundaries, unstated assumptions and the attack that breaks each, returned as a ## Security challenge section (/threat-model, plus a read-only security-architect subagent). security-audit is a read-only whole-repository audit covering secrets in git history, dependency supply chain, CI/CD, containers and IaC, webhooks, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE, with confidence-scored findings and the security-auditor subagent judging each one independently (/security-audit). Hooks enforce it: an ExitPlanMode gate and a plan-document gate require an independent security-architect challenge on plans that touch security surface, a UserPromptSubmit nudge challenges security-sensitive ideas, and a commit/PR gate holds a security-sensitive diff once for review. Adapted from the cso skill in garrytan/gstack.",
-      "version": "0.1.1",
+      "description": "The Security phase. security-architect challenges a specific idea, plan, spec or diff before it ships: trust boundaries, unstated assumptions and the attack that breaks each, returned as a ## Security challenge section (/threat-model, plus a read-only security-architect subagent). security-audit is a read-only whole-repository audit covering secrets in git history, dependency supply chain, CI/CD, containers and IaC, webhooks, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE, with confidence-scored findings and the security-auditor subagent judging each one independently (/security-audit). One push gate hook holds a git push or gh pr create whose diff against its upstream touches security surface, once per distinct diff, so the architect reviews that diff and nothing else. Adapted from the cso skill in garrytan/gstack.",
+      "version": "0.2.0",
       "category": "development",
       "strict": true
     },

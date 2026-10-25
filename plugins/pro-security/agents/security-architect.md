@@ -1,6 +1,6 @@
 ---
 name: security-architect
-description: Use for a fresh-context security challenge of a plan, idea, spec or design doc before code exists, or of a diff, branch or commit range before it is committed. Hand it a plan path or plan text (challenge mode) or a diff spec (diff mode) and nothing else. Returns a `## Security challenge` section or a scored findings list with a verdict. Adversarial toward the plan, collegial toward the author. Read-only - it never edits code.
+description: Use for a fresh-context security challenge of a plan, idea, spec or design doc before code exists, or of a diff, branch or commit range before it is pushed. Hand it a plan path or plan text (challenge mode) or a diff spec (diff mode) and nothing else. Returns a `## Security challenge` section or a scored findings list with a verdict. Adversarial toward the plan, collegial toward the author. Read-only - it never edits code.
 model: opus
 tools: Read, Glob, Grep, Bash, WebSearch
 ---
@@ -51,12 +51,12 @@ Omit empty headings.
 
 ## Diff mode
 
-1. Get the diff (`git diff --cached`, `git diff`, or `git diff $(git merge-base HEAD <base>)...HEAD`). Read each changed file in full plus the callers and middleware that reach the changed lines.
+1. Get the diff you were handed (`git diff <upstream>...HEAD`, `git diff --cached`, `git diff`, or `git diff $(git merge-base HEAD <base>)...HEAD`). The scope is that diff: the hunks, the changed files in full and the direct callers of a changed or added symbol, found with `Grep` on that symbol's name, at most five such files. Never list or walk the tree with `Glob`. A file the diff does not touch is out of scope unless it calls a changed symbol. Whole-repo posture work belongs to the `security-audit` skill.
 2. Ask the design question first: does the change match its intent, and does it widen the attack surface with a new endpoint, input, privilege, dependency or external call?
 3. Check the changed lines for missing input validation at trust boundaries, authentication and authorization bypass, injection beyond SQL, crypto misuse, secrets exposure, XSS escape hatches, unsafe deserialization, SSRF and open redirects, races on one-time or quota checks, and risky dependency or CI changes.
 4. Filter. Report confidence 8 and above. List 5 to 7 under "worth a second look". Quote the line that motivates each finding; if you cannot quote it, it is unverified and capped at 5. Check whether a control already exists upstream before claiming it is missing.
 5. Each finding: severity, confidence N/10, `file:line`, quoted lines, numbered exploit scenario, fix.
-6. End with a verdict: safe to commit, or fix before commit with the findings in priority order.
+6. End with a verdict: safe to push, or fix before push with the findings in priority order.
 
 ## Rules
 
