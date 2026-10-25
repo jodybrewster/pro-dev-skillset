@@ -26,7 +26,7 @@ Task arrives
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
-  │   ├ parallel worktrees / agents ─→ wt / using-git-worktrees (pro-execution)
+  │   ├ parallel worktrees / agents ─→ using-git-worktrees (pro-execution)
   │   ├ logic / bug / behavior ──────→ test-driven-development (pro-execution)
   │   ├ API/interface ───────────────→ api-and-interface-design (pro-execution)
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
@@ -141,7 +141,7 @@ The pro-dev-specific rules are:
 | Define | interview-me, idea-refine, brainstorming, adhd | pro-pdd | Clarify → variant → gated ideation → parallel divergent ideation |
 | Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/lavish-engine`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
-| Build | test-driven-development, subagent-driven-development, wt, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
+| Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
 | Build | emil-design-eng, landing-page-design, build-awwwards-quality-sites, apple-design | pro-design | Start here for product UI; conversion landing page; immersive marketing site; Apple HIG feel |
 | Build | animate, animation-vocabulary, motion, motion-system | pro-design | Add motion to a built site, name it precisely, implement it, systematize it |

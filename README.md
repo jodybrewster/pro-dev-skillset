@@ -7,7 +7,6 @@ A Claude Code and OpenAI Codex plugin marketplace for professional software deve
 **Prerequisites:**
 - [Homebrew](https://brew.sh) — package manager used to install the tools below (macOS/Linux)
 - [`gh` CLI](https://cli.github.com) — required to bootstrap from this private repo; also powers the `/gh` command in `pro-core`
-- [`worktrunk`](https://worktrunk.dev) — required for parallel worktree workflows: `brew install worktrunk && wt config shell install`
 
 Optional machine-level status lines for both Claude Code and Codex CLI:
 
@@ -47,7 +46,6 @@ Then open Codex in the project and run `/skills` to confirm the pro-dev skills a
 |---|---|---|
 | Homebrew | Package manager for the tools below | [brew.sh](https://brew.sh) |
 | `gh` (GitHub CLI) | Bootstrap from this private repo; powers the `/gh` command in `pro-core` | `brew install gh` |
-| `worktrunk` (`wt`) | Parallel worktree + agent management for the `wt` skill in `pro-execution` | `brew install worktrunk && wt config shell install` |
 
 ### Optional
 
@@ -60,16 +58,11 @@ Install them with `templates/install-companions.sh` or `bootstrap.sh --with-comp
 | `vercel@claude-plugins-official` | `pro-nextjs`, `pro-astro` | Next.js and Astro deployment workflows on Vercel |
 | `figma@claude-plugins-official` | `pro-design`, `pro-nextjs` | Design lookup and asset extraction |
 | `playwright@claude-plugins-official` | `pro-quality`, `pro-testing` | Browser E2E testing |
-| `worktrunk@worktrunk` | `pro-execution` | Activity tracking and config guidance for the `wt` CLI |
 
 The official Cloudflare plugin pairs with `pro-astro`'s `astro-on-cloudflare` skill (Wrangler, Workers best practices, web-perf and the Cloudflare MCP server).
 It lives in its own marketplace and is not installed by `install-companions.sh`; add it by hand when a project deploys to Cloudflare: `/plugin marketplace add cloudflare/skills` then `/plugin install cloudflare@cloudflare`.
 The `pro-astro` skills also use the official Astro Docs MCP server when it is configured: `claude mcp add --transport http astro-docs https://mcp.docs.astro.build/mcp`.
 
-`worktrunk@worktrunk` is not a declared dependency either.
-The worktrunk marketplace's `plugin.json` ships no `version` field, so Claude Code falls back to the marketplace git commit SHA as the version string.
-The dependency resolver cannot match a SHA against any range, `*` included, so any plugin depending on it fails to load with `Requires worktrunk@worktrunk *, installed version unknown` even when worktrunk is installed and enabled.
-Installing it explicitly sidesteps the resolver entirely.
 `node tests/check.mjs versions` fails if a `*` cross-marketplace dependency is ever reintroduced.
 
 If a Claude Code version does not auto-install cross-marketplace dependencies correctly, run the helper script explicitly:
