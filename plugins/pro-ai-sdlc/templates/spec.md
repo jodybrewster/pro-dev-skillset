@@ -51,6 +51,8 @@ Anything where the intent or the design collides with a policy, or where two pol
 Reviewers start here.
 Write "None found" and name the sources read when there is nothing to flag.
 
+ADR needed: <yes or no>, <one-line reason; yes when the change sets a rule other work must follow or would be expensive to reverse>.
+
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
 | 1 | <the collision> | <file or person> | open, or resolved: <how> |

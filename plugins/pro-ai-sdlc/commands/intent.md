@@ -39,6 +39,10 @@ Rules for the interview:
 - For a ticket or an incident, record the source ID in Source and link the evidence under Evidence.
 - Anything still unknown goes under Open questions rather than being guessed.
   Never invent numbers or users.
+- Watch for an idea that is large or spans more than one shippable change.
+  Offer once to split it into separate intents, and when the person agrees write one folder each.
+- When the idea sets a rule other work must follow or would be expensive to reverse, record `Likely needs an ADR: <the decision at stake>` under Open questions.
+  Do not write the ADR here; `/spec` drafts it once the options are weighed.
 
 If the idea is empty, ask for it first.
 

@@ -30,6 +30,18 @@ The step most likely to go wrong, what it could break, how far the damage would 
 
 The exact commands to run and the output that counts as finished: tests, lint, build, visual comparison.
 
+## Done
+
+Filled in when the build is finished, before sign-off.
+
+- Build commit: <sha>
+- Checks run: <each command with its real result>
+- AC1: <pass or fail, with what was observed>
+- Sign-off: <the person's words and the date>
+
+The sign-off moves `status` in the intent and the spec to `accepted`.
+It also moves any ADR with Status `proposed` from this change to `accepted`.
+
 ## Departures from plan
 
 Added in the same commit as the change that departs.

@@ -10,3 +10,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0002](./0002-version-bump-law.md) | Every content change bumps the plugin version in both manifests and the marketplace entry | 2026-05-24 |
 | [0003](./0003-one-hooks-json-per-plugin.md) | Each plugin registers all its hooks in one `hooks/hooks.json` | 2026-07-26 |
 | [0004](./0004-codex-parity.md) | Every skill-bearing plugin also loads under Codex, agents included | 2026-05-24 |
+| [0005](./0005-adrs-in-the-sdlc-loop.md) | pro-ai-sdlc carries ADRs through the loop: flagged at intent, drafted at spec, accepted at Done, standalone through /adr | 2026-10-27 |

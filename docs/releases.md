@@ -4,11 +4,11 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.43.0.
+Marketplace `metadata.version`: 1.45.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
-| pro-ai-sdlc | 0.1.0 | 2026-10-17 | First release: /intent, /spec, /plan, /review, /pr-babysit and /sdlc-init, four templates, the researcher, verifier, simplifier and reviewer agents, and the protect-tests, plan-sync and production-gate hooks in warn mode | this PR | none |
+| pro-ai-sdlc | 0.2.0 | 2026-10-27 | ADRs in the loop: /intent flags a likely decision, /spec drafts it as proposed, the plan's Done section accepts it, and the new /adr records standalone decisions; templates/adr.md added | this PR | none |
 | pro-astro | 0.1.1 | 2026-10-16 | Standard original-skill footer on the four Astro skills | this PR | none |
 | pro-core | 0.15.2 | 2026-10-16 | Router lists next-skills-bridge and the pro-nextjs skills | this PR | pro-core--v0.13.0 |
 | pro-data | 0.4.5 | 2026-07-26 | Hooks merged into one `hooks/hooks.json` | 8597453 (PR 34) | pro-data--v0.2.0 |
@@ -22,5 +22,5 @@ Marketplace `metadata.version`: 1.43.0.
 | pro-research | 0.3.3 | 2026-10-17 | The four research agents declare `model: haiku` | this PR | none |
 | pro-security | 0.1.1 | 2026-10-17 | Agents `security-architect` and `security-auditor` declare `model: opus` | this PR | none |
 | pro-spdd | 0.3.5 | 2026-10-16 | PORT-PLAN smoke test uses a path placeholder instead of a home directory | this PR | pro-spdd--v0.2.1 |
-| pro-starter | 1.13.0 | 2026-10-17 | Adds pro-ai-sdlc to the dependency list | this PR | pro-starter--v1.0.3 |
+| pro-starter | 1.13.1 | 2026-10-27 | Re-resolves the pro-ai-sdlc 0.2.0 dependency | this PR | pro-starter--v1.0.3 |
 | pro-testing | 0.5.7 | 2026-10-16 | LICENSE carries the full Apache-2.0 text for the agent-browser fork (section 4(a)) and records that upstream has no NOTICE | this PR | pro-testing--v0.2.0 |

@@ -14,6 +14,7 @@ Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this o
 | Intent | `/intent` | `intent/<date>-<slug>/intent.md` |
 | Spec | `/spec` | `spec.md` beside the intent |
 | Plan | `/plan` | `plan.md` beside the spec |
+| Decision | `/adr` | an ADR for a decision with no change behind it |
 | Review | `/review` | findings, nothing on disk |
 | PR | `/pr-babysit` | fixes on the PR branch, never a merge |
 | Setup | `/sdlc-init` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
@@ -25,10 +26,23 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 - `templates/intent.md`
 - `templates/spec.md`
 - `templates/plan.md`
+- `templates/adr.md`
 - `templates/REVIEW.md`
 
 The interview rules for `/intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
+
+## Decisions
+
+ADRs enter the loop at four points:
+
+- `/intent` flags a likely decision under Open questions and writes no ADR.
+- `/spec` answers `ADR needed:` in Flagged concerns and, on yes, drafts the ADR as `proposed` in the same commit as the spec.
+- The Done section of `plan.md` accepts it: the person's sign-off moves the ADR to `accepted`.
+- `/adr` records a decision with no change behind it, standalone and `accepted`.
+
+The folder is `docs/adr/` if it exists, else `docs/decisions/` if it exists, else a new `docs/adr/`.
+A `README.md` index table in that folder gets a row for each new ADR.
 
 ## Agents
 
