@@ -27,7 +27,9 @@ Anyone with pro-ai-sdlc installed gets it in any repo that uses the `intent/` la
 - R1. `/execute` takes a path to a `plan.md` and stops with a reason when the path is missing, the file is not tracked by git, it has uncommitted changes or its `Status:` line is not `approved` (intent outcome 1).
 - R2. `/execute` stops with a reason when the plan's Done section already records a build commit, so an approved plan that was already built is not built twice (intent outcome 1).
 - R3. `/execute` runs `git fetch origin` and creates the worktree on a new branch named from the intent folder's slug (the folder name without its date prefix), based on `origin/<default branch>`; it stops if that branch already exists locally or on the remote (intent outcome 2).
-- R4. The worktree location follows the answer to open question 1; whichever tool makes it, the branch base is `origin/<default branch>` and never the current `HEAD` (intent outcome 2).
+- R4. `/execute` uses the harness's own worktree tool when that tool can base the branch on `origin/<default branch>`, so the session follows the worktree.
+  Otherwise it runs `git worktree add ../<repo>.<slug> -b <slug> origin/<default branch>`, a sibling folder that needs no new ignore rule.
+  Either way the branch base is `origin/<default branch>` and never the current `HEAD` (intent outcome 2, open question 1).
 - R5. Env file discovery takes only files that `git ls-files --others --ignored --exclude-standard` lists in the main checkout and whose basename matches `.env`, `.env.*`, `.dev.vars` or `.dev.vars.*`, at any depth outside `node_modules/`, `.git/` and other worktrees (intent outcome 3, open question 2).
 - R6. Each env file is copied to the same relative path in the worktree with its permission bits kept; a tracked file such as `.env.example` is never copied or overwritten (intent outcome 3).
 - R7. After copying, `/execute` runs `git check-ignore` on every copied path inside the worktree; if any is not ignored it deletes the copies, removes nothing else and stops with the file names (intent constraint on secrets).
@@ -94,13 +96,13 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 | 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | open: R7 checks ignore status after the copy; a `security-architect` challenge of this spec is still owed before `/plan` (open question 5). |
 | 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | open: same risk as installing in the main checkout; the security challenge should say whether `--ignore-scripts` or installing before the copy is worth it. |
 | 5 | The success criterion names `intent/2026-10-28-quiet-validation-hook/plan.md`, but that plan was already built in PR 60. Its Status still reads `approved` so R2 refuses it. | intent "Success looks like" | open: pick an unbuilt approved plan for the live check. Decide whether `/execute` or the Done sign-off should move a plan's Status to `implemented`. |
-| 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | open: see open question 1. |
+| 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | resolved: R4 uses the harness's tool only when it can base on `origin/<default branch>` and falls back to a sibling folder rather than an unignored `.worktrees/` (Jody, 2026-10-28). |
 
 ## Open questions
 
 1. Worktree location.
-   Proposed: use the harness's worktree tool when it can base the branch on `origin/<default branch>` so the session follows the worktree, otherwise `git worktree add ../<repo>.<slug> -b <slug> origin/<default branch>`.
-   Owner: Jody, still open.
+   Answered in R4: the harness's worktree tool when it can base the branch on `origin/<default branch>`, otherwise a sibling `../<repo>.<slug>` made with `git worktree add`.
+   Jody took the recommendation on 2026-10-28.
 2. Which env file names count.
    Answered in R5: `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*`, git-ignored only; `config/*.local.*` is left out until a repo needs it.
 3. Pause after the baseline?
