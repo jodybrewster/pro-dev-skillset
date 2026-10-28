@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
+import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 import { runDocHookCases } from "./doc-hooks.mjs";
@@ -753,6 +754,21 @@ checks["sdlc-hooks"] = () => {
   }
   if (!results.length) failures.push("tests/sdlc-hooks.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`sdlc hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// pro-quality Stop hook behaviour. user-validation.py nudges by default and blocks
+// only on request, so a hook that fires outside the repo or crashes on a bad
+// payload is the failure to catch. The case table lives in tests/quality-hooks.mjs.
+checks["quality-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runQualityHookCases();
+  if (skipped) {
+    warnings.push(`quality hook cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/quality-hooks.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`quality hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

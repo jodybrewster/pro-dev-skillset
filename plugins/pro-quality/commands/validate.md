@@ -3,6 +3,7 @@ description: Produce a validation handoff - what changed, what was actually veri
 argument-hint: '[what to focus the handoff on]'
 ---
 
+This is the on-demand path the Stop hook points at when it suggests `/validate`.
 Use the `user-validation` skill to produce a validation handoff for the work in this session.
 
 Scope it to `$ARGUMENTS` if given; otherwise cover everything that changed in the working tree.

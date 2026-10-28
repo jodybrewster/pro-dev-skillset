@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
-"""Stop hook - hand the user a validation checklist when work lands.
+"""Stop hook - suggest a validation checklist when work lands in the repo.
 
-Fires when the session is about to end its turn. If real work happened since
-the last handoff, blocks the stop once and instructs the session to produce a
-user-validation handoff: an ordered list of what the *user* should check on
-their end, written to `.pro-dev/validation/latest.md` and echoed in chat.
+Fires when the session is about to end its turn. If the session wrote files
+inside the repo (or ran `git commit`) since the hook last spoke, it says so.
+`PRO_DEV_VALIDATION` picks how:
 
-Stays silent (exit 0) when there is nothing to validate - a conversation-only
-turn, no git working tree, or a handoff already produced for this state.
+  nudge (default)  one `systemMessage` line suggesting `/validate`; the turn
+                   ends normally and the model is told nothing. Spoken once
+                   per distinct set of changed files per session.
+  block            blocks the stop once and instructs the session to produce a
+                   user-validation handoff, written to
+                   `.pro-dev/validation/latest.md` and echoed in chat.
+  off              silent.
 
-Loop safety, belt and braces:
+Any other value behaves as nudge. Stays silent (exit 0) when there is nothing
+to validate - a conversation-only turn, writes outside the repo or under
+`.pro-dev/`, no git working tree, or a change set already reported.
+
+Loop safety, belt and braces (block mode):
   1. `stop_hook_active` is true on the continuation turn the block causes, so
      the second Stop always passes through.
   2. Transcript progress is recorded per session before any decision, so the
@@ -23,10 +31,16 @@ import os
 import subprocess
 import sys
 
-# File-mutating tools. A turn that touched none of these produced nothing the
-# user needs to validate, so the hook stays quiet. Bash is deliberately absent
-# (most Bash calls are read-only); `git commit` is picked up separately.
-MUTATING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit", "apply_patch"}
+# File-mutating tools and the input key that names their target. A turn that
+# touched none of these inside the repo produced nothing the user needs to
+# validate, so the hook stays quiet. Bash is deliberately absent (most Bash
+# calls are read-only); `git commit` is picked up separately.
+MUTATING_TOOLS = {
+    "Write": "file_path",
+    "Edit": "file_path",
+    "MultiEdit": "file_path",
+    "NotebookEdit": "notebook_path",
+}
 STATE_HOME = os.path.expanduser("~/.claude/pro-dev/user-validation")
 OUTPUT_REL = os.path.join(".pro-dev", "validation", "latest.md")
 MAX_TRANSCRIPT_BYTES = 64 * 1024 * 1024
@@ -95,7 +109,26 @@ def new_transcript_lines(path: str, already_seen: int) -> tuple[list[str], int]:
     return lines[already_seen:], len(lines)
 
 
-def work_happened(lines: list[str]) -> bool:
+def repo_relative(raw: str, cwd: str, root: str) -> str | None:
+    """Resolve a tool target to a path under root, or None if it is outside.
+
+    realpath on both sides so /tmp vs /private/tmp style aliases and symlinks
+    compare equal. Anything under .pro-dev/ is hook state, not work.
+    """
+    real_root = os.path.realpath(root)
+    real = os.path.realpath(raw if os.path.isabs(raw) else os.path.join(cwd, raw))
+    if real != real_root and not real.startswith(real_root + os.sep):
+        return None
+    rel = os.path.relpath(real, real_root)
+    if rel == "." or rel == ".pro-dev" or rel.startswith(".pro-dev" + os.sep):
+        return None
+    return rel
+
+
+def changed_paths(lines: list[str], cwd: str, root: str) -> tuple[set[str], bool]:
+    """Repo-relative paths the session wrote, plus whether it ran `git commit`."""
+    paths: set[str] = set()
+    committed = False
     for line in lines:
         line = line.strip()
         if not line:
@@ -106,29 +139,64 @@ def work_happened(lines: list[str]) -> bool:
             continue
         for block in iter_tool_uses(entry):
             name = block.get("name")
+            tool_input = block.get("input") or {}
+            if not isinstance(tool_input, dict):
+                continue
             if name in MUTATING_TOOLS:
-                return True
-            if name == "Bash":
-                cmd = (block.get("input") or {}).get("command") or ""
+                raw = tool_input.get(MUTATING_TOOLS[name])
+                if isinstance(raw, str) and raw:
+                    rel = repo_relative(raw, cwd, root)
+                    if rel:
+                        paths.add(rel)
+            elif name == "Bash":
+                cmd = tool_input.get("command") or ""
                 if isinstance(cmd, str) and "git commit" in cmd:
-                    return True
-    return False
+                    committed = True
+    return paths, committed
 
 
-def change_summary(root: str) -> tuple[str, bool]:
-    """A compact description of the working tree + recent commits."""
+def drop_ignored(paths: set[str], root: str) -> set[str]:
+    """Remove paths git ignores. Any git failure keeps every path (fail open)."""
+    if not paths:
+        return paths
+    try:
+        r = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"],
+            cwd=root,
+            input="\0".join(sorted(paths)) + "\0",
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except Exception:
+        return paths
+    if r.returncode not in (0, 1):  # 1 means none ignored; anything else is an error
+        return paths
+    ignored = {p for p in r.stdout.split("\0") if p}
+    return paths - ignored
+
+
+def change_summary(root: str, paths: list[str]) -> tuple[str, bool]:
+    """A compact description of the session's files + recent commits.
+
+    With no session paths (a bare `git commit`) the working tree is not
+    reported at all, only the unpushed commits.
+    """
     parts: list[str] = []
-    _, status = run(["git", "status", "--porcelain"], root)
-    _, stat = run(["git", "diff", "--stat", "HEAD"], root)
+    if paths:
+        _, status = run(["git", "status", "--porcelain", "--", *paths], root)
+        _, stat = run(["git", "diff", "--stat", "HEAD", "--", *paths], root)
+        if status:
+            parts.append("Uncommitted changes:\n" + status)
+        if stat:
+            parts.append("Diff vs HEAD:\n" + stat)
     ok_log, log = run(
         ["git", "log", "--oneline", "-5", "--no-decorate", "@{u}..HEAD"], root
     )
-    if status:
-        parts.append("Uncommitted changes:\n" + status)
-    if stat:
-        parts.append("Diff vs HEAD:\n" + stat)
     if ok_log and log:
         parts.append("Commits not yet pushed:\n" + log)
+    elif not paths:
+        parts.append("No file changes were recorded this session.")
     return ("\n\n".join(parts), bool(parts))
 
 
@@ -151,7 +219,7 @@ def build_reason(root: str, summary: str) -> str:
 Do NOT start new work, refactor anything, or fix things you notice while writing this. \
 Produce the handoff only. Follow the `user-validation` skill.
 
-What changed in {root}:
+What changed in {root} (only the files this session wrote):
 {summary or "(no git-visible changes detected - describe what you changed from the session instead)"}
 
 Produce two things:
@@ -175,10 +243,27 @@ Keep it short enough to act on. Skip a section rather than pad it. \
 Every step must be checkable by the user without reading the diff."""
 
 
+def nudge_message(root: str, count: int) -> str:
+    repo = os.path.basename(root)
+    if count:
+        noun = "file" if count == 1 else "files"
+        return (
+            f"pro-quality: this session changed {count} {noun} in {repo}. "
+            "Run /validate for a checklist."
+        )
+    return f"pro-quality: this session committed changes in {repo}. Run /validate for a checklist."
+
+
 def main() -> int:
+    mode = (os.environ.get("PRO_DEV_VALIDATION") or "").strip().lower()
+    if mode == "off":
+        return 0
+
     try:
         payload = json.load(sys.stdin)
     except Exception:
+        return 0
+    if not isinstance(payload, dict):
         return 0
 
     cwd = payload.get("cwd") or os.getcwd()
@@ -193,24 +278,46 @@ def main() -> int:
     state = load_state(path)
     lines, seen = new_transcript_lines(transcript, int(state.get("lines_seen") or 0))
 
+    new_paths, committed = changed_paths(lines, cwd, root)
+    new_paths = drop_ignored(new_paths, root)
+    session_paths = sorted(set(state.get("paths") or []) | new_paths)
+
     # Always record progress first, so the handoff's own writes are consumed
     # and can never trigger a second handoff.
     state["lines_seen"] = seen
+    state["paths"] = session_paths
     save_state(path, state)
 
     if payload.get("stop_hook_active"):
         return 0
-    if not work_happened(lines):
+    if not new_paths and not committed:
         return 0
 
-    summary, has_changes = change_summary(root)
-    if not has_changes:
-        return 0  # Edits were made but nothing survives in the tree.
+    if mode == "block":
+        summary, has_changes = change_summary(root, session_paths)
+        if not has_changes:
+            return 0  # Edits were made but nothing survives in the tree.
+        ensure_output_dir(root)
+        print(json.dumps({"decision": "block", "reason": build_reason(root, summary)}))
+        return 0
 
-    ensure_output_dir(root)
-    print(json.dumps({"decision": "block", "reason": build_reason(root, summary)}))
+    # nudge (the default, and any unrecognised value): once per change set.
+    digest = hashlib.sha256("\n".join(session_paths).encode()).hexdigest()[:16]
+    if state.get("reported") == digest:
+        return 0
+    state["reported"] = digest
+    save_state(path, state)
+    print(json.dumps({"systemMessage": nudge_message(root, len(session_paths))}))
     return 0
 
 
+def guarded_main() -> int:
+    """Run main; any failure ends the turn quietly rather than with a traceback."""
+    try:
+        return main()
+    except Exception:
+        return 0
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(guarded_main())
