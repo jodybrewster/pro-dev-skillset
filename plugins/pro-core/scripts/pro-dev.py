@@ -1239,6 +1239,14 @@ def trusted_argv(row: dict, argv: list[str]) -> tuple[list[str] | None, str]:
     exe = os.path.join(folder, name)
     if not (os.path.isfile(exe) and os.access(exe, os.X_OK)):
         return None, f"{exe} is not an executable file"
+    tools = uv_tool_dir()
+    need = next((r for r in load_registry()["engines"] if isinstance(r, dict) and r.get("id") == row.get("needs")), None)
+    tool = need["detect"]["uvTool"] if need and uv_row(need) else None
+    if tools is None or not isinstance(tool, str) or not TOOL_NAME_RE.match(tool):
+        return None, "uv tool dir or the needed row's uv tool name cannot be read, so the shim cannot be checked"
+    home = os.path.join(os.path.realpath(tools), tool) + os.sep
+    if not (os.path.realpath(exe) + os.sep).startswith(home) or os.path.realpath(exe) + os.sep == home:
+        return None, f"{exe} resolves to {os.path.realpath(exe)}, outside the uv tool folder {home}"
     first = shutil.which(name)
     if first and os.path.realpath(first) != os.path.realpath(exe):
         return None, (f"{name} on PATH is {os.path.realpath(first)} but the pinned CLI is {os.path.realpath(exe)}; "

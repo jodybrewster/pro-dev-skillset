@@ -267,20 +267,20 @@ Verdict: proceed with required changes; nothing blocking.
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Marketplace clone commit used by the live check: <sha>
-- Checks run: <each command with its real result>
-- AC1: <pass or fail, with what was observed>
-- AC2: <pass or fail, with what was observed>
-- AC3: <pass or fail, with what was observed>
-- AC4: <pass or fail, with what was observed>
-- AC5: <pass or fail, with what was observed>
-- AC6: <pass or fail, with what was observed>
-- AC7: <pass or fail, with what was observed>
-- AC8: <pass or fail, with what was observed>
-- AC9: <pass or fail, with what was observed>
-- AC10: <pass or fail, with what was observed>
-- AC11: <pass or fail, with what was observed>
+- Build commit: b40ffca and 4c4eeb0 on `feat/pro-speckit`, plus the push-gate review fixes; the squash commit is added at merge.
+- Marketplace clone commit used by the live check: 4c4eeb08727643284c89ded66a6a8a2989f769ae (a `git archive` of the branch head, before the review fixes, which touch only prompt text and the shim path check).
+- Checks run: `node tests/check.mjs` 27 checks, 0 failures, 38 warnings; `node tests/eval.mjs --dry` 80 cases over 94 skills plus 7 distractors; `node tests/pro-dev.mjs` 188 cases; `node tests/methods.mjs` 21 cases; `claude plugin validate . --strict` passed; the per-plugin strict loop passed for all 20 plugins.
+- AC1: pass for the setup path, run through `pro-dev-owner.py` and `pro-dev.py` in a scratch config with scratch uv folders: after `answer spec-kit yes`, `run all install` installed `specify-cli` with `direct_url.json` at commit 43486672fe826d230d884815be7cc2026469a6ba and `specify init` wrote 10 `speckit-*` skills, each with `disable-model-invocation: true`, and `.specify/`. The `/pro-dev install` conversation itself was not driven live.
+- AC2: not run; typing the `/speckit-*` commands needs an interactive session (left for Jody's first use).
+- AC3: covered by the `tests/methods.mjs` pro-speckit case (the `intent` offer prints and the other stages print nothing); not run in a live `/intent`.
+- AC4: not run live; the update path and the at-pin no-op are covered by `tests/pro-dev.mjs`, and step 0 showed the constitution's hash unchanged by `specify integration upgrade`.
+- AC5: step 0 showed `specify integration uninstall claude` removes every unedited `speckit-*` folder; `/pro-speckit:remove` itself was not run live.
+- AC6: pass for the dirty tree: with an untracked file present the `spec-kit` row refused with "the working tree has uncommitted changes" and `.specify/` was not recreated; the uv-missing line and the existing-`.specify/` refusal are covered by `tests/pro-dev.mjs`.
+- AC7: pass; `git diff --stat origin/main -- plugins/pro-ai-sdlc` is empty on the branch (the merge base replaces `bc7c3ef`, as the plan says).
+- AC8: pass, per Checks run.
+- AC9: pass; all pro-speckit text is original and `docs/licenses.md` has the spec-kit-bridge row.
+- AC10: pass for an edited pinned script: editing `.specify/scripts/bash/common.sh` made status report `.specify/scripts/bash/common.sh changed (sha256 aa055f830965, pinned 53cb1c23e349)`; the hash comes from the registry, so editing the manifest alongside changes nothing. The skill-frontmatter cases are covered by `tests/pro-dev.mjs`.
+- AC11: pass; with a fake `specify` first on `PATH` the row refused with "specify on PATH is <scratch>/fake/specify but the pinned CLI is <scratch>/uvtools/specify-cli/bin/specify".
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -308,3 +308,7 @@ It also moves ADR-0008 from `proposed` to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+- Push-gate review fixes, 2026-10-28:
+  - `/pro-speckit:install` shows a drifted `specify-cli` row as "replace specify-cli <installed> with <pin>, user-wide" and says that row is a user-wide `uv tool install` while the `spec-kit` row writes files into this repo.
+  - The Codex section of the bridge skill gives the exact pinned `uv tool install` line and tells the person to check `specify init --help` for whether the codex integration accepts the same `--integration-options`; `.specify/integrations/*.manifest.json` joins the review-like-code list.
+  - `trusted_argv` in `pro-dev.py` refuses a `specify` shim whose real path is outside `<uv tool dir>/<needed row's uvTool name>/` (a pipx-style path); `tests/pro-dev.mjs` links the fake shim into the tool folder as uv does and has a case for the refusal.

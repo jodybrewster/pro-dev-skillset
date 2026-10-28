@@ -1929,6 +1929,9 @@ if argv[:2] == ["tool", "install"]:
     ts = argv[argv.index("--exclude-newer") + 1]
     base = os.path.join(td, argv[2])
     shutil.rmtree(base, ignore_errors=True)
+    os.makedirs(os.path.join(base, "bin"))
+    shutil.copy(os.environ["FAKE_SPECIFY_SRC"], os.path.join(base, "bin", "specify"))
+    os.chmod(os.path.join(base, "bin", "specify"), 0o755)
     di = os.path.join(base, "lib", "python3.14", "site-packages", "specify_cli-1.2.4.dist-info")
     os.makedirs(di)
     json.dump({"url": "https://github.com/github/spec-kit.git", "vcs_info": {"vcs": "git", "commit_id": sha,
@@ -1995,7 +1998,7 @@ function seedCli(tooldir, { sha = SK_SHA, url = SK_URL, ts = SK_TS, receipt = tr
 }
 
 // cli: "pin" | "old" | null seeds the tool dir; uv / specifyOnPath / gitFail shape the PATH folder
-function kitWorld(s, { cli = "pin", uv = true, specifyOnPath = false, gitFail = false, owner = true,
+function kitWorld(s, { cli = "pin", uv = true, specifyOnPath = false, gitFail = false, owner = true, shimOutside = false,
   before = [], after = [], files = null } = {}) {
   const tooldir = join(s.root, "uv-tools");
   const bindir = join(s.root, "uv-bin");
@@ -2005,19 +2008,24 @@ function kitWorld(s, { cli = "pin", uv = true, specifyOnPath = false, gitFail = 
   put(kitbin, "claude", FAKE_CLAUDE);
   put(kitbin, "npx", FAKE_NPX);
   if (uv) put(kitbin, "uv", FAKE_UV);
-  put(bindir, "specify", FAKE_SPECIFY);
+  const shim = join(tooldir, "specify-cli", "bin", "specify");
+  const shimSrc = join(s.root, "specify-src");
+  writeFileSync(shimSrc, FAKE_SPECIFY);
+  if (shimOutside) put(bindir, "specify", FAKE_SPECIFY);
+  else { rmSync(join(bindir, "specify"), { force: true }); symlinkSync(shim, join(bindir, "specify")); }
   if (specifyOnPath === "other") put(kitbin, "specify", FAKE_SPECIFY);
   if (specifyOnPath === "link") symlinkSync(join(bindir, "specify"), join(kitbin, "specify"));
   if (gitFail) put(kitbin, "git", FAKE_GIT);
   s.bins.kit = kitbin;
   if (cli === "pin") seedCli(tooldir);
   if (cli === "old") seedCli(tooldir, { sha: SK_OLD });
+  if (cli && !shimOutside) { mkdirSync(dirname(shim), { recursive: true }); put(dirname(shim), "specify", FAKE_SPECIFY); }
   s.useRows([...before, cliRow(), kitRow(), ...after]);
   s.setPlugins(owner ? [s.entry("pro-speckit", "project", s.repo)] : []);
   const marker = join(s.root, "specify-marker.txt");
   const realGit = spawnSync("sh", ["-c", "command -v git"], { encoding: "utf8" }).stdout.trim();
   const baseEnv = {
-    FAKE_UV_TOOLDIR: tooldir, FAKE_UV_BIN: bindir, FAKE_MARKER: marker, REAL_GIT: realGit,
+    FAKE_UV_TOOLDIR: tooldir, FAKE_UV_BIN: bindir, FAKE_SPECIFY_SRC: shimSrc, FAKE_MARKER: marker, REAL_GIT: realGit,
     FAKE_SPECIFY_FILES: JSON.stringify(files ?? SK_ALL),
   };
   const run = (args, extra = {}) => s.run(args, { bin: "kit", extra: { ...baseEnv, ...extra } });
@@ -2033,7 +2041,7 @@ function kitWorld(s, { cli = "pin", uv = true, specifyOnPath = false, gitFail = 
   const installs = () => s.calls("uv").filter((c) => c.argv[0] === "tool" && c.argv[1] === "install");
   const specifyCalls = () => s.calls("specify");
   return { tooldir, bindir, kitbin, marker, run, status, write, engineOf, findings, installs, specifyCalls,
-    ran: () => existsSync(marker), exe: join(realpathSync(bindir), "specify") };
+    ran: () => existsSync(marker), get exe() { return realpathSync(join(bindir, "specify")); } };
 }
 
 const gitIn2 = (repo, args) => spawnSync("git", args, { cwd: repo, encoding: "utf8" });
@@ -2426,6 +2434,14 @@ CASES.push(
       if (pathHasSpecify) return bad(`test setup: specify is on PATH at ${pathHasSpecify}`);
       const r = k.run(["run", "spec-kit", "install"]);
       return r.code === 0 && k.specifyCalls().length === 1 && k.specifyCalls()[0].exe === k.exe ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "trusted-path/a-shim-that-resolves-outside-the-uv-tool-folder-is-refused",
+    run: (s) => {
+      const k = kitWorld(s, { shimOutside: true });
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 1 && /outside the uv tool folder/.test(r.out) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
     },
   },
   {

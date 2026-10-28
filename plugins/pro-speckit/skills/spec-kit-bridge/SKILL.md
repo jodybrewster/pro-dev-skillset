@@ -51,6 +51,7 @@ Treat a change to any of these as you would a change to code in a PR:
 - `.claude/skills/speckit-*/`
 - `.specify/extensions.yml`, `.specify/extensions/`, `.specify/presets/`, `.specify/workflows/`, `.specify/integration-events.yml` and `.specify/integrations/packages/`
 - hooks in `.claude/settings.json`
+- `.specify/integrations/*.manifest.json`
 - `.specify/feature.json`
 - `.specify/memory/constitution.md`
 - `specs/**/tasks.md`
@@ -68,7 +69,8 @@ Install it first: https://docs.astral.sh/uv/getting-started/installation/
 ## Codex
 
 Codex does not run the pro-speckit commands.
-Install `uv`, then the person installs the `specify` CLI from GitHub's spec-kit repository by its documented lines and runs `specify init --here --integration codex` in a clean repo.
+Install `uv`, then the person runs the pinned line `uv tool install specify-cli --exclude-newer 2026-10-27T18:07:43Z --from git+https://github.com/github/spec-kit.git@43486672fe826d230d884815be7cc2026469a6ba`.
+Then run `specify init --here --integration codex` in a clean repo with the same `--integration-options` as the Claude row; check `specify init --help` for whether the codex integration accepts them.
 Then use the spec-kit commands Codex shows for that integration, in the same order as above.
 
 ---
