@@ -69,6 +69,66 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-boots
 
 Then open Codex in the project and run `/skills` to confirm the pro-dev skills are available.
 
+## Work with a spec method
+
+Every change starts as an intent and ends as a reviewed PR.
+`pro-ai-sdlc` is the default loop and comes with `pro-dev-starter`.
+The other methods are opt-in plugins: install one to try it and uninstall it to drop it.
+When one is installed, the loop offers it at the right stage and runs it only on your yes ([ADR-0007](./docs/decisions/0007-spec-method-plugins.md)).
+A feature runs through one method's documents, never two at once.
+
+### The default loop: pro-ai-sdlc
+
+Each step writes one file in `intent/<date>-<slug>/` and commits it.
+
+1. `/intent <idea or bug>` brainstorms the idea with you until it is concrete, then writes `intent.md`: the problem, the outcome and what is out of scope.
+2. `/spec` writes `spec.md`: testable requirements traced to the intent, checked against `REVIEW.md`, `CLAUDE.md` and the repo's ADRs.
+   It lists every conflict under Flagged concerns for you to settle, one at a time; a change that sets a rule drafts an ADR beside it.
+3. `/plan` writes `plan.md`: the files touched, the order of work, the tests behind each step, the risks and the commands that prove it is done.
+   A plan that touches security surface gets a `## Security challenge` from a fresh reviewer before you approve it.
+4. `/execute` builds the approved plan in its own worktree and opens the PR.
+5. `/review` reviews the diff against `REVIEW.md` and the intent, spec and plan; `/pr-babysit` loops on CI and review threads until the PR waits only on your approval.
+6. After the merge, the plan's Done section records the live check and your sign-off, which moves the intent, the spec and any ADR to accepted.
+
+`/adr <decision>` records a decision that has no change behind it.
+
+### Add a goldfish review: pro-egm
+
+Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) reviews a document with fresh reviewers that see only the document and the files it points to.
+
+1. Install `pro-egm@pro-dev-skillset`, then run `/pro-egm:install` (or `/pro-dev install` on a starter site), which installs `egm@egm` after showing what it carries.
+2. `/spec` and `/plan` now offer "run a goldfish review" before they commit.
+   On yes, EGM's reviewers check the draft, you accept or contest each finding, the fixes land in the draft and open Blocker and Major findings move into the spec's Flagged concerns or the plan's Risks.
+3. Run `/pro-egm:goldfish <file>` on any spec, plan or design doc outside the loop.
+4. Customize your reviewers with `/pro-egm:goldfish init`, which copies two starter goldfish (a policy reviewer and a scope reviewer) into `.egm/`.
+   Edit them or add your own, then list them per stage in `.egm/goldfish.json`.
+   Custom goldfish run read-only. A goldfish file that changed since your last run asks for your yes first.
+
+### Use GitHub spec-kit: pro-speckit
+
+[spec-kit](https://github.com/github/spec-kit) keeps its own spec, plan and tasks under `specs/<NNN>-<feature>/`.
+It needs [`uv`](https://docs.astral.sh/uv/) installed.
+
+1. Install `pro-speckit@pro-dev-skillset` at project scope, then run `/pro-speckit:install`.
+   It installs the `specify` CLI pinned to a reviewed release and sets up this repo; it refuses a repo with uncommitted changes.
+2. Type spec-kit's own commands in order: `/speckit-constitution` once per repo, then `/speckit-specify`, `/speckit-plan`, `/speckit-tasks` and `/speckit-implement` per feature.
+   They run only when you type them.
+3. `/pro-dev check` tells you if any file spec-kit put in the repo changed.
+4. `/pro-speckit:install update` moves to the next reviewed release; `/pro-speckit:remove` takes spec-kit back out.
+
+When you start an intent with pro-speckit installed, `/intent` reminds you that `/speckit-specify` is there for that feature.
+
+### Use open-SPDD: pro-spdd
+
+[open-SPDD](https://github.com/gszhangwei/open-spdd) suits client or team-facing work that needs a structured prompt and a written story.
+
+1. Install `pro-spdd@pro-dev-skillset`.
+2. `/spdd-story` breaks the requirement into stories, `/spdd-analysis` adds business and code context and `/spdd-reasons-canvas` writes the structured prompt.
+3. `/spdd-generate` writes the code from that prompt; `/spdd-code-review` and `/spdd-api-test` check it.
+4. `/spdd-sync` updates the prompt after code changes, `/spdd-prompt-update` changes the requirements and `/spdd-reverse` writes a prompt for existing code.
+
+`/intent` offers `/spdd-story` when pro-spdd is installed.
+
 ## Dependencies
 
 ### Required
