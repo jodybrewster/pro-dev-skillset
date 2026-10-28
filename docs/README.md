@@ -6,6 +6,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 ## Working on the repo
 
 - [overview.md](./overview.md): what the repo is, how it relates to Mieruka and the two use cases it is testing.
+- [spec-methods.md](./spec-methods.md): the four spec methods compared, which to pick and how to use each.
 - [subagents.md](./subagents.md): how to split work across parallel subagents and which model each runs on.
 - [version-bump-law.md](./version-bump-law.md): the version-bump law in detail.
 - [hook-loading.md](./hook-loading.md): the hook-loading law in detail, including blocking on `Stop`.

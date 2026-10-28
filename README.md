@@ -69,6 +69,18 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-boots
 
 Then open Codex in the project and run `/skills` to confirm the pro-dev skills are available.
 
+## Work with a spec method
+
+Every change starts as an intent and ends as a reviewed PR.
+`pro-ai-sdlc` is the default loop (`/intent`, `/spec`, `/plan`, `/execute`, `/review`, `/pr-babysit`) and comes with `pro-dev-starter`.
+Three more methods are opt-in plugins:
+
+- `pro-egm` adds a goldfish review of your spec and plan by reviewers with no history.
+- `pro-speckit` brings GitHub spec-kit and its `/speckit-*` commands.
+- `pro-spdd` brings open-SPDD's story and structured-prompt flow.
+
+[docs/spec-methods.md](./docs/spec-methods.md) compares them side by side, says which to pick and walks through each one step by step.
+
 ## Dependencies
 
 ### Required
