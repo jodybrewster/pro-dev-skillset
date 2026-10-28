@@ -47,7 +47,8 @@ It holds a thin `spec-kit-bridge` skill and an `sdlc-method.json`; pro-ai-sdlc's
 Two new registry rows in pro-core let `/pro-dev install` install the `specify` CLI pinned to one reviewed commit and then, when the person picks it for this repo, add spec-kit's Claude integration with its skills user-invocable only and its hook events off.
 `/pro-dev update` reinstalls the CLI only when it is off the pin and runs `specify integration upgrade claude`, which leaves the constitution alone.
 `/pro-dev check` never runs `specify`: it reads the CLI's install provenance and hashes spec-kit's generated files against hashes pinned in the registry.
-pro-speckit ships three slash commands, `/pro-speckit:install`, `/pro-speckit:update` and `/pro-speckit:remove`, which run every safety check on their own; the person types spec-kit's own `/speckit-*` commands for the work itself.
+pro-speckit ships two slash commands, `/pro-speckit:install` (with `update` as its argument) and `/pro-speckit:remove`, which run every safety check on their own; the person types spec-kit's own `/speckit-*` commands for the work itself.
+The installer follows `intent/2026-10-28-plugin-installers/spec.md`: it runs pro-speckit's own `pro-dev-owner.py`, which runs only pro-speckit's rows through pro-core's `pro-dev.py`.
 A feature taken through spec-kit lives where spec-kit puts it, `specs/<NNN>-<feature>/`, linked from its `intent.md`; no spec-kit file replaces or sits beside `spec.md` in the intent folder.
 pro-speckit stays out of pro-dev-starter.
 
@@ -55,7 +56,7 @@ pro-speckit stays out of pro-dev-starter.
 
 ### Functional
 
-- R1. A new plugin `plugins/pro-speckit/` ships `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` at the same version with `skills: "./skills/"`, `skills/spec-kit-bridge/SKILL.md`, `sdlc-method.json` and a marketplace entry; its only commands are the three of R26 to R28 and it has no hooks, no agents and no scripts. (intent: "A new pro-speckit plugin that bridges to spec-kit without copying any of it")
+- R1. A new plugin `plugins/pro-speckit/` ships `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` at the same version with `skills: "./skills/"`, `skills/spec-kit-bridge/SKILL.md`, `sdlc-method.json` and a marketplace entry; its only commands are the two of R26 and R28, its only script is the shared `scripts/pro-dev-owner.py` of the installer spec and it has no hooks and no agents. (intent: "A new pro-speckit plugin that bridges to spec-kit without copying any of it")
 - R2. `spec-kit-bridge` says when to reach for spec-kit's flow (constitution, specify, plan, tasks, implement, converge), that `/pro-dev install` installs it, where its output lives (`.specify/` and `specs/<NNN>-<feature>/`), that its skills are user-invocable only so the person types each `/speckit-<command>` and how a spec-kit feature links back to its intent (R12); it carries the review line of R25, quotes no spec-kit text and names `/pro-dev` so the `bridges` check passes. (intent: "It carries a thin spec-kit-bridge skill: when to use spec-kit's flow ... how to install it and where its output lives")
 - R3. `spec-kit-bridge` points at `/pro-speckit:remove` (R28) for taking spec-kit out of a repo and names `uv tool uninstall specify-cli` as the step that drops the CLI machine-wide. (intent: "Uninstalling the plugin leaves a clear way to remove spec-kit from the project")
 - R4. `spec-kit-bridge` gives a Codex user the two commands to run by hand: the pinned `uv tool install` line and `specify init --here --integration codex`, invoked there as `$speckit-<command>`. (constraint: "Codex parity ... spec-kit also has a Codex integration")
@@ -97,21 +98,24 @@ pro-speckit stays out of pro-dev-starter.
 - R23. `check` reports a `.specify/feature.json` that `git ls-files` tracks or whose `feature_directory` resolves outside the repo's `specs/`; it also reports a `SPECIFY_FEATURE_DIRECTORY` in its own environment that does the same. (Security challenge; ADR-0007)
 - R24. `pro-dev.py` runs every `specify` argv by the absolute path `<uv tool dir --bin>/specify`; before running one it resolves `specify` on `PATH` and refuses with a one-line reason when it resolves to a different real path. (Security challenge; Flagged concern 3)
 - R25. `spec-kit-bridge` says these are reviewed like code in a PR: `.specify/scripts/`, `.specify/templates/`, `.claude/skills/speckit-*/`, the R22 extension, preset and workflow paths, `.claude/settings.json` hooks, `.specify/feature.json`, `.specify/memory/constitution.md` and `specs/**/tasks.md`. (Security challenge; Flagged concern 6)
-- R26. pro-speckit ships `commands/install.md` (`/pro-speckit:install`), which runs `pro-dev.py run <id> install` for the `specify-cli` and `spec-kit` rows only, with the same pins, checks and refusals as `/pro-dev install`; its `allowed-tools` holds only that exact script pattern. (Jody, 2026-10-28: "the individual plugins can all have installers")
-- R27. pro-speckit ships `commands/update.md` (`/pro-speckit:update`), which runs `pro-dev.py run <id> update` for the `specify-cli` and `spec-kit` rows only and so moves the repo to the reviewed pin in the installed registry, never past it. (Jody, 2026-10-28: simple slash commands)
+- R26. pro-speckit ships `commands/install.md` (`/pro-speckit:install`) and `scripts/pro-dev-owner.py` per R10 to R23 and R34 of `intent/2026-10-28-plugin-installers/spec.md` and depends on pro-core. (Jody, 2026-10-28: "the individual plugins can all have installers"; installer spec Flagged concern 6)
+  The command runs pro-speckit's own `pro-dev-owner.py`, never `pro-dev.py` directly; that script runs `pro-dev.py --owner pro-speckit run all install`, which acts on the `specify-cli` and `spec-kit` rows only, with the same pins, checks and refusals as `/pro-dev install`.
+  Its `allowed-tools` pre-approves only the owner script's `status` and `answer` patterns; `run` prompts.
+- R27. `/pro-speckit:install update` runs `pro-dev-owner.py run all update`, which updates the `specify-cli` and `spec-kit` rows only and so moves the repo to the reviewed pin in the installed registry, never past it. (Jody, 2026-10-28: simple slash commands; installer spec R18)
+  It replaces the separate `/pro-speckit:update` of earlier drafts, so every plugin with rows updates the same way; there is no `commands/update.md`.
   At the pin the CLI step is the no-op of R7; off the pin it reinstalls with the pinned argv.
   The project step runs `specify integration upgrade claude` without `--force` (N3); when a managed file was edited it stops and names the file.
-  Its `allowed-tools` holds only that exact script pattern.
-- R28. pro-speckit ships `commands/remove.md` (`/pro-speckit:remove`), which takes spec-kit out of the current repo through `pro-dev.py`. (Jody, 2026-10-28; Flagged concern 11)
-  It runs `specify integration uninstall claude` by the absolute path of R24, with the same `PATH` check.
+- R28. pro-speckit ships `commands/remove.md` (`/pro-speckit:remove`), its own command, which takes spec-kit out of the current repo. (Jody, 2026-10-28; Flagged concern 11)
+  It does not go through `pro-dev-owner.py`, whose argument set is fixed by R12 of the installer spec.
+  It runs `specify integration uninstall claude` under the same trusted path rules as R24: by the absolute path `<uv tool dir --bin>/specify`, refusing with a one-line reason when `specify` on `PATH` resolves to a different real path.
   When edited skill files stay behind it names them and says that `--force` removes them; it passes `--force` only after the person says yes.
   It removes `.specify/` only after the person says yes and never touches `specs/`.
   It does not uninstall the CLI, which other repos on the machine may share; it prints `uv tool uninstall specify-cli` for the person to run.
-  Its `allowed-tools` holds only that exact script pattern.
+  Its `allowed-tools` pre-approves only `uv tool dir --bin`; the uninstall and every deletion prompt.
 
 ### Non-functional
 
-- N1. Nothing spec-kit installs, updates or removes runs except from `/pro-dev install`, `/pro-dev update` or a `/pro-speckit:*` command run by the person; no hook, plugin update or session start runs a row. (intent: "The person runs every install; nothing installs on plugin update or session start")
+- N1. Nothing spec-kit installs, updates or removes runs except from `/pro-dev install`, `/pro-dev update`, `/pro-speckit:install`, `/pro-speckit:install update` or `/pro-speckit:remove` run by the person; no hook, plugin update or session start runs a row. (intent: "The person runs every install; nothing installs on plugin update or session start")
 - N2. With pro-speckit not installed, `/pro-dev` output, `methods.py` output and every pro-ai-sdlc command behave exactly as on `main` at bc7c3ef.
 - N3. `/pro-dev update` leaves `.specify/memory/constitution.md` byte-for-byte unchanged and never passes `--force` to `specify integration upgrade`. (intent success line)
 - N4. No row argv calls bare `specify self upgrade`, `uvx` without a pin or any `curl | sh` installer.
@@ -142,7 +146,7 @@ pro-speckit stays out of pro-dev-starter.
 4. Run `/speckit-constitution` once to write the repo's ground rules.
 5. For each feature, type `/speckit-specify`, then `/speckit-plan`, `/speckit-tasks` and `/speckit-implement`.
 6. Run `/pro-dev check` any time to see whether the spec-kit files still match what was reviewed.
-7. Run `/pro-speckit:update` after a pro-speckit update to move to the next reviewed pin.
+7. Run `/pro-speckit:install update` after a pro-speckit update to move to the next reviewed pin.
 8. Run `/pro-speckit:remove` to take spec-kit out of the repo; it asks before deleting `.specify/` and leaves `specs/` alone.
 
 Every safety check in this spec runs inside these commands; there is nothing else to remember.
@@ -170,7 +174,7 @@ To stop using spec-kit the person runs `/pro-speckit:remove`, then uninstalls pr
 
 New:
 
-- `plugins/pro-speckit/`: two manifests, `skills/spec-kit-bridge/SKILL.md`, `sdlc-method.json`, `commands/install.md`, `commands/update.md`, `commands/remove.md` and a marketplace entry (R1 to R4, R12, R26 to R28).
+- `plugins/pro-speckit/`: two manifests, `skills/spec-kit-bridge/SKILL.md`, `sdlc-method.json`, `commands/install.md`, `commands/remove.md`, `scripts/pro-dev-owner.py` and a marketplace entry (R1 to R4, R12, R26 to R28).
 
 Changed:
 
@@ -202,7 +206,7 @@ pro-ai-sdlc's `/review` still reads `intent.md`; for a spec-kit feature the revi
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
 | 1 | spec-kit fits none of the three row kinds: `tests/check.mjs` accepts only `skills-cli`, `npx` and `claude-plugin`, `tool_missing` knows only `claude` and `npx` and the status `tools` field has no `uv`. | ADR-0006, `tests/check.mjs`, `plugins/pro-core/scripts/pro-dev.py`, Jody | settled 2026-10-28 (Jody): a new `uv-tool` row kind, recorded in ADR-0008. It runs `uv tool install` from GitHub pinned to commit `43486672fe826d230d884815be7cc2026469a6ba` (tag `v1.2.4` in the row `note`) with `--exclude-newer` set to the reviewed release date; update is a no-op when the installed copy already matches the pin; `/pro-dev` never installs `uv` and says how to get it when it is missing. The ADR names `uvx` with no shared install as the fallback if two repos on different pins keep downgrading each other. |
-| 2 | Setup is two dependent steps (CLI, then `specify init`) and a row has one `install` argv with no way to say one row needs another. | ADR-0006, Jody | settled 2026-10-28 (Jody): two rows in file order, `specify-cli` then `spec-kit`, with the fixed rule that skips `spec-kit` until the CLI is at the pin (R8). `spec-kit` runs with no question when pro-speckit is installed at project or local scope for this repo, since that install is the yes; it is asked once per repo for a user-scope install. It refuses a dirty tree or an existing `.specify/` either way. pro-speckit ships `/pro-speckit:install`, which runs only its own rows through `pro-dev.py`, under the per-plugin installer rule of intent `2026-10-28-plugin-installers` (R26). |
+| 2 | Setup is two dependent steps (CLI, then `specify init`) and a row has one `install` argv with no way to say one row needs another. | ADR-0006, Jody | settled 2026-10-28 (Jody): two rows in file order, `specify-cli` then `spec-kit`, with the fixed rule that skips `spec-kit` until the CLI is at the pin (R8). `spec-kit` runs with no question when pro-speckit is installed at project or local scope for this repo, since that install is the yes; it is asked once per repo for a user-scope install. It refuses a dirty tree or an existing `.specify/` either way. pro-speckit ships `/pro-speckit:install`, which runs only its own rows through its own `pro-dev-owner.py` and pro-core's `pro-dev.py`, under the per-plugin installer rule of intent `2026-10-28-plugin-installers` (R26). |
 | 3 | `detect` reads files under `.claude/` or a plugin id; it cannot see a CLI on `PATH` or its version; running `specify version` from the pre-approved `status` would execute third-party code on every check. | ADR-0006, `plugins/pro-core/commands/pro-dev.md`, Jody | settled 2026-10-28 (Jody): an automatic check inside the commands. Detect the CLI by `vcs_info.commit_id` in its `direct_url.json` under `uv tool dir`, never by running it (R7); `status` and `check` never execute `specify` (R11, N5); `run` calls it by absolute path and refuses another `specify` on `PATH` (R24). |
 | 4 | Pinning: a git tag can be moved upstream, the CLI's dependencies are open ranges resolved from PyPI at install time and spec-kit shipped five releases in two weeks; a tag pin both drifts and does not fix what runs. | intent constraint "Install a pinned release", REVIEW.md pass 2, Jody | settled 2026-10-28 with concern 1: the commit SHA, not the tag, plus `--exclude-newer`. |
 | 5 | `specify init --here --force` merges into a non-empty repo and can overwrite files, while `/pro-dev` runs it from a registry argv with no prompt of its own. | REVIEW.md pass 2, `plugins/pro-core/commands/pro-dev.md` ("Never commit"), Jody | settled 2026-10-28 (Jody): an automatic check inside `/pro-speckit:install` and `/pro-dev install`. Refuse when `.specify/` exists or the tree is dirty (R9), running the row only when the person picks it for this repo (R6) and by the pinned CLI's absolute path (R24); every change it makes is a reviewable diff that `check` then compares with the registry hashes (R20). |
@@ -262,7 +266,7 @@ Controls that already hold: registry argvs run with no shell, R9 refuses a dirty
 2. Does the setup install `uv` or only tell the person? Answered 2026-10-28 (Jody): only tell, with a link to uv's install docs (R10), because uv's own installer is `curl | sh` and the umbrella forbids third-party installs the person did not run.
 3. spec-kit keeps its specs under `specs/<n>-<feature>/` while pro-ai-sdlc uses `intent/`; where does the line fall? Answered 2026-10-28 (Jody), Flagged concern 8: one loop per feature, linked from `intent.md`.
 4. Which reference to pin, the `v1.2.4` tag or its commit SHA (Flagged concern 4)? Answered 2026-10-28 (Jody): commit `43486672fe826d230d884815be7cc2026469a6ba` with `--exclude-newer` (R5).
-5. Does `/pro-dev update` also run `specify extension update`? Answered 2026-10-28 (Jody): no, extensions are out of scope and neither `/pro-dev update` nor `/pro-speckit:update` runs it.
+5. Does `/pro-dev update` also run `specify extension update`? Answered 2026-10-28 (Jody): no, extensions are out of scope and neither `/pro-dev update` nor `/pro-speckit:install update` runs it.
 
 ## Acceptance criteria
 
