@@ -10,7 +10,7 @@ author: Jody Brewster
 # Intent: fill the Ship phase with pro-ship v0.1
 
 Author: Jody Brewster (pro-dev-skillset).
-Source: research Jody brought on 2026-10-28, "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable, twelve-factor apps.
+Source: research Jody brought on 2026-10-28, "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
 Status: proposed.
 Created: 2026-10-28.
 
