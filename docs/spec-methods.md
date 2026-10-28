@@ -9,6 +9,14 @@ pro-dev-skillset ships five ways to go from an idea to reviewed code.
 When an opt-in method is installed, pro-ai-sdlc's commands offer it at the right stage and run it only on your yes ([ADR-0007](./decisions/0007-spec-method-plugins.md)).
 A feature runs through one method's documents, never two at once.
 
+## The workflows side by side
+
+Each lane runs left to right: the command or skill you type, what it does and the file it leaves behind.
+An orange diamond marks a point where you approve, hooks sit under the lane they belong to and the last band lists the hooks that run under every method.
+The OpenSpec lane is a candidate for comparison and is not installed by any plugin here.
+
+![The spec methods as lanes: pro-pdd, pro-ai-sdlc, pro-egm, pro-speckit, pro-spdd and OpenSpec, with commands, approval gates and hooks](./spec-workflows.svg)
+
 ## At a glance
 
 | | pro-pdd (default) | pro-ai-sdlc | pro-egm | pro-speckit | pro-spdd |
