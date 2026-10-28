@@ -1,6 +1,6 @@
 ---
 name: screen-critique
-description: Critique a rendered screen, screenshot, Figma frame, or built page across seven visual-quality dimensions and return a prioritised P1/P2/P3 fix list. Use for "what is wrong with this screen", "why does this look off", "review this design", or a critique of visual hierarchy, composition, typography, colour, affordance, information density, or brand consistency. For a WCAG conformance audit use `accessibility-audit`; for reviewing UI changes in a diff, PR, or branch use `interface-review`; for applying fixes rather than judging them use `better-layout`, `taste-skill`, or `perception-laws`; for a full redesign use `impeccable-bridge`.
+description: Critique a rendered screen, screenshot, Figma frame, or built page across seven visual-quality dimensions and return a prioritised P1/P2/P3 fix list. Use for "what is wrong with this screen", "why does this look off", "review this design", or a critique of visual hierarchy, composition, typography, colour, affordance, information density, or brand consistency. For a WCAG conformance audit use `accessibility-audit`; for reviewing UI changes in a diff, PR, or branch use `interface-review`; for applying fixes rather than judging them use `better-layout`, `taste-skill`, or `perception-laws`; for a full redesign use `impeccable-bridge`; for a rule-level lint of UI code against Vercel's Web Interface Guidelines use `web-design-guidelines`.
 ---
 
 # Screen Critique

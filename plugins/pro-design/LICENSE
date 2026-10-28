@@ -40,6 +40,13 @@ vendored). They point at ConardLi/garden-skills (web-design-engineer),
 codeswithroh/tastemaker, MengTo/Skills, and Leonxlnx/taste-skill respectively -
 all MIT, all installed and licensed separately in the target project.
 
+`react-patterns-bridge` is an original BRIDGE file as well (no upstream content
+vendored). It points at the React composition and view-transition skills in
+vercel-labs/agent-skills (MIT per its README), installed and licensed separately
+in the target project. `web-design-guidelines` is an original skill; it fetches
+the Web Interface Guidelines rules at run time from vercel-labs/web-interface-guidelines
+(MIT, Copyright (c) 2025 Vercel Labs), which governs them.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

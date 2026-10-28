@@ -122,6 +122,18 @@
       "category": "Development"
     },
     {
+      "name": "pro-ship",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-ship"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
       "name": "pro-spdd",
       "source": {
         "source": "local",

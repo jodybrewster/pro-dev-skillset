@@ -298,12 +298,12 @@ Filled in when the build is finished, before sign-off.
 
 - Build commit:
 - Checks run:
-- Step 0, pin test from an older commit (parent of dfeeb54; installed `SKILL.md` hash against the old file):
-- Step 0, pin test with a made-up SHA (must fail, no fallback to main):
-- Step 0, pin test at the real pin (only `deploy-to-vercel`; R28 folder digest recorded):
+- Step 0, pin test from an older commit (parent of dfeeb54; installed `SKILL.md` hash against the old file): pass. The parent is `4f8ed6022d21339a541a9bcd81e0fd921df99cac`; installing from its tree URL gave `SKILL.md` sha256 `3ac2790bccd66964...`, the same as that commit's file through `gh api` and not the pinned `418ca2a60d35c551...`.
+- Step 0, pin test with a made-up SHA (must fail, no fallback to main): pass. `0123456789abcdef0123456789abcdef01234567` exited 1 with nothing installed.
+- Step 0, pin test at the real pin (only `deploy-to-vercel`; R28 folder digest recorded): pass. Only `deploy-to-vercel` landed, holding one file, `SKILL.md` (`418ca2a60d35c551...`). The R28 folder digest, sha256 of the sorted `<path> <sha256>` lines, is `9e0944ebe282cc1d398899a47a9767d97a7f22cdbeb475ae45e0583e44cb055a`.
 - Step 0, linked-worktree exclude path:
-- Step 0, `vercel deploy` and `.gitignore`:
-- Step 0, R30 for 434b7f9 (compare status and `command.md` diff read):
+- Step 0, `vercel deploy` and `.gitignore`: not honored. `getVercelIgnore` in `vercel/vercel` `packages/client/src/utils/index.ts` reads only `.vercelignore` (or `.nowignore`) plus a built-in list; that list skips `.env.local` and `.env.*.local` but not `.env` or `.env.production`. So the R10b `.vercelignore` requirement applies, repo or not.
+- Step 0, R30 for 434b7f9 (compare status and `command.md` diff read): `identical`, so there is no diff to read.
 - AC1 (non-Hallmark):
 - AC2 (non-Hallmark):
 - AC3:
@@ -321,3 +321,7 @@ Filled in when the build is finished, before sign-off.
 The sign-off moves `status` in the intent and the spec to `accepted`.
 
 ## Departures from plan
+
+- Step 4: `deploy-to-vercel` appears in `vercel-deploy-bridge` on three kinds of line, not two: the result hand-off, the do-not-commit line and the Codex `skills add` install command, which has to name it; the `bridges` check allows exactly those.
+- Step 7: with the R29 distractors in the live eval, "Our Vercel bill doubled" routed to upstream `vercel-optimize` directly; the case now accepts `vercel-skills-bridge|vercel-optimize`, since the bridge only routes there and `vercel-optimize` itself keeps tokens out of commands. "Deploy this to Vercel" still routes to `vercel-deploy-bridge`.
+- Step 8: the smoke run passed the three new targets (the `vercel-deploy` folder digest matched); `taste-skills-bridge` failed with 12 of 13 skills missing, the known upstream drift tracked by intent `2026-10-28-taste-skill-v2`.

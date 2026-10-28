@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "engines": [
     {
       "id": "lavish",
@@ -976,6 +976,174 @@
       "upstream": [
         "gh api repos/google/elephant-goldfish-model/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ]
+    },
+    {
+      "id": "vercel-skills",
+      "owner": "pro-nextjs",
+      "bridges": [
+        "vercel-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/vercel-react-best-practices/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/vercel-optimize/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "vercel-react-best-practices",
+        "vercel-optimize"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "vercel-react-best-practices",
+        "vercel-optimize"
+      ],
+      "why": "React performance rules and Vercel cost tuning from vercel-labs/agent-skills. vercel-optimize runs authenticated Vercel CLI calls, so the bridge keeps the token in the environment.",
+      "upstream": [
+        "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
+      ],
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs."
+    },
+    {
+      "id": "vercel-deploy",
+      "owner": "pro-ship",
+      "bridges": [
+        "vercel-deploy-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/deploy-to-vercel/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "deploy-to-vercel"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "deploy-to-vercel"
+      ],
+      "why": "The upstream deploy-to-vercel skill can fire on \"deploy\" prompts without the bridge, may stage with git add . and can fall back to a public temporary deploy; the bridge's rules apply only when the bridge loads. .claude/skills/deploy-to-vercel/ is not to be committed, so /pro-dev adds it to the repo's .git/info/exclude.",
+      "upstream": [
+        "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
+      ],
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs.",
+      "gitExclude": [
+        ".claude/skills/deploy-to-vercel/"
+      ]
+    },
+    {
+      "id": "vercel-react",
+      "owner": "pro-design",
+      "bridges": [
+        "react-patterns-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/vercel-composition-patterns/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/vercel-react-view-transitions/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "vercel-composition-patterns",
+        "vercel-react-view-transitions"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "vercel-composition-patterns",
+        "vercel-react-view-transitions"
+      ],
+      "why": "React composition patterns and view transition guidance from vercel-labs/agent-skills.",
+      "upstream": [
+        "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
+      ],
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs."
     }
   ]
 }

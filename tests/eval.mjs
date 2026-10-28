@@ -65,6 +65,24 @@ const DISTRACTORS = [
     description:
       "Strip the machine fingerprints out of text - both the invisible character-level encoding (em-dashes, smart quotes, zero-width and non-breaking spaces) and the stylistic tells of LLM prose. Use whenever the user asks to humanize, de-AI, remove the AI-isms, make something sound less like ChatGPT, or strip hidden/weird characters from copied text.",
   },
+  {
+    slug: "deploy-to-vercel",
+    plugin: "external",
+    description:
+      "Deploy applications and websites to Vercel. Use when the user requests deployment actions like \"deploy my app\", \"deploy and give me the link\", \"push this live\", or \"create a preview deployment\".",
+  },
+  {
+    slug: "vercel-optimize",
+    plugin: "external",
+    description:
+      "Use for Vercel cost and performance optimization on deployed projects, especially Next.js, SvelteKit, Nuxt, and limited Astro apps. Collect Vercel metrics, usage, project config, and code scan results first; investigate only metric-backed candidates; produce ranked recommendations grounded in verified files and version-aware Vercel/framework docs. Trigger for Vercel bill reduction, slow or expensive routes, caching opportunities, Function Invocations, Build Minutes, Fast Data Transfer, Core Web Vitals, Bot Management, Fluid compute, or cost breakdown requests.",
+  },
+  {
+    slug: "vercel-react-best-practices",
+    plugin: "external",
+    description:
+      "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
+  },
 ];
 
 // Build the routing catalog.

@@ -16,6 +16,9 @@
 //   MengTo/Skills             -> mengto-skills-bridge          (1 of 130)
 //   codeswithroh/tastemaker   -> tastemaker-bridge             (1 skill + tree)
 //   vercel/next.js skills/    -> next-skills-bridge            (6 skills)
+//   vercel-labs/agent-skills  -> vercel-skills-bridge          (2 skills, pinned)
+//   vercel-labs/agent-skills  -> vercel-deploy-bridge          (1 skill, pinned, folder digest)
+//   vercel-labs/agent-skills  -> react-patterns-bridge         (2 skills, pinned)
 //
 // Opt-in. Needs network + npx. Not part of tests/check.mjs or the PR gate -
 // it runs on demand (workflow_dispatch) and on a weekly schedule via
@@ -30,6 +33,7 @@
 
 import { mkdtempSync, existsSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 
@@ -128,7 +132,46 @@ const TARGETS = [
       "next-partial-prefetching-adoption": ["rig-template.md"],
     },
   },
+  {
+    bridge: "vercel-skills-bridge",
+    engine: "vercel-skills",
+    // Pinned tree URL from the registry row; -s filters on the frontmatter name.
+    repo: "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+    args: [],
+    expected: ["vercel-react-best-practices", "vercel-optimize"],
+  },
+  {
+    bridge: "vercel-deploy-bridge",
+    engine: "vercel-deploy",
+    repo: "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+    args: [],
+    expected: ["deploy-to-vercel"],
+    // R28: the installed folder must match the reviewed one (4.0.0 at 1a2c79d,
+    // read 2026-10-28). Moving the pin means rereading it and updating this.
+    digest: { "deploy-to-vercel": "9e0944ebe282cc1d398899a47a9767d97a7f22cdbeb475ae45e0583e44cb055a" },
+  },
+  {
+    bridge: "react-patterns-bridge",
+    engine: "vercel-react",
+    repo: "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
+    args: [],
+    expected: ["vercel-composition-patterns", "vercel-react-view-transitions"],
+  },
 ];
+
+// sha256 of the sorted lines "<relpath> <sha256>\n" over every file in a folder
+function folderDigest(root) {
+  const lines = [];
+  const walk = (rel) => {
+    for (const e of readdirSync(join(root, rel), { withFileTypes: true })) {
+      const r = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) walk(r);
+      else lines.push(`${r} ${createHash("sha256").update(readFileSync(join(root, r))).digest("hex")}\n`);
+    }
+  };
+  walk("");
+  return createHash("sha256").update(lines.sort().join("")).digest("hex");
+}
 
 // Install argv come from the /pro-dev engine registry so this smoke test and
 // /pro-dev install can never drift apart.
@@ -229,6 +272,15 @@ function runTarget(t) {
       console.log(`   ✗ ${name}  - installed but missing ${missing.join(", ")}`);
       failed++;
       continue;
+    }
+    const want = t.digest?.[name];
+    if (want) {
+      const got = folderDigest(rec.dir);
+      if (got !== want) {
+        console.log(`   ✗ ${name}  - folder digest ${got} does not match the reviewed ${want}`);
+        failed++;
+        continue;
+      }
     }
     console.log(`   ✓ ${name}${required.length ? `  (+ ${required.length} required path(s))` : ""}`);
   }

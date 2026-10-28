@@ -1,7 +1,7 @@
 {
   "name": "pro-nextjs",
-  "version": "0.10.0",
-  "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs), next-upgrade (version upgrades with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js - Cache Components, Partial Prefetching, bundle and dev-loop work - installed by /pro-dev), shadcn (component reference and theming). Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
+  "version": "0.11.0",
+  "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs), next-upgrade (version upgrades with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js - Cache Components, Partial Prefetching, bundle and dev-loop work - installed by /pro-dev), shadcn (component reference and theming). Also installs vercel and figma from claude-plugins-official via install-companions.sh. vercel-skills-bridge routes React and Next.js performance and Vercel cost tuning to two pinned vercel-labs skills.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
