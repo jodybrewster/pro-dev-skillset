@@ -37,12 +37,13 @@ Jody: "Having four different spec driven methods means I can try them out easily
 
 Status per item: todo, intent (its own intent folder exists), in PR, done or dropped.
 
-The items ship as four intents, in this order:
+The items ship as five intents, in this order:
 
-- A. Quiet validation hook - item 6. Small and independent, so it goes first.
+- A. Quiet validation hook - item 6. Small and independent, so it goes first. Intent: `intent/2026-10-28-quiet-validation-hook/`.
 - B. /pro-dev setup - items 1 to 5. Builds the registry the later intents add rows to.
-- C. Swappable spec methods - item 7. Needs B's registry.
+- C. Swappable spec methods - item 7 apart from spec-kit: the EGM bridge plugin and pro-ai-sdlc routing between whichever methods are installed. Needs B's registry.
 - D. Design and Vercel bridges - items 8 to 11. Needs B's registry; can run alongside C.
+- E. spec-kit as its own plugin, `pro-speckit` - the spec-kit part of item 7. Intent: `intent/2026-10-28-pro-speckit/` (branch `pro-speckit`).
 
 1. todo - `/pro-dev install|update|check` in pro-core with an engine registry; answers to optional engines saved in `.claude/pro-dev.json`; `check` replaces `/pro-dev-doctor`.
 2. todo - delete the setup commands `/pro-dev` replaces: `/pro-starter`, `/design-engine`, `/design-skills`, `/taste-skills`, `/next-skills`, `/lavish-engine`, `/qa-engine`; fold `/sdlc-init` into `/pro-dev install`.
