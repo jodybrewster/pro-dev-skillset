@@ -19,6 +19,7 @@ pro-ai-sdlc gains `/execute <path to plan.md>`, the build stage of the loop betw
 It refuses a plan that is not committed and approved, makes a worktree on a fresh branch off `origin/main`, copies the git-ignored env files across without printing them, proves a green baseline, builds the plan's steps test-first, runs the proof of done and the `verifier` agent, fills in the plan's Done section and opens a pull request.
 It stops at the pull request.
 Anyone with pro-ai-sdlc installed gets it in any repo that uses the `intent/` layout.
+pro-ai-sdlc is a Claude Code only plugin, so `/execute` targets Claude Code and makes no promise for Codex.
 
 ## Requirements
 
@@ -49,7 +50,7 @@ Anyone with pro-ai-sdlc installed gets it in any repo that uses the `intent/` la
 
 ### Non-functional
 
-- N1. The command prose is harness-neutral: it says "dispatch a subagent" and "the harness's worktree tool" rather than naming one harness's tool, so it reads correctly under Codex.
+- N1. The command prose is written for Claude Code, since pro-ai-sdlc is Claude Code only (Jody, 2026-10-28); it may name Claude Code's own tools, such as its worktree tool. This supersedes the intent's constraint that the prose stay harness-neutral.
 - N2. Every stop leaves the main checkout untouched: no branch switch, no stash, no file written outside the worktree and the plan in it.
 - N3. A run with no env files and no lockfile (this repo) works the same as one with both, with the skipped steps named in the output.
 
@@ -57,7 +58,7 @@ Anyone with pro-ai-sdlc installed gets it in any repo that uses the `intent/` la
 
 - Version-bump law (ADR-0002): the PR bumps pro-ai-sdlc from 0.2.0 to 0.3.0 in `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` and its marketplace entry plus `metadata.version` from 1.49.0 to 1.50.0, in one commit.
 - Hook-loading law (ADR-0003): `/execute` adds no hook; `protect-tests`, `production-gate` and `plan-sync` keep running inside the worktree because they are registered per plugin, not per checkout.
-- Codex parity (ADR-0004): pro-ai-sdlc ships no skills, so the law's skill and agent checks do not grow; see concern 1 for the command gap.
+- Codex parity (ADR-0004): it does not apply, because pro-ai-sdlc is a Claude Code only plugin with no skills (concern 1); its existing `.codex-plugin/plugin.json` still gets the version bump so `tests/check.mjs` passes.
 - ADR-0001 (skills first, commands where triggering must be deterministic): `/execute` is a command because it starts a long, side-effecting run that must only happen when the person asks.
 - REVIEW.md security pass: no secrets in tracked files and no personal paths; R5 to R8 keep env values out of every output and commit.
 - `CLAUDE.md`: no hard dependency on a plugin from another marketplace and no home-directory path in a command or doc.
@@ -94,8 +95,8 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | Codex does not load plugin commands, so `/execute` has no Codex path, the same as the other six pro-ai-sdlc commands; the global rule says the loop works "from Claude Code alone" while ADR-0004 asks for parity on skill-bearing plugins only. | ADR-0004, Jody | open: accept the existing command-only gap, or add a Codex prompt or skill for the loop in a later intent. |
-| 2 | The intent lists "routing cases" as affected, but `tests/cases/routing.jsonl` only targets skills and pro-ai-sdlc has none, so there is nothing a routing case can point at. | `tests/eval.mjs`, intent | open: drop routing cases from this change unless concern 1 adds a skill. |
+| 1 | Codex does not load plugin commands, so `/execute` has no Codex path, the same as the other six pro-ai-sdlc commands; the global rule says the loop works "from Claude Code alone" while ADR-0004 asks for parity on skill-bearing plugins only. | ADR-0004, Jody | resolved: pro-ai-sdlc is a Claude Code only plugin (Jody, 2026-10-28). The plan should say whether its `.codex-plugin/` manifest and agent `.toml` files stay or go in a later intent. |
+| 2 | The intent lists "routing cases" as affected, but `tests/cases/routing.jsonl` only targets skills and pro-ai-sdlc has none, so there is nothing a routing case can point at. | `tests/eval.mjs`, intent | resolved: no routing cases in this change, since pro-ai-sdlc stays command-only (follows concern 1). |
 | 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | deferred: R7 checks ignore status after the copy; the `security-architect` challenge moves to a later intent (Jody, 2026-10-28) and does not block `/plan`. |
 | 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | deferred: same risk as installing in the main checkout; the later security intent decides whether `--ignore-scripts` or installing before the copy is worth it. |
 | 5 | The success criterion names `intent/2026-10-28-quiet-validation-hook/plan.md`, but that plan was already built in PR 60. Its Status still reads `approved` so R2 refuses it. | intent "Success looks like" | open: pick an unbuilt approved plan for the live check. Decide whether `/execute` or the Done sign-off should move a plan's Status to `implemented`. |
@@ -134,4 +135,4 @@ Merging, release and deploy.
 Running `/execute` from CI or a `build` label.
 Chaining `/spec`, `/plan` and `/execute` into one command (the `/ship` idea).
 Cleaning up the worktree after merge; `/merge-pr` or the person does that.
-A Codex counterpart for pro-ai-sdlc's commands (concern 1).
+Codex support for pro-ai-sdlc, which is a Claude Code only plugin (concern 1).
