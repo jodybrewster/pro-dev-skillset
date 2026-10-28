@@ -28,7 +28,7 @@ With no argument, diff the current branch against its merge base and add uncommi
 ### 2. Load the policy
 
 Read the repo's `REVIEW.md`.
-If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the repo has no review policy of its own; `/sdlc-init` can add one.
+If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the repo has no review policy of its own; `/pro-dev install` can add one.
 Read the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
 Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names, else the newest folder under `intent/` the diff relates to.
 

@@ -20,7 +20,7 @@ Task arrives
   ├ PLAN:
   │   ├ quick/solo, think it through → planning mode, then lavish for review when the plan is substantive
   │   ├ want a written TDD plan ─────→ writing-plans (pro-pdd), then lavish for plan review
-  │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /lavish-engine install)
+  │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /pro-dev install)
   │   ├ plan touches auth/data/input → security-architect, /threat-model (pro-security; hooks require a `## Security challenge` section before approval)
   │   ├ plan touches licensing/personal data/AI/scraping/payments → software-counsel, /legal-review (pro-legal, opt-in; hooks require a `## Legal review` section before approval)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
@@ -32,11 +32,11 @@ Task arrives
   │   ├ doc-verified code ───────────→ source-driven-development (pro-execution)
   │   ├ UI, build new product UI ────→ emil-design-eng (pro-design; start here for components and screens)
   │   ├ UI, conversion landing page ─→ landing-page-design (pro-design)
-  │   ├ UI, immersive marketing site → build-awwwards-quality-sites (pro-design), mengto-skills-bridge → video-to-superprompt and effect recipes (bridge: /design-skills install mengto)
-  │   ├ UI, reference-grounded look ─→ web-design-engineer-bridge → web-design-engineer engine (pro-design, bridge: /design-skills install garden)
-  │   ├ UI, match a reference's pixels → tastemaker-bridge → tastemaker engine (pro-design, bridge: /design-skills install tastemaker)
-  │   ├ UI, anti-slop styles / brand kit → taste-skills-bridge (pro-design, bridge: /taste-skills install)
-  │   ├ UI (full pass / redesign) ───→ impeccable-bridge → impeccable engine (pro-design, bridge: /design-engine install)
+  │   ├ UI, immersive marketing site → build-awwwards-quality-sites (pro-design), mengto-skills-bridge → video-to-superprompt and effect recipes (bridge: /pro-dev install)
+  │   ├ UI, reference-grounded look ─→ web-design-engineer-bridge → web-design-engineer engine (pro-design, bridge: /pro-dev install)
+  │   ├ UI, match a reference's pixels → tastemaker-bridge → tastemaker engine (pro-design, bridge: /pro-dev install)
+  │   ├ UI, anti-slop styles / brand kit → taste-skills-bridge (pro-design, bridge: /pro-dev install)
+  │   ├ UI (full pass / redesign) ───→ impeccable-bridge → impeccable engine (pro-design, bridge: /pro-dev install)
   │   ├ UI (one facet) ──────────────→ frontend-ui-engineering + pro-design skills
   │   ├ UI, add motion to a built site → animate (pro-design); vague motion words → animation-vocabulary
   │   ├ UI, Apple HIG feel ──────────→ apple-design (pro-design)
@@ -45,15 +45,15 @@ Task arrives
   │   ├ video / programmatic render ──→ remotion (pro-motion)
   │   ├ complex animation sequence ───→ hyperframes (pro-motion)
   │   ├ marketing / hero animation ───→ gsap (pro-motion)
-  │   ├ Next.js Cache Components / prefetching / bundle → next-skills-bridge → upstream Next.js skills (pro-nextjs, bridge: /next-skills install)
+  │   ├ Next.js Cache Components / prefetching / bundle → next-skills-bridge → upstream Next.js skills (pro-nextjs, bridge: /pro-dev install)
   │   ├ data/schema ─────────────────→ pro-data (drizzle/prisma/nextauth)
   │   ├ better context ──────────────→ context-engineering (pro-core)
   │   └ high-stakes/unfamiliar ──────→ doubt-driven-development (pro-core)
   ├ Something broke? ────────────────→ systematic-debugging (pro-execution)
   ├ VERIFY:
-  │   ├ run the whole suite ─────────→ qa-suite → qa-do / qa-start (pro-testing, bridge: /qa-engine install)
+  │   ├ run the whole suite ─────────→ qa-suite → qa-do / qa-start (pro-testing, bridge: /pro-dev install)
   │   ├ interactive browser check ───→ agent-browser (pro-testing)
-  │   ├ committed e2e suite ─────────→ playwright-automation (bridged via qa-suite / /qa-engine)
+  │   ├ committed e2e suite ─────────→ playwright-automation (bridged via qa-suite / /pro-dev)
   │   ├ unit/component ──────────────→ vitest (pro-testing)
   │   ├ claiming done ───────────────→ verification-before-completion (pro-quality)
   │   └ handing work back to a human → user-validation, /validate (pro-quality)
@@ -80,7 +80,7 @@ Task arrives
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```
 
-The LEGAL branch needs the opt-in `pro-legal` plugin, which is not in `pro-starter`. If it is not installed, say so and suggest installing it. `software-counsel` spots legal issues and is not legal advice.
+The LEGAL branch needs the opt-in `pro-legal` plugin, which is not in `pro-dev-starter`. If it is not installed, say so and suggest installing it. `software-counsel` spots legal issues and is not legal advice.
 
 One branch in this router references a **planned plugin not yet built**: SHIP (pro-ship) is on the roadmap — when the user reaches that phase, surface what is planned and recommend the closest available substitute (e.g. the existing git workflow). The SECURITY branch splits by scope: `security-architect` challenges a specific idea, plan, spec or diff before it ships (pro-security hooks enforce this when a plan or commit touches security surface), while `security-audit` audits the whole repository and its infrastructure (git history, lockfiles, workflows, containers, IaC, installed skills). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
 
@@ -88,17 +88,17 @@ One branch in this router references a **planned plugin not yet built**: SHIP (p
 
 Some entries are **bridges**, not vendored skills — thin routers that point to a heavier engine installed *outside* this marketplace. They only do work once that engine is present, so they ship an install/update command:
 
-- **`impeccable-bridge` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/design-engine [check|install|update]`** (`npx impeccable skills install`).
-- **`taste-skills-bridge` (pro-design) → `Leonxlnx/taste-skill`** - anti-slop styles, visual-style presets, image generation, and brand kits. Install/update with **`/taste-skills [check|install|update]`**.
-- **`web-design-engineer-bridge` (pro-design) → `web-design-engineer`** - ConardLi/garden-skills' design engineer: it grounds a design in real references, carries style recipes for Apple, Linear, Vercel, Stripe and their neighbours, and scores the result so you can iterate against a number. Install/update with **`/design-skills [check|install|update] garden`**.
-- **`tastemaker-bridge` (pro-design) → `tastemaker`** - codeswithroh/tastemaker pulls tokens out of a reference image's real pixels with scripts, locks that style across the whole project, and gates the usual AI slop. Needs Python 3. Install/update with **`/design-skills [check|install|update] tastemaker`**.
-- **`mengto-skills-bridge` (pro-design) → `MengTo/Skills`** - a 130-skill library: scroll storytelling, WebGL, shader and 3D effects, style recipes, and `video-to-superprompt`, which turns a screen recording of a site into a prompt. Install/update with **`/design-skills [check|install|update] mengto`**.
-- **`next-skills-bridge` (pro-nextjs) → the Next.js agent skills in vercel/next.js** - Cache Components and Partial Prefetching adoption and optimization, bundle reduction and the `next dev` verify loop. Install/update with **`/next-skills [check|install|update]`**.
+- **`impeccable-bridge` (pro-design) → `impeccable`** — the full end-to-end UI/UX engine. Install/update with **`/pro-dev [check|install|update]`** (`npx impeccable skills install`).
+- **`taste-skills-bridge` (pro-design) → `Leonxlnx/taste-skill`** - anti-slop styles, visual-style presets, image generation, and brand kits. Install/update with **`/pro-dev [check|install|update]`** (optional, answer yes when asked).
+- **`web-design-engineer-bridge` (pro-design) → `web-design-engineer`** - ConardLi/garden-skills' design engineer: it grounds a design in real references, carries style recipes for Apple, Linear, Vercel, Stripe and their neighbours, and scores the result so you can iterate against a number. Install/update with **`/pro-dev [check|install|update]`** (optional garden collection, answer yes when asked).
+- **`tastemaker-bridge` (pro-design) → `tastemaker`** - codeswithroh/tastemaker pulls tokens out of a reference image's real pixels with scripts, locks that style across the whole project, and gates the usual AI slop. Needs Python 3. Install/update with **`/pro-dev [check|install|update]`** (optional tastemaker collection, answer yes when asked).
+- **`mengto-skills-bridge` (pro-design) → `MengTo/Skills`** - a 130-skill library: scroll storytelling, WebGL, shader and 3D effects, style recipes, and `video-to-superprompt`, which turns a screen recording of a site into a prompt. Install/update with **`/pro-dev [check|install|update]`** (optional mengto collection, answer yes when asked).
+- **`next-skills-bridge` (pro-nextjs) → the Next.js agent skills in vercel/next.js** - Cache Components and Partial Prefetching adoption and optimization, bundle reduction and the `next dev` verify loop. Install/update with **`/pro-dev [check|install|update]`**.
 - **Mieruka app** — ships its own `.claude-plugin`; install via `npx mieruka init` which registers the MCP server and plugin. Launch with `/start-mieruka`.
-- **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/qa-engine [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
-- **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/lavish-engine [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
+- **`qa-suite` (pro-testing) → `qa-skills`** — the broad QA suite (playwright e2e, visual regression, api/contract testing, strategy/risk/planning). Install/update with **`/pro-dev [check|install|update]`** (`npx skills add petrkindlmann/qa-skills …`); once installed, `qa-do`/`qa-start` own the routing within testing. Native (non-bridged) pro-testing skills: `vitest`, `agent-browser`, `storybook-interactions`.
+- **`lavish` (pro-pdd) → `lavish-axi`** — renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser, with a poll-for-feedback loop. The CLI works on demand via `npx -y lavish-axi`; install/update the full upstream playbooks with **`/pro-dev [check|install|update]`** (`npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` for the Claude project skill).
 
-`/design-skills [check|install|update] [collection] [skill]` is the shared installer for the design collections. Its collection aliases are `emil`, `jakub`, `garden`, `mengto`, `tastemaker`, `elaya`, and `owl`, and it also installs the parts of each collection that pro-design does not vendor.
+`/pro-dev [check|install|update]` is the one installer for every engine and the design collections. The collections are `emil`, `jakub`, `garden`, `mengto`, `tastemaker`, `elaya` and `owl`; each is optional and installed when you answer yes during `/pro-dev install` or `/pro-dev update`. They include the parts of each collection that pro-design does not vendor.
 
 When a bridge fires and its engine is missing, run the engine's install command (or tell the user to) rather than half-doing the work with general capabilities.
 
@@ -130,7 +130,7 @@ The pro-dev-specific rules are:
 
 **(b) Lavish is the default review surface for substantive plans.** Claude Code / Codex plan mode may be used to think and draft, and a tiny plan can stay in plain text. But when the output is a real implementation plan, milestone plan, client plan, task breakdown, or anything the user is expected to approve before execution, invoke `lavish` and render it as an annotatable HTML artifact. If the harness requires a built-in plan-mode response such as `<proposed_plan>`, keep that response concise and point to the Lavish artifact as the review surface. If the engine is unavailable or the session cannot run it, say so explicitly and fall back to plain text instead of silently skipping Lavish.
 
-**(c) The Verify phase delegates to the `qa-suite` bridge → `qa-do` / `qa-start`.** `qa-suite` (pro-testing) routes to the bridged qa-skills library; once installed (`/qa-engine install`), `qa-do` owns the routing logic within testing. Do not re-implement that routing here — hand off and let it drive. If the suite is missing, run `/qa-engine install` first.
+**(c) The Verify phase delegates to the `qa-suite` bridge → `qa-do` / `qa-start`.** `qa-suite` (pro-testing) routes to the bridged qa-skills library; once installed (`/pro-dev install`), `qa-do` owns the routing logic within testing. Do not re-implement that routing here — hand off and let it drive. If the suite is missing, run `/pro-dev install` first.
 
 ## Quick Reference
 
@@ -139,19 +139,19 @@ The pro-dev-specific rules are:
 | Meta | using-pro-dev, [[find-skills]] | pro-core | Router, ecosystem discovery |
 | Meta | [[dream]], /dream | pro-core | Consolidate piled-up memory into a lean MEMORY.md; not for saving a single new fact |
 | Define | interview-me, idea-refine, brainstorming, adhd | pro-pdd | Clarify → variant → gated ideation → parallel divergent ideation |
-| Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/lavish-engine`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
+| Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/pro-dev`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |
 | Build | emil-design-eng, landing-page-design, build-awwwards-quality-sites, apple-design | pro-design | Start here for product UI; conversion landing page; immersive marketing site; Apple HIG feel |
 | Build | animate, animation-vocabulary, motion, motion-system | pro-design | Add motion to a built site, name it precisely, implement it, systematize it |
-| Build | impeccable-bridge (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/design-engine`) + focused design skills |
-| Build | web-design-engineer-bridge, tastemaker-bridge, mengto-skills-bridge, taste-skills-bridge | pro-design | Bridged engines: reference-grounded visuals, pixel-exact style lock, the Meng To effect library, anti-slop styles and brand kits (via `/design-skills`, `/taste-skills`) |
+| Build | impeccable-bridge (bridge → impeccable), frontend-ui-engineering + design skills | pro-design | Full UI/UX pass (via `/pro-dev`) + focused design skills |
+| Build | web-design-engineer-bridge, tastemaker-bridge, mengto-skills-bridge, taste-skills-bridge | pro-design | Bridged engines: reference-grounded visuals, pixel-exact style lock, the Meng To effect library, anti-slop styles and brand kits (via `/pro-dev`) |
 | Build | stitch-skill (DESIGN.md), taste-skill (targeted polish) | pro-design | Design documentation + visual polish pass |
 | Build | remotion (video render), hyperframes (complex animation), gsap (marketing animation) | pro-motion | Motion and video |
-| Build | next-best-practices, next-upgrade, next-skills-bridge (bridge → vercel/next.js skills, via `/next-skills`), shadcn | pro-nextjs | Next.js conventions, upgrades, Cache Components, prefetching and bundle work, shadcn/ui |
+| Build | next-best-practices, next-upgrade, next-skills-bridge (bridge → vercel/next.js skills, via `/pro-dev`), shadcn | pro-nextjs | Next.js conventions, upgrades, Cache Components, prefetching and bundle work, shadcn/ui |
 | Build | drizzle, prisma, nextauth | pro-data | Data layer and auth |
-| Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/qa-engine`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
+| Verify | qa-suite → [[qa-do]] / qa-start (bridge → qa-skills, via `/pro-dev`), agent-browser, vitest, storybook-interactions | pro-testing | Full suite (bridged), interactive browser, unit, stories |
 | Verify | systematic-debugging | pro-execution | Break-fix root cause |
 | Verify | verification-before-completion | pro-quality | Gate before claiming done |
 | Review | requesting-code-review, receiving-code-review, code-simplification, performance-optimization | pro-quality | Review and polish cycle |

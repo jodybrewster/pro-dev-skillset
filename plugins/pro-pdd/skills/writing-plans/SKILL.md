@@ -143,7 +143,7 @@ After saving the plan, offer execution choice:
 
 **Which approach?"**
 
-Before either execution path for a substantive plan, verify the project-local upstream Lavish skill exists at `.claude/skills/lavish/SKILL.md`. If it is missing, treat that as a setup failure: run `/lavish-engine install` when commands are available, or ask the user to run `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root before you deliver the plan for approval. Do not silently fall back to plain text for substantive plans.
+Before either execution path for a substantive plan, verify the project-local upstream Lavish skill exists at `.claude/skills/lavish/SKILL.md`. If it is missing, treat that as a setup failure: run `/pro-dev install` when commands are available, or ask the user to run `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root before you deliver the plan for approval. Do not silently fall back to plain text for substantive plans.
 
 Once `.claude/skills/lavish/SKILL.md` exists, route through `lavish` and render the plan as a reviewable HTML artifact the user can annotate in the browser. Use the plain saved markdown path as the source content, then run the Lavish review loop before treating the plan as approved.
 

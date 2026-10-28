@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.50.0"
+    "version": "1.51.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -16,16 +16,16 @@
     {
       "name": "pro-core",
       "source": "./plugins/pro-core",
-      "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev-doctor health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.15.3",
+      "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev (install, update, check) installs the engines, updates the plugins and health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
+      "version": "0.16.0",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-ai-sdlc",
       "source": "./plugins/pro-ai-sdlc",
-      "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<date>-<slug>/intent.md), /spec, /plan, /execute (build an approved plan in its own worktree and open the PR, never merge), /adr (record a decision with no change behind it), /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge) and /sdlc-init (set a repo up for the loop, commits nothing). The templates the commands read ship as files under templates/ (intent, spec, plan, adr, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Three hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update) and production-gate (flags push to main, deploys, publishes and merges).",
-      "version": "0.3.0",
+      "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<date>-<slug>/intent.md), /spec, /plan, /execute (build an approved plan in its own worktree and open the PR, never merge), /adr (record a decision with no change behind it), /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge); repo setup for the loop moved to /pro-dev install in pro-core. The templates the commands read ship as files under templates/ (intent, spec, plan, adr, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Three hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update) and production-gate (flags push to main, deploys, publishes and merges).",
+      "version": "0.4.0",
       "category": "development",
       "strict": true
     },
@@ -48,8 +48,8 @@
     {
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
-      "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs: file conventions, Server and Client Components, async request APIs, data, errors, metadata, images, fonts), next-upgrade (structured upgrade workflow with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js for Cache Components, Partial Prefetching, bundles and the dev loop; /next-skills installs them), shadcn (component installation, theming, composition patterns). Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.9.0",
+      "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs: file conventions, Server and Client Components, async request APIs, data, errors, metadata, images, fonts), next-upgrade (structured upgrade workflow with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js for Cache Components, Partial Prefetching, bundles and the dev loop; /pro-dev install installs them), shadcn (component installation, theming, composition patterns). Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.10.0",
       "category": "development",
       "strict": true
     },
@@ -64,16 +64,16 @@
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /design-engine, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /taste-skills, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with the /design-skills command. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.9.1",
+      "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /pro-dev install, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /pro-dev install, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with /pro-dev install. Install figma from claude-plugins-official via install-companions.sh.",
+      "version": "0.10.0",
       "category": "development",
       "strict": true
     },
     {
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
-      "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via the /qa-engine command (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/qa-engine), not as a hard plugin dependency.",
-      "version": "0.5.7",
+      "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via /pro-dev install (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/pro-dev install), not as a hard plugin dependency.",
+      "version": "0.6.0",
       "category": "development",
       "strict": true
     },
@@ -96,8 +96,8 @@
     {
       "name": "pro-pdd",
       "source": "./plugins/pro-pdd",
-      "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, adhd — parallel divergent ideation under cognitive frames via /adhd (forked from UditAkhourii/adhd), and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /lavish-engine). Depends on pro-execution for worktree and subagent execution handoff.",
-      "version": "0.4.2",
+      "description": "Default Define + Plan skills: interview-me and idea-refine (Define-phase intent extraction and idea refinement, forked from addyosmani/agent-skills), brainstorming, written implementation plans, adhd — parallel divergent ideation under cognitive frames via /adhd (forked from UditAkhourii/adhd), and lavish — a bridge plus /lavish command for the kunchenguid/lavish-axi CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser (installed on demand via /pro-dev install). Depends on pro-execution for worktree and subagent execution handoff.",
+      "version": "0.5.0",
       "category": "development",
       "strict": true
     },
@@ -136,8 +136,16 @@
     {
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, nextjs, astro, research, and security). The claude-plugins-official companions are installed via install-companions.sh, not as dependencies.",
-      "version": "1.13.2",
+      "description": "Deprecated shim for one release: renamed to pro-dev-starter. Run /pro-dev update to switch.",
+      "version": "1.14.0",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-dev-starter",
+      "source": "./plugins/pro-dev-starter",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, research and security). Run /pro-dev install after it. pro-nextjs and pro-astro are opt-in and installed by hand.",
+      "version": "2.0.0",
       "category": "development",
       "strict": true
     }

@@ -2,7 +2,7 @@
 
 `pro-testing` **bridges** to the QA skills library rather than vendoring it. The broad
 suite is installed on demand from upstream; this plugin ships only a thin router skill
-(`qa-suite`) and an install/update command (`/qa-engine`).
+(`qa-suite`) and an install/update command (`/pro-dev`, in pro-core).
 
 - Upstream repository: `https://github.com/petrkindlmann/qa-skills`
 - Upstream license: MIT (governed by the upstream repo; nothing is copied here)
@@ -17,11 +17,11 @@ re-pull/re-copy/version-bump sync tax. See `docs/plans/QA-SKILLS-BRIDGE-PLAN.md`
 
 - **`qa-suite`** (skill) — the entry point. Triggers on QA-suite intent, routes to the
   *installed* qa-skills (`qa-do`/`qa-start` own the routing within testing), and tells the
-  user to `/qa-engine install` when the suite is absent.
-- **`/qa-engine [check|install|update]`** (command) — manages the external suite via
+  user to `/pro-dev install` when the suite is absent.
+- **`/pro-dev [check|install|update]`** (command) — manages the external suite via
   `npx skills add petrkindlmann/qa-skills …` and runs `claude plugin update` for the stack.
 
-## Curated testing-core subset (what `/qa-engine install` pulls)
+## Curated testing-core subset (what `/pro-dev install` pulls)
 
 `qa-do`, `qa-start`, `qa-project-context`, `playwright-automation`, `visual-testing`,
 `api-testing`, `contract-testing`, `test-reliability`, `test-strategy`, `risk-based-testing`,
@@ -47,5 +47,5 @@ route to the bridged version when one exists:
 ## Maintenance
 
 None for the library itself — it tracks upstream independently. Updating the **curated
-subset list** (if upstream renames/adds skills) means editing `/qa-engine`'s subset and the
+subset list** (if upstream renames/adds skills) means editing the `qa-skills` row's subset in `plugins/pro-core/registry/engines.json` and the
 `qa-suite` skill, then bumping `pro-testing` (version-bump law).

@@ -177,9 +177,11 @@ The only guaranteed runtime in a user's repo is Claude Code itself, so the
 install-time check ships as a slash command, not a script:
 
 ```
-/pro-dev-doctor
+/pro-dev check
 ```
 
-It verifies the expected plugin set is installed, runs `claude plugin validate`
-on what's present, and does a routing smoke check ("where do I start" →
-`using-pro-dev`). See `plugins/pro-core/commands/pro-dev-doctor.md`.
+It reports the pro-dev plugin installs that cover the repo with their versions, the state of every bridge engine in the registry, strict validation of what is installed and a routing smoke check ("where do I start" -> `using-pro-dev`).
+It changes nothing.
+See `plugins/pro-core/commands/pro-dev.md`.
+
+`tests/pro-dev.mjs` covers `scripts/pro-dev.py` and the SessionStart nudge with a fake `claude` and `npx` on `PATH` and a temp `HOME`; `tests/check.mjs` runs it as the `pro-dev` check.

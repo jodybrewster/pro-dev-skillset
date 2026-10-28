@@ -29,7 +29,7 @@ Then verify the install **through the skills**:
 ```bash
 cd demo/app
 claude                # open Claude Code in the target repo
-> /pro-dev-doctor     # checks installed stack, validates plugins, smoke-tests routing
+> /pro-dev check      # checks installed stack, validates plugins, smoke-tests routing
 ```
 
 ## What "the install" looks like
@@ -46,7 +46,7 @@ claude plugin install pro-core@pro-dev-skillset --scope project
 Project scope means the marketplace + enabled plugins are declared in
 `demo/app/.claude/settings.json`. Because the source is a **directory**, the
 install reflects your local edits (including unreleased work like
-`/pro-dev-doctor`) — no commit or tag required to dogfood.
+`/pro-dev check`) — no commit or tag required to dogfood.
 
 ## What "the tests" looks like
 
@@ -56,7 +56,7 @@ Two layers, run by `setup.sh` and re-runnable any time:
 |---|---|---|
 | Marketplace contract | `node ../../tests/check.mjs` (from `demo/app`) | manifests, version-bump law, router resolves |
 | The site itself | `npm run build && npx vitest run` (in `demo/app`) | the POC compiles and its content/render invariants hold |
-| Install + routing | `/pro-dev-doctor` (in a Claude session) | the installed stack is present and routes correctly |
+| Install + routing | `/pro-dev check` (in a Claude session) | the installed stack is present and routes correctly |
 
 ## The site
 

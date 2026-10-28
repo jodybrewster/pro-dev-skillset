@@ -1,6 +1,6 @@
 ---
 name: taste-skills-bridge
-description: Bridge to the external Leonxlnx taste-skill library - anti-slop generation of landing pages, portfolios, and redesigns from a brief, plus aesthetic-family styles (brutalist, minimalist, soft/high-end), image-to-code, premium image-generation references (web + mobile), and brand kits. Use when the ask is to GENERATE a fresh marketing/portfolio surface that must not look templated, adopt a specific visual language, or produce design reference imagery. This is a BRIDGE (not vendored); the skills install via the /taste-skills command. For polishing an existing UI use pro-design's own taste-skill; for the comprehensive in-code craft engine use impeccable-bridge.
+description: Bridge to the external Leonxlnx taste-skill library - anti-slop generation of landing pages, portfolios, and redesigns from a brief, plus aesthetic-family styles (brutalist, minimalist, soft/high-end), image-to-code, premium image-generation references (web + mobile), and brand kits. Use when the ask is to GENERATE a fresh marketing/portfolio surface that must not look templated, adopt a specific visual language, or produce design reference imagery. This is a BRIDGE (not vendored); the skills install via the /pro-dev command. For polishing an existing UI use pro-design's own taste-skill; for the comprehensive in-code craft engine use impeccable-bridge.
 ---
 
 # taste-skills-bridge
@@ -43,16 +43,17 @@ Stay in pro-design's own skills when the task is: polish an existing surface (`t
 
 1. **Check whether the skill is installed.** Leonxlnx skills land in `~/.claude/skills/<install-name>/` (user scope) or `.claude/skills/<install-name>/` (project scope).
    - **If present:** follow that skill's `SKILL.md`.
-   - **If absent:** tell the user this is a bridge and the skill is not installed, then get it in place with **`/taste-skills install <install-name>`** (or all of them: `/taste-skills install`). Don't half-do the work here; offer the relevant focused pro-design skill in the meantime.
+   - **If absent:** tell the user this is a bridge and the skill is not installed, then get it in place with **`/pro-dev install`** (answer yes when it asks about taste-skill) or directly with `npx skills add https://github.com/Leonxlnx/taste-skill --skill "<install-name>"`. Don't half-do the work here; offer the relevant focused pro-design skill in the meantime.
 2. **Defer to the Leonxlnx skill for the actual work.** Do not reimplement its rules or the block library in this repo - the point of the bridge is that the upstream evolves on its own cadence.
 
 ## Keeping the skills installed and current
 
-Use the **`/taste-skills`** command (in this plugin):
+Use the **`/pro-dev`** command (in pro-core).
+taste-skill is an optional engine: `/pro-dev install` and `/pro-dev update` install it when you answer yes.
 
-- `/taste-skills check` - report which install names are present, and where. Also diffs the local catalog table above against the live upstream repo and flags drift (upstream skills missing from this table, or local entries renamed/removed upstream).
-- `/taste-skills install [name]` - `npx skills add https://github.com/Leonxlnx/taste-skill` (all), or `--skill "<name>"` for one.
-- `/taste-skills update [name]` - re-run the install (the newer SKILL.md replaces the older in place).
+- `/pro-dev check` - report which install names are present, and where. Also diffs the local catalog table above against the live upstream repo and flags drift (upstream skills missing from this table, or local entries renamed/removed upstream).
+- `/pro-dev install` - `npx skills add https://github.com/Leonxlnx/taste-skill` (all), or `--skill "<name>"` for one by hand.
+- `/pro-dev update` - re-run the install (the newer SKILL.md replaces the older in place).
 
 ## Why a bridge, not a fork
 

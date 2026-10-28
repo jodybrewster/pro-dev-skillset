@@ -202,7 +202,7 @@ Opinionated and brief. When the honest answer is "this shouldn't animate," give 
 
 This file names other skills from the same collection (`review-animations`, `improve-animations`, `find-animation-opportunities`, `animate-expo`, `pick-ui-library`).
 They are not shipped in pro-design.
-Install any of them with `/design-skills install emil <name>`; `screen-critique` covers the review case and `shadcn-ui-composition` covers library composition in the meantime.
+The emil collection is optional: answer yes when `/pro-dev install` or `/pro-dev update` asks about it to get them; `screen-critique` covers the review case and `shadcn-ui-composition` covers library composition in the meantime.
 
 ---
 

@@ -1,0 +1,852 @@
+{
+  "version": 1,
+  "engines": [
+    {
+      "id": "lavish",
+      "owner": "pro-pdd",
+      "bridges": [
+        "lavish"
+      ],
+      "kind": "skills-cli",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/lavish/SKILL.md",
+            "scopes": [
+              "project"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "skills",
+        "add",
+        "kunchenguid/lavish-axi",
+        "--agent",
+        "claude-code",
+        "-y",
+        "--skill",
+        "lavish"
+      ],
+      "update": [
+        "npx",
+        "skills",
+        "add",
+        "kunchenguid/lavish-axi",
+        "--agent",
+        "claude-code",
+        "-y",
+        "--skill",
+        "lavish"
+      ],
+      "why": "Browser review of plans and specs through the lavish-axi artifact playbooks.",
+      "note": "Only the project-local .claude/skills/lavish/SKILL.md counts as installed; a user-scope copy does not satisfy it. The CLI itself runs on demand with npx -y lavish-axi."
+    },
+    {
+      "id": "impeccable",
+      "owner": "pro-design",
+      "bridges": [
+        "impeccable-bridge"
+      ],
+      "kind": "npx",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/impeccable/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "impeccable",
+        "skills",
+        "install"
+      ],
+      "update": [
+        "npx",
+        "impeccable",
+        "skills",
+        "update"
+      ],
+      "why": "The whole-surface UI and UX design engine that impeccable-bridge routes to.",
+      "note": "This is the build compiled for the harness. Never run the shared build (npx skills add pbakaus/impeccable) over a newer harness build, because it tracks npm latest and downgrades."
+    },
+    {
+      "id": "qa-skills",
+      "owner": "pro-testing",
+      "bridges": [
+        "qa-suite"
+      ],
+      "kind": "skills-cli",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/qa-do/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/qa-start/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/playwright-automation/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/visual-testing/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/api-testing/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/contract-testing/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/test-reliability/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/test-strategy/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/risk-based-testing/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/test-planning/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/qa-project-context/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "skills",
+        "add",
+        "petrkindlmann/qa-skills",
+        "-y",
+        "--agent",
+        "claude-code",
+        "--skill",
+        "qa-do",
+        "qa-start",
+        "playwright-automation",
+        "visual-testing",
+        "api-testing",
+        "contract-testing",
+        "test-reliability",
+        "test-strategy",
+        "risk-based-testing",
+        "test-planning",
+        "qa-project-context"
+      ],
+      "update": [
+        "npx",
+        "skills",
+        "add",
+        "petrkindlmann/qa-skills",
+        "-y",
+        "--agent",
+        "claude-code",
+        "--skill",
+        "qa-do",
+        "qa-start",
+        "playwright-automation",
+        "visual-testing",
+        "api-testing",
+        "contract-testing",
+        "test-reliability",
+        "test-strategy",
+        "risk-based-testing",
+        "test-planning",
+        "qa-project-context"
+      ],
+      "why": "The curated testing-core subset of petrkindlmann/qa-skills behind qa-suite.",
+      "note": "--skill must stay last because it consumes every name after it. The full library has 50 skills; vitest, agent-browser and storybook-interactions are native pro-testing skills."
+    },
+    {
+      "id": "taste-skill",
+      "owner": "pro-design",
+      "bridges": [
+        "taste-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/design-taste-frontend/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "skills",
+        "add",
+        "https://github.com/Leonxlnx/taste-skill",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "update": [
+        "npx",
+        "skills",
+        "add",
+        "https://github.com/Leonxlnx/taste-skill",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "why": "Anti-slop frontend generation, visual styles and brand-kit skills from Leonxlnx/taste-skill.",
+      "upstream": [
+        "gh api repos/Leonxlnx/taste-skill/contents/skills --jq '.[] | select(.type==\"dir\") | .name'",
+        "gh api repos/Leonxlnx/taste-skill/contents/skills/<dir>/SKILL.md -H \"Accept: application/vnd.github.raw\" | grep '^name:'"
+      ],
+      "note": "Upstream folder names do not match install names (brutalist-skill installs as industrial-brutalist-ui), so the upstream catalog is read from each SKILL.md name: line."
+    },
+    {
+      "id": "next-skills",
+      "owner": "pro-nextjs",
+      "bridges": [
+        "next-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/next-cache-components-adoption/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/next-cache-components-optimizer/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/next-partial-prefetching-adoption/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/next-partial-prefetching-optimizer/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/next-bundle-optimizer/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/next-dev-loop/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel/next.js/tree/canary/skills",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/vercel/next.js/tree/canary/skills",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "why": "The six official Next.js agent skills from vercel/next.js.",
+      "upstream": [
+        "gh api 'repos/vercel/next.js/git/trees/canary?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
+      ],
+      "note": "Point at the skills/ folder URL, not at vercel/next.js alone: the repo root also holds maintainer skills under .agents/skills/."
+    },
+    {
+      "id": "garden",
+      "owner": "pro-design",
+      "bridges": [
+        "web-design-engineer-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/web-design-engineer/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "ConardLi/garden-skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "web-design-engineer"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "ConardLi/garden-skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "web-design-engineer"
+      ],
+      "why": "The web-design-engineer skill with its style recipes and acceptance harness.",
+      "upstream": [
+        "gh api repos/ConardLi/garden-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ]
+    },
+    {
+      "id": "mengto",
+      "owner": "pro-design",
+      "bridges": [
+        "mengto-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/video-to-superprompt/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/html-to-interaction-prompts/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/cinematic-scroll-storytelling/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/build-threejs-scroll-worlds/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/cinematic-gsap-lenis-motion-system/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/progressive-blur/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/optimize-web-animations/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "MengTo/Skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "video-to-superprompt",
+        "html-to-interaction-prompts",
+        "cinematic-scroll-storytelling",
+        "build-threejs-scroll-worlds",
+        "cinematic-gsap-lenis-motion-system",
+        "progressive-blur",
+        "optimize-web-animations"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "MengTo/Skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "video-to-superprompt",
+        "html-to-interaction-prompts",
+        "cinematic-scroll-storytelling",
+        "build-threejs-scroll-worlds",
+        "cinematic-gsap-lenis-motion-system",
+        "progressive-blur",
+        "optimize-web-animations"
+      ],
+      "why": "Meng To's scroll-driven and immersive web technique skills (the notable seven of 130).",
+      "upstream": [
+        "gh api repos/MengTo/Skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ],
+      "note": "Installs the seven notable skills only, not all 130. The repo lays skills out as agent-skills/<group>/<name>/. -s stays last because it consumes every name after it."
+    },
+    {
+      "id": "tastemaker",
+      "owner": "pro-design",
+      "bridges": [
+        "tastemaker-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/tastemaker/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "codeswithroh/tastemaker",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "codeswithroh/tastemaker",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "why": "The tastemaker skill with its ideagram sub-skill and scripts.",
+      "upstream": [
+        "gh api repos/codeswithroh/tastemaker/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ],
+      "note": "No -s filter and no --full-depth: the folder copies whole, including the nested ideagram sub-skill. The scripts need Python 3 (Pillow for the image paths)."
+    },
+    {
+      "id": "emil",
+      "owner": "pro-design",
+      "bridges": [],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/emil-design-eng/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "emilkowalski/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "emilkowalski/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "why": "Emil Kowalski's animation and interface craft skills.",
+      "upstream": [
+        "gh api repos/emilkowalski/skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ],
+      "note": "Some of these skills are forked in pro-design (emil-design-eng, animate, apple-design, animation-vocabulary); the external copy is redundant but harmless."
+    },
+    {
+      "id": "jakub",
+      "owner": "pro-design",
+      "bridges": [],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/better-interface/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "jakubkrehel/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "jakubkrehel/skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "*"
+      ],
+      "why": "Jakub Krehel's better-* review family; better-interface reports uninstalled domains as Not reviewed.",
+      "upstream": [
+        "gh api repos/jakubkrehel/skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ],
+      "note": "Install all 11 for full coverage out of interface-review; the three pro-design forks alone leave most domains unreviewed."
+    },
+    {
+      "id": "elaya",
+      "owner": "pro-design",
+      "bridges": [],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/landing-page-design/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "elayadesign/ai-design-skills",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "elayadesign/ai-design-skills",
+        "-a",
+        "claude-code",
+        "-y"
+      ],
+      "why": "One landing-page-design skill from elayadesign.",
+      "upstream": [
+        "gh api repos/elayadesign/ai-design-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ]
+    },
+    {
+      "id": "owl",
+      "owner": "pro-design",
+      "bridges": [],
+      "kind": "skills-cli",
+      "default": false,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/accessibility-audit/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/design-token/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/motion-system/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/typography-scale/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/screen-critique/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          },
+          {
+            "file": "skills/perception-laws/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "Owl-Listener/designer-skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "accessibility-audit",
+        "design-token",
+        "motion-system",
+        "typography-scale",
+        "screen-critique",
+        "perception-laws"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "Owl-Listener/designer-skills",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "accessibility-audit",
+        "design-token",
+        "motion-system",
+        "typography-scale",
+        "screen-critique",
+        "perception-laws"
+      ],
+      "why": "Six designer skills from Owl-Listener (accessibility, tokens, motion, typography, critique).",
+      "upstream": [
+        "gh api repos/Owl-Listener/designer-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ],
+      "note": "Installs only the six that pro-design forks, not all 107. Also installable as Claude plugins: /plugin marketplace add Owl-Listener/designer-skills."
+    },
+    {
+      "id": "vercel",
+      "owner": "pro-nextjs",
+      "bridges": [],
+      "kind": "claude-plugin",
+      "default": false,
+      "detect": {
+        "plugin": "vercel@claude-plugins-official"
+      },
+      "install": [
+        "claude",
+        "plugin",
+        "install",
+        "vercel@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "update": [
+        "claude",
+        "plugin",
+        "update",
+        "vercel@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "why": "Next.js and Vercel deployment workflows.",
+      "note": "Cross-marketplace companion from claude-plugins-official. Never a manifest dependency (PR 44). Needs that marketplace registered; templates/install-companions.sh does that."
+    },
+    {
+      "id": "figma",
+      "owner": "pro-design",
+      "bridges": [],
+      "kind": "claude-plugin",
+      "default": false,
+      "detect": {
+        "plugin": "figma@claude-plugins-official"
+      },
+      "install": [
+        "claude",
+        "plugin",
+        "install",
+        "figma@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "update": [
+        "claude",
+        "plugin",
+        "update",
+        "figma@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "why": "Figma asset extraction and design lookup.",
+      "note": "Cross-marketplace companion from claude-plugins-official. Never a manifest dependency (PR 44). Needs that marketplace registered; templates/install-companions.sh does that."
+    },
+    {
+      "id": "playwright",
+      "owner": "pro-testing",
+      "bridges": [],
+      "kind": "claude-plugin",
+      "default": false,
+      "detect": {
+        "plugin": "playwright@claude-plugins-official"
+      },
+      "install": [
+        "claude",
+        "plugin",
+        "install",
+        "playwright@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "update": [
+        "claude",
+        "plugin",
+        "update",
+        "playwright@claude-plugins-official",
+        "--scope",
+        "project"
+      ],
+      "why": "Browser end-to-end testing.",
+      "note": "Cross-marketplace companion from claude-plugins-official. Never a manifest dependency (PR 44). Needs that marketplace registered; templates/install-companions.sh does that."
+    }
+  ]
+}

@@ -9,7 +9,7 @@
 #   ./demo/setup.sh            # full setup
 #   ./demo/setup.sh --clean    # tear down first, then set up
 #
-# After it finishes: open Claude Code inside demo/app and run /pro-dev-doctor.
+# After it finishes: open Claude Code inside demo/app and run /pro-dev check.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -31,9 +31,9 @@ else
   claude plugin marketplace add "$REPO_ROOT" --scope project
 fi
 
-say "2/6  Install the default stack via pro-starter (project scope)"
-if ! claude plugin install "pro-starter@$MARKETPLACE" --scope project 2>&1; then
-  echo "  ! pro-starter install failed - check marketplace registration and version-bump law"
+say "2/6  Install the default stack via pro-dev-starter (project scope)"
+if ! claude plugin install "pro-dev-starter@$MARKETPLACE" --scope project 2>&1; then
+  echo "  ! pro-dev-starter install failed - check marketplace registration and version-bump law"
   exit 1
 fi
 
@@ -47,7 +47,7 @@ fi
 say "3/6  Run memory-hook tests against the installed pro-core copy"
 PRO_CORE_VERSION=$(node -p "require('$REPO_ROOT/plugins/pro-core/.claude-plugin/plugin.json').version")
 INSTALLED="$HOME/.claude/plugins/cache/pro-dev-skillset/pro-core/$PRO_CORE_VERSION"
-# `plugin install` is a no-op for an already-installed plugin, and pro-starter
+# `plugin install` is a no-op for an already-installed plugin, and pro-dev-starter
 # depends on pro-core with a `*` constraint, so any cached version satisfies it.
 # On a re-run that leaves the previous version installed and this step would
 # test yesterday's scripts. `plugin update` is what actually re-resolves against
@@ -81,7 +81,7 @@ cat <<EOF
 
     cd "$APP"
     claude            # open Claude Code here
-    > /pro-dev-doctor # verifies the installed stack + routing
+    > /pro-dev check # verifies the installed stack + routing
 
   To preview the site:        npm run dev   (then open http://localhost:3000)
   To tear the demo back down:  ./demo/teardown.sh

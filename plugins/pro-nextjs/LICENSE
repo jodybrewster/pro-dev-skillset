@@ -9,7 +9,7 @@ MIT License:
 
 Each section of those two skills cites the documentation page it was written from.
 
-The `next-skills-bridge` skill and the `/next-skills` command vendor nothing; they
+The `next-skills-bridge` skill and its `/pro-dev` registry row vendor nothing; they
 install the Next.js agent skills from vercel/next.js
 (https://github.com/vercel/next.js/tree/canary/skills), which are governed by that
 repository's MIT License.
