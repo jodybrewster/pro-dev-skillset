@@ -288,5 +288,15 @@ It also moves ADR-0008 from `proposed` to `accepted`.
 
 ## Departures from plan
 
+- Step 0, 2026-10-28, in scratch `UV_TOOL_DIR` and `UV_TOOL_BIN_DIR` with uv 0.11.7 (results in the session scratchpad `speckit-step0/RESULTS.md`):
+  - The pinned install works as written; `direct_url.json` sits under `<tool dir>/specify-cli/lib/python*/site-packages/specify_cli-1.2.4.dist-info/`, so detection globs `lib/python*`; `url` has no `git+` or `@rev`; `vcs_info.commit_id` is the pin; there is exactly one dist-info folder.
+  - `uv-receipt.toml` stores `exclude-newer` and the `rev`, so detection also matches both to the row; `uv tool upgrade` and `uv tool upgrade --all` change nothing.
+  - Reinstalling a different commit, then the pin, replaces the install without `--force`; at the pin the argv is a no-op.
+  - `specify init` exits 1 with nothing written when `claude` is not on `PATH`; the `spec-kit` row adds `--ignore-agent-tools` since it already names `--integration claude`.
+  - `init` writes 30 files (10 `.claude/skills/speckit-*/SKILL.md` and 20 under `.specify/`), nothing outside the repo, no `.claude/settings.json`; every core skill carries one `disable-model-invocation: true`.
+  - Across three repos 27 of the 30 files are byte-identical; the two `.specify/integrations/*.manifest.json` files and `workflows/workflow-registry.json` differ only in timestamps, so R20 pins the other 27; no repo path, name or user name appears in any file. The Linux run was not done.
+  - `specify integration upgrade claude` does not stop on an edited script: it exits 0, keeps the edit, names it and rewrites a manifest timestamp. An edited skill stops it with exit 1. The update never passes `--force`, so an edited script stays and the R20 hash check reports it.
+  - `specify integration uninstall claude` removes unedited skills, keeps and names an edited one and leaves `.specify/`; `--force` must be given on the first run because a second run errors "not installed".
+
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
