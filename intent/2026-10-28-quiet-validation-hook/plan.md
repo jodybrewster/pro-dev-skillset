@@ -85,12 +85,21 @@ Then AC3 by hand: update pro-quality in a session, write a file outside the repo
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1: <pass or fail, with what was observed>
-- AC2: <pass or fail>
-- AC3: <pass or fail>
-- Sign-off: <the person's words and the date>
+- Build commit: bdaed79 (PR 60, pro-quality 0.10.0).
+- Checks run, on origin/main at bdaed79 on 2026-10-28:
+  - `node tests/quality-hooks.mjs`: 19/19 quality hook cases passed.
+  - `node tests/check.mjs`: 21 checks, 0 failures, 38 warnings.
+  - `node tests/eval.mjs --dry`: 72 cases reference real skills, 87 skills in catalog plus 4 distractors; live routing skipped (no API key).
+  - `claude plugin validate . --strict`: passed.
+  - `claude plugin validate plugins/<name> --strict` for each plugin: all 16 passed.
+- AC1: pass. The 19 cases cover R1 to R10, including the outside write, the inside write, the repeat stop, `off`, `block` with `stop_hook_active` false and true and a garbage payload.
+- AC2: pass, per the checks above.
+- AC3: pass. In a real session on 2026-10-28, a turn that wrote only a scratch file outside the repo ended with no hook output and the session's state file recorded `"paths": []`.
+  A turn that added and removed a blank line in `intent/README.md` ended with the transcript recording one Stop `systemMessage`, "pro-quality: this session changed 1 file in pro-dev-skillset. Run /validate for a checklist.", and no block.
+  Jody missed that line on screen, so the turn was repeated on `docs/README.md` and he saw "pro-quality: this session changed 2 files in pro-dev-skillset. Run /validate for a checklist." with no forced checklist.
+  The first live check, in an earlier session, failed because it ran 0.9.6: the demo/app project-scope install of pro-quality shadowed the user-scope 0.10.0 even though /plugin showed 0.10.0.
+  It passed once the demo/app install was updated to 0.10.0 too; that shadowing feeds intent B's `/pro-dev update`.
+- Sign-off: Jody Brewster, 2026-10-28, after seeing the nudge line in the live check.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 
