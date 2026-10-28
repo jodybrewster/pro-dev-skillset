@@ -43,6 +43,9 @@ Anyone with pro-ai-sdlc installed gets it in any repo that uses the `intent/` la
 - R15. `/execute` never merges, never pushes to the default branch, never passes `--no-verify` and never force-pushes; its last output is the PR URL, the worktree path and a pointer to `/pr-babysit` (intent outcome 7).
 - R16. When pro-execution's `using-git-worktrees` or `subagent-driven-development` skill is available, `/execute` defers to it for that part and otherwise does the work itself with plain git, with no plugin dependency declared on pro-execution (intent "Affected users and systems", `CLAUDE.md` on cross-marketplace dependencies).
 - R17. The pro-ai-sdlc README, both manifest descriptions and the loop description in `intent/README.md` name `/execute` as the build stage between `/plan` and `/pr-babysit` (intent "Affected users and systems").
+- R18. `commands/execute.md` declares `model: opus` in its frontmatter so Opus builds the plan in the session that runs the command (open question 4).
+- R19. The building session dispatches subagents when a step benefits from one: parallel steps when `subagent-driven-development` is available, broad code search and the `verifier` pass; each dispatch names its model and effort (open question 4).
+- R20. `/execute` does not pause between a green baseline and the build; it stops only on a failure named in R1 to R10 (open question 3).
 
 ### Non-functional
 
@@ -97,6 +100,7 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 | 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | deferred: same risk as installing in the main checkout; the later security intent decides whether `--ignore-scripts` or installing before the copy is worth it. |
 | 5 | The success criterion names `intent/2026-10-28-quiet-validation-hook/plan.md`, but that plan was already built in PR 60. Its Status still reads `approved` so R2 refuses it. | intent "Success looks like" | open: pick an unbuilt approved plan for the live check. Decide whether `/execute` or the Done sign-off should move a plan's Status to `implemented`. |
 | 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | resolved: R4 uses the harness's tool only when it can base on `origin/<default branch>` and falls back to a sibling folder rather than an unignored `.worktrees/` (Jody, 2026-10-28). |
+| 7 | The model split in `CLAUDE.md` says Opus orchestrates and Sonnet builds, while R18 makes Opus the builder for `/execute`. | `CLAUDE.md` model split, Jody | resolved: Jody chose Opus as the builder on 2026-10-28; the plan should note whether `CLAUDE.md` and the hq record need a line for this exception. |
 
 ## Open questions
 
@@ -106,11 +110,11 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 2. Which env file names count.
    Answered in R5: `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*`, git-ignored only; `config/*.local.*` is left out until a repo needs it.
 3. Pause after the baseline?
-   Proposed: no pause; stop only on failure, because the plan's approval is the gate and the PR is the next human checkpoint.
-   Owner: Jody, still open.
+   Answered in R20: no pause; it stops only on failure, because the plan's approval is the gate and the PR is the next human checkpoint.
+   Jody took the recommendation on 2026-10-28.
 4. Build in the current session or dispatch subagents per step?
-   Proposed: the current session builds by default; when `subagent-driven-development` is available and the plan marks steps as parallel, dispatch a builder subagent per step on Sonnet per the model split.
-   Owner: Jody, still open.
+   Answered in R18 and R19: Opus builds in the current session and dispatches subagents when needed.
+   Jody chose Opus as the builder on 2026-10-28 (concern 7).
 5. Security challenge for copying secrets.
    Deferred to a later intent (Jody, 2026-10-28); it covers concerns 3 and 4 and does not block `/plan`.
 
