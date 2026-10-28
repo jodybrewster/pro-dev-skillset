@@ -821,6 +821,20 @@ checks["sdlc-contract"] = () => {
   for (const h of wantHeadings) if (!intentT.split("\n").includes(h)) failures.push(`pro-ai-sdlc: templates/intent.md lost the exact heading line "${h}"`);
   for (const [c, t] of [["spec", "spec.md"], ["plan", "plan.md"], ["review", "REVIEW.md"], ["sdlc-init", "REVIEW.md"]])
     if (!(read(`commands/${c}.md`) ?? "").includes(`\${CLAUDE_PLUGIN_ROOT}/templates/${t}`)) failures.push(`pro-ai-sdlc: /${c} does not read templates/${t}`);
+  // /execute: the gate and the env copy are scripts, Opus builds, and it never merges.
+  const execC = read("commands/execute.md");
+  if (execC === null) failures.push("pro-ai-sdlc: commands/execute.md missing");
+  else {
+    for (const s of ["execute-gate.py", "copy-env.py"]) {
+      if (!execC.includes(`\${CLAUDE_PLUGIN_ROOT}/scripts/${s}`)) failures.push(`pro-ai-sdlc: /execute does not run scripts/${s}`);
+      if (read(`scripts/${s}`) === null) failures.push(`pro-ai-sdlc: scripts/${s} missing`);
+    }
+    if (!/^model: opus$/m.test(execC.split("---")[1] ?? "")) failures.push("pro-ai-sdlc: /execute frontmatter lacks model: opus");
+    for (const h of ["## Done", "## Departures from plan", "## Order of work", "## Proof of done"])
+      if (!execC.includes(h)) failures.push(`pro-ai-sdlc: /execute does not name the plan's ${h} section`);
+    if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
+      failures.push("pro-ai-sdlc: /execute lost its never-merge line");
+  }
   return { failures, warnings };
 };
 
