@@ -12,3 +12,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0004](./0004-codex-parity.md) | Every skill-bearing plugin also loads under Codex, agents included | 2026-05-24 |
 | [0005](./0005-adrs-in-the-sdlc-loop.md) | pro-ai-sdlc carries ADRs through the loop: flagged at intent, drafted at spec, accepted at Done, standalone through /adr | 2026-10-27 |
 | [0006](./0006-engine-registry-and-pro-dev.md) | Every bridge engine is a row in pro-core's one registry, installed and updated only through /pro-dev (proposed) | 2026-10-28 |
+| [0007](./0007-spec-method-plugins.md) | Spec methods are opt-in plugins whose stage hand-offs pro-ai-sdlc offers and never runs on its own (proposed) | 2026-10-28 |
