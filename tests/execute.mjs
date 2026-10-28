@@ -10,7 +10,7 @@
 //
 // Also exported as runExecuteCases() for tests/check.mjs.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, statSync, chmodSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, statSync, lstatSync, readlinkSync, symlinkSync, chmodSync, rmSync, realpathSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -168,6 +168,36 @@ export function runExecuteCases() {
 
     r = run("copy-env.py", [e], e);
     add("c13 a missing argument stops with usage", "stop", r, r.status === 1 && /usage/i.test(r.stderr));
+
+    // symlinks stay symlinks: a link to a file outside the repo is not copied as its contents
+    const outside = join(sandbox, "shared.env");
+    write(outside, `S=${MARKER}\n`);
+    const l = repoWithOrigin(sandbox, "links", { ".gitignore": ".env*\n", "a.js": "1\n" });
+    const lwt = join(sandbox, "links.feature");
+    git(l, "worktree", "add", "-q", lwt, "-b", "feature", "origin/main");
+    symlinkSync(outside, join(l, ".env"));
+    symlinkSync(join(sandbox, "missing.env"), join(l, ".env.dangling"));
+    write(join(l, ".env.local"), `L=${MARKER}\n`);
+    r = run("copy-env.py", [l, lwt], l);
+    add("c14 a symlinked env file is recreated as the same link", "link", r,
+      r.status === 0 && lstatSync(join(lwt, ".env")).isSymbolicLink() && readlinkSync(join(lwt, ".env")) === outside);
+    add("c15 a dangling env symlink does not crash the run", "link", r,
+      r.status === 0 && lstatSync(join(lwt, ".env.dangling"), { throwIfNoEntry: false })?.isSymbolicLink() === true && existsSync(join(lwt, ".env.local")));
+    add("c16 no file contents in the output with links", "quiet", r, !leaked(r));
+
+    // ── gate details ──
+    const b = repoWithOrigin(sandbox, "bold", { [planRel]: PLAN("approved", "<sha>").replace("- Build commit: <sha>", "- **Build commit:** abc1234") });
+    r = run("execute-gate.py", [join(b, planRel)], b);
+    add("g11 a bold Build commit line counts as built", "stop", r, r.status === 1 && /built/i.test(r.stderr));
+
+    const n = join(sandbox, "noorigin");
+    mkdirSync(n);
+    git(n, "init", "-q", "-b", "main");
+    write(join(n, planRel), PLAN("approved", "<sha>"));
+    git(n, "add", "-A");
+    git(n, "commit", "-q", "-m", "init");
+    r = run("execute-gate.py", [join(n, planRel)], n);
+    add("g12 a repo with no origin remote stops and says so", "stop", r, r.status === 1 && /no origin remote/i.test(r.stderr));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
