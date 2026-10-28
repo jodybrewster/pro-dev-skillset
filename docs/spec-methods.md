@@ -3,8 +3,8 @@
 pro-dev-skillset ships five ways to go from an idea to reviewed code.
 
 - `pro-pdd` is the default: plan-driven development, which is Claude Code as it is plus a written plan you approve before `pro-execution` builds it test first.
-- `pro-ai-sdlc` also comes with `pro-dev-starter`: a command-driven loop for changes that need a record, writing an intent, a spec and a plan under `intent/` and checking them against the repo's rules.
-- The other three are opt-in plugins: install one to try it and uninstall it to drop it.
+- `pro-ai-sdlc` is opt-in: a command-driven loop for changes that need a record, writing an intent, a spec and a plan under `intent/` and checking them against the repo's rules.
+- `pro-egm`, `pro-speckit` and `pro-spdd` are opt-in plugins too: install one to try it and uninstall it to drop it.
 
 When an opt-in method is installed, pro-ai-sdlc's commands offer it at the right stage and run it only on your yes ([ADR-0007](./decisions/0007-spec-method-plugins.md)).
 A feature runs through one method's documents, never two at once.
@@ -14,9 +14,9 @@ A feature runs through one method's documents, never two at once.
 | | pro-pdd (default) | pro-ai-sdlc | pro-egm | pro-speckit | pro-spdd |
 |---|---|---|---|---|---|
 | What it is | Plain Claude Code with a plan step: talk it through, approve a written plan, build it test first | A fuller loop for changes that need a record: intent, spec, plan, build, review | A review step added to the loop, not a separate loop | GitHub's spec-driven toolkit with its own loop | Structured Prompt-Driven Development with its own loop |
-| Upstream | Forked from [obra/superpowers](https://github.com/obra/superpowers) and [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills), MIT | This repo | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model), Apache-2.0 | [github/spec-kit](https://github.com/github/spec-kit), MIT | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd), MIT |
+| Upstream | Forked from [obra/superpowers](https://github.com/obra/superpowers) and [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills), MIT | This repo, heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (PDF on that page) | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model), Apache-2.0 | [github/spec-kit](https://github.com/github/spec-kit), MIT | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd), MIT |
 | How it ships | Built in (forked skills); lavish is a bridge | Built in | Bridge: Google's `egm@egm` plugin, installed as Google ships it | Bridge: spec-kit's `specify` CLI, pinned to a reviewed release | Adapted into this repo |
-| Comes with the starter | Yes | Yes | No | No | No |
+| Comes with the starter | Yes | No | No | No | No |
 | Best for | The simplest path: most everyday work, ideas still being explored, quick features | Changes that should be checked against the repo's rules and signed off | A second opinion on a spec or plan from reviewers with no history | Teams already on spec-kit, or a project that wants a constitution and task lists | Client or team-facing work that needs a written story and a structured prompt |
 | Documents it writes | A design doc under `docs/superpowers/specs/` and a plan under `docs/plans/` | `intent/<date>-<slug>/intent.md`, `spec.md`, `plan.md` | Edits your spec or plan in place; a report in `goldfish_review_report.md` (left untracked) | `.specify/memory/constitution.md` once; `specs/<NNN>-<feature>/spec.md`, `plan.md`, `tasks.md` per feature | `spdd/analysis/`, `spdd/prompt/`, `spdd/review/` |
 | Who drives it | The skills trigger when you describe the work; `/adhd` and `/lavish` run on demand | You run each command; Claude asks before anything it commits | Offered at `/spec` and `/plan`; you accept or contest each finding | You type every `/speckit-*` command; the model cannot start them | You run each `/spdd-*` command |
@@ -31,6 +31,7 @@ A feature runs through one method's documents, never two at once.
 - Start with pro-pdd: it is the simplest, close to plain Claude Code.
   Describe what you want, approve the plan and let it build.
 - Move to pro-ai-sdlc when a change should be checked against the repo's rules and signed off.
+  Install it with `claude plugin install pro-ai-sdlc@pro-dev-skillset` when a change needs a record.
   It keeps the intent, spec and plan together under `intent/` and gates risky plans with a security challenge.
 - Add pro-egm when a spec or plan has real design choices and you want it read cold before anyone builds it.
   It does not replace the loop; it sharpens the documents the loop writes.
@@ -51,6 +52,9 @@ The skills trigger from what you say rather than from a command.
 5. Open the PR with `/gh` or your usual flow; `/review` and `/pr-babysit` from pro-ai-sdlc work here too.
 
 ## pro-ai-sdlc: the full record
+
+pro-ai-sdlc is heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) by Louis Claxton; the page links the PDF.
+Its intent, spec, plan, review and sign-off steps follow the playbook's stages.
 
 Each step writes one file in `intent/<date>-<slug>/` and commits it.
 

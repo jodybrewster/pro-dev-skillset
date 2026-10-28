@@ -26,7 +26,7 @@ One-line bootstrap for Claude Code inside a fresh project:
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-This writes the project settings and installs `pro-dev-starter`, the meta-plugin that pulls the default stack: `pro-core`, `pro-ai-sdlc`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-testing`, `pro-data`, `pro-research` and `pro-security`.
+This writes the project settings and installs `pro-dev-starter`, the meta-plugin that pulls the default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-testing`, `pro-data`, `pro-research` and `pro-security`.
 It then tells you to run `/pro-dev install` in a Claude Code session.
 
 ### Set up a site
@@ -73,9 +73,9 @@ Then open Codex in the project and run `/skills` to confirm the pro-dev skills a
 
 `pro-pdd` is the default: plan-driven development, which is Claude Code as it is plus a written plan you approve before `pro-execution` builds it test first.
 
-`pro-ai-sdlc` also comes with `pro-dev-starter` for changes that need a record: `/intent`, `/spec`, `/plan`, `/execute`, `/review` and `/pr-babysit` check each change against the repo's rules and record sign-off.
+`pro-ai-sdlc`, heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (PDF on that page), is an opt-in plugin for changes that need a record: `/intent`, `/spec`, `/plan`, `/execute`, `/review` and `/pr-babysit` check each change against the repo's rules and record sign-off.
 
-Three more methods are opt-in plugins:
+Three more methods are opt-in plugins, installed with `claude plugin install <name>@pro-dev-skillset`:
 
 - `pro-egm` adds a goldfish review of your spec and plan by reviewers with no history.
 - `pro-speckit` brings GitHub spec-kit and its `/speckit-*` commands.
@@ -158,7 +158,7 @@ Manual equivalent when you already have a local checkout:
 ```bash
 codex plugin marketplace add <path-to-pro-dev-skillset>
 codex plugin add pro-core@pro-dev-skillset
-codex plugin add pro-ai-sdlc@pro-dev-skillset
+codex plugin add pro-ai-sdlc@pro-dev-skillset   # optional: the intent, spec and plan loop
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
@@ -293,7 +293,8 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-nextjs`, `pro-astro`, `pro-spdd`, `pro-egm`, `pro-speckit` and `pro-ship` are opt-in and installed by hand.
+- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-spdd`, `pro-egm`, `pro-speckit` and `pro-ship` are opt-in and installed by hand.
+  Version 3.0.0 dropped `pro-ai-sdlc` from the stack; removing a dependency does not uninstall it, so a site that already has it keeps it until you run `claude plugin uninstall pro-ai-sdlc@pro-dev-skillset`.
 - **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
 
 ### Layout
@@ -373,7 +374,7 @@ frontmatter, sidecar references, Codex manifests, and a repo-local Codex marketp
 ```bash
 codex plugin marketplace add jodybrewster/pro-dev-skillset
 codex plugin add pro-core@pro-dev-skillset
-codex plugin add pro-ai-sdlc@pro-dev-skillset
+codex plugin add pro-ai-sdlc@pro-dev-skillset   # optional: the intent, spec and plan loop
 codex plugin add pro-pdd@pro-dev-skillset
 codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset

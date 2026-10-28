@@ -24,3 +24,9 @@ Moved from `CLAUDE.md`, whose "Things Claude gets wrong" list keeps the short fo
 - A site still enables `pro-starter`?
   The shim keeps it loading for one release because it depends on `pro-dev-starter`.
   `/pro-dev update` offers to swap it; a disabled `pro-starter` or a disabled plugin it bundles is skipped, so the swap never turns them back on.
+
+## pro-ai-sdlc is still installed after the starter update
+
+Version 3.0.0 of `pro-dev-starter` dropped `pro-ai-sdlc` from its dependencies.
+Removing a dependency does not uninstall the plugin, so a site that already has it keeps it.
+Run `claude plugin uninstall pro-ai-sdlc@pro-dev-skillset` to drop it or leave it in place to keep the intent, spec and plan loop.

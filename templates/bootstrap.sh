@@ -12,13 +12,13 @@
 #      if it is absent (registers the pro-dev-skillset marketplace and enables
 #      pro-dev-starter)
 #   2. Installs pro-dev-starter@pro-dev-skillset at the chosen scope (cascades
-#      to the default stack: pro-core, pro-ai-sdlc, pro-pdd, pro-execution,
+#      to the default stack: pro-core, pro-pdd, pro-execution,
 #      pro-quality, pro-design, pro-motion, pro-testing, pro-data, pro-research
 #      and pro-security)
 #   3. Prints the next step: run /pro-dev install in a Claude Code session,
 #      which installs the engines and project-local skills
 #
-# pro-nextjs and pro-astro are opt-in: install them by hand.
+# pro-ai-sdlc, pro-nextjs and pro-astro are opt-in: install them by hand.
 #
 # Flags:
 #   --scope <s>   Install scope: user | project (default: project)
