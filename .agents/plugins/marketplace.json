@@ -110,6 +110,18 @@
       "category": "Development"
     },
     {
+      "name": "pro-egm",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-egm"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
       "name": "pro-spdd",
       "source": {
         "source": "local",

@@ -1,7 +1,7 @@
 ---
 description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<date>-<slug>/intent.md from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
 argument-hint: "<idea or bug, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Read, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Write
 ---
 
 ## Context
@@ -12,6 +12,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Author: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
 - Existing intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -20`
+- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage intent; true`
 
 The idea: $ARGUMENTS
 
@@ -20,6 +21,13 @@ The intent file is the artifact `/spec` reads next.
 It says what and why, never how.
 
 ## Your task
+
+### 0. Offer spec methods
+
+If "Spec methods" in Context lists lines, offer each one once as a yes or no question.
+A line reads `<method>: <when> -> <offer>`; a line `<method> needs <plugin>: run /pro-dev install` means that method is not installed, so say so and move on.
+On yes, run the offer and stop; on no, carry on.
+With nothing listed, skip this step.
 
 ### 1. Interview like an analyst
 

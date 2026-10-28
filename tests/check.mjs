@@ -12,7 +12,6 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
 import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
@@ -23,6 +22,8 @@ import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 import { runDocHookCases } from "./doc-hooks.mjs";
 import { runProDevCases } from "./pro-dev.mjs";
+import { runGoldfishCases } from "./goldfish.mjs";
+import { spawnSync } from "node:child_process";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -51,7 +52,7 @@ const EXTERNAL = new Set([
 const BRIDGES = [
   "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
   "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
-  "next-skills-bridge",
+  "next-skills-bridge", "egm-bridge",
 ];
 const CLAUDE_ONLY_AGGREGATORS = new Set(["pro-starter", "pro-dev-starter"]);
 const COMMANDS = new Set(["code-review", "simplify", "pro-dev", "validate", "document", "api-docs", "critique-screen", "security-audit", "security-review", "threat-model"]);
@@ -384,7 +385,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -773,6 +774,28 @@ checks.registry = (m) => {
     if (!row.detect || typeof row.detect !== "object") failures.push(`engines.json ${id}: detect is missing`);
     for (const k of ["install", "update"])
       if (!argvOk(row[k])) failures.push(`engines.json ${id}: ${k} must be an array of strings (no shell string)`);
+    if (row.marketplace !== undefined) {
+      const mk = row.marketplace;
+      if (!mk || typeof mk !== "object" || Array.isArray(mk)) failures.push(`engines.json ${id}: marketplace must be an object`);
+      else {
+        if (typeof mk.name !== "string" || !mk.name) failures.push(`engines.json ${id}: marketplace.name must be a string`);
+        if (typeof mk.source !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(mk.source))
+          failures.push(`engines.json ${id}: marketplace.source must look like owner/repo`);
+      }
+    }
+    if (row.surface !== undefined) {
+      const sf = row.surface;
+      if (!sf || typeof sf !== "object" || Array.isArray(sf)) failures.push(`engines.json ${id}: surface must be an object`);
+      else {
+        for (const k of ["agents", "skills"])
+          if (!Number.isInteger(sf[k]) || sf[k] < 0) failures.push(`engines.json ${id}: surface.${k} must be a non-negative integer`);
+        if (!sf.tools || typeof sf.tools !== "object" || Array.isArray(sf.tools)
+          || Object.values(sf.tools).some((v) => !Array.isArray(v) || v.some((t) => typeof t !== "string")))
+          failures.push(`engines.json ${id}: surface.tools must map each agent, skill and command path to an array of strings`);
+        if (typeof sf.hooksMcpSha256 !== "string" || !/^[0-9a-f]{64}$/.test(sf.hooksMcpSha256))
+          failures.push(`engines.json ${id}: surface.hooksMcpSha256 must be 64 hex characters`);
+      }
+    }
     if (!Array.isArray(row.bridges) || row.bridges.some((b) => typeof b !== "string")) {
       failures.push(`engines.json ${id}: bridges must be an array of skill slugs`);
       continue;
@@ -784,6 +807,57 @@ checks.registry = (m) => {
   }
   for (const b of BRIDGES)
     if (m.skillSlugs.has(b) && !covered.has(b)) failures.push(`bridge ${b} has no row in engines.json`);
+  return { failures, warnings };
+};
+
+// spec-method files: every plugins/*/sdlc-method.json is valid JSON of the shape methods.py reads
+checks.methods = () => {
+  const failures = [], warnings = [];
+  for (const d of readdirSync(PLUGINS_DIR)) {
+    const f = join(PLUGINS_DIR, d, "sdlc-method.json");
+    if (!existsSync(f)) continue;
+    const tag = `${d}/sdlc-method.json`;
+    let j;
+    try { j = readJSON(f); }
+    catch (e) { failures.push(`${tag}: unparseable - ${e.message}`); continue; }
+    if (!j || typeof j !== "object" || Array.isArray(j)) { failures.push(`${tag}: must be an object`); continue; }
+    if (typeof j.method !== "string" || !j.method) failures.push(`${tag}: method must be a string`);
+    if (j.requires !== null && !(typeof j.requires === "string" && /^[^@\s]+@[^@\s]+$/.test(j.requires)))
+      failures.push(`${tag}: requires must be null or a name@marketplace string`);
+    if (!Array.isArray(j.handoffs)) { failures.push(`${tag}: handoffs must be an array`); continue; }
+    j.handoffs.forEach((h, i) => {
+      if (!h || typeof h !== "object") { failures.push(`${tag}: handoffs[${i}] must be an object`); return; }
+      if (!["intent", "spec", "plan", "review"].includes(h.stage)) failures.push(`${tag}: handoffs[${i}].stage must be intent, spec, plan or review`);
+      if (typeof h.when !== "string") failures.push(`${tag}: handoffs[${i}].when must be a string`);
+      if (typeof h.offer !== "string" || !h.offer.startsWith("/")) failures.push(`${tag}: handoffs[${i}].offer must be a string starting with /`);
+    });
+  }
+  // behaviour: tests/methods.mjs is a standalone script (non-zero exit on a failed case),
+  // so it runs as a child process and its FAIL lines are surfaced.
+  const r = spawnSync(process.execPath, [join(ROOT, "tests", "methods.mjs")], { encoding: "utf8" });
+  const out = r.stdout ?? "";
+  if (/^skipped:/m.test(out)) { warnings.push(`methods cases skipped - ${out.trim()}`); return { failures, warnings }; }
+  if (r.status !== 0) {
+    const bad = out.split("\n").filter((l) => /FAIL/.test(l));
+    if (bad.length) for (const l of bad) failures.push(`methods ${l.trim()}`);
+    else failures.push(`tests/methods.mjs exited ${r.status}: ${(r.stderr ?? "").trim().slice(0, 200)}`);
+  }
+  return { failures, warnings };
+};
+
+// pro-egm's scripts/goldfish.py: case table in tests/goldfish.mjs
+checks.goldfish = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runGoldfishCases();
+  if (skipped) {
+    warnings.push(`goldfish cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/goldfish.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) if (!r.ok) failures.push(`goldfish ${r.id}: ${r.detail}`);
   return { failures, warnings };
 };
 
