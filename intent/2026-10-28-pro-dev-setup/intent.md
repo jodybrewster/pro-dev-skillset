@@ -33,6 +33,10 @@ It reads one engine registry in pro-core and acts only on engines whose owning p
 For each engine the registry records the owning plugin, how to tell it is installed, how to install it, how to update it and whether it is default or optional.
 `install` installs the default engines, asks once about each optional one, saves the answers in `.claude/pro-dev.json` and sets the repo up for the intent, spec and plan loop that `/sdlc-init` does today.
 `update` updates every installed engine, installs engines that new bridges need and asks only about optional engines it has not asked about before.
+`update` also updates the pro-dev plugins in every scope they are installed in, including project-scope installs in subfolders such as `demo/app`.
+An install in another scope can shadow the updated one without `/plugin` showing it: intent A's first live check ran pro-quality 0.9.6 from the `demo/app` project-scope install while `/plugin` showed the user-scope 0.10.0.
+`update` removes plugin installs whose project folder no longer exists.
+`update` ends by reminding the person to restart Claude Code so the updated plugins load.
 `check` reports what is installed, missing or stale and changes nothing; it replaces `/pro-dev-doctor`.
 The seven engine commands, `/pro-starter`, `/sdlc-init` and `/pro-dev-doctor` are deleted.
 pro-starter is renamed pro-dev-starter, keeps no command and no longer depends on pro-nextjs or pro-astro.
@@ -64,6 +68,7 @@ A hook that runs `/pro-dev update` automatically.
 
 On a fresh test repo: install pro-dev-starter, run `/pro-dev install`, and every bridge in the installed plugins has its engine; `/pro-dev check` reports all present.
 After a release that adds a bridge, `claude plugin update` then `/pro-dev update` installs its engine without asking about engines already decided.
+After `/pro-dev update` and a restart, every install of a pro-dev plugin that covers the repo, in any scope, is on the new version, and no install points at a missing folder.
 Installing pro-dev-starter no longer pulls in pro-nextjs or pro-astro.
 The command list shrinks from 42 to about 31.
 

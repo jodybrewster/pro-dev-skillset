@@ -36,11 +36,12 @@ Jody: "Having four different spec driven methods means I can try them out easily
 ## Running list
 
 Status per item: todo, intent (its own intent folder exists), in PR, done or dropped.
-Every item below has its intent written as of 2026-10-28; A also has its spec.
+Every item below has its intent written as of 2026-10-28.
+A is done: built in PR 60 (pro-quality 0.10.0) and signed off after its live check on 2026-10-28.
 
 The items ship as six intents, in this order:
 
-- A. Quiet validation hook - item 6. Small and independent, so it goes first. Intent: `intent/2026-10-28-quiet-validation-hook/`.
+- A. done - Quiet validation hook - item 6. Small and independent, so it went first. Intent: `intent/2026-10-28-quiet-validation-hook/`.
 - B. /pro-dev setup - items 1 to 5. Builds the registry the later intents add rows to. Intent: `intent/2026-10-28-pro-dev-setup/`.
 - C. Swappable spec methods - item 7 apart from spec-kit: the EGM bridge plugin and pro-ai-sdlc routing between whichever methods are installed. Needs B's registry. Intent: `intent/2026-10-28-spec-methods/`.
 - D. Design and Vercel bridges - items 8 to 11. Needs B's registry; can run alongside C. Intent: `intent/2026-10-28-design-vercel-bridges/`.
@@ -52,7 +53,7 @@ The items ship as six intents, in this order:
 3. todo - rename pro-starter to pro-dev-starter, make it a pure dependency bundle with no command and drop pro-nextjs and pro-astro from its dependencies.
 4. todo - shrink `templates/bootstrap.sh` to: add the marketplace, install pro-dev-starter, then run `/pro-dev install`.
 5. todo - remove duplicate commands: pro-quality's `/review` (keep pro-ai-sdlc's), `/api-docs` becomes a mode of `/document`, `/lead-research` becomes `/research lead`.
-6. todo - tone down the validation Stop hook: count only writes inside the repo, stop blocking and print a one-line pointer to `/validate` instead, and add an opt-out.
+6. done (A) - tone down the validation Stop hook: count only writes inside the repo, stop blocking and print a one-line pointer to `/validate` instead, and add an opt-out.
 7. todo - spec methods as swappable plugins, with pro-ai-sdlc as the default loop and the coordinator that routes to whichever methods are installed:
    - pro-ai-sdlc (intent, spec, plan): stays the default.
    - pro-spdd: kept as an opt-in plugin.
