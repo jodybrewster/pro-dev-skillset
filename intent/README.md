@@ -7,6 +7,7 @@ The folder holds the artifacts each stage writes and the next stage reads.
 - `spec.md`: what must be true when the change merges, as numbered statements a command, a grep or a file can check.
 - `plan.md`: how to get there, as ordered steps that cite the statements they satisfy, committed before the first change and kept true afterwards.
 
+`/execute <plan.md>` builds an approved plan in its own worktree and opens that pull request; it never merges.
 The pull request that lands the change links its folder, ticks every spec statement with its proof and is reviewed against [REVIEW.md](../REVIEW.md).
 A small fix can skip `spec.md` when the intent states its check.
 A decision that outlives the change gets an ADR in [docs/decisions/](../docs/decisions/README.md).
