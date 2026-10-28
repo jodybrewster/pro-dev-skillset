@@ -500,21 +500,26 @@ def command_shell_digest(text: str) -> str | None:
     return hashlib.sha256("\n".join(bang).encode("utf-8")).hexdigest() if bang else None
 
 
-def declared_paths(root: str, manifest: dict, key: str) -> list[str]:
-    """Paths plugin.json gives for agents, skills or commands (they replace the default folder); each must stay inside the plugin."""
-    spec = manifest.get(key)
+def declared_paths(root: str, obj: dict, key: str, site: str = "plugin.json") -> list[str]:
+    """Paths a manifest or marketplace entry gives for agents, skills or commands; each must stay inside the plugin."""
+    spec = obj.get(key)
     if spec is None:
         return []
     items = [spec] if isinstance(spec, str) else spec
     if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
-        raise SurfaceError(f"plugin.json {key} has an unexpected shape")
+        raise SurfaceError(f"{site} {key} has an unexpected shape")
     out = []
     for item in items:
         path = os.path.normpath(os.path.join(root, item))
         if not is_inside(path, root):
-            raise SurfaceError(f"plugin.json {key} path {item} resolves outside the plugin folder")
+            raise SurfaceError(f"{site} {key} path {item} resolves outside the plugin folder")
         out.append(path)
     return out
+
+
+def all_declared(root: str, manifest: dict, entry: dict, key: str) -> list[str]:
+    """Custom paths from plugin.json and the marketplace entry together."""
+    return declared_paths(root, manifest, key) + declared_paths(root, entry, key, "marketplace")
 
 
 def is_plain_dir(path: str) -> bool:
@@ -524,12 +529,14 @@ def is_plain_dir(path: str) -> bool:
         return False
 
 
-def md_files(root: str, manifest: dict, key: str) -> list[str]:
-    """Every agent or command file: the paths plugin.json gives, else the default folder."""
+def md_files(root: str, manifest: dict, entry: dict, key: str) -> list[str]:
+    """Every agent or command file: the default folder always, plus every path a manifest or entry gives.
+
+    A custom path never replaces the default folder: over-counting is safe and under-counting is not.
+    """
     base = os.path.join(root, key)
-    custom = declared_paths(root, manifest, key)
-    out = [] if custom else [os.path.join(base, n) for n in list_plugin_dir(root, base) if n.endswith(".md")]
-    for path in custom:
+    out = [os.path.join(base, n) for n in list_plugin_dir(root, base) if n.endswith(".md")]
+    for path in all_declared(root, manifest, entry, key):
         if is_plain_dir(path):
             out.extend(os.path.join(path, n) for n in list_plugin_dir(root, path) if n.endswith(".md"))
         else:
@@ -537,14 +544,13 @@ def md_files(root: str, manifest: dict, key: str) -> list[str]:
     return list(dict.fromkeys(out))
 
 
-def skill_dirs(root: str, manifest: dict) -> list[str]:
-    """Every skill folder: the folders plugin.json gives (or their subfolders), else skills/<name>."""
+def skill_dirs(root: str, manifest: dict, entry: dict) -> list[str]:
+    """Every skill folder: skills/<name> always, plus the folders a manifest or entry gives (and their subfolders)."""
     base = os.path.join(root, "skills")
-    custom = declared_paths(root, manifest, "skills")
-    out = [] if custom else [os.path.join(base, n) for n in list_plugin_dir(root, base)]
-    for path in custom:
+    out = [os.path.join(base, n) for n in list_plugin_dir(root, base)]
+    for path in all_declared(root, manifest, entry, "skills"):
         if not is_plain_dir(path):
-            raise SurfaceError(f"plugin.json skills path {os.path.relpath(path, root)} is not a folder")
+            raise SurfaceError(f"skills path {os.path.relpath(path, root)} is not a folder")
         out.append(path)
         out.extend(os.path.join(path, n) for n in list_plugin_dir(root, path))
     return list(dict.fromkeys(out))
@@ -565,7 +571,9 @@ def compute_surface(folder: str, market_entry: dict | None = None) -> tuple[dict
     `allowed-tools`. The hash covers hooks/hooks.json, .mcp.json, .lsp.json, the hooks,
     mcpServers and lspServers declared inline in plugin.json and in the plugin's marketplace
     entry (with any file those point at), `hooks` in agent, skill and command frontmatter
-    and a digest of the shell lines (`!`) of each command.
+    and a digest of the shell lines (`!`) of each command and skill. The default folders
+    are always scanned, whatever custom paths plugin.json or the marketplace entry add, and
+    the raw agents, skills and commands values are hashed too.
     """
     try:
         return _surface(folder, market_entry), ""
@@ -583,8 +591,15 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
     manifest = parse_plugin_json(raw, "plugin.json")
     if not isinstance(manifest, dict):
         raise SurfaceError("plugin.json is not an object")
+    if market_entry is not None and not isinstance(market_entry, dict):
+        raise SurfaceError("the marketplace entry is not an object")
+    entry = market_entry or {}
     declared: dict = {}
     tools: dict[str, list[str]] = {}
+    for site, obj in (("plugin.json", manifest), ("marketplace", entry)):
+        for key in ("agents", "skills", "commands"):  # moving a path changes the hash
+            if key in obj:
+                declared[f"{site}:{key}-paths"] = obj[key]
 
     def rel_of(path: str) -> str:
         return os.path.relpath(path, root).replace(os.sep, "/")
@@ -594,14 +609,14 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
         if block is not None:
             declared[f"frontmatter-hooks:{rel}"] = block
 
-    agents = md_files(root, manifest, "agents")
+    agents = md_files(root, manifest, entry, "agents")
     for path in agents:
         text = read_plugin_file(root, path, required=True).decode("utf-8", "replace")
         listed = frontmatter_tools(text, "tools")
         tools[rel_of(path)] = ["*"] if listed is None else sorted(set(listed))
         fold_hooks(rel_of(path), text)
     skills = 0
-    for sdir in skill_dirs(root, manifest):
+    for sdir in skill_dirs(root, manifest, entry):
         raw = read_plugin_file(root, os.path.join(sdir, "SKILL.md"))
         if raw is None:
             continue
@@ -609,7 +624,10 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
         text = raw.decode("utf-8", "replace")
         tools[rel_of(sdir)] = sorted(set(frontmatter_tools(text, "allowed-tools") or []))
         fold_hooks(rel_of(sdir), text)
-    for path in md_files(root, manifest, "commands"):
+        digest = command_shell_digest(text)
+        if digest is not None:
+            declared[f"skill-shell:{rel_of(sdir)}"] = digest
+    for path in md_files(root, manifest, entry, "commands"):
         text = read_plugin_file(root, path, required=True).decode("utf-8", "replace")
         tools[rel_of(path)] = sorted(set(frontmatter_tools(text, "allowed-tools") or []))
         fold_hooks(rel_of(path), text)
@@ -620,9 +638,7 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
         raw = read_plugin_file(root, os.path.join(root, *rel.split("/")))
         if raw is not None:
             declared[rel] = parse_plugin_json(raw, rel)
-    if market_entry is not None and not isinstance(market_entry, dict):
-        raise SurfaceError("the marketplace entry is not an object")
-    for site, obj in (("plugin.json", manifest), ("marketplace", market_entry or {})):
+    for site, obj in (("plugin.json", manifest), ("marketplace", entry)):
         for key in ("hooks", "mcpServers", "lspServers"):
             if key not in obj:
                 continue
@@ -868,12 +884,22 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
         after = detected(row, repo, read_installs()[0])
         if not after:
             return "failed", f"{eid}: {action} exited 0 but the engine is still not detected. Retry: {retry_line(eid, action)}"
-    if pinned:  # the copy on disk is what runs: check it, whatever the clone said before
-        _, diffs = surface_report(row, repo, read_installs()[0], True)
-        if diffs:
-            off, off_detail = run_argv(["claude", "plugin", "disable", pid, "--scope", "project"], repo)
-            state = "disabled it" if off else f"could not disable it ({off_detail}); run: claude plugin disable {pid} --scope project"
-            return "failed", f"{eid}: {action} left a surface beyond the pin, {state}: {'; '.join(diffs)}"
+    if pinned:  # the copy on disk is what runs: check every install that covers the repo, not the first
+        after = read_installs()[0]
+        mine = [i for i in after if i.get("id") == pid and i.get("enabled") is not False and covers_repo(i, repo)]
+        bad_scopes: list[tuple[str, str, list[str]]] = []
+        for inst in mine or [None]:
+            _, diffs = surface_report(row, repo, [inst] if inst else after, True)
+            if diffs:
+                scope = inst.get("scope") if inst else argv_scope(argv)
+                bad_scopes.append((scope if scope in ("user", "project", "local") else "project", install_cwd(inst, repo) or repo if inst else repo, diffs))
+        states = []
+        for scope, cwd, diffs in bad_scopes:
+            off, off_detail = run_argv(["claude", "plugin", "disable", pid, "--scope", scope], cwd)
+            states.append(("disabled it" if off else f"could not disable it ({off_detail}); run: claude plugin disable {pid} --scope {scope}")
+                          + f" at {scope} scope: {'; '.join(diffs)}")
+        if states:
+            return "failed", f"{eid}: {action} left a surface beyond the pin, " + " | ".join(states)
     return "done", f"{eid}: {action} ok"
 
 
@@ -1064,6 +1090,14 @@ def cmd_surface(args, repo: str) -> int:
         return 1
     say(json.dumps(surface, indent=2, sort_keys=True))
     return 0
+
+
+def argv_scope(argv) -> str | None:
+    """The value after --scope in a registry argv, or None."""
+    if isinstance(argv, list) and "--scope" in argv:
+        i = argv.index("--scope")
+        return argv[i + 1] if i + 1 < len(argv) else None
+    return None
 
 
 def valid_plugin_id(pid) -> bool:

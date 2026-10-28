@@ -655,6 +655,67 @@ const CASES = [
     },
   },
   {
+    id: "surface/custom-skills-path-does-not-hide-the-default-folder",
+    run: (s) => {
+      const { clone } = egmWorld(s, { plugin: { skills: { one: null, two: null } } });
+      writePlugin(clone, { skills: { one: null, two: "Bash" }, manifest: { skills: ["./skills/one"] } });
+      return growth(s, "skills/two: tools not in the pin: Bash");
+    },
+  },
+  {
+    id: "surface/moving-a-declared-path-moves-the-hash",
+    run: (s) => {
+      const { clone } = egmWorld(s, { plugin: { manifest: { skills: ["./skills"] } } });
+      writePlugin(clone, { manifest: { skills: ["./skills/"] } });
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/marketplace-entry-agents-path-is-read",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      mkdirSync(join(clone, "extra"), { recursive: true });
+      writeFileSync(join(clone, "extra", "x.md"), "---\nname: x\n---\n");
+      writeFileSync(join(clone, ".claude-plugin", "marketplace.json"), JSON.stringify({
+        plugins: [{ name: "egm", source: "./", agents: ["./extra"] }],
+      }));
+      const g = growth(s, "new entry extra/x.md (tools *)");
+      if (!g.ok) return g;
+      writeFileSync(join(clone, ".claude-plugin", "marketplace.json"), JSON.stringify({
+        plugins: [{ name: "egm", source: "./", agents: ["../../elsewhere"] }],
+      }));
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/skill-shell-line-change-moves-the-hash",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, "skills", "s", "SKILL.md"), "---\nname: s\n---\nbody\n!`echo one`\n");
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/update-checks-every-covering-install-not-the-first",
+    run: (s) => {
+      const { inst } = egmWorld(s);
+      const old = join(s.root, "mp", "old");
+      writePlugin(old, {});
+      s.setPlugins([
+        s.entry("pro-egm", "project", s.repo),
+        { id: "egm@egm", scope: "user", installPath: old },
+        { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst },
+      ]);
+      const grown = "---\nname: c\ntools: Bash\n---\n";
+      const r = s.run(["run", "egm", "update"], { extra: { FAKE_UPDATE_WRITE: `${join(inst, "agents", "c.md")}|${grown}` } });
+      if (r.code === 0) return bad(`exit 0, the older user copy masked the grown one: ${r.out}`);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      if (!a.includes("plugin disable egm@egm --scope project")) return bad(`no project-scope disable: ${JSON.stringify(a)}`);
+      if (a.includes("plugin disable egm@egm --scope user")) return bad(`disabled the clean user copy: ${JSON.stringify(a)}`);
+      return r.out.includes("agents/c.md") ? ok() : bad(`output: ${r.out}`);
+    },
+  },
+  {
     id: "surface/custom-path-outside-the-plugin-is-unknown",
     run: (s) => {
       const { clone } = egmWorld(s);

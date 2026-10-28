@@ -267,6 +267,8 @@ const CASES = [
       if (!names.includes(".egm/reviewers/policy.md")) return { ok: false, detail: `first run lists ${JSON.stringify(first.newOrChanged)}` };
       const pol = first.newOrChanged.find((e) => e.path === ".egm/reviewers/policy.md");
       if (pol.author !== "Ada Author <ada@example.com>" || !/^[0-9a-f]{7,}$/.test(pol.commit)) return { ok: false, detail: `author ${pol.author} commit ${pol.commit}` };
+      if (pol.signature !== "unsigned") return { ok: false, detail: `signature ${pol.signature}, wanted unsigned for a plain commit` };
+      if (sorted(Object.keys(pol)).join() !== sorted(["path", "author", "commit", "signature", "sha256"]).join()) return { ok: false, detail: `keys ${Object.keys(pol)}` };
       const acc = s.run(s.resolveArgs("spec", SPEC, ["--accept", "--token", first.acceptToken]));
       if (acc.code !== 0) return { ok: false, detail: `accept exit ${acc.code}: ${acc.err}` };
       if (existsSync(join(s.repo, ".egm", "egm-seen.json")) || !existsSync(join(s.repo, ".git", "egm-seen.json"))) return { ok: false, detail: "seen file is not in the git dir" };

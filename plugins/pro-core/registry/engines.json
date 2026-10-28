@@ -880,8 +880,8 @@
         "source": "google/elephant-goldfish-model"
       },
       "surface": {
-        "agents": 9,
-        "hooksMcpSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "agents": 18,
+        "hooksMcpSha256": "b379ce622beb1c00cb73a24904e91e0a5476da37267edb7ae93e926bf0bf8b96",
         "skills": 7,
         "tools": {
           ".claude-plugin/agents/bootstrap_orchestrator.md": [
@@ -934,6 +934,33 @@
             "Glob",
             "Grep",
             "Read"
+          ],
+          "agents/bootstrap_orchestrator.md": [
+            "*"
+          ],
+          "agents/codebase_details.md": [
+            "*"
+          ],
+          "agents/comprehension.md": [
+            "*"
+          ],
+          "agents/design_critic.md": [
+            "*"
+          ],
+          "agents/implementation_readiness.md": [
+            "*"
+          ],
+          "agents/structural.md": [
+            "*"
+          ],
+          "agents/style.md": [
+            "*"
+          ],
+          "agents/synthesizer.md": [
+            "*"
+          ],
+          "agents/zoom_out.md": [
+            "*"
           ],
           "skills/egm-bootstrap": [],
           "skills/egm-brainstorm": [],

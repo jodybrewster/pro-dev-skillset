@@ -13,7 +13,7 @@ CLAUDE.md, AGENTS.md) may be a symlink when it resolves to a regular file inside
 repo; it is listed once under its resolved path. A violation exits 2 with the entry named.
 `init` is the only writer: it creates files under .egm/ and never overwrites.
 The sha256 of each custom reviewer and standard is kept in <git dir>/egm-seen.json
-so a changed file is listed before the run. `.egm/goldfish.json` is tracked the same way.
+so a changed file is listed before the run with its claimed author, commit and signature status. `.egm/goldfish.json` is tracked the same way.
 `resolve` prints `acceptToken`, the sha256 of the printed newOrChanged list; `--accept`
 records the files only when `--token` matches the current list. Standard library only, no network.
 """
@@ -289,19 +289,28 @@ def clean(value: str) -> str:
     return text if len(text) <= FIELD_CAP else text[: FIELD_CAP - 3] + "..."
 
 
-def last_commit(repo: str, rel: str) -> tuple[str, str]:
-    """Return (author as 'name <email>', short hash) of the last commit touching rel."""
+# git's %G? letter to a plain word. Only G counts as good.
+SIGNATURE = {"G": "good", "N": "unsigned", "B": "bad", "R": "bad", "X": "bad", "Y": "bad", "U": "unknown", "E": "unknown"}
+
+
+def last_commit(repo: str, rel: str) -> tuple[str, str, str]:
+    """Return (author as 'name <email>', short hash, signature) of the last commit touching rel.
+
+    The author is what the commit claims; anyone can set it. signature is good, unsigned,
+    bad or unknown (from git's %G?), and only good says anything about who made the commit.
+    """
     try:
         out = subprocess.run(
-            ["git", "log", "-1", "--format=%an%x00%ae%x00%h", "--", rel],
+            ["git", "log", "-1", "--format=%an%x00%ae%x00%h%x00%G?", "--", rel],
             cwd=repo, capture_output=True, text=True, timeout=10,
         )
     except (OSError, subprocess.SubprocessError):
-        return "unknown", ""
+        return "unknown", "", "unknown"
     parts = out.stdout.strip("\n").split("\0") if out.returncode == 0 else []
-    if len(parts) != 3 or not parts[0]:
-        return "uncommitted", ""
-    return clean(f"{clean(parts[0])} <{clean(parts[1])}>"), clean(parts[2])
+    if len(parts) != 4 or not parts[0]:
+        return "uncommitted", "", "unsigned"
+    return (clean(f"{clean(parts[0])} <{clean(parts[1])}>"), clean(parts[2]),
+            SIGNATURE.get(parts[3].strip(), "unknown"))
 
 
 def token_for(changed: list) -> str:
@@ -370,8 +379,8 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     changed = []
     for p in custom:
         if seen.get(p) != hashes[p]:
-            author, commit = last_commit(repo, p)
-            changed.append({"path": clean(p), "author": author, "commit": commit, "sha256": hashes[p]})
+            author, commit, signature = last_commit(repo, p)
+            changed.append({"path": clean(p), "author": author, "commit": commit, "signature": signature, "sha256": hashes[p]})
     if args.accept:
         if not args.token:
             raise Refuse("--accept needs --token <acceptToken from the previous resolve>")
