@@ -293,24 +293,34 @@ def clean(value: str) -> str:
 SIGNATURE = {"G": "good", "N": "unsigned", "B": "bad", "R": "bad", "X": "bad", "Y": "bad", "U": "unknown", "E": "unknown"}
 
 
-def last_commit(repo: str, rel: str) -> tuple[str, str, str]:
-    """Return (author as 'name <email>', short hash, signature) of the last commit touching rel.
+def last_commit(repo: str, rel: str) -> tuple[str, str, str, str]:
+    """Return (claimed author, short hash, signature, signer) of the last commit touching rel.
 
     The author is what the commit claims; anyone can set it. signature is good, unsigned,
-    bad or unknown (from git's %G?); only good says anything about who made the commit.
+    bad, unknown or n/a (from git's %G?). A good signature says which key signed, shown as
+    signer; git never checks the signer against the claimed author. n/a means the file in
+    the working tree differs from that commit, so its signature says nothing about it.
     """
     try:
         out = subprocess.run(
-            ["git", "log", "-1", "--format=%an%x00%ae%x00%h%x00%G?", "--", rel],
+            ["git", "log", "-1", "--format=%an%x00%ae%x00%h%x00%G?%x00%GS", "--", rel],
             cwd=repo, capture_output=True, text=True, timeout=10,
         )
     except (OSError, subprocess.SubprocessError):
-        return "unknown", "", "unknown"
+        return "unknown", "", "unknown", ""
     parts = out.stdout.strip("\n").split("\0") if out.returncode == 0 else []
-    if len(parts) != 4 or not parts[0]:
-        return "uncommitted", "", "unsigned"
-    return (clean(f"{clean(parts[0])} <{clean(parts[1])}>"), clean(parts[2]),
-            SIGNATURE.get(parts[3].strip(), "unknown"))
+    if len(parts) != 5 or not parts[0]:
+        return "uncommitted", "", "unsigned", ""
+    signature = SIGNATURE.get(parts[3].strip(), "unknown")
+    try:
+        dirty = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", rel],
+                               cwd=repo, capture_output=True, timeout=10).returncode != 0
+    except (OSError, subprocess.SubprocessError):
+        dirty = True
+    if dirty:
+        signature = "n/a"
+    signer = clean(parts[4]) if signature == "good" else ""
+    return (clean(f"{clean(parts[0])} <{clean(parts[1])}>"), clean(parts[2]), signature, signer)
 
 
 def token_for(changed: list) -> str:
@@ -379,8 +389,9 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     changed = []
     for p in custom:
         if seen.get(p) != hashes[p]:
-            author, commit, signature = last_commit(repo, p)
-            changed.append({"path": clean(p), "author": author, "commit": commit, "signature": signature, "sha256": hashes[p]})
+            author, commit, signature, signer = last_commit(repo, p)
+            changed.append({"path": clean(p), "author": author, "commit": commit, "signature": signature,
+                            "signer": signer, "sha256": hashes[p]})
     if args.accept:
         if not args.token:
             raise Refuse("--accept needs --token <acceptToken from the previous resolve>")

@@ -268,15 +268,17 @@ const CASES = [
       const pol = first.newOrChanged.find((e) => e.path === ".egm/reviewers/policy.md");
       if (pol.author !== "Ada Author <ada@example.com>" || !/^[0-9a-f]{7,}$/.test(pol.commit)) return { ok: false, detail: `author ${pol.author} commit ${pol.commit}` };
       if (pol.signature !== "unsigned") return { ok: false, detail: `signature ${pol.signature}, wanted unsigned for a plain commit` };
-      if (sorted(Object.keys(pol)).join() !== sorted(["path", "author", "commit", "signature", "sha256"]).join()) return { ok: false, detail: `keys ${Object.keys(pol)}` };
+      if (sorted(Object.keys(pol)).join() !== sorted(["path", "author", "commit", "signature", "signer", "sha256"]).join()) return { ok: false, detail: `keys ${Object.keys(pol)}` };
       const acc = s.run(s.resolveArgs("spec", SPEC, ["--accept", "--token", first.acceptToken]));
       if (acc.code !== 0) return { ok: false, detail: `accept exit ${acc.code}: ${acc.err}` };
       if (existsSync(join(s.repo, ".egm", "egm-seen.json")) || !existsSync(join(s.repo, ".git", "egm-seen.json"))) return { ok: false, detail: "seen file is not in the git dir" };
       const again = s.run(s.resolveArgs("spec", SPEC)).json;
       if (again.newOrChanged.length !== 0) return { ok: false, detail: `after accept ${JSON.stringify(again.newOrChanged)}` };
       writeFileSync(join(s.repo, ".egm", "reviewers", "policy.md"), "edited persona\n");
-      const edited = s.run(s.resolveArgs("spec", SPEC)).json.newOrChanged.map((e) => e.path);
-      return edited.join() === ".egm/reviewers/policy.md" ? { ok: true } : { ok: false, detail: `after edit ${JSON.stringify(edited)}` };
+      const editedList = s.run(s.resolveArgs("spec", SPEC)).json.newOrChanged;
+      const edited = editedList.map((e) => e.path);
+      if (edited.join() !== ".egm/reviewers/policy.md") return { ok: false, detail: `after edit ${JSON.stringify(edited)}` };
+      return editedList[0].signature === "n/a" ? { ok: true } : { ok: false, detail: `signature ${editedList[0].signature}, wanted n/a for a file edited after its commit` };
     },
   },
   {
