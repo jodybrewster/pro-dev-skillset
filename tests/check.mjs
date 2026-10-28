@@ -6,7 +6,7 @@
 //   node tests/check.mjs versions   # run one check by name
 //
 // Exit 0 = all checks pass (warnings allowed). Exit 1 = at least one failure.
-// This is the same gate CI runs; it also ships (in spirit) as /pro-dev-doctor
+// This is the same gate CI runs; it also ships (in spirit) as /pro-dev check
 // for the installed marketplace. See tests/README.md.
 
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
@@ -22,6 +22,7 @@ import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 import { runDocHookCases } from "./doc-hooks.mjs";
+import { runProDevCases } from "./pro-dev.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -45,7 +46,15 @@ const EXTERNAL = new Set([
   "web-design-engineer", "tastemaker", "ideagram", "video-to-superprompt",
 ]);
 // Built-in or shipped slash commands the router references with a leading /.
-const COMMANDS = new Set(["code-review", "simplify", "qa-engine", "design-engine", "lavish-engine", "validate", "document", "api-docs", "design-skills", "critique-screen", "taste-skills", "next-skills", "security-audit", "security-review", "threat-model"]);
+// Claude-only dependency aggregators: pro-dev-starter, and the one-release pro-starter shim that depends on it.
+// Bridge skills: each routes to an engine installed outside the marketplace.
+const BRIDGES = [
+  "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
+  "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
+  "next-skills-bridge",
+];
+const CLAUDE_ONLY_AGGREGATORS = new Set(["pro-starter", "pro-dev-starter"]);
+const COMMANDS = new Set(["code-review", "simplify", "pro-dev", "validate", "document", "api-docs", "critique-screen", "security-audit", "security-review", "threat-model"]);
 // Wikilink targets that resolve outside the skill set (bridged routers).
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
@@ -255,7 +264,7 @@ checks["codex-manifests"] = (m) => {
     const codexMarketplace = readJSON(codexMarketplacePath);
     const entries = new Map((codexMarketplace.plugins ?? []).map((p) => [p.name, p]));
     for (const p of m.plugins) {
-      if (p.name === "pro-starter") continue; // Claude dependency aggregator; Codex installs concrete plugins.
+      if (CLAUDE_ONLY_AGGREGATORS.has(p.name)) continue; // Claude dependency aggregators; Codex installs concrete plugins.
       const entry = entries.get(p.name);
       if (!entry) failures.push(`${p.name}: missing from .agents/plugins/marketplace.json`);
       else if (entry.source?.path !== `./plugins/${p.name}`)
@@ -264,7 +273,7 @@ checks["codex-manifests"] = (m) => {
   }
 
   for (const p of m.plugins) {
-    if (p.name === "pro-starter") continue;
+    if (CLAUDE_ONLY_AGGREGATORS.has(p.name)) continue;
     if (!p.codexManifest) {
       failures.push(`${p.name}: missing .codex-plugin/plugin.json`);
       continue;
@@ -343,7 +352,7 @@ checks.router = (m) => {
   // inverse drift: shipped skills that the router never mentions
   for (const p of m.plugins) {
     // skip plugins the router references by family/abbreviation, not exact slug
-    if (["pro-starter", "pro-nextjs", "pro-astro",
+    if (["pro-starter", "pro-dev-starter", "pro-nextjs", "pro-astro",
          "pro-data", "pro-design", "pro-spdd", "pro-research"].includes(p.name)) continue;
     for (const s of p.skills) {
       if (s.slug === "using-pro-dev") continue;
@@ -353,13 +362,15 @@ checks.router = (m) => {
   return { failures, warnings };
 };
 
-// pro-starter dependency integrity: all same-marketplace deps resolve, all
-// default-stack plugins are covered (opt-in plugins are explicitly excluded)
-checks["pro-starter"] = (m) => {
+// pro-dev-starter dependency integrity: all same-marketplace deps resolve, all
+// default-stack plugins are covered. Stack and method plugins (pro-nextjs,
+// pro-astro, pro-spdd, pro-legal) are opt-in; the pro-starter shim and
+// pro-dev-starter itself are never listed as their own dependency.
+checks["pro-dev-starter"] = (m) => {
   const failures = [], warnings = [];
-  const starter = m.plugins.find((p) => p.name === "pro-starter");
+  const starter = m.plugins.find((p) => p.name === "pro-dev-starter");
   if (!starter?.manifest) {
-    failures.push("pro-starter: missing .claude-plugin/plugin.json");
+    failures.push("pro-dev-starter: missing .claude-plugin/plugin.json");
     return { failures, warnings };
   }
   const deps = starter.manifest.dependencies ?? [];
@@ -370,14 +381,14 @@ checks["pro-starter"] = (m) => {
   // every same-marketplace dep must resolve to a real plugin
   for (const name of sameMktDeps) {
     if (!m.mpByName.has(name))
-      failures.push(`pro-starter: dependency "${name}" not found in marketplace`);
+      failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-spdd", "pro-legal", "pro-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
-      warnings.push(`pro-starter: "${p.name}" is in the marketplace but not in pro-starter dependencies`);
+      warnings.push(`pro-dev-starter: "${p.name}" is in the marketplace but not in pro-dev-starter dependencies`);
   }
   return { failures, warnings };
 };
@@ -721,25 +732,76 @@ checks["eval-coverage"] = (m) => {
   return { failures, warnings };
 };
 
-// bridge skills name an install command that must exist as a command file
+// bridge skills send the person to /pro-dev, which installs their engine from
+// the registry in plugins/pro-core/registry/engines.json
 checks.bridges = (m) => {
   const failures = [], warnings = [];
-  const commandFiles = new Set();
-  for (const p of m.plugins)
-    for (const f of (isDir(join(p.dir, "commands")) ? readdirSync(join(p.dir, "commands")) : []))
-      if (f.endsWith(".md")) commandFiles.add(f.replace(/\.md$/, ""));
-  const bridges = [
-    "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
-    "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
-    "next-skills-bridge",
-  ];
   for (const p of m.plugins) for (const s of p.skills) {
-    if (!bridges.includes(s.slug)) continue;
+    if (!BRIDGES.includes(s.slug)) continue;
     const body = readFileSync(s.path, "utf8");
-    const cmds = [...body.matchAll(/\/([a-z][a-z0-9-]+)\b/g)].map((x) => x[1]);
-    const named = cmds.find((c) => commandFiles.has(c));
-    if (!named) warnings.push(`bridge ${p.name}/${s.slug}: no install command found among ${[...new Set(cmds)].join(", ") || "(none)"}`);
+    if (!/\/pro-dev\b/.test(body))
+      failures.push(`bridge ${p.name}/${s.slug}: does not name /pro-dev`);
   }
+  return { failures, warnings };
+};
+
+// engine registry: every bridge has a row, every row is well formed and owned by a real plugin
+checks.registry = (m) => {
+  const failures = [], warnings = [];
+  const regPath = join(ROOT, "plugins", "pro-core", "registry", "engines.json");
+  if (!existsSync(regPath)) {
+    failures.push("plugins/pro-core/registry/engines.json missing");
+    return { failures, warnings };
+  }
+  let reg;
+  try { reg = readJSON(regPath); }
+  catch (e) { failures.push(`engines.json: unparseable - ${e.message}`); return { failures, warnings }; }
+  if (!Number.isInteger(reg.version)) failures.push("engines.json: version must be an integer");
+  if (!Array.isArray(reg.engines)) { failures.push("engines.json: engines must be an array"); return { failures, warnings }; }
+  const pluginNames = new Set(m.plugins.map((p) => p.name));
+  const seen = new Set();
+  const covered = new Set();
+  const argvOk = (a) => Array.isArray(a) && a.length > 0 && a.every((x) => typeof x === "string");
+  for (const row of reg.engines) {
+    const id = row?.id;
+    if (typeof id !== "string" || !id) { failures.push("engines.json: a row has no string id"); continue; }
+    if (seen.has(id)) failures.push(`engines.json: duplicate id "${id}"`);
+    seen.add(id);
+    if (!pluginNames.has(row.owner)) failures.push(`engines.json ${id}: owner "${row.owner}" is not a plugin in this marketplace`);
+    if (!["skills-cli", "npx", "claude-plugin"].includes(row.kind)) failures.push(`engines.json ${id}: kind "${row.kind}" is not skills-cli, npx or claude-plugin`);
+    if (typeof row.default !== "boolean") failures.push(`engines.json ${id}: default must be true or false`);
+    if (!row.detect || typeof row.detect !== "object") failures.push(`engines.json ${id}: detect is missing`);
+    for (const k of ["install", "update"])
+      if (!argvOk(row[k])) failures.push(`engines.json ${id}: ${k} must be an array of strings (no shell string)`);
+    if (!Array.isArray(row.bridges) || row.bridges.some((b) => typeof b !== "string")) {
+      failures.push(`engines.json ${id}: bridges must be an array of skill slugs`);
+      continue;
+    }
+    for (const b of row.bridges) {
+      if (!m.skillSlugs.has(b)) failures.push(`engines.json ${id}: bridge "${b}" is not a skill in this marketplace`);
+      covered.add(b);
+    }
+  }
+  for (const b of BRIDGES)
+    if (m.skillSlugs.has(b) && !covered.has(b)) failures.push(`bridge ${b} has no row in engines.json`);
+  return { failures, warnings };
+};
+
+// pro-core's /pro-dev script and nudge hook: case table in tests/pro-dev.mjs, run
+// with a fake claude and npx on PATH and a temp HOME. A missing python3 or git is a
+// warning-level skip.
+checks["pro-dev"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runProDevCases();
+  if (skipped) {
+    warnings.push(`pro-dev cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) {
+    failures.push("tests/pro-dev.mjs produced no cases to run");
+    return { failures, warnings };
+  }
+  for (const r of results) if (!r.ok) failures.push(`pro-dev ${r.id}: ${r.detail}`);
   return { failures, warnings };
 };
 
@@ -819,7 +881,7 @@ checks["sdlc-contract"] = () => {
   if (!ruleBlock.includes("Let the person describe the problem in their own words.")) failures.push("pro-ai-sdlc: commands/intent.md interview rules lost their first rule");
   const wantHeadings = ["## Problem", "## Proposed outcome", "## Affected users and systems", "## Constraints", "## Out of scope", "## Success looks like", "## Open questions", "## Evidence"];
   for (const h of wantHeadings) if (!intentT.split("\n").includes(h)) failures.push(`pro-ai-sdlc: templates/intent.md lost the exact heading line "${h}"`);
-  for (const [c, t] of [["spec", "spec.md"], ["plan", "plan.md"], ["review", "REVIEW.md"], ["sdlc-init", "REVIEW.md"]])
+  for (const [c, t] of [["spec", "spec.md"], ["plan", "plan.md"], ["review", "REVIEW.md"]])
     if (!(read(`commands/${c}.md`) ?? "").includes(`\${CLAUDE_PLUGIN_ROOT}/templates/${t}`)) failures.push(`pro-ai-sdlc: /${c} does not read templates/${t}`);
   // /execute: the gate and the env copy are scripts, Opus builds, and it never merges.
   const execC = read("commands/execute.md");

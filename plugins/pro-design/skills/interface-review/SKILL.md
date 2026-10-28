@@ -157,7 +157,7 @@ End with `Block` when any `HIGH` remains and `Approve` otherwise, leaving the re
 This file routes to other skills from the same collection (`better-accessibility`, `better-typography`, `better-colors`, `better-writing`).
 pro-design ships `interface-review`, `better-interface`, and `better-layout` from it; the rest are not vendored.
 Until they are installed, `better-interface` reports those domains as `Not reviewed` instead of guessing.
-Install any of them with `/design-skills install jakub <name>`, or all of them with `/design-skills install jakub`.
+The jakub collection is optional: answer yes when `/pro-dev install` or `/pro-dev update` asks about it to get these skills.
 
 ---
 

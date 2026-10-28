@@ -285,7 +285,7 @@ Tactical rules that serve these:
 
 This file names another skill from the same collection (`prototype`).
 It is not shipped in pro-design.
-Install it with `/design-skills install emil prototype`.
+It comes with the emil collection, which is optional: answer yes when `/pro-dev install` or `/pro-dev update` asks about it.
 
 ---
 

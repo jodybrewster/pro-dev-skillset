@@ -51,7 +51,7 @@ plugins/<name>/
   LICENSE                        # required when content is forked
 ```
 
-The `pro-starter` meta-plugin intentionally has no `skills/` - it exists as a dependency aggregator.
+The `pro-dev-starter` meta-plugin intentionally has no `skills/` - it exists as a dependency aggregator.
 Forked content keeps its footer and its row in [docs/licenses.md](./docs/licenses.md).
 
 ## Verifying your work
@@ -83,7 +83,7 @@ Expected output, from a real run on 2026-10-16 (the 34 warnings are skills and a
 Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin, 15 times.
 CI runs these automatically on PR (see `.github/workflows/`).
 All must pass before tagging.
-The full install test (demo app, `pro-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
+The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
 
 ## Things Claude gets wrong
 

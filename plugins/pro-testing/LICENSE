@@ -9,7 +9,7 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
   Copyright (c) 2026 Peter Knezek
 
 It also BRIDGES to the following MIT-licensed library without vendoring any of its
-content. The `qa-suite` skill is an original pointer and `/qa-engine` installs the library
+content. The `qa-suite` skill is an original pointer and `/pro-dev install` installs the library
 in place via `npx skills add`; install and license terms are governed by the upstream repo:
 
 - petrkindlmann/qa-skills (https://github.com/petrkindlmann/qa-skills)

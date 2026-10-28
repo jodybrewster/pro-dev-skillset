@@ -43,6 +43,7 @@ import { spawnSync } from "node:child_process";
 const TARGETS = [
   {
     bridge: "taste-skills-bridge",
+    engine: "taste-skill",
     repo: "https://github.com/Leonxlnx/taste-skill",
     args: [],
     // The 13 install names the taste-skills-bridge skill documents. Keep in
@@ -65,6 +66,7 @@ const TARGETS = [
   },
   {
     bridge: "web-design-engineer-bridge",
+    engine: "garden",
     repo: "ConardLi/garden-skills",
     args: ["-s", "web-design-engineer"],
     expected: ["web-design-engineer"],
@@ -74,6 +76,7 @@ const TARGETS = [
   },
   {
     bridge: "mengto-skills-bridge",
+    engine: "mengto",
     repo: "MengTo/Skills",
     // MengTo/Skills has no top-level skills/ dir - skills live at
     // agent-skills/<group>/<name>/. The CLI discovers that nested layout
@@ -83,6 +86,7 @@ const TARGETS = [
   },
   {
     bridge: "tastemaker-bridge",
+    engine: "tastemaker",
     repo: "codeswithroh/tastemaker",
     // No -s filter and no --full-depth on purpose. At default depth the CLI
     // finds exactly one skill, `tastemaker`, and copies its folder whole -
@@ -105,6 +109,7 @@ const TARGETS = [
   },
   {
     bridge: "next-skills-bridge",
+    engine: "next-skills",
     // Point at the skills/ folder, not the repo root: the root also holds
     // maintainer-only skills under .agents/skills/. Keep in sync with the
     // catalog in plugins/pro-nextjs/skills/next-skills-bridge/SKILL.md.
@@ -125,6 +130,16 @@ const TARGETS = [
   },
 ];
 
+// Install argv come from the /pro-dev engine registry so this smoke test and
+// /pro-dev install can never drift apart.
+const REGISTRY = JSON.parse(readFileSync(new URL("../plugins/pro-core/registry/engines.json", import.meta.url), "utf8"));
+function engineArgv(id) {
+  const row = REGISTRY.engines.find((e) => e.id === id);
+  if (!row || !Array.isArray(row.install) || row.install[0] !== "npx")
+    throw new Error(`registry row ${id} missing or not an npx install`);
+  return row.install.slice(1);
+}
+
 const NETWORK_RE = /ENOTFOUND|ETIMEDOUT|ECONNRESET|network|getaddrinfo|EAI_AGAIN/i;
 
 function skipAll(reason) {
@@ -142,8 +157,10 @@ if (npxCheck.error) {
 // ── run one target in its own throwaway dir ─────────────────────────────────
 function runTarget(t) {
   const dir = mkdtempSync(join(tmpdir(), "bridge-install-smoke-"));
-  const argv = ["-y", "skills", "add", t.repo, "-a", "claude-code", "-y", ...t.args];
-  console.log(`\n── ${t.bridge}\n   npx ${argv.join(" ")}\n   -> ${dir}`);
+  // The argv is the registry row's own install command, so this proves what
+  // /pro-dev install runs. t.repo and t.args are kept only as documentation.
+  const argv = engineArgv(t.engine);
+  console.log(`\n── ${t.bridge} (${t.engine})\n   npx ${argv.join(" ")}\n   -> ${dir}`);
 
   const res = spawnSync("npx", argv, {
     cwd: dir,

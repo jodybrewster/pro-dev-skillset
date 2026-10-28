@@ -6,7 +6,7 @@ The whole loop works from Claude Code alone in any repo that has the plugin inst
 It is a Claude Code only plugin: its commands target Claude Code and make no promise for Codex.
 
 Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this one if present, the kit installed into a repo.
-`/sdlc-init` writes toward that shape, with one departure: `intent/<date>-<slug>/{intent,spec,plan}.md` live in one folder instead of flat `specs/` and `plans/`.
+`/pro-dev install` writes toward that shape, with one departure: `intent/<date>-<slug>/{intent,spec,plan}.md` live in one folder instead of flat `specs/` and `plans/`.
 
 ## The loop
 
@@ -19,7 +19,7 @@ Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this o
 | Decision | `/adr` | an ADR for a decision with no change behind it |
 | Review | `/review` | findings, nothing on disk |
 | PR | `/pr-babysit` | fixes on the PR branch, never a merge |
-| Setup | `/sdlc-init` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
+| Setup | `/pro-dev install` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
 
 ## Templates
 

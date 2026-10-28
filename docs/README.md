@@ -10,7 +10,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [version-bump-law.md](./version-bump-law.md): the version-bump law in detail.
 - [hook-loading.md](./hook-loading.md): the hook-loading law in detail, including blocking on `Stop`.
 - [codex-parity.md](./codex-parity.md): Codex parity for skills and agents in detail.
-- [install-test.md](./install-test.md): the full install test with the demo app, `pro-starter` and Codex.
+- [install-test.md](./install-test.md): the full install test with the demo app, `pro-dev-starter` and Codex.
 - [troubleshooting.md](./troubleshooting.md): symptoms and fixes when a skill, hook or dependency misbehaves.
 - [private-repo.md](./private-repo.md): what changes because the repo is private.
 

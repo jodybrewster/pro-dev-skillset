@@ -1,6 +1,6 @@
 ---
 name: mengto-skills-bridge
-description: Bridge to MengTo/Skills, a 130-skill technique library for scroll-driven and immersive web design - cinematic scroll storytelling, GSAP ScrollTrigger and Lenis motion systems, Three.js/WebGL scroll worlds, shader and particle backgrounds, cursor trails, dozens of named style recipes, plus workflow skills such as video-to-superprompt, which turns a screen recording into a prompt. Use when the ask names a scroll story, an immersive effect, a technique or style recipe from this collection, turning a reference video into a prompt, optimizing web animations, or Meng To by name. This is a BRIDGE (not vendored); install via the /design-skills command. build-awwwards-quality-sites (vendored here) is the principles layer, pro-motion's gsap and hyperframes are for hand-written timelines, animate for functional product UI motion.
+description: Bridge to MengTo/Skills, a 130-skill technique library for scroll-driven and immersive web design - cinematic scroll storytelling, GSAP ScrollTrigger and Lenis motion systems, Three.js/WebGL scroll worlds, shader and particle backgrounds, cursor trails, dozens of named style recipes, plus workflow skills such as video-to-superprompt, which turns a screen recording into a prompt. Use when the ask names a scroll story, an immersive effect, a technique or style recipe from this collection, turning a reference video into a prompt, optimizing web animations, or Meng To by name. This is a BRIDGE (not vendored); install via the /pro-dev command. build-awwwards-quality-sites (vendored here) is the principles layer, pro-motion's gsap and hyperframes are for hand-written timelines, animate for functional product UI motion.
 ---
 
 # mengto-skills-bridge
@@ -53,7 +53,7 @@ These are representative, grouped by theme.
 2. **Check whether that skill is installed.**
    Each lands in `~/.claude/skills/<install-name>/` (user scope) or `.claude/skills/<install-name>/` (project scope).
    - **If present:** follow that skill's `SKILL.md`.
-   - **If absent:** tell the user this is a bridge and the skill is not installed, then get it in place with **`/design-skills install mengto <install-name>`**.
+   - **If absent:** tell the user this is a bridge and the skill is not installed, then get it in place with **`/pro-dev install`** (answer yes when it asks about the mengto collection).
      Do not half-do the work here.
      Offer `build-awwwards-quality-sites` or a pro-motion skill in the meantime if the user wants to keep moving.
 3. **Defer to the upstream skill for the actual work.**
@@ -65,12 +65,13 @@ Most web-design skills need only the project's own toolchain plus the library th
 
 ## Keeping it installed and current
 
-Use the **`/design-skills`** command (in this plugin):
+Use the **`/pro-dev`** command (in pro-core).
+The mengto collection is optional: `/pro-dev install` and `/pro-dev update` install it when you answer yes.
 
-- `/design-skills check mengto` - report which install names are present and at which scope, and diff against the live upstream skill list.
-- `/design-skills install mengto <install-name>` - install one skill.
+- `/pro-dev check` - report which install names are present and at which scope, and diff against the live upstream skill list.
+- `/pro-dev install` - install the collection skills.
   Installing all 130 is possible and almost never what you want.
-- `/design-skills update mengto <install-name>` - re-run the install; the newer files replace the older ones in place.
+- `/pro-dev update` - re-run the install; the newer files replace the older ones in place.
 
 ## Why a bridge, not a fork
 

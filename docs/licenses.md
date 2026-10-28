@@ -84,7 +84,8 @@ The three skills first adapted from vercel-labs/next-skills, a repository with n
 | pro-legal | original | 9ee43b0 (PR 48); code search for distinctive phrases finds only this repo; no shared eight-word sequence with VoltAgent legal-advisor or anthropics/knowledge-work-plugins legal skills |
 | pro-motion | original | c4460d3 (2026-06-23), added whole; overlap with greensock/gsap-skills, remotion-dev/skills and heygen-com/hyperframes is code fragments only; the `hyperframes` skill covers Framer Motion and shares only a name with HeyGen's HyperFrames |
 | pro-research | original | ef447db (2026-06-02); agent names match langchain-ai company-researcher and people-researcher but no text is shared |
-| pro-starter | original | a dependency aggregator and one `/pro-starter` command; f0887bd and c19635c |
+| pro-dev-starter | original | a dependency aggregator, renamed from pro-starter; f0887bd and c19635c |
+| pro-starter | original | a deprecated shim that depends on pro-dev-starter |
 
 Original skills inside plugins that also ship forked content: pro-core `using-pro-dev`; pro-design `motion`, `stitch-skill` and `taste-skill`; pro-nextjs `shadcn`; pro-quality `user-validation`.
 Their footers say `Original skill for pro-dev-skillset`, except `using-pro-dev` and `user-validation`, which the plugin LICENSE names as original.

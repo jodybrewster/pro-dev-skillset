@@ -352,7 +352,7 @@ def main(argv: list[str]) -> int:
     if "--help" in argv or "-h" in argv:
         print(__doc__.strip())
         return 0
-    # /dream status and /pro-dev-doctor both shell out to --status by name, so a
+    # /dream status and /pro-dev check both shell out to --status by name, so a
     # typo has to fail instead of falling through to the default report.
     unknown = [arg for arg in argv if arg not in KNOWN_FLAGS]
     if unknown:

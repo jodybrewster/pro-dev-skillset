@@ -48,4 +48,4 @@ This lets Mieruka surface live progress to clients - saved stories, REASONS canv
 
 The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins).
 `pro-legal` is opt-in too.
-The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.
+The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.

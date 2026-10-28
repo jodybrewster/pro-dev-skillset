@@ -12,7 +12,7 @@ So: **every content change requires a version bump**, and the bump MUST happen i
 2. `plugins/<plugin>/.codex-plugin/plugin.json` → matching `version` when the plugin is available in Codex
 3. `.claude-plugin/marketplace.json` → matching entry's `version`
 
-If a meta-plugin (`pro-starter`) depends on a bumped plugin, also bump the meta-plugin and its marketplace entry so installers re-resolve dependencies.
+If a meta-plugin (`pro-dev-starter`) depends on a bumped plugin, also bump the meta-plugin and its marketplace entry so installers re-resolve dependencies.
 
 ### Constraint cascade
 
@@ -51,6 +51,7 @@ Tagging resumed in October 2026, so after the PR merges each bumped plugin is ta
 # Validate the whole marketplace AND each plugin in strict mode
 claude plugin validate . --strict
 claude plugin validate plugins/pro-core --strict
+claude plugin validate plugins/pro-dev-starter --strict
 claude plugin validate plugins/pro-starter --strict
 ```
 
@@ -102,7 +103,7 @@ Check these once a quarter too:
 - [agents-inc/skills](https://github.com/agents-inc/skills) - `shadcn-ui-composition`
 
 Bridged engines are deliberately absent from this list.
-`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, and `taste-skills-bridge` vendor nothing, and `/design-skills check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
+`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, and `taste-skills-bridge` vendor nothing, and `/pro-dev check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
 
 `pro-security` adapts the `cso` skill from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT) into `security-audit` (+ `phases.md`, `false-positives.md`, `report-format.md`) and draws on it for `security-architect`.
 Check upstream `cso/SKILL.md` once a quarter for new phases, exclusions or precedents worth porting.

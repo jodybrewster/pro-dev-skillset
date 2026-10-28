@@ -4,39 +4,30 @@
 # Usage (from inside a project dir):
 #   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 #
-# (gh is required because pro-dev-skillset is a private repo — raw.github
+# (gh is required because pro-dev-skillset is a private repo - raw.github
 # URLs 404 without auth. gh uses your existing GitHub auth.)
 #
-# What it does:
+# What it does, in three steps:
 #   1. Writes .claude/settings.json from this repo's templates/project-settings.json
-#      (registers the pro-dev-skillset marketplace + enables pro-starter)
-#   2. Optionally runs install-companions.sh before dependency resolution if
-#      --with-companions is passed (installs vercel + figma + playwright from
-#      claude-plugins-official explicitly)
-#   3. Installs pro-starter@pro-dev-skillset at project scope (cascades to the
-#      default stack: pro-core, pro-pdd, pro-execution, pro-quality,
-#      pro-nextjs, pro-astro, pro-design, pro-motion, pro-testing, pro-data, pro-research
+#      if it is absent (registers the pro-dev-skillset marketplace and enables
+#      pro-dev-starter)
+#   2. Installs pro-dev-starter@pro-dev-skillset at the chosen scope (cascades
+#      to the default stack: pro-core, pro-ai-sdlc, pro-pdd, pro-execution,
+#      pro-quality, pro-design, pro-motion, pro-testing, pro-data, pro-research
 #      and pro-security)
-#   4. Installs the bridge engines / project-local skills by default — lavish
-#      (behind plan review), impeccable (behind ui-ux-pro-max), and qa-skills
-#      (behind qa-suite). These are external npx packages / skills, not
-#      marketplace plugins, so they install here. (Mieruka is project-specific;
-#      run /init-mieruka in the project that needs it.)
+#   3. Prints the next step: run /pro-dev install in a Claude Code session,
+#      which installs the engines and project-local skills
+#
+# pro-nextjs and pro-astro are opt-in: install them by hand.
 #
 # Flags:
-#   --with-companions   Pre-install the cross-marketplace dependencies explicitly
-#   --no-engines        Skip step 4 (e.g. offline / CI with no network)
-#   --scope <s>         Install scope: user | project (default: project)
+#   --scope <s>   Install scope: user | project (default: project)
 
 set -euo pipefail
 
 SCOPE="project"
-WITH_COMPANIONS=0
-WITH_ENGINES=1
 while [ $# -gt 0 ]; do
   case "$1" in
-    --with-companions) WITH_COMPANIONS=1; shift ;;
-    --no-engines) WITH_ENGINES=0; shift ;;
     --scope) SCOPE="$2"; shift 2 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
@@ -60,44 +51,10 @@ fetch() {
   gh api "repos/jodybrewster/pro-dev-skillset/contents/$1" --jq '.content' | base64 -d
 }
 
-install_lavish_project_command() {
-  mkdir -p .claude/commands
-  cat > .claude/commands/lavish.md <<'LAVISH_COMMAND'
----
-description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /lavish <what to render>"
-argument-hint: "<what the artifact should show>"
-allowed-tools:
-  - "Bash(test -f .claude/skills/lavish/SKILL.md*)"
-  - "Bash(mkdir -p .lavish*)"
-  - "Bash(npx -y lavish-axi*)"
-  - "Bash(npx skills add kunchenguid/lavish-axi*)"
----
-
-Use Lavish as the review surface for `$ARGUMENTS`.
-
-First verify the project-local upstream skill exists at `.claude/skills/lavish/SKILL.md`. If it is missing, install it from the project root with:
-
-```bash
-npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish
-```
-
-Then follow `.claude/skills/lavish/SKILL.md` exactly:
-
-1. Read every relevant Lavish playbook before writing HTML, starting with `npx -y lavish-axi playbook plan` for plans.
-2. Create the artifact under `.lavish/` unless the user specified another location.
-3. Open or resume the review session with `npx -y lavish-axi <html-file>`.
-4. Poll for feedback with `npx -y lavish-axi poll <html-file>` and fix any reported layout warnings before asking the user to review.
-5. End the session with `npx -y lavish-axi end <html-file>` when review is finished.
-
-Lavish is the default review surface for substantive implementation plans, milestone plans, client-facing plans, decision matrices, diagrams, dense tables, code diffs, and reports. Keep short answers in plain text.
-LAVISH_COMMAND
-  echo "  • /lavish command installed at .claude/commands/lavish.md"
-}
-
 # 1. Drop the project-settings template
 mkdir -p .claude
 if [ -f .claude/settings.json ]; then
-  echo "warning: .claude/settings.json already exists — leaving it alone."
+  echo "warning: .claude/settings.json already exists - leaving it alone."
   echo "         If you want the pro-dev-skillset settings, fetch with:"
   echo "         gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d"
 else
@@ -105,51 +62,10 @@ else
   echo "wrote .claude/settings.json"
 fi
 
-# 2. Optional explicit cross-marketplace dependency install
-if [ $WITH_COMPANIONS -eq 1 ]; then
-  echo "Pre-installing official cross-marketplace dependencies..."
-  bash <(fetch templates/install-companions.sh) --scope "${SCOPE}"
-fi
+# 2. Install pro-dev-starter (cascades to all stack plugins)
+echo "Installing pro-dev-starter@pro-dev-skillset --scope ${SCOPE}..."
+claude plugin install pro-dev-starter@pro-dev-skillset --scope "${SCOPE}"
 
-# 3. Install pro-starter (cascades to all stack plugins)
-echo "Installing pro-starter@pro-dev-skillset --scope ${SCOPE}..."
-claude plugin install pro-starter@pro-dev-skillset --scope "${SCOPE}"
-
-# 4. Install the bridge engines / project-local skills (default ON; --no-engines
-#    to skip). These are external npx packages / skills the bridge skills route
-#    to, not marketplace plugins.
-#    Failures here are non-fatal — the stack is already installed, and the
-#    per-engine commands (/design-engine, /qa-engine) can finish the job later.
-if [ "$WITH_ENGINES" -eq 1 ]; then
-  echo
-  echo "Installing bridge engines / project-local skills (lavish, impeccable, qa-skills)..."
-  if command -v npx >/dev/null 2>&1; then
-    echo "  • lavish     (plan-review engine + project skill)"
-    npx --yes skills add kunchenguid/lavish-axi --skill lavish \
-      || echo "    ! lavish install failed — run /lavish-engine install later"
-    npx --yes skills add kunchenguid/lavish-axi --agent claude-code --skill lavish \
-      || echo "    ! lavish Claude Code skill install failed — run /lavish-engine install later"
-    install_lavish_project_command
-
-    echo "  • impeccable  (ui-ux-pro-max engine)"
-    npx --yes impeccable skills install \
-      || echo "    ! impeccable install failed — run /design-engine install later"
-
-    echo "  • qa-skills   (qa-suite engine)"
-    QA_SUBSET="qa-do qa-start playwright-automation visual-testing api-testing contract-testing test-reliability test-strategy risk-based-testing test-planning qa-project-context"
-    QA_SCOPE_FLAG=""
-    [ "$SCOPE" = "user" ] && QA_SCOPE_FLAG="-g"
-    # -y skips the scope/confirm prompt; --agent claude-code copies into
-    # .claude/skills (where Claude Code and /qa-engine check both look);
-    # --skill must come LAST since it greedily consumes the names that follow.
-    # shellcheck disable=SC2086
-    npx --yes skills add petrkindlmann/qa-skills -y $QA_SCOPE_FLAG --agent claude-code --skill $QA_SUBSET \
-      || echo "    ! qa-skills install failed — run /qa-engine install later"
-  else
-    echo "  ! npx not found — skipping engines. Install Node, then run /pro-starter engines."
-    install_lavish_project_command
-  fi
-fi
-
+# 3. Hand over to /pro-dev
 echo
-echo "Done. Verify with: claude plugin list   (and /pro-dev-doctor in a session)"
+echo "Done. Open Claude Code in this project and run /pro-dev install"

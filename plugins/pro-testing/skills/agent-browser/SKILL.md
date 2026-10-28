@@ -14,7 +14,7 @@ description: >-
   `playwright-automation` instead.
   Not for: writing a durable typed E2E test suite — use `playwright-automation`.
   Related: playwright-automation, visual-testing (bridged qa-skills — install via the
-  `qa-suite` skill / `/qa-engine`).
+  `qa-suite` skill / `/pro-dev`).
 ---
 
 <objective>
@@ -214,8 +214,8 @@ then `tab docs` to switch. Tab ids (`t1`, `t2`) are stable and never reused.
 
 ### Related Skills
 
-- **playwright-automation** — the committed-regression-suite axis: when you need a durable, typed, CI-run E2E *test suite* rather than ad-hoc interactive driving. Bridged qa-skill — install via the `qa-suite` skill / `/qa-engine`.
-- **visual-testing** — screenshot baselines and pixel-diff review; pairs with `agent-browser screenshot`. Bridged qa-skill — install via the `qa-suite` skill / `/qa-engine`.
+- **playwright-automation** — the committed-regression-suite axis: when you need a durable, typed, CI-run E2E *test suite* rather than ad-hoc interactive driving. Bridged qa-skill — install via the `qa-suite` skill / `/pro-dev`.
+- **visual-testing** — screenshot baselines and pixel-diff review; pairs with `agent-browser screenshot`. Bridged qa-skill — install via the `qa-suite` skill / `/pro-dev`.
 - **dogfood** — systematic exploratory app testing. CLI-bundled, **not a repo skill**: it ships with the agent-browser CLI itself (`agent-browser skills get dogfood`), so there is no `skills/dogfood/` in this plugin.
 
 ---

@@ -12,7 +12,7 @@ high-quality tests, debug failures, and maintain test suites efficiently.
 React/Next.js unit and component tests. For broader, framework-agnostic unit-testing guidance
 (Jest, pytest, test-doubles taxonomy, mutation testing with Stryker/mutmut, coverage threshold
 theory), the `qa-skills` library has a `unit-testing` skill — it's bridged, not vendored, so
-install the suite via `/qa-engine install` (see the `qa-suite` skill). For end-to-end browser
+install the suite via `/pro-dev install` (see the `qa-suite` skill). For end-to-end browser
 tests use the bridged `playwright-automation` (via `qa-suite`); for interactive one-off browser
 verification use `agent-browser`.
 

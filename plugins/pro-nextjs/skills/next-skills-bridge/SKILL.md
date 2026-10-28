@@ -1,6 +1,6 @@
 ---
 name: next-skills-bridge
-description: Bridge to the official Next.js agent skills in vercel/next.js (MIT) - adopt or optimize Cache Components ("use cache", cacheLife, static shell, blocking-prerender errors), adopt or tune Partial Prefetching, cut client bundle and initial-load JavaScript, and verify a change against a running next dev. Use when the task is one of those in a Next.js App Router app. This is a BRIDGE (not vendored); the skills install via the /next-skills command. For everyday App Router conventions use next-best-practices; for a version upgrade use next-upgrade.
+description: Bridge to the official Next.js agent skills in vercel/next.js (MIT) - adopt or optimize Cache Components ("use cache", cacheLife, static shell, blocking-prerender errors), adopt or tune Partial Prefetching, cut client bundle and initial-load JavaScript, and verify a change against a running next dev. Use when the task is one of those in a Next.js App Router app. This is a BRIDGE (not vendored); the skills install via the /pro-dev command. For everyday App Router conventions use next-best-practices; for a version upgrade use next-upgrade.
 ---
 
 # next-skills-bridge
@@ -40,7 +40,8 @@ The upstream skills hand off to each other by these names, so installing all six
 1. Check whether the skill is installed.
    Upstream skills land in `.claude/skills/<install-name>/` (project scope) or `~/.claude/skills/<install-name>/` (user scope).
    - If present: follow that skill's `SKILL.md`.
-   - If absent: tell the user this is a bridge and the skill is not installed, then run `/next-skills install` (all six) or `/next-skills install <install-name>`.
+   - If absent: tell the user this is a bridge and the skill is not installed, then run `/pro-dev install` (all six).
+
      The underlying command is `npx -y skills add https://github.com/vercel/next.js/tree/canary/skills -a claude-code -y`, with `-s <install-name>` added last for one skill.
      In the meantime, `next-best-practices` covers the basics and the Next.js docs are the reference.
 2. Defer to the upstream skill for the work.
@@ -48,17 +49,17 @@ The upstream skills hand off to each other by these names, so installing all six
 
 ## Keeping the skills installed and current
 
-Use the `/next-skills` command (in this plugin):
+Use the `/pro-dev` command (in pro-core):
 
-- `/next-skills check` - report which install names are present and where, and diff the catalog above against the live upstream tree.
-- `/next-skills install [name]` - install all six, or one.
-- `/next-skills update [name]` - re-run the install; the newer files replace the older ones in place.
+- `/pro-dev check` - report which install names are present and where, and diff the catalog above against the live upstream tree.
+- `/pro-dev install` - install all six.
+- `/pro-dev update` - re-run the install; the newer files replace the older ones in place.
 
 ## Why a bridge, not a fork
 
 pro-nextjs used to carry a `next-cache-components` skill adapted from vercel-labs/next-skills, a repository with no license file.
 The Next.js team now publishes its skills under MIT inside vercel/next.js, so pro-nextjs points at them instead of copying.
-The trade-off: the skills do not exist in a project until `/next-skills install` has run there.
+The trade-off: the skills do not exist in a project until `/pro-dev install` has run there.
 
 ---
 

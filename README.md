@@ -26,7 +26,11 @@ One-line bootstrap for Claude Code inside a fresh project:
 bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)
 ```
 
-This installs `pro-starter`, the meta-plugin that pulls the full default stack: `pro-core`, `pro-ai-sdlc`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-testing`, `pro-data`, `pro-research`, `pro-security` and the `pro-nextjs` and `pro-astro` framework plugins. Bridge engines, project-local skills, and the project `/lavish` command (`lavish`, `impeccable`, and `qa-skills`) are included by default so plan review, design, and QA workflows work out of the box.
+This writes the project settings and installs `pro-dev-starter`, the meta-plugin that pulls the default stack: `pro-core`, `pro-ai-sdlc`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-testing`, `pro-data`, `pro-research` and `pro-security`.
+It then tells you to run `/pro-dev install` in a Claude Code session, which installs the bridge engines and project-local skills (`lavish`, `impeccable` and `qa-skills`) from the engine registry.
+`pro-nextjs` and `pro-astro` are opt-in and installed by hand: `claude plugin install pro-nextjs@pro-dev-skillset`.
+After each `claude plugin update`, run `/pro-dev update` to bring the plugins and engines in line.
+`/pro-dev check` health-checks the install.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
 
@@ -141,13 +145,14 @@ mkdir -p .claude
 gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d > .claude/settings.json
 ```
 
-On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-starter` installs (which cascades to the rest).
+On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-dev-starter` installs (which cascades to the rest). Then run `/pro-dev install`.
 
 ### Ad-hoc, mid-development
 
 ```bash
 claude plugin marketplace add jodybrewster/pro-dev-skillset
-claude plugin install pro-starter@pro-dev-skillset --scope project
+claude plugin install pro-dev-starter@pro-dev-skillset --scope project
+# then, in a session: /pro-dev install
 ```
 
 ## What's here
@@ -160,13 +165,13 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 |---|---|---|
 | **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills`, [`dream`](./plugins/pro-core/skills/dream/SKILL.md) + `/dream` (consolidate this project's Claude Code auto-memory into a lean `MEMORY.md`), `/kaizen` (raise each project's bar one notch per run from a planning repo) | `pro-core` |
 | **Define** | `interview-me`, `idea-refine`, `brainstorming`, `adhd` (parallel divergent ideation, `/adhd`) | `pro-pdd` |
-| **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/lavish-engine`) | `pro-pdd` |
+| **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/pro-dev install`) | `pro-pdd` |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
-| **Build** | `emil-design-eng` (start here for product UI), `landing-page-design`, `build-awwwards-quality-sites`, `apple-design`, `animate` + `animation-vocabulary`, `screen-critique` (`/critique-screen`), `interface-review`, `better-interface`, `better-layout`, `perception-laws`, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition, `frontend-ui-engineering`†, `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/design-engine`), `taste-skills-bridge`◆ (via `/taste-skills`), `web-design-engineer-bridge`◆, `tastemaker-bridge`◆, `mengto-skills-bridge`◆ (all three via `/design-skills`) | `pro-design` |
+| **Build** | `emil-design-eng` (start here for product UI), `landing-page-design`, `build-awwwards-quality-sites`, `apple-design`, `animate` + `animation-vocabulary`, `screen-critique` (`/critique-screen`), `interface-review`, `better-interface`, `better-layout`, `perception-laws`, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition, `frontend-ui-engineering`†, `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/pro-dev install`), `taste-skills-bridge`◆ (via `/pro-dev install`), `web-design-engineer-bridge`◆, `tastemaker-bridge`◆, `mengto-skills-bridge`◆ (all three via `/pro-dev install`) | `pro-design` |
 | **Build** | drizzle (orm + schema), prisma, nextauth | `pro-data` |
 | **Build** | `context-engineering`†, `doubt-driven-development`† | `pro-core` |
-| **Verify** | `qa-suite`◆ → `qa-do`/`qa-start` + playwright/visual/api/contract/strategy/risk/planning (bridged qa-skills, via `/qa-engine`), `agent-browser` (interactive), `vitest` (unit), `storybook-interactions` | `pro-testing` |
+| **Verify** | `qa-suite`◆ → `qa-do`/`qa-start` + playwright/visual/api/contract/strategy/risk/planning (bridged qa-skills, via `/pro-dev install`), `agent-browser` (interactive), `vitest` (unit), `storybook-interactions` | `pro-testing` |
 | **Verify** | `systematic-debugging` | `pro-execution` |
 | **Verify** | `verification-before-completion` | `pro-quality` |
 | **Verify** | `user-validation`, `/validate` — hands *you* the checklist; a Stop hook suggests `/validate` after repo edits (`PRO_DEV_VALIDATION` = nudge, block or off) | `pro-quality` |
@@ -177,7 +182,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 
-*(opt-in)* = not in `pro-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/lavish-engine`, `impeccable-bridge` → `impeccable` via `/design-engine`).
+*(opt-in)* = not in `pro-dev-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/pro-dev install`, `impeccable-bridge` → `impeccable` via `/design-engine`).
 
 ### Plugins
 
@@ -185,7 +190,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Skill-bearing plugins:**
 
-- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/execute` (build an approved plan in its own worktree and open the PR), `/review`, `/pr-babysit` and `/sdlc-init`, the intent, spec, plan and REVIEW templates, the `researcher`, `verifier`, `simplifier` and `reviewer` agents, and warn-mode hooks for protected tests, plan drift and production actions.
+- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/execute` (build an approved plan in its own worktree and open the PR), `/review` and `/pr-babysit`, with repo setup for the loop in `/pro-dev install` (`pro-core`), the intent, spec, plan and REVIEW templates, the `researcher`, `verifier`, `simplifier` and `reviewer` agents, and warn-mode hooks for protected tests, plan drift and production actions.
 - **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/gh` GitHub workflow command, `dream` memory consolidation, and safety/parallelism hooks.
   `dream` (forked from [`grandamenium/dream-skill`](https://github.com/grandamenium/dream-skill), MIT) reads this project's Claude Code auto-memory at `~/.claude/projects/<project-slug>/memory/`, scans the project's session transcripts for corrections, decisions, preferences, and patterns, merges what it finds into the memory files, and rebuilds `MEMORY.md` as a lean index under 200 lines.
   Run it with `/dream`; `/dream dry-run` previews the proposed merges, rewrites, and deletions without writing, and `/dream status` reports the timer.
@@ -195,7 +200,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   Both hooks are silent no-ops when the project has no auto-memory directory, when there are no memory files, when disabled, or when consolidation is not yet due.
   The auto-trigger deliberately does not spawn a background agent.
   Upstream's `Stop` hook launched a detached `nohup claude -p ... --allowedTools "Read,Write,Edit,Bash,Glob,Grep" &`, an unsupervised agent with write access across every project on the machine; this fork replaces that with flag-on-exit plus nudge-at-next-session-start, so consolidation always runs inside a real session the user is present for.
-  `dream` ships inside `pro-core`, so every `pro-starter` install picks it up with no extra step.
+  `dream` ships inside `pro-core`, so every `pro-dev-starter` install picks it up with no extra step.
   `/kaizen` raises the bar one notch per run from a planning repo (a repo holding `STATUS.md` and `coverage.md`; `/kaizen init <repo-path> ...` scaffolds one): it judges each tracked project against its own profile in `kaizen/profiles.md`, red-teams it, applies at most one reversible improvement, briefs the rest and writes a dated ledger plus an HTML report with the coverage matrix.
 - **`pro-execution`** — execution discipline skills forked from [obra/superpowers](https://github.com/obra/superpowers): TDD, systematic debugging, git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
 - **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (with reusable reviewer prompt), receiving code review, verification-before-completion, plus the original `user-validation` handoff. A `Stop` hook watches for sessions that wrote files inside the repo and ends the turn with one line suggesting `/validate`. `/validate` hands you a checklist — what changed, what was actually verified, and the concrete steps you should check on your end — written to `.pro-dev/validation/latest.md` and echoed in chat. Set `PRO_DEV_VALIDATION` in the `env` block of `.claude/settings.json` to `off` to silence the hook or `block` to have it block the stop once and require the checklist. Conversation-only turns and writes outside the repo produce nothing. Ships three documentation subagents — `technical-writer` (release notes, migration guides, README prose), `documentation-engineer` (doc drift, broken setup paths, structure), and `api-documenter` (references built from the real handlers, schemas, and serializers) — reachable via `/document` and `/api-docs`. All three are constrained to write only what they can trace to a file they opened. Codex counterparts ship as `.toml` under `.codex-plugin/agents/`. A doc-freshness gate blocks `git push` when code changed but docs did not, routing you into `/document` rather than leaving a dead end, and an API-contract hook nudges `api-documenter` when an OpenAPI, GraphQL, or proto file changes. Pairs with the optional `playwright@claude-plugins-official` companion.
@@ -204,11 +209,11 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   Motion: `animate` adds or refines animation on a site that already exists and decides what should move at all, `animation-vocabulary` turns "snappy but not bouncy" into exact easing, duration, and spring terms, and the older `motion` (Framer Motion implementation and discipline) and `motion-system` skills still cover implementation and token-level motion scales.
   Review and fix: `screen-critique` with the `/critique-screen` command judges a rendered screen through seven critique lenses, and `perception-laws` covers Gestalt grouping, Von Restorff, and visual hierarchy - both from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT). `interface-review` reviews the UI changes in a PR, branch, or working tree and flags regressions, `better-interface` is the holistic pass that consolidates the `better-*` family into one ranked verdict (any domain whose skill is not installed comes back as `Not reviewed`), and `better-layout` fixes spacing, alignment, and grouping to the pixel - all three from [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (MIT). `accessibility-audit` (WCAG 2.2 POUR) rounds it out.
   Systems: `design-token` and `typography-scale` (Owl-Listener/designer-skills), `shadcn-ui-composition` with OKLCH theming, cva variants, compound components, and Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT), `stitch-skill` (create/update `DESIGN.md`), and `taste-skill` (a targeted visual polish pass).
-  Bridges (not vendored): `impeccable-bridge` routes to the standalone `impeccable` engine via `/design-engine`; `taste-skills-bridge` routes to [`Leonxlnx/taste-skill`](https://github.com/Leonxlnx/taste-skill) via `/taste-skills`; `web-design-engineer-bridge` routes to [`ConardLi/garden-skills`](https://github.com/ConardLi/garden-skills) `web-design-engineer`, which grounds a design in real references, ships style recipes for Apple/Linear/Vercel/Stripe and friends, and scores the result so you can iterate against a number; `tastemaker-bridge` routes to [`codeswithroh/tastemaker`](https://github.com/codeswithroh/tastemaker), which extracts tokens from a reference image's actual pixels with scripts, locks that style across a project, and gates the usual AI slop (needs Python 3); `mengto-skills-bridge` routes to the full [`MengTo/Skills`](https://github.com/MengTo/Skills) library of 130 skills - scroll storytelling, WebGL/shader/3D effects, style recipes, and video-to-superprompt.
-  The last three install with `/design-skills [check|install|update] [collection] [skill]` (collection aliases: emil, jakub, garden, mengto, tastemaker, elaya, owl), which also pulls the non-vendored remainder of every collection.
+  Bridges (not vendored): `impeccable-bridge` routes to the standalone `impeccable` engine via `/pro-dev install`; `taste-skills-bridge` routes to [`Leonxlnx/taste-skill`](https://github.com/Leonxlnx/taste-skill) via `/pro-dev install`; `web-design-engineer-bridge` routes to [`ConardLi/garden-skills`](https://github.com/ConardLi/garden-skills) `web-design-engineer`, which grounds a design in real references, ships style recipes for Apple/Linear/Vercel/Stripe and friends, and scores the result so you can iterate against a number; `tastemaker-bridge` routes to [`codeswithroh/tastemaker`](https://github.com/codeswithroh/tastemaker), which extracts tokens from a reference image's actual pixels with scripts, locks that style across a project, and gates the usual AI slop (needs Python 3); `mengto-skills-bridge` routes to the full [`MengTo/Skills`](https://github.com/MengTo/Skills) library of 130 skills - scroll storytelling, WebGL/shader/3D effects, style recipes, and video-to-superprompt.
+  The last three install with `/pro-dev install`, which also pulls the non-vendored remainder of every collection.
   The bridge trade-off is worth stating plainly: a bridged engine does nothing in a project until it has been installed there, so run the install command before you rely on one.
   Pairs with the optional `figma@claude-plugins-official` companion for Figma-MCP integration.
-- **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via the `/qa-engine` command (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Pairs with the optional `playwright@claude-plugins-official` companion.
+- **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via `/pro-dev install` (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Pairs with the optional `playwright@claude-plugins-official` companion.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-security`** - the Security phase, in the default stack.
   `security-architect` challenges a specific idea, plan, spec or diff: it restates the plan as a system, draws the trust boundaries, names the unstated assumptions and the attack that breaks each, and returns a `## Security challenge` section to fold into the plan (`/threat-model`, plus a read-only `security-architect` subagent for a fresh-context pass).
@@ -218,7 +223,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   `git commit` is never gated.
   In diff mode the `security-architect` reads the diff, the changed files and the direct callers of a changed symbol and does not walk the tree; whole-repo review stays with `security-audit`.
   The audit and the threat framing are adapted from the `cso` skill in [garrytan/gstack](https://github.com/garrytan/gstack) (MIT); the challenge procedure and hooks are original.
-- **`pro-legal`** - the Legal phase, opt-in and not in `pro-starter`.
+- **`pro-legal`** - the Legal phase, opt-in and not in `pro-dev-starter`.
   `software-counsel` is an in-house product counsel persona that spots legal issues in a plan or a release.
   It is issue spotting and not legal advice.
   In `plan` mode it reviews an idea, plan or spec and returns a `## Legal review` section to fold into the plan (`/legal-review`).
@@ -228,17 +233,18 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   A release gate holds `git tag`, `gh release create`, package publishes, production deploys, `gh pr create` and commits that add problematically licensed dependencies or change LICENSE and NOTICE files.
   A dated `legal-landscape.md` baseline backs the review, with a CI staleness check.
   The content is original.
-- **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-starter` yet.
-- **`pro-pdd`** — Define + Plan skills included in `pro-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/lavish-engine install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
+- **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-dev-starter` yet.
+- **`pro-pdd`** — Define + Plan skills included in `pro-dev-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/pro-dev install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Framework plugins (skills trigger from file context in projects that use the framework):**
 
-- **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/next-skills`, and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
+- **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/pro-dev install`, and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
 - **`pro-astro`** - Astro projects: `astro-best-practices` (auto-applied guardrails), `astro-upgrade` (Astro 5 to 6 to 7 and adapter majors), `astro-on-cloudflare` (`@astrojs/cloudflare` on Workers) and `astro-on-vercel` (`@astrojs/vercel`). The content is original, written from the official Astro, Cloudflare and Vercel docs. Pairs with the official Astro Docs MCP server and, on Cloudflare, the official `cloudflare/skills` plugin.
 
 **Meta:**
 
-- **`pro-starter`** - pulls the full default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-nextjs` + `pro-astro`. One install ⇒ the full default stack. `pro-spdd` is opt-in.
+- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-nextjs`, `pro-astro` and `pro-spdd` are opt-in and installed by hand.
+- **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
 
 ### Layout
 
@@ -259,7 +265,8 @@ plugins/
   pro-research/                      # deep-research and lead-research engines
   pro-security/                      # security architect, whole-repo audit, push gate
   pro-legal/                         # opt-in software counsel, legal review plan and release gates
-  pro-starter/                       # meta-plugin: dependencies only
+  pro-dev-starter/                   # meta-plugin: dependencies only
+  pro-starter/                       # deprecated shim that depends on pro-dev-starter
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-pdd/                           # default define + plan-driven development skills
 templates/
@@ -275,7 +282,7 @@ RELEASING.md                         # version-bump law + tag scheme
 
 ```bash
 ./demo/setup.sh         # install marketplace (project scope) → build → test the site
-cd demo/app && claude   # then run /pro-dev-doctor to verify the install through the skills
+cd demo/app && claude   # then run /pro-dev check to verify the install through the skills
 ```
 
 See [demo/LIFECYCLE.md](./demo/LIFECYCLE.md) for the phase-by-phase build trail.
@@ -287,8 +294,8 @@ See [demo/LIFECYCLE.md](./demo/LIFECYCLE.md) for the phase-by-phase build trail.
 Verified workaround:
 
 1. Drop `templates/project-settings.json` into the repo as `.claude/settings.json` (the marketplace is then auto-registered on next `claude` invocation, even headless).
-2. Either open `claude` interactively once and accept the folder-trust prompt — OR run `claude plugin install pro-starter@pro-dev-skillset --scope project` explicitly (no prompt required).
-3. After install, `.claude/settings.json` is updated so `enabledPlugins` contains both `pro-starter` and `pro-core`. Commit it — subsequent `claude -p` runs in CI then re-resolve the same stack on cache miss.
+2. Either open `claude` interactively once and accept the folder-trust prompt — OR run `claude plugin install pro-dev-starter@pro-dev-skillset --scope project` explicitly (no prompt required).
+3. After install, `.claude/settings.json` is updated so `enabledPlugins` contains both `pro-dev-starter` and `pro-core`. Commit it — subsequent `claude -p` runs in CI then re-resolve the same stack on cache miss.
 
 ## Folder-trust prompt
 
@@ -296,10 +303,10 @@ Every first-open of a project that adopts the template settings triggers a folde
 
 ## Cleanup
 
-`pro-starter` is a meta-plugin — uninstalling it leaves `pro-core` as an orphaned auto-installed dep. To remove both:
+`pro-dev-starter` is a meta-plugin — uninstalling it leaves `pro-core` as an orphaned auto-installed dep. To remove both:
 
 ```bash
-claude plugin uninstall pro-starter@pro-dev-skillset --scope project
+claude plugin uninstall pro-dev-starter@pro-dev-skillset --scope project
 claude plugin prune --scope project -y     # -y required in non-TTY contexts
 ```
 
@@ -329,7 +336,7 @@ codex plugin add pro-legal@pro-dev-skillset   # opt-in
 codex exec --skip-git-repo-check "enumerate available pro-dev skills"
 ```
 
-Note: Codex does not use `pro-starter`'s Claude dependency cascade. Install the concrete plugins you
+Note: Codex does not use `pro-dev-starter`'s Claude dependency cascade. Install the concrete plugins you
 want, or run `templates/codex-bootstrap.sh`. Skill bodies, command prose, and sidecars should stay
 harness-neutral: no hard-coded `TodoWrite`/`TaskCreate`/`TaskUpdate`, and any Claude Code `Task tool`
 or MCP tool-name examples must include a Codex/fallback path.
