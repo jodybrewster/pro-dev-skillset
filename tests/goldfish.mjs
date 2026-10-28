@@ -43,8 +43,8 @@ function buildSandbox(pluginRoot) {
   w("intent/2026-01-01-demo/spec.md", "# Spec\n");
   w("intent/2026-01-01-demo/plan.md", "# Plan\n");
   const script = join(pluginRoot, "scripts", "goldfish.py");
-  const run = (args, { cwd = repo } = {}) => {
-    const r = spawnSync("python3", ["-I", script, ...args], { cwd, encoding: "utf8", env: GIT_ENV });
+  const run = (args, { cwd = repo, env = GIT_ENV } = {}) => {
+    const r = spawnSync("python3", ["-I", script, ...args], { cwd, encoding: "utf8", env });
     let json = null;
     try { json = JSON.parse(r.stdout); } catch { /* not JSON */ }
     return { code: r.status, out: r.stdout, err: r.stderr, json };
@@ -73,7 +73,63 @@ function refused(s, args, named) {
   return { ok: true };
 }
 
+// A fake `claude` whose `plugin list --json` prints the given installs.
+function fakeClaude(s, installs) {
+  const bin = join(s.root, "bin");
+  mkdirSync(bin, { recursive: true });
+  const listing = join(s.root, "listing.json");
+  writeFileSync(listing, JSON.stringify(installs));
+  writeFileSync(join(bin, "claude"), `#!/bin/sh\ncat '${listing}'\n`, { mode: 0o755 });
+  return { ...GIT_ENV, PATH: `${bin}:/usr/bin:/bin` };
+}
+
+function fakeEgm(s) {
+  const base = join(s.root, "egm-cache");
+  mkdirSync(join(base, "skills", "egm-review-loop"), { recursive: true });
+  writeFileSync(join(base, "skills", "egm-review-loop", "SKILL.md"), "# loop\n");
+  return base;
+}
+
+const egmEntry = (s, base, extra = {}) => ({ id: "egm@egm", scope: "project", enabled: true, installPath: base, projectPath: s.repo, ...extra });
+
 const CASES = [
+  {
+    id: "egm-found-when-enabled-for-repo",
+    run(s) {
+      const base = fakeEgm(s);
+      const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, [egmEntry(s, base)]) }).json;
+      const want = join(realpathSync(base), "skills", "egm-review-loop", "SKILL.md");
+      return j && j.egmLoop === want ? { ok: true } : { ok: false, detail: JSON.stringify(j) };
+    },
+  },
+  {
+    id: "egm-null-when-disabled-other-project-or-missing",
+    run(s) {
+      const base = fakeEgm(s);
+      for (const [label, list] of [
+        ["disabled", [egmEntry(s, base, { enabled: false })]],
+        ["other project", [egmEntry(s, base, { projectPath: join(s.root, "elsewhere") })]],
+        ["not installed", []],
+      ]) {
+        const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, list) }).json;
+        if (!j || j.egmLoop !== null) return { ok: false, detail: `${label}: ${JSON.stringify(j)}` };
+      }
+      const none = s.run(["egm", "--repo", s.repo], { env: { ...GIT_ENV, PATH: "/usr/bin:/bin" } }).json;
+      return none && none.egmLoop === null ? { ok: true } : { ok: false, detail: `no claude: ${JSON.stringify(none)}` };
+    },
+  },
+  {
+    id: "egm-null-when-skill-file-is-a-symlink",
+    run(s) {
+      const base = fakeEgm(s);
+      const f = join(base, "skills", "egm-review-loop", "SKILL.md");
+      rmSync(f);
+      writeFileSync(join(s.root, "outside.md"), "x\n");
+      symlinkSync(join(s.root, "outside.md"), f);
+      const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, [egmEntry(s, base)]) }).json;
+      return j && j.egmLoop === null ? { ok: true } : { ok: false, detail: JSON.stringify(j) };
+    },
+  },
   {
     id: "resolve-defaults-spec",
     run(s) {

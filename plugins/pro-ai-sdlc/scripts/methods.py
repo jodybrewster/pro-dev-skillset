@@ -59,12 +59,13 @@ def find_repo(explicit):
     return os.path.realpath(os.getcwd())
 
 
-def list_installs():
+def list_installs(repo):
     exe = shutil.which("claude")
     if not exe:
         return None
     try:
-        res = subprocess.run([exe, "plugin", "list", "--json"], capture_output=True, text=True,
+        # enabled is reported for the cwd's project, so list from the repo itself
+        res = subprocess.run([exe, "plugin", "list", "--json"], cwd=repo, capture_output=True, text=True,
                              timeout=20, stdin=subprocess.DEVNULL)
         if res.returncode != 0:
             return None
@@ -145,10 +146,10 @@ def main() -> int:
     ap.add_argument("--repo", default=None)
     args = ap.parse_args()
 
-    installs = list_installs()
+    repo = find_repo(args.repo)
+    installs = list_installs(repo)
     if not installs:
         return 0
-    repo = find_repo(args.repo)
     live = [i for i in installs if i.get("enabled") is not False and covers_repo(i, repo)]
     if not live:
         return 0

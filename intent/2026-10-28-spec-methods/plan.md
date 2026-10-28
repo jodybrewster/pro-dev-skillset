@@ -193,16 +193,28 @@ Upstream fact found while answering: `docs/claude.md` lets an `EGM artifact dire
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
-
-- Build commit:
-- Checks run:
-- AC1 to AC10:
+- Build commit: bc7c3ef (PR 66), fixed by PR 67 after the live check.
+- Checks run on PR 66: `node tests/check.mjs && node tests/eval.mjs --dry` gave 26 checks, 0 failures, 39 warnings and 73 cases over 89 skills; `claude plugin validate . --strict` passed; the per-plugin loop passed 18 times; CI "Validate marketplace + plugins (strict)" passed.
+- Live check on 2026-10-28 in a fresh scratch repo with pro-dev-starter 2.0.1 at project scope, from the published marketplace:
+- AC1: pass. `methods.py --stage spec` printed nothing with only pro-dev-starter installed.
+- AC2: pass. After installing pro-egm, `/pro-dev`'s `run egm install` printed the surface line ("18 agents, 7 skills ... hooks/MCP hash matches pin"), found the `egm` marketplace registered with the matching source and installed `egm@egm`; `status` reported `egm` installed.
+- AC3: fail on 0.1.0, pass on the PR 67 fix. 0.1.0 stopped because every EGM skill sets `disable-model-invocation` and the Skill tool refused `egm-review-loop`. With the fix, `/pro-egm:goldfish` ran one round headless: `zoom_out` and `design_critic` ran as `egm:egm-zoom-out` and `egm:egm-design`, both starter goldfish ran as `pro-egm:goldfish-reviewer`, the spec was edited in place and `goldfish_review_report.md` was left untracked.
+- AC4: pass for the offer. `methods.py --stage plan` printed the plan offer with the target filled in; a plan-stage review was not run.
+- AC5: pass. After `init`, dropping `zoom_out` removed it from the resolved reviewers; the new `.egm/` files were listed as changed; `../x.md` was refused with the entry named.
+- AC6: pass. With pro-egm installed and `egm@egm` missing, `methods.py` printed "pro-egm needs egm@egm: run /pro-dev install".
+- AC7: pass. After `claude plugin uninstall pro-egm@pro-dev-skillset`, the spec offer was gone and no file changed.
+- AC8: pass. With pro-spdd installed, `methods.py --stage intent` printed the `/spdd-story` offer.
+- AC9: pass, per the checks above.
+- AC10: pass. All pro-egm text is original; `docs/licenses.md` has the pro-egm row.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted` and ADR-0007 from `proposed` to `accepted`.
 
 ## Departures from plan
+
+- Live check, 2026-10-28: every EGM skill sets `disable-model-invocation`, so `/pro-egm:goldfish` 0.1.0 could not call `egm-review-loop` through the Skill tool.
+  EGM's PR 103 says a caller reads the skill's `SKILL.md` and follows it; PR 67 does that, with `goldfish.py egm` finding the file in the enabled `egm@egm` install for the repo.
+  The same run showed `claude plugin list --json` reports `enabled` for the cwd's project, so `goldfish.py` and `methods.py` now list from the repo folder.
 
 - Step 0, 2026-10-28, in a scratch repo with `egm@egm` 0.1.0 at project scope, run headless on Sonnet.
   Plain run: EGM used direct dispatch, spawned `egm:egm-zoom-out` for the shortname and `general-purpose` for the reviewer given as a path, so a custom goldfish had every tool.
