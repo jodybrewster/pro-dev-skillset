@@ -4,7 +4,7 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.48.0.
+Marketplace `metadata.version`: 1.49.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
@@ -18,7 +18,7 @@ Marketplace `metadata.version`: 1.48.0.
 | pro-motion | 0.1.0 | 2026-06-23 | First release: gsap, hyperframes and remotion skills | c4460d3 | none |
 | pro-nextjs | 0.9.0 | 2026-10-16 | next-skills-bridge and `/next-skills` install the MIT Next.js skills from vercel/next.js; next-cache-components removed; next-best-practices and next-upgrade rewritten from the Next.js docs | this PR | pro-nextjs--v0.5.0 |
 | pro-pdd | 0.4.2 | 2026-10-16 | LICENSE with the superpowers, agent-skills and adhd copyright lines | this PR | none |
-| pro-quality | 0.9.6 | 2026-10-28 | Doc hooks: only root Markdown, docs/ and intent/ count as docs; agent files allowed only in ~/.claude/ and the session repo; heredocs skipped and env, timeout and bash -c wrappers followed; scratch space limited to claude-* directories | this PR | pro-quality--v0.9.1 |
+| pro-quality | 0.10.0 | 2026-10-28 | The Stop hook only suggests /validate (one line, once per set of changed files) and counts only repo files the session wrote or a `git commit`, skipping gitignored paths; set `PRO_DEV_VALIDATION=block` in the env block of .claude/settings.json to restore the forced handoff (`off` silences it) | this PR | pro-quality--v0.9.1 |
 | pro-research | 0.3.3 | 2026-10-17 | The four research agents declare `model: haiku` | this PR | none |
 | pro-security | 0.2.0 | 2026-10-28 | One push gate replaces the commit, plan-mode, plan-document and ideation hooks; `security-architect` diff mode reviews the diff and its direct callers only | this PR | none |
 | pro-spdd | 0.3.5 | 2026-10-16 | PORT-PLAN smoke test uses a path placeholder instead of a home directory | this PR | pro-spdd--v0.2.1 |

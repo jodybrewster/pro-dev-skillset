@@ -143,6 +143,21 @@ export function runQualityHookCases() {
     add("q12 block mode blocks with a reason that lists the written file and not an unrelated dirty one", "block", r,
       r.status === 0 && r.json?.decision === "block" && reason.includes("app.js") && !reason.includes("dirty.txt"));
 
+    // R8: a commit with no written paths must not fall back to the whole tree
+    s = fresh();
+    appendFileSync(s.transcript, tool("Bash", { command: "git commit -am x" }));
+    r = run(stop(s), { env: { PRO_DEV_VALIDATION: "block" } });
+    add("q12b block mode with only a Bash git commit does not report unrelated dirty files", "no dirty file", r,
+      r.status === 0 && !r.stdout.includes("dirty.txt"));
+
+    // ignored files do not count
+    s = fresh();
+    writeFileSync(join(repo, ".gitignore"), "ignored.log\n");
+    touch(join(repo, "ignored.log"));
+    write(s, "Write", join(repo, "ignored.log"));
+    r = run(stop(s));
+    add("q12c a write to a gitignored file in the repo is silent", "silent", r, silent(r));
+
     s = fresh();
     write(s, "Edit", join(repo, "app.js"));
     r = run(stop(s, { stop_hook_active: true }), { env: { PRO_DEV_VALIDATION: "block" } });

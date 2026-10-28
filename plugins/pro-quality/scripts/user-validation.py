@@ -155,21 +155,48 @@ def changed_paths(lines: list[str], cwd: str, root: str) -> tuple[set[str], bool
     return paths, committed
 
 
+def drop_ignored(paths: set[str], root: str) -> set[str]:
+    """Remove paths git ignores. Any git failure keeps every path (fail open)."""
+    if not paths:
+        return paths
+    try:
+        r = subprocess.run(
+            ["git", "check-ignore", "--stdin", "-z"],
+            cwd=root,
+            input="\0".join(sorted(paths)) + "\0",
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except Exception:
+        return paths
+    if r.returncode not in (0, 1):  # 1 means none ignored; anything else is an error
+        return paths
+    ignored = {p for p in r.stdout.split("\0") if p}
+    return paths - ignored
+
+
 def change_summary(root: str, paths: list[str]) -> tuple[str, bool]:
-    """A compact description of the session's files + recent commits."""
+    """A compact description of the session's files + recent commits.
+
+    With no session paths (a bare `git commit`) the working tree is not
+    reported at all, only the unpushed commits.
+    """
     parts: list[str] = []
-    scope = ["--", *paths] if paths else []
-    _, status = run(["git", "status", "--porcelain", *scope], root)
-    _, stat = run(["git", "diff", "--stat", "HEAD", *scope], root)
+    if paths:
+        _, status = run(["git", "status", "--porcelain", "--", *paths], root)
+        _, stat = run(["git", "diff", "--stat", "HEAD", "--", *paths], root)
+        if status:
+            parts.append("Uncommitted changes:\n" + status)
+        if stat:
+            parts.append("Diff vs HEAD:\n" + stat)
     ok_log, log = run(
         ["git", "log", "--oneline", "-5", "--no-decorate", "@{u}..HEAD"], root
     )
-    if status:
-        parts.append("Uncommitted changes:\n" + status)
-    if stat:
-        parts.append("Diff vs HEAD:\n" + stat)
     if ok_log and log:
         parts.append("Commits not yet pushed:\n" + log)
+    elif not paths:
+        parts.append("No file changes were recorded this session.")
     return ("\n\n".join(parts), bool(parts))
 
 
@@ -252,6 +279,7 @@ def main() -> int:
     lines, seen = new_transcript_lines(transcript, int(state.get("lines_seen") or 0))
 
     new_paths, committed = changed_paths(lines, cwd, root)
+    new_paths = drop_ignored(new_paths, root)
     session_paths = sorted(set(state.get("paths") or []) | new_paths)
 
     # Always record progress first, so the handoff's own writes are consumed

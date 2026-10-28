@@ -98,3 +98,5 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 
 - The nudge says "1 file" for one file and "N files" otherwise, and a commit-only session says it committed changes.
 - The nudge's file count and the `block` summary use the session's accumulated paths from the state file, so a later stop reports the whole session and an edit to an already-reported file stays silent.
+- In `block` mode with no session paths (a bare `git commit`) the summary reports only unpushed commits, or says no file changes were recorded, instead of falling back to the whole working tree (spec R8).
+- Paths git ignores (`git check-ignore`) are dropped from the counted set; on any git failure the paths are kept.
