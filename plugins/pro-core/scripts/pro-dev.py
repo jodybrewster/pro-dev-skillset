@@ -917,6 +917,10 @@ def apply_git_exclude(row: dict, repo: str) -> list[str]:
         return lines + [f"{eid}: could not write {target} ({type(exc).__name__}: {exc})"]
     for path in good:
         lines.append(f"{eid}: {'added' if path in fresh else 'already in'} {target}: {path}")
+        ok, tracked = git_out(["ls-files", "--", path], repo)
+        if ok and tracked.strip():  # an exclude line never untracks a committed folder
+            lines.append(f"{eid}: {path} is already committed, so the exclude does nothing for it; "
+                         f"remove it from the index with: git rm -r --cached {path}")
     return lines
 
 
@@ -935,6 +939,8 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
         if kind != "ok":
             return "failed", f"{eid}: {text}"
     if action == "install" and installed:
+        for line in apply_git_exclude(row, repo):  # a hand-installed copy needs the exclude too
+            say(line)
         return "skipped", f"{eid}: already installed"
     pinned = has_pin(row)
     pid = "@".join(row_plugin(row)) if pinned else ""

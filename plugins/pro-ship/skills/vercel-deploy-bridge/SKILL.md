@@ -28,8 +28,8 @@ Stop at the first one that fails.
    Stop when it fails or when any git check below exits non-zero, so nothing fails open outside a repo.
 2. Find every env file with `find <root> -name node_modules -prune -o -name '.env*' -type f -print`.
 3. `git ls-files -- '.env*' '*/.env*'` must list nothing beyond `.env.example`-style templates.
-4. `git check-ignore -q <file>` must pass for each `.env*` file found.
-5. A `.vercelignore` must exist and match every `.env*` file found.
+4. `git check-ignore -q <file>` must pass for each `.env*` file found that `git ls-files` did not list; a tracked template from check 3 is not checked here.
+5. A `.vercelignore` must exist with a literal `.env*` line and no `!` line that re-includes a `.env` file.
    The Vercel CLI reads only `.vercelignore` and its built-in list.
    That list skips `.env.local` and `.env.*.local` but uploads `.env` and `.env.production`.
 
@@ -59,7 +59,7 @@ Report the preview URL and say which deploy type it was.
 ## Install
 
 Run `/pro-dev install` and answer yes on the `vercel-deploy` row.
-For Codex run `npx -y skills add https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills -a codex -y -s deploy-to-vercel`.
+For Codex run `npx -y skills add https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills -a codex -g -y -s deploy-to-vercel`, at user scope so the skill never sits in the repo.
 Do not commit `.claude/skills/deploy-to-vercel/`.
 A committed copy loads for anyone who opens the repo, with or without pro-ship.
 `/pro-dev` keeps the folder out of commits through `.git/info/exclude`; this line is the second layer.

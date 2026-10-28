@@ -1292,6 +1292,28 @@ const gxCount = (text) => text.split("\n").filter((l) => l === GX_DIR).length;
 
 CASES.push(
   {
+    id: "gitExclude/already-installed-still-gets-the-exclude",
+    run: (s) => {
+      const o = gxWorld(s);
+      mkdirSync(join(s.repo, GX_DIR), { recursive: true });
+      writeFileSync(join(s.repo, GX_FILE), "# hand install\n");
+      const r = s.run(["run", "gx", "install"], o);
+      if (!/already installed/.test(r.out)) return bad(`not reported installed: ${r.out}`);
+      return gxCount(excludeText(s.repo)) === 1 ? ok() : bad(`exclude: ${JSON.stringify(excludeText(s.repo))}`);
+    },
+  },
+  {
+    id: "gitExclude/tracked-folder-is-named",
+    run: (s) => {
+      const o = gxWorld(s);
+      mkdirSync(join(s.repo, GX_DIR), { recursive: true });
+      writeFileSync(join(s.repo, GX_FILE), "# committed\n");
+      gitIn(s.repo, ["add", "-f", GX_FILE]);
+      const r = s.run(["run", "gx", "install"], o);
+      return /already committed/.test(r.out) && /git rm -r --cached/.test(r.out) ? ok() : bad(`no warning: ${r.out}`);
+    },
+  },
+  {
     id: "gitExclude/added-once-across-install-and-update",
     run: (s) => {
       const o = gxWorld(s);
