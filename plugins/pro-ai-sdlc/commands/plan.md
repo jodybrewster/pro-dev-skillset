@@ -1,7 +1,7 @@
 ---
 description: "Write plan.md beside a spec: the files touched, the order of work, the tests that prove it, risks, rejected options and proof of done. Interrogates the plan before it is committed. Usage: /plan [path to spec.md]"
 argument-hint: "[path to spec.md]  (default: the newest spec without a plan.md)"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Read, Glob, Grep, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Glob, Grep, Write
 ---
 
 ## Context
@@ -47,14 +47,26 @@ Before showing it, answer these and fold the answers into the plan.
 A change to architecture, security, data, a public API or a deploy names an approver (a lead or architect) in the header.
 Routine work with a small blast radius and good test coverage can say it suits auto mode.
 
-### 4. Show it and commit after confirmation
+### 4. Offer spec methods
+
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage plan --target <plan.md path>`.
+Offer each printed line once as a yes or no question.
+A line reads `<method>: <when> -> <offer>`; a line with `needs <plugin>` means that method is not installed, so say so and move on.
+On no, or with nothing printed, go straight to the next step, so the command runs as it always has.
+
+After a goldfish review, keep the fixes EGM applied to the draft.
+For each Blocker or Major finding still open, write one line of your own under Risks in your words with no quoted file content; show those lines before committing.
+The review writes `goldfish_review_report.md` in the working directory; leave it untracked and name its path in the report.
+
+### 5. Show it and commit after confirmation
 
 Print the plan and iterate until the engineer confirms.
 Then commit that one file: `git add <intent dir>/plan.md` and `git commit -m "plan: <slug>"`.
 Never stage other files, never pass `--no-verify` and do not push.
+Check `git status` that nothing else got staged.
 Implement only after the plan is committed.
 When the build strays from the plan, record that under Departures in the same commit as the change.
 
-### 5. Report
+### 6. Report
 
 The path, the commit hash, the riskiest step and the approver if one is needed.

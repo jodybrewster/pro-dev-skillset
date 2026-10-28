@@ -40,6 +40,7 @@ Reverse it if EGM keeps changing its review-loop inputs often enough that pro-eg
 
 ## Enforced by
 
-- `plugins/pro-ai-sdlc/scripts/methods.py` discovers and prints the hand-offs.
-- `tests/check.mjs` fails on a malformed `sdlc-method.json` and on a malformed `marketplace` object in a registry row.
+- [`plugins/pro-ai-sdlc/scripts/methods.py`](../../plugins/pro-ai-sdlc/scripts/methods.py) discovers and prints the hand-offs.
+- [`plugins/pro-egm/scripts/goldfish.py`](../../plugins/pro-egm/scripts/goldfish.py) resolves the reviewers and reading list and confines every path to the repo.
+- [`tests/check.mjs`](../../tests/check.mjs) fails on a malformed `sdlc-method.json` and on a malformed `marketplace` object in a registry row.
 - [`plugins/pro-core/scripts/pro-dev.py`](../../plugins/pro-core/scripts/pro-dev.py) registers and checks a row's marketplace and reports a plugin's surface.

@@ -204,6 +204,20 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-000
 
 ## Departures from plan
 
+- Step 0, 2026-10-28, in a scratch repo with `egm@egm` 0.1.0 at project scope, run headless on Sonnet.
+  Plain run: EGM used direct dispatch, spawned `egm:egm-zoom-out` for the shortname and `general-purpose` for the reviewer given as a path, so a custom goldfish had every tool.
+  EGM staged and committed nothing; it edited the target and wrote `goldfish_review_report.md` at the root.
+  Second run with a project agent `goldfish-reviewer` (`tools: Read, Grep, Glob`, `omitClaudeMd: true`) and a caller rule "use direct dispatch; a reviewer given as a path must spawn `goldfish-reviewer`": EGM spawned `goldfish-reviewer` and the probe reported only `Read`, `Grep` and `Glob`.
+  So pro-egm also ships `agents/goldfish-reviewer.md` with that frontmatter and its Codex `.toml`; `/pro-egm:goldfish` passes that dispatch rule with every run.
+  The rule is an instruction to the session, not a hard control; the step 6 changed-file check and the confirmation before each run remain the fence if a session ignores it.
+- Step 2: a surface that cannot be read turns the row into a question instead of the Risks section's "surface unknown until installed", following security change 1; an agent with no `tools` line counts as `*`.
+  A row over its pin has no answer path in `/pro-dev`; the pin is raised by a reviewed registry change, as `pro-dev.md` says.
+- Step 5: the `sdlc-method.json` validation and the `tests/methods.mjs` run are one `methods` check; `tests/methods.mjs` runs as a child process.
+- Step 7: `/pro-egm:goldfish` allows `Skill`, `Agent`, `Read`, `Grep`, `Glob`, `Write` and `Edit` beside the exact `goldfish.py` pattern, because EGM's loop runs inside the command; no other shell command is allowed.
+  It checks for EGM by whether `/egm:egm-review-loop` is available.
+- Step 8: `/intent`'s offer is step 0 so the `sdlc-contract` check's anchor on step 3 holds.
+- Step 9: the catalog counts 89 skills where Proof of done said 88; the numbers in `CLAUDE.md` are from the real run.
+
 <!--
 Write this in plan mode from an accepted spec, then question it before approval:
 what might break, where the weakest step is, and what was skipped on purpose.

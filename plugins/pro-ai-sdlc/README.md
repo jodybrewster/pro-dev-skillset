@@ -60,6 +60,15 @@ ADRs enter the loop at four points:
 The folder is `docs/adr/` if it exists, else `docs/decisions/` if it exists, else a new `docs/adr/`.
 A `README.md` index table in that folder gets a row for each new ADR.
 
+## Spec methods
+
+Another plugin from this marketplace can offer a different way to write or review a spec.
+It ships an `sdlc-method.json` at its root with a `method` id, a `requires` plugin id or `null` and a list of `handoffs`, each a `stage` (`intent`, `spec`, `plan` or `review`), a `when` line and an `offer` slash command with an optional `{target}` placeholder.
+`/intent`, `/spec`, `/plan` and `/review` run `scripts/methods.py` for their stage and offer each printed line once as a yes or no question.
+With no method installed it prints nothing and the commands run as they always have.
+The file is read as data from enabled installs that cover the repo, only when the `pro-dev-skillset` marketplace points at its github repo.
+The decision is in [ADR-0007](../../docs/decisions/0007-spec-method-plugins.md).
+
 ## Agents
 
 Each declares its model in frontmatter by role.

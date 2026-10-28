@@ -14,19 +14,31 @@ Subcommands:
   plugins update                   refresh the marketplace, update covering installs
   plugins swap-starter             replace pro-starter with pro-dev-starter
   stale [--remove]                 list (or remove) installs whose folder is gone
+  surface <id>                     print the computed surface of an installed claude-plugin row
 
 Rules this script keeps:
   - registry argv run through subprocess with no shell; nothing read from the
     repo, the answers file or a plugin payload is ever put into a command
   - a failed step is reported and the run carries on
   - writes stay inside the repo, except stale --remove, which edits
-    installed_plugins.json after writing a backup beside it
+    installed_plugins.json after writing a backup beside it, plus a row's
+    `marketplace` step: `claude plugin marketplace add` is a user-wide write that
+    outlives the plugin (accepted by ADR-0007), run only when no marketplace of that
+    name is registered and refused when the registered one has another source
+  - a claude-plugin row may pin the `surface` it was reviewed with (agent and skill
+    counts, the union of their tools, a hash of every hook and MCP declaration); a
+    plugin beyond the pin, or one whose surface cannot be read, is never installed or
+    updated by this script and status names it. Nothing about surfaces is written to
+    the repo, so a repo change cannot raise the baseline. Plugin files are third-party
+    input: only regular files that stay inside the plugin folder are opened, each
+    read is capped and any failure reads as "surface unknown"
   - only python3 and the standard library
 """
 from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -282,6 +294,355 @@ def write_answers(repo: str, data: dict) -> bool:
     return True
 
 
+# --- marketplaces -------------------------------------------------------------
+
+MARKETPLACE_SOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+$")
+
+
+def known_marketplaces_path() -> str:
+    return os.path.join(config_dir(), "plugins", "known_marketplaces.json")
+
+
+def read_known_marketplaces() -> tuple[dict | None, str]:
+    """Return (registered marketplaces, problem). A missing file is an empty record."""
+    path = known_marketplaces_path()
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        return {}, ""
+    except (OSError, ValueError) as exc:
+        return None, f"{path} is unreadable ({type(exc).__name__}); refusing to trust it"
+    if not isinstance(data, dict):
+        return None, f"{path} has an unexpected shape; refusing to trust it"
+    return data, ""
+
+
+def source_text(entry) -> str:
+    src = entry.get("source") if isinstance(entry, dict) else None
+    return json.dumps(src, sort_keys=True)[:200] if src is not None else "unknown"
+
+
+def check_marketplace(mp: dict, repo: str, allow_add: bool) -> tuple[str, str]:
+    """Return (kind, text): kind is ok, absent or bad.
+
+    The registered source must be github with the row's owner/repo (any case), read from
+    known_marketplaces.json after any add. Another source kind, another repo or an
+    unreadable file is bad and the row is never installed.
+    """
+    name, source = mp.get("name"), mp.get("source")
+    if not (isinstance(name, str) and ENGINE_ID_RE.match(name) and isinstance(source, str)
+            and MARKETPLACE_SOURCE_RE.match(source)):
+        return "bad", "registry row has an invalid marketplace object"
+    known, why = read_known_marketplaces()
+    if known is None:
+        return "bad", why
+    if name not in known:
+        if not allow_add:
+            return "absent", f"marketplace {name} is not registered (expected github {source})"
+        say(f"registering marketplace {name} from {source} (a user-wide change that stays after the plugin is removed)")
+        ok, detail = run_argv(["claude", "plugin", "marketplace", "add", source], repo)
+        if not ok:
+            return "bad", f"marketplace add {source} failed ({detail})"
+        known, why = read_known_marketplaces()
+        if known is None:
+            return "bad", why
+        if name not in known:
+            return "bad", f"marketplace add {source} exited 0 but {name} is still not registered"
+    entry = known[name]
+    src = entry.get("source") if isinstance(entry, dict) else None
+    if (isinstance(src, dict) and src.get("source") == "github" and isinstance(src.get("repo"), str)
+            and src["repo"].lower() == source.lower()):
+        return "ok", ""
+    return "bad", (f"marketplace {name} is registered from {source_text(entry)} but this row expects "
+                   f"github {source}; refusing to use it")
+
+
+# --- plugin surface -----------------------------------------------------------
+
+class SurfaceError(Exception):
+    """A plugin file could not be read safely; the surface is unknown."""
+
+
+def read_plugin_file(root: str, path: str, required: bool = False) -> bytes | None:
+    """Read one file of a plugin folder. None when it is absent and not required.
+
+    Plugin files are third-party input: only a regular file (no symlink, FIFO or device)
+    whose real path stays inside the plugin folder is opened; the read is capped.
+    """
+    rel = os.path.relpath(path, root)
+    try:
+        st = os.lstat(path)
+    except (FileNotFoundError, NotADirectoryError):
+        if required:
+            raise SurfaceError(f"{rel} is missing")
+        return None
+    except OSError as exc:
+        raise SurfaceError(f"cannot inspect {rel} ({type(exc).__name__})")
+    if not stat.S_ISREG(st.st_mode):
+        raise SurfaceError(f"{rel} is not a regular file")
+    if not is_inside(path, root):
+        raise SurfaceError(f"{rel} resolves outside the plugin folder")
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
+        with os.fdopen(fd, "rb") as fh:
+            if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+                raise SurfaceError(f"{rel} is not a regular file")
+            raw = fh.read(MAX_ANSWERS_BYTES + 1)
+    except OSError as exc:
+        raise SurfaceError(f"cannot read {rel} ({type(exc).__name__})")
+    if len(raw) > MAX_ANSWERS_BYTES:
+        raise SurfaceError(f"{rel} is larger than {MAX_ANSWERS_BYTES} bytes")
+    return raw
+
+
+def list_plugin_dir(root: str, path: str) -> list[str]:
+    """Sorted entry names of a real (not symlinked) folder inside the plugin; [] when absent."""
+    rel = os.path.relpath(path, root)
+    try:
+        st = os.lstat(path)
+    except (FileNotFoundError, NotADirectoryError):
+        return []
+    except OSError as exc:
+        raise SurfaceError(f"cannot inspect {rel} ({type(exc).__name__})")
+    if not stat.S_ISDIR(st.st_mode) or not is_inside(path, root):
+        raise SurfaceError(f"{rel} is not a plain folder inside the plugin")
+    try:
+        return sorted(os.listdir(path))
+    except OSError as exc:
+        raise SurfaceError(f"cannot list {rel} ({type(exc).__name__})")
+
+
+def parse_plugin_json(raw: bytes, label: str):
+    try:
+        return json.loads(raw.decode("utf-8"))
+    except (ValueError, RecursionError):
+        raise SurfaceError(f"{label} is not valid JSON")
+
+
+def split_tools(value: str) -> list[str]:
+    """Split a tools line on commas outside parentheses, so Bash(a, b) stays whole."""
+    out, depth, cur = [], 0, ""
+    for ch in value:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            out.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    out.append(cur)
+    return [t.strip().strip("\"'") for t in out if t.strip().strip("\"'")]
+
+
+def frontmatter_tools(text: str, key: str) -> list[str] | None:
+    """The tools named by `key` in a file's frontmatter, or None when the key is absent."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
+    if end is None:
+        return None
+    head = lines[1:end]
+    for i, line in enumerate(head):
+        m = re.match(rf"^{re.escape(key)}\s*:\s*(.*)$", line)
+        if not m:
+            continue
+        val = m.group(1).strip()
+        if val:
+            if val.startswith("[") and val.endswith("]"):
+                val = val[1:-1]
+            return split_tools(val)
+        items = []
+        for nxt in head[i + 1:]:
+            if nxt.strip().startswith("- "):
+                items.extend(split_tools(nxt.strip()[2:]))
+            elif nxt.strip() and nxt[:1] not in " \t":
+                break
+        return items
+    return None
+
+
+def agent_paths(root: str, manifest: dict) -> list[str]:
+    spec = manifest.get("agents")
+    if spec is None:
+        base = os.path.join(root, "agents")
+        return [os.path.join(base, n) for n in list_plugin_dir(root, base) if n.endswith(".md")]
+    items = [spec] if isinstance(spec, str) else spec
+    if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
+        raise SurfaceError("plugin.json agents has an unexpected shape")
+    out = []
+    for item in items:
+        path = os.path.normpath(os.path.join(root, item))
+        try:
+            is_dir = stat.S_ISDIR(os.lstat(path).st_mode)
+        except OSError:
+            is_dir = False
+        if is_dir:
+            out.extend(os.path.join(path, n) for n in list_plugin_dir(root, path) if n.endswith(".md"))
+        else:
+            out.append(path)
+    return out
+
+
+def declaration_refs(value) -> list[str]:
+    """Paths a hooks or mcpServers value points at instead of declaring inline."""
+    items = value if isinstance(value, list) else [value]
+    return [i for i in items if isinstance(i, str)]
+
+
+def compute_surface(folder: str, market_entry: dict | None = None) -> tuple[dict | None, str]:
+    """Return (surface, reason) for a plugin folder; surface is None when it cannot be read.
+
+    surface is {"agents", "skills", "tools", "hooksMcpSha256"}. An agent with no `tools`
+    line inherits every tool and counts as "*". The hash covers hooks/hooks.json, .mcp.json
+    and the hooks and mcpServers declared inline in plugin.json and in the plugin's
+    marketplace entry, with any file those point at.
+    """
+    try:
+        return _surface(folder, market_entry), ""
+    except SurfaceError as exc:
+        return None, str(exc)
+    except Exception as exc:  # a crash here must never block every claude-plugin row
+        return None, f"{type(exc).__name__} while reading the plugin"
+
+
+def _surface(folder: str, market_entry: dict | None) -> dict:
+    root = os.path.realpath(folder)
+    if not os.path.isdir(root):
+        raise SurfaceError("plugin folder is missing")
+    raw = read_plugin_file(root, os.path.join(root, ".claude-plugin", "plugin.json"), required=True)
+    manifest = parse_plugin_json(raw, "plugin.json")
+    if not isinstance(manifest, dict):
+        raise SurfaceError("plugin.json is not an object")
+    tools: set[str] = set()
+    agents = agent_paths(root, manifest)
+    for path in agents:
+        text = read_plugin_file(root, path, required=True).decode("utf-8", "replace")
+        listed = frontmatter_tools(text, "tools")
+        tools.update(["*"] if listed is None else listed)
+    skills = 0
+    skills_dir = os.path.join(root, "skills")
+    for name in list_plugin_dir(root, skills_dir):
+        raw = read_plugin_file(root, os.path.join(skills_dir, name, "SKILL.md"))
+        if raw is None:
+            continue
+        skills += 1
+        tools.update(frontmatter_tools(raw.decode("utf-8", "replace"), "allowed-tools") or [])
+    declared: dict = {}
+    for rel in ("hooks/hooks.json", ".mcp.json"):
+        raw = read_plugin_file(root, os.path.join(root, *rel.split("/")))
+        if raw is not None:
+            declared[rel] = parse_plugin_json(raw, rel)
+    if market_entry is not None and not isinstance(market_entry, dict):
+        raise SurfaceError("the marketplace entry is not an object")
+    for site, obj in (("plugin.json", manifest), ("marketplace", market_entry or {})):
+        for key in ("hooks", "mcpServers"):
+            if key not in obj:
+                continue
+            declared[f"{site}:{key}"] = obj[key]
+            for ref in declaration_refs(obj[key]):
+                path = os.path.normpath(os.path.join(root, ref))
+                declared["file:" + os.path.relpath(path, root)] = parse_plugin_json(
+                    read_plugin_file(root, path, required=True), ref)
+    digest = hashlib.sha256(json.dumps(declared, sort_keys=True).encode("utf-8")).hexdigest()
+    return {"agents": len(agents), "skills": skills, "tools": sorted(tools), "hooksMcpSha256": digest}
+
+
+def clone_plugin(mp_name: str, plugin: str) -> tuple[str, dict]:
+    """The plugin folder and marketplace entry inside a registered marketplace's local clone."""
+    known, why = read_known_marketplaces()
+    if known is None:
+        raise SurfaceError(why)
+    entry = known.get(mp_name)
+    loc = entry.get("installLocation") if isinstance(entry, dict) else None
+    if not isinstance(loc, str) or not os.path.isabs(loc):
+        raise SurfaceError(f"marketplace {mp_name} has no local clone")
+    loc = os.path.realpath(loc)
+    raw = read_plugin_file(loc, os.path.join(loc, ".claude-plugin", "marketplace.json"), required=True)
+    listing = parse_plugin_json(raw, "marketplace.json")
+    plugins = listing.get("plugins") if isinstance(listing, dict) else None
+    found = next((p for p in plugins if isinstance(p, dict) and p.get("name") == plugin), None) \
+        if isinstance(plugins, list) else None
+    if found is None:
+        raise SurfaceError(f"marketplace.json has no entry for {plugin}")
+    source = found.get("source")
+    if not isinstance(source, str) or "://" in source or source.startswith(("/", "~", "git@")):
+        raise SurfaceError("the marketplace entry points outside its clone, so the plugin cannot be read before install")
+    folder = os.path.realpath(os.path.join(loc, source))
+    if not is_inside(folder, loc):
+        raise SurfaceError("the marketplace entry source resolves outside its clone")
+    return folder, found
+
+
+def row_plugin(row: dict) -> tuple[str, str] | None:
+    det = row.get("detect")
+    pid = det.get("plugin") if isinstance(det, dict) else None
+    if row.get("kind") != "claude-plugin" or not isinstance(pid, str) or "@" not in pid:
+        return None
+    name, mp_name = pid.split("@", 1)
+    return name, mp_name
+
+
+def row_surface(row: dict, repo: str, installs: list[dict], installed: bool) -> tuple[dict | None, str]:
+    """An installed row reads its installPath; a row not yet installed reads the marketplace clone."""
+    name, mp_name = row_plugin(row)
+    try:
+        if installed:
+            pid = f"{name}@{mp_name}"
+            path = next((i.get("installPath") for i in installs if i.get("id") == pid
+                         and i.get("enabled") is not False and covers_repo(i, repo)
+                         and isinstance(i.get("installPath"), str)), None)
+            if path is None:
+                raise SurfaceError("no install path is recorded for it")
+            try:
+                _, entry = clone_plugin(mp_name, name)
+            except SurfaceError:
+                entry = None
+            return compute_surface(path, entry)
+        folder, entry = clone_plugin(mp_name, name)
+    except SurfaceError as exc:
+        return None, str(exc)
+    return compute_surface(folder, entry)
+
+
+def surface_diff(pin: dict, surface: dict) -> list[str]:
+    """What the surface has beyond the pin; empty when it is equal or smaller."""
+    diffs = []
+    for key in ("agents", "skills"):
+        want = pin.get(key)
+        if not isinstance(want, int) or isinstance(want, bool):
+            diffs.append(f"the pin has no {key} count")
+        elif surface[key] > want:
+            diffs.append(f"{surface[key]} {key}, pinned {want}")
+    pinned = pin.get("tools")
+    pinned = set(pinned) if isinstance(pinned, list) else set()
+    extra = sorted(set(surface["tools"]) - pinned)
+    if extra:
+        diffs.append("tools not in the pin: " + " ".join(extra))
+    if surface["hooksMcpSha256"] != pin.get("hooksMcpSha256"):
+        diffs.append("hooks/MCP declarations differ from the pin")
+    return diffs
+
+
+def surface_report(row: dict, repo: str, installs: list[dict], installed: bool) -> tuple[str, list[str]]:
+    """Return (line to print, differences). No differences means the row may proceed."""
+    pin = row["surface"]
+    surface, reason = row_surface(row, repo, installs, installed)
+    if surface is None:
+        return f"{row['id']}: surface unknown ({reason})", [f"surface unknown ({reason})"]
+    match = "matches" if surface["hooksMcpSha256"] == pin.get("hooksMcpSha256") else "differs from"
+    line = (f"{row['id']}: {surface['agents']} agents, {surface['skills']} skills, "
+            f"tools {' '.join(surface['tools']) or 'none'}, hooks/MCP hash {match} pin")
+    return line, surface_diff(pin, surface)
+
+
+def has_pin(row: dict) -> bool:
+    return isinstance(row.get("surface"), dict) and row_plugin(row) is not None
+
+
 # --- engine state -------------------------------------------------------------
 
 def skill_root(scope: str, repo: str) -> str | None:
@@ -372,15 +733,29 @@ def retry_line(engine_id: str, action: str) -> str:
 
 
 def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers: dict) -> tuple[str, str]:
-    """Return (outcome, message). outcome: done, skipped, failed."""
+    """Return (outcome, message). outcome: done, skipped, failed, question."""
     st = engine_state(row, repo, installs, answers)
     eid = row["id"]
     if st["state"] == "not-applicable":
         return "skipped", f"{eid}: skipped, owner {row['owner']} is not installed and enabled for this repo"
-    if action == "install" and st["state"] == "installed":
-        return "skipped", f"{eid}: already installed"
     if action == "update" and st["state"] != "installed":
         return "skipped", f"{eid}: not installed, nothing to update"
+    installed = st["state"] == "installed"
+    mp = row.get("marketplace")
+    if isinstance(mp, dict):  # before everything else, even for a row that is already detected
+        kind, text = check_marketplace(mp, repo, allow_add=action == "install" and not installed)
+        if kind != "ok":
+            return "failed", f"{eid}: {text}"
+    if action == "install" and installed:
+        return "skipped", f"{eid}: already installed"
+    pinned = has_pin(row)
+    if pinned:
+        line, diffs = surface_report(row, repo, installs, installed)
+        say(line)
+        if diffs:
+            say(f"{eid}: surface beyond the pin: {'; '.join(diffs)}")
+            return "question", (f"{eid}: not {'installed' if action == 'install' else 'updated'}. Review the surface above, then raise the pin in "
+                                f"registry/engines.json or leave the row alone")
     argv = row.get(action)
     if not valid_argv(argv):
         return "failed", f"{eid}: registry row has no valid {action} argv"
@@ -391,10 +766,45 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
         after = detected(row, repo, read_installs()[0])
         if not after:
             return "failed", f"{eid}: {action} exited 0 but the engine is still not detected. Retry: {retry_line(eid, action)}"
+    if pinned and action == "update":  # the new copy is on disk now; say so if it grew
+        _, diffs = surface_report(row, repo, read_installs()[0], True)
+        if diffs:
+            return "done", f"{eid}: update ok, but the surface is now beyond the pin: {'; '.join(diffs)}"
     return "done", f"{eid}: {action} ok"
 
 
 # --- subcommands --------------------------------------------------------------
+
+def row_findings(row: dict, repo: str, installs: list[dict], st: dict) -> dict:
+    """Extra status fields for a row with a marketplace or a surface pin; reads only, adds nothing.
+
+    marketplaceProblem: the registered source is not the row's. surfaceGrew: an installed
+    plugin is beyond its pin. surfaceProblem: a plugin about to be installed is beyond
+    its pin or unreadable, so the row needs a decision and is not installed.
+    """
+    out: dict = {}
+    if st["state"] == "not-applicable":
+        return out
+    installed = st["state"] == "installed"
+    mp = row.get("marketplace")
+    mp_ok = True
+    if isinstance(mp, dict):
+        kind, text = check_marketplace(mp, repo, allow_add=False)
+        if kind == "bad" or (kind == "absent" and installed):
+            out["marketplaceProblem"] = text
+        mp_ok = kind == "ok"
+    if has_pin(row) and mp_ok:
+        _, diffs = surface_report(row, repo, installs, installed)
+        if diffs and installed:
+            out["surfaceGrew"] = diffs
+        elif diffs:
+            out["surfaceProblem"] = diffs
+    if "marketplaceProblem" in out or "surfaceProblem" in out:
+        out["wantsInstall"] = False
+    if "surfaceProblem" in out:
+        out["needsQuestion"] = True
+    return out
+
 
 def cmd_status(args, repo: str) -> int:
     reg = load_registry()
@@ -412,7 +822,11 @@ def cmd_status(args, repo: str) -> int:
             "installPath": i.get("installPath"), "enabled": i.get("enabled") is not False,
             "covers": cov, "lagging": lag,
         })
-    engines = [engine_state(r, repo, installs, data) for r in reg["engines"]]
+    engines = []
+    for r in reg["engines"]:
+        e = engine_state(r, repo, installs, data)
+        e.update(row_findings(r, repo, installs, e))
+        engines.append(e)
     sdlc = next((p["installPath"] for p in plugins if p["name"] == "pro-ai-sdlc" and p["covers"]
                  and p["installPath"]), None)
     starter = [{"scope": p["scope"], "projectPath": p["projectPath"]} for p in plugins
@@ -437,6 +851,10 @@ def cmd_status(args, repo: str) -> int:
     say("engines:")
     for e in engines:
         say(f"  {e['id']}: {e['state']}")
+        if e.get("marketplaceProblem"):
+            say(f"    marketplace: {e['marketplaceProblem']}")
+        for d in e.get("surfaceProblem", []) + e.get("surfaceGrew", []):
+            say(f"    surface: {d}")
     return 0
 
 
@@ -469,7 +887,7 @@ def cmd_run(args, repo: str) -> int:
             return 2
         outcome, msg = run_engine(rows[args.id], action, repo, installs, data)
         say(msg)
-        return 1 if outcome == "failed" else 0
+        return 1 if outcome in ("failed", "question") else 0
 
     # all: update every installed row (update only), then install what is missing
     if action == "update":
@@ -477,7 +895,7 @@ def cmd_run(args, repo: str) -> int:
             if engine_state(row, repo, installs, data)["state"] == "installed":
                 outcome, msg = run_engine(row, "update", repo, installs, data)
                 say(msg)
-                if outcome == "failed":
+                if outcome in ("failed", "question"):
                     failures.append(msg)
     installs, _ = read_installs()
     for row in rows.values():
@@ -486,10 +904,13 @@ def cmd_run(args, repo: str) -> int:
             say(f"{row['id']}: installing")
             outcome, msg = run_engine(row, "install", repo, installs, data)
             say(msg)
-            if outcome == "failed":
+            if outcome in ("failed", "question"):
                 failures.append(msg)
         elif st["state"] == "installed" and action == "install":
-            say(f"{row['id']}: already installed")
+            outcome, msg = run_engine(row, "install", repo, installs, data)  # still checks its marketplace
+            say(msg)
+            if outcome == "failed":
+                failures.append(msg)
     if not write_run_version(repo, reg):
         failures.append("answers file not updated")
     if failures:
@@ -523,6 +944,21 @@ def cmd_answer(args, repo: str) -> int:
         say(f"cannot save the answer: {exc}")
         return 1
     say(f"{args.id}: {args.value}" + ("" if changed else " (unchanged)"))
+    return 0
+
+
+def cmd_surface(args, repo: str) -> int:
+    reg = load_registry()
+    row = next((r for r in reg["engines"] if isinstance(r, dict) and r.get("id") == args.id), None)
+    if row is None or row_plugin(row) is None:
+        say(f"{args.id}: not a claude-plugin row")
+        return 2
+    installs, _ = read_installs()
+    surface, reason = row_surface(row, repo, installs, True)
+    if surface is None:
+        say(f"{args.id}: surface unknown ({reason})")
+        return 1
+    say(json.dumps(surface, indent=2, sort_keys=True))
     return 0
 
 
@@ -699,6 +1135,8 @@ def build_parser() -> argparse.ArgumentParser:
     pl.add_argument("what", choices=["update", "swap-starter"])
     st = sub.add_parser("stale")
     st.add_argument("--remove", action="store_true")
+    sf = sub.add_parser("surface")
+    sf.add_argument("id")
     return p
 
 
@@ -716,6 +1154,8 @@ def main(argv: list[str]) -> int:
             return cmd_plugins_update(args, repo) if args.what == "update" else cmd_swap_starter(args, repo)
         if args.cmd == "stale":
             return cmd_stale(args, repo)
+        if args.cmd == "surface":
+            return cmd_surface(args, repo)
     except (OSError, ValueError) as exc:
         say(f"pro-dev.py: {type(exc).__name__}: {exc}")
         return 1

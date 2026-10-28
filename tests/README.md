@@ -185,3 +185,7 @@ It changes nothing.
 See `plugins/pro-core/commands/pro-dev.md`.
 
 `tests/pro-dev.mjs` covers `scripts/pro-dev.py` and the SessionStart nudge with a fake `claude` and `npx` on `PATH` and a temp `HOME`; `tests/check.mjs` runs it as the `pro-dev` check.
+
+`tests/methods.mjs` covers `plugins/pro-ai-sdlc/scripts/methods.py` with a fake `claude` first on `PATH`, a temp `HOME` and temp repos: no method installed, pro-egm with and without `egm@egm`, the `{target}` fill, disabled and other-repo installs, a method file from another marketplace, malformed JSON, a missing or failing `claude` and 50 installs under two seconds; `tests/check.mjs` runs it inside the `methods` check.
+
+`tests/goldfish.mjs` covers `plugins/pro-egm/scripts/goldfish.py` in a temp repo with a fake plugin install path: the defaults for `spec` and `plan`, the reading list, a valid `.egm/goldfish.json`, each refused path form and `init`; `tests/check.mjs` runs it as the `goldfish` check.

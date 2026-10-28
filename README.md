@@ -124,7 +124,7 @@ The script clones or updates this private repository through `gh` at
 `~/.codex/marketplaces/pro-dev-skillset`, adds that local checkout as a Codex plugin marketplace,
 installs the default stack
 (`pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-nextjs`, `pro-astro`, `pro-design`, `pro-motion`,
-`pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`, `pro-legal`)
+`pro-testing`, `pro-data`, `pro-research`, `pro-security`), and leaves opt-in plugins (`pro-spdd`, `pro-egm`, `pro-legal`)
 disabled unless you pass `--with-opt-in`. It also installs project-local Lavish at
 `.claude/skills/lavish/SKILL.md` and the project command at `.claude/commands/lavish.md` unless you
 pass `--no-lavish`. The bootstrap runs both the generic skill installer and the `--agent claude-code`
@@ -185,6 +185,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills`, [`dream`](./plugins/pro-core/skills/dream/SKILL.md) + `/dream` (consolidate this project's Claude Code auto-memory into a lean `MEMORY.md`), `/kaizen` (raise each project's bar one notch per run from a planning repo) | `pro-core` |
 | **Define** | `interview-me`, `idea-refine`, `brainstorming`, `adhd` (parallel divergent ideation, `/adhd`) | `pro-pdd` |
 | **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/pro-dev install`) | `pro-pdd` |
+| **Spec** *(branch)* | goldfish review of a spec or plan: `egm-bridge` → `egm@egm` reviewers with fresh context | `pro-egm` *(opt-in)* |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
 | **Build** | `emil-design-eng` (start here for product UI), `landing-page-design`, `build-awwwards-quality-sites`, `apple-design`, `animate` + `animation-vocabulary`, `screen-critique` (`/critique-screen`), `interface-review`, `better-interface`, `better-layout`, `perception-laws`, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition, `frontend-ui-engineering`†, `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/pro-dev install`), `taste-skills-bridge`◆ (via `/pro-dev install`), `web-design-engineer-bridge`◆, `tastemaker-bridge`◆, `mengto-skills-bridge`◆ (all three via `/pro-dev install`) | `pro-design` |
@@ -253,6 +254,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   A dated `legal-landscape.md` baseline backs the review, with a CI staleness check.
   The content is original.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-dev-starter` yet.
+- **`pro-egm`** - opt-in glue for Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Apache-2.0, bridged, not vendored): `/pro-egm:goldfish` runs the goldfish review of a spec or plan with fresh-context reviewers a repo keeps in `.egm/`, and the `egm-bridge` skill points to `/pro-dev install`, which installs `egm@egm`. Once installed, `/spec` and `/plan` offer the review. Not included in `pro-dev-starter`.
 - **`pro-pdd`** — Define + Plan skills included in `pro-dev-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/pro-dev install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Framework plugins (skills trigger from file context in projects that use the framework):**
@@ -262,7 +264,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-nextjs`, `pro-astro` and `pro-spdd` are opt-in and installed by hand.
+- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-ai-sdlc` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-nextjs`, `pro-astro`, `pro-spdd` and `pro-egm` are opt-in and installed by hand.
 - **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
 
 ### Layout
@@ -287,6 +289,7 @@ plugins/
   pro-dev-starter/                   # meta-plugin: dependencies only
   pro-starter/                       # deprecated shim that depends on pro-dev-starter
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
+  pro-egm/                           # opt-in goldfish review glue for egm@egm
   pro-pdd/                           # default define + plan-driven development skills
 templates/
   project-settings.json              # drop-in for any new project's .claude/

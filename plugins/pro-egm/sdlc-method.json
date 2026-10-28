@@ -1,0 +1,16 @@
+{
+  "method": "egm",
+  "requires": "egm@egm",
+  "handoffs": [
+    {
+      "stage": "spec",
+      "when": "Goldfish review of the drafted spec before it is committed; runs several subagents on the session model",
+      "offer": "/pro-egm:goldfish {target} --stage spec"
+    },
+    {
+      "stage": "plan",
+      "when": "Goldfish review of the drafted plan before it is committed; runs several subagents on the session model",
+      "offer": "/pro-egm:goldfish {target} --stage plan"
+    }
+  ]
+}

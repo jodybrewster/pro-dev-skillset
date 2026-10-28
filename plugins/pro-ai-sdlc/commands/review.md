@@ -1,7 +1,7 @@
 ---
 description: "Review the current diff or a PR against the repo's REVIEW.md: a bugs pass, a security pass and a compliance pass against the intent, spec and plan. Findings inform a human and never approve or block. Usage: /review [pr-number | url | branch]"
 argument-hint: "[pr-number | url | branch]  (default: the current branch against its base)"
-allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git merge-base:*), Bash(git rev-parse:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(ls:*), Read, Glob, Grep
+allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git merge-base:*), Bash(git rev-parse:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Glob, Grep
 ---
 
 ## Context
@@ -11,6 +11,7 @@ allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git
 - Working tree: !`git status --short --branch`
 - Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null`
 - Intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -10`
+- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage review`
 
 Target: $ARGUMENTS
 
@@ -38,7 +39,14 @@ Normally bugs, then security, then compliance.
 Compliance compares the diff with the spec and plan and flags a departure that plan.md does not record.
 For a large or risky diff, hand the passes to the `reviewer` subagent with the diff spec and the policy paths and nothing else, so its read is not anchored on yours.
 
-### 4. Report
+### 4. Offer spec methods
+
+If "Spec methods" in Context lists lines, offer each one once as a yes or no question.
+A line reads `<method>: <when> -> <offer>`; a line with `needs <plugin>` means that method is not installed, so say so and move on.
+On yes, run the offer; on no, carry on.
+With nothing listed, skip this step.
+
+### 5. Report
 
 Rank findings most severe first.
 Each one names its pass, severity (Important or nit), file and line, a one-sentence claim and a concrete failure scenario.

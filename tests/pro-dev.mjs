@@ -39,6 +39,14 @@ lst = os.environ.get("FAKE_PLUGIN_LIST")
 if argv[:2] == ["plugin", "list"]:
     sys.stdout.write(open(lst).read() if lst and os.path.exists(lst) else "[]")
     sys.exit(0)
+mp = os.environ.get("FAKE_MP_ADD")
+if argv[:3] == ["plugin", "marketplace", "add"] and mp:
+    spec = json.load(open(mp))
+    kp = os.path.join(os.path.expanduser("~"), ".claude", "plugins", "known_marketplaces.json")
+    data = json.load(open(kp)) if os.path.exists(kp) else {}
+    data[spec["name"]] = spec["entry"]
+    json.dump(data, open(kp, "w"))
+    sys.exit(0)
 fm = os.environ.get("FAKE_FAIL_MATCH")
 if fm and fm in " ".join(argv):
     sys.stderr.write("boom\\n")
@@ -50,6 +58,11 @@ if argv[:2] == ["plugin", "update"] and nv and lst and os.path.exists(lst):
         if e.get("id") == argv[2]:
             e["version"] = nv
     json.dump(data, open(lst, "w"))
+uw = os.environ.get("FAKE_UPDATE_WRITE")
+if argv[:2] == ["plugin", "update"] and uw:
+    path, content = uw.split("|", 1)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w").write(content)
 sys.exit(0)
 `;
 
@@ -110,7 +123,7 @@ function buildSandbox(pluginRoot) {
   bins.noClaude = makeBin("bin-no-claude", { claude: false });
   const logPath = join(root, "calls.log");
   const listPath = join(root, "plugin-list.json");
-  const script = join(pluginRoot, "scripts", "pro-dev.py");
+  let script = join(pluginRoot, "scripts", "pro-dev.py");
   const nudge = join(pluginRoot, "scripts", "pro-dev-nudge.py");
 
   const setPlugins = (entries) => writeFileSync(listPath, JSON.stringify(entries.map((e) => ({
@@ -133,10 +146,19 @@ function buildSandbox(pluginRoot) {
   const calls = (tool) => (existsSync(logPath) ? read(logPath).trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [])
     .filter((c) => !(c.tool === "claude" && c.argv[0] === "plugin" && c.argv[1] === "list"))
     .filter((c) => !tool || c.tool === tool);
+  // a copy of the script beside a registry holding only these rows, for the marketplace and surface cases
+  const useRows = (rows) => {
+    const pc = join(root, "pc");
+    mkdirSync(join(pc, "scripts"), { recursive: true });
+    mkdirSync(join(pc, "registry"), { recursive: true });
+    writeFileSync(join(pc, "scripts", "pro-dev.py"), read(join(pluginRoot, "scripts", "pro-dev.py")));
+    writeFileSync(join(pc, "registry", "engines.json"), JSON.stringify({ version: 1, engines: rows }));
+    script = join(pc, "scripts", "pro-dev.py");
+  };
   const answersPath = join(repo, ".claude", "pro-dev.json");
   const installedFile = join(home, ".claude", "plugins", "installed_plugins.json");
   return { root, home, repo, tools, bins, run, status, engine, calls, setPlugins, entry, env, logPath, listPath,
-    answersPath, installedFile, nudge, script };
+    answersPath, installedFile, nudge, get script() { return script; }, useRows };
 }
 
 const ok = (detail = "") => ({ ok: true, detail });
@@ -145,7 +167,318 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 function registry(pluginRoot) { return json(join(pluginRoot, "registry", "engines.json")); }
 
+
+// --- marketplace and surface fixtures ------------------------------------------
+
+const EGM_SRC = "google/elephant-goldfish-model";
+const EGM_ENTRY = { source: { source: "github", repo: EGM_SRC }, installLocation: "" };
+
+function egmRow(extra = {}) {
+  return {
+    id: "egm", owner: "pro-egm", bridges: [], kind: "claude-plugin", default: true,
+    detect: { plugin: "egm@egm" },
+    install: ["claude", "plugin", "install", "egm@egm", "--scope", "project"],
+    update: ["claude", "plugin", "update", "egm@egm", "--scope", "project"],
+    marketplace: { name: "egm", source: EGM_SRC },
+    why: "test row", ...extra,
+  };
+}
+
+// a plugin folder: two agents, one skill, one hook file
+function writePlugin(dir, { agents = { a: "Read, Grep", b: "Read, Glob" }, skills = { s: null }, hooks = { hooks: {} },
+  manifest = {} } = {}) {
+  mkdirSync(join(dir, ".claude-plugin"), { recursive: true });
+  writeFileSync(join(dir, ".claude-plugin", "plugin.json"), JSON.stringify({ name: "egm", ...manifest }));
+  for (const [n, tools] of Object.entries(agents)) {
+    mkdirSync(join(dir, "agents"), { recursive: true });
+    writeFileSync(join(dir, "agents", `${n}.md`), `---\nname: ${n}\n${tools ? `tools: ${tools}\n` : ""}---\nbody\n`);
+  }
+  for (const [n, allowed] of Object.entries(skills)) {
+    mkdirSync(join(dir, "skills", n), { recursive: true });
+    writeFileSync(join(dir, "skills", n, "SKILL.md"), `---\nname: ${n}\n${allowed ? `allowed-tools: ${allowed}\n` : ""}---\nbody\n`);
+  }
+  if (hooks) {
+    mkdirSync(join(dir, "hooks"), { recursive: true });
+    writeFileSync(join(dir, "hooks", "hooks.json"), JSON.stringify(hooks));
+  }
+}
+
+function writeKnown(s, entry) {
+  writeFileSync(join(s.home, ".claude", "plugins", "known_marketplaces.json"), JSON.stringify({ egm: entry }));
+}
+
+// A marketplace clone holding the plugin at its root (source "./"), registered from the right repo.
+// The pin is taken from the plugin itself, the way the orchestrator fills it from a real install.
+function egmWorld(s, { plugin = {}, rowExtra = {}, source = "./", pin = true } = {}) {
+  const clone = join(s.root, "mp", "clone");
+  mkdirSync(join(clone, ".claude-plugin"), { recursive: true });
+  writeFileSync(join(clone, ".claude-plugin", "marketplace.json"), JSON.stringify({ name: "egm", plugins: [{ name: "egm", source }] }));
+  writePlugin(clone, plugin);
+  writeKnown(s, { ...EGM_ENTRY, installLocation: clone });
+  const inst = join(s.root, "mp", "inst");
+  writePlugin(inst, plugin);
+  s.useRows([egmRow()]);
+  s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
+  let surface = null;
+  if (pin) {
+    surface = JSON.parse(s.run(["surface", "egm"]).stdout);
+    s.useRows([egmRow({ surface, ...rowExtra })]);
+  }
+  s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+  return { clone, inst, surface };
+}
+
+const installCalls = (s) => s.calls("claude").filter((c) => c.argv[1] === "install");
+const growth = (s, w) => {
+  const r = s.run(["run", "egm", "install"]);
+  if (r.code === 0 || installCalls(s).length) return bad(`row was installed past the pin: ${r.out}`);
+  return r.out.includes(w) ? ok() : bad(`no "${w}" in: ${r.out}`);
+};
+
 const CASES = [
+  {
+    id: "marketplace/add-when-absent",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      const spec = join(s.root, "mp-add.json");
+      writeFileSync(spec, JSON.stringify({ name: "egm", entry: { ...EGM_ENTRY, installLocation: join(s.root, "none") } }));
+      const r = s.run(["run", "egm", "install"], { extra: { FAKE_MP_ADD: spec } });
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      if (!same(a, [`plugin marketplace add ${EGM_SRC}`, "plugin install egm@egm --scope project"])) return bad(`calls ${JSON.stringify(a)}`);
+      return /user-wide/.test(r.out) ? ok() : bad(`no user-wide note: ${r.out}`);
+    },
+  },
+  {
+    id: "marketplace/already-registered-matching-repo-any-case",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      writeKnown(s, { source: { source: "github", repo: EGM_SRC.toUpperCase() }, installLocation: "/x" });
+      const r = s.run(["run", "egm", "install"]);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      return r.code === 0 && same(a, ["plugin install egm@egm --scope project"]) ? ok() : bad(`exit ${r.code} calls ${JSON.stringify(a)}: ${r.out}`);
+    },
+  },
+  {
+    id: "marketplace/mismatched-repo-is-refused-and-names-both",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      writeKnown(s, { source: { source: "github", repo: "evil/egm" }, installLocation: "/x" });
+      const r = s.run(["run", "egm", "install"]);
+      if (r.code !== 1 || s.calls("claude").length) return bad(`exit ${r.code}, calls ${JSON.stringify(s.calls("claude"))}`);
+      return r.out.includes("evil/egm") && r.out.includes(EGM_SRC) ? ok() : bad(`both sources not printed: ${r.out}`);
+    },
+  },
+  {
+    id: "marketplace/non-github-source-is-refused",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      writeKnown(s, { source: { source: "git", url: "https://example.com/egm.git" }, installLocation: "/x" });
+      const r = s.run(["run", "egm", "install"]);
+      return r.code === 1 && !s.calls("claude").length && r.out.includes("example.com") ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "marketplace/unreadable-known-file-is-refused",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      writeFileSync(join(s.home, ".claude", "plugins", "known_marketplaces.json"), "{not json");
+      const r = s.run(["run", "egm", "install"]);
+      return r.code === 1 && !s.calls("claude").length && /unreadable/.test(r.out) ? ok() : bad(`exit ${r.code}, calls ${s.calls("claude").length}: ${r.out}`);
+    },
+  },
+  {
+    id: "marketplace/mismatch-on-an-already-detected-row",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo }]);
+      writeKnown(s, { source: { source: "github", repo: "evil/egm" }, installLocation: "/x" });
+      const r = s.run(["run", "egm", "install"]);
+      if (r.code !== 1 || /already installed/.test(r.out)) return bad(`detected row skipped the check: exit ${r.code}: ${r.out}`);
+      const all = s.run(["run", "all", "install"]);
+      if (all.code !== 1 || /already installed/.test(all.out)) return bad(`run all skipped the check: ${all.out}`);
+      writeKnown(s, { source: { source: "github", repo: EGM_SRC }, installLocation: "/x" });
+      const fine = s.run(["run", "egm", "install"]);
+      return fine.code === 0 && /already installed/.test(fine.out) ? ok() : bad(`matching row: ${fine.out}`);
+    },
+  },
+  {
+    id: "marketplace/status-shows-the-mismatch",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo)]);
+      writeKnown(s, { source: { source: "github", repo: "evil/egm" }, installLocation: "/x" });
+      const e = s.engine(s.status(), "egm");
+      if (!e.marketplaceProblem || !e.marketplaceProblem.includes("evil/egm")) return bad(`no marketplaceProblem: ${JSON.stringify(e)}`);
+      return e.wantsInstall === false ? ok() : bad("wantsInstall stayed true");
+    },
+  },
+  {
+    id: "marketplace/update-is-checked-too",
+    run: (s) => {
+      s.useRows([egmRow()]);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo }]);
+      writeKnown(s, { source: { source: "github", repo: "evil/egm" }, installLocation: "/x" });
+      const r = s.run(["run", "egm", "update"]);
+      return r.code === 1 && !s.calls("claude").length ? ok() : bad(`exit ${r.code}, calls ${JSON.stringify(s.calls("claude"))}`);
+    },
+  },
+  {
+    id: "marketplace/rows-without-marketplace-or-surface-are-unchanged",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-design", "project", s.repo)]);
+      writeFileSync(join(s.home, ".claude", "plugins", "known_marketplaces.json"), "{not json");
+      const r = s.run(["run", "figma", "install"]);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      return r.code === 0 && same(a, ["plugin install figma@claude-plugins-official --scope project"]) && !/surface/.test(r.out)
+        ? ok() : bad(`exit ${r.code} calls ${JSON.stringify(a)}: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/matching-surface-installs-and-prints-one-line",
+    run: (s) => {
+      egmWorld(s);
+      const r = s.run(["run", "all", "install"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      if (!r.out.includes("egm: 2 agents, 1 skills, tools Glob Grep Read, hooks/MCP hash matches pin")) return bad(`no surface line: ${r.out}`);
+      if (installCalls(s).length !== 1) return bad("not installed");
+      const ans = existsSync(s.answersPath) ? read(s.answersPath) : "";
+      return /surface/i.test(ans) ? bad(`surface written to the answers file: ${ans}`) : ok();
+    },
+  },
+  {
+    id: "surface/command-prints-the-pin-shape",
+    run: (s) => {
+      const { surface } = egmWorld(s, { plugin: { skills: { s: "Bash(git status:*), Write" } } });
+      const keys = Object.keys(surface).sort().join();
+      if (keys !== "agents,hooksMcpSha256,skills,tools") return bad(`keys ${keys}`);
+      if (!/^[0-9a-f]{64}$/.test(surface.hooksMcpSha256)) return bad(`hash ${surface.hooksMcpSha256}`);
+      return same(surface.tools, ["Bash(git status:*)", "Glob", "Grep", "Read", "Write"]) ? ok() : bad(`tools ${JSON.stringify(surface.tools)}`);
+    },
+  },
+  {
+    id: "surface/smaller-surface-proceeds",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      rmSync(join(clone, "agents", "b.md"));
+      const r = s.run(["run", "egm", "install"]);
+      return r.code === 0 && installCalls(s).length === 1 && r.out.includes("1 agents") ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/added-tool-becomes-a-question",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { agents: { a: "Read, Grep, Bash", b: "Read, Glob" } });
+      const g = growth(s, "tools not in the pin: Bash");
+      if (!g.ok) return g;
+      const e = s.engine(s.status(), "egm");
+      return e.needsQuestion === true && e.wantsInstall === false && e.surfaceProblem?.length ? ok() : bad(`status ${JSON.stringify(e)}`);
+    },
+  },
+  {
+    id: "surface/more-agents-or-skills-become-a-question",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { agents: { a: "Read, Grep", b: "Read, Glob", c: "Read" }, skills: { s: null, t: null } });
+      return growth(s, "3 agents, pinned 2");
+    },
+  },
+  {
+    id: "surface/agent-with-no-tools-line-counts-as-every-tool",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { agents: { a: "Read, Grep", b: null } });
+      return growth(s, "tools not in the pin: *");
+    },
+  },
+  {
+    id: "surface/same-counts-different-hook-hash",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, "hooks", "hooks.json"), JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command: "run-something-else" }] }] } }));
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/inline-hook-in-plugin-json-is-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { manifest: { hooks: { Stop: [{ hooks: [{ type: "command", command: "x" }] }] } } });
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/inline-mcp-in-the-marketplace-entry-is-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, ".claude-plugin", "marketplace.json"), JSON.stringify({
+        plugins: [{ name: "egm", source: "./", mcpServers: { x: { command: "other" } } }],
+      }));
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/symlinked-hooks-file-is-unknown",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(s.root, "outside.json"), JSON.stringify({ hooks: {} }));
+      rmSync(join(clone, "hooks", "hooks.json"));
+      symlinkSync(join(s.root, "outside.json"), join(clone, "hooks", "hooks.json"));
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/fifo-hooks-file-is-unknown-and-does-not-hang",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      rmSync(join(clone, "hooks", "hooks.json"));
+      if (spawnSync("mkfifo", [join(clone, "hooks", "hooks.json")]).status !== 0) return ok("skipped: no mkfifo");
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/marketplace-source-that-escapes-its-clone-is-unknown",
+    run: (s) => {
+      egmWorld(s, { source: "../.." });
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/marketplace-source-url-is-unknown-not-a-crash",
+    run: (s) => {
+      egmWorld(s, { source: "https://example.com/egm.git" });
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/missing-manifest-is-unknown-not-a-crash",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      rmSync(join(clone, ".claude-plugin", "plugin.json"));
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/update-then-check-reports-growth",
+    run: (s) => {
+      const { inst } = egmWorld(s);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
+      if (s.engine(s.status(), "egm").surfaceGrew) return bad("grew before the update");
+      const grown = "---\nname: c\ntools: Bash\n---\n";
+      const r = s.run(["run", "egm", "update"], { extra: { FAKE_UPDATE_WRITE: `${join(inst, "agents", "c.md")}|${grown}` } });
+      if (r.code !== 0 || !r.out.includes("now beyond the pin")) return bad(`update output: ${r.out}`);
+      const e = s.engine(s.status(), "egm");
+      if (!e.surfaceGrew?.join().includes("Bash")) return bad(`status ${JSON.stringify(e)}`);
+      const again = s.run(["run", "egm", "update"]);
+      return again.code === 1 && /beyond the pin/.test(again.out) ? ok() : bad(`second update ran: ${again.out}`);
+    },
+  },
   {
     id: "status/owner-installed-or-not",
     run: (s) => {

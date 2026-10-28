@@ -44,6 +44,7 @@ The status JSON lists:
 
 - `plugins`: each pro-dev-skillset install with scope, version, `latest`, `covers` (true when its scope is user or its folder is this repo or inside it) and `lagging`.
 - `engines`: each registry row with `state` (`installed`, `missing`, `declined` or `not-applicable`), `needsQuestion`, `why` and `bridges`.
+- `engines` rows may also carry `marketplaceProblem` (the marketplace registered under the row's name has another source, or cannot be read), `surfaceGrew` (an installed plugin has more agents, skills, tools or hooks than its registry pin, or its surface cannot be read) and `surfaceProblem` (the same for a plugin about to be installed, which then has `needsQuestion` true and `wantsInstall` false).
 - `aiSdlcInstallPath`: where pro-ai-sdlc is installed, or null.
 - `starterShim`: installs of the old `pro-starter` that cover this repo.
 - `staleCount`: installs whose project folder no longer exists.
@@ -65,6 +66,7 @@ Print a short report, then one line naming the next command to run.
   If `starterShim` is not empty, say `/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`.
 - Engines: a table of each row with its state.
   Say which are default and which are optional.
+  For each row with `marketplaceProblem` or `surfaceGrew`, print the text exactly as the status JSON gives it and mark the report `needs attention`.
 - Strict validation: for each installed pro-dev plugin that covers the repo, run `claude plugin validate` on its `installPath` from the status JSON and report any failure.
 - Router smoke check: confirm `pro-core` exposes the `using-pro-dev` skill, then sanity-route these prompts against the installed skill descriptions and flag any that would resolve elsewhere:
   - "where do I start / what's the workflow" goes to `using-pro-dev`.
@@ -93,6 +95,11 @@ Print a short report, then one line naming the next command to run.
 3. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" run all install`.
    It installs every default row that is missing and every optional row answered yes, skips what is installed, records `registryVersion` in `.claude/pro-dev.json` and lists each failure with the command to retry.
    A failure does not stop the run; report each one.
+   A row that names a marketplace may register it with `claude plugin marketplace add`; the script prints a line saying so, which is a user-wide change that stays after the plugin is removed.
+   Before it installs a plugin row that pins a surface, it prints one surface line (agents, skills, tools and whether the hooks and MCP hash matches the pin).
+   Relay that line, any `surface beyond the pin` difference line and any marketplace mismatch exactly as printed.
+   A row beyond its pin, or whose surface cannot be read, is not installed: tell the person which row it is and that the pin in `registry/engines.json` is reviewed before it is raised.
+   Never install such a row another way.
 4. Set the repo up for the loop, as in section 4.
 5. Run `check`'s engine table again so the person sees what landed.
 6. Print what changed and what to commit.
@@ -112,6 +119,8 @@ Print each step as it finishes.
 4. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" run all update`.
    It updates every installed engine, installs default rows now missing and optional rows answered yes.
    It also records `registryVersion`.
+   Relay surface lines, difference lines and marketplace mismatches exactly as printed, as in install step 3.
+   An update of a pinned plugin that finishes with "the surface is now beyond the pin" is listed with the failures in step 6.
 5. If `staleCount` is above zero, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale`, show the list and ask once whether to remove them.
    On yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale --remove`.
    It writes a backup of `installed_plugins.json` beside the file and removes only pro-dev-skillset entries whose folder is gone.

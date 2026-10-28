@@ -1,7 +1,7 @@
 ---
 description: "Write spec.md beside an intent, check it against the repo's design, review and security policies and commit it. Usage: /spec [path to intent.md]"
 argument-hint: "[path to intent.md]  (default: the newest intent without a spec.md)"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Read, Glob, Grep, Write, Edit
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Glob, Grep, Write, Edit
 ---
 
 ## Context
@@ -58,7 +58,7 @@ The spec's Flagged concerns section ends with an `ADR needed:` line, `yes` or `n
 It is `yes` when the change sets a rule other work must follow or would be expensive to reverse.
 A `Likely needs an ADR` line in the intent's Open questions carries into this decision.
 
-When the answer is no, skip to the commit.
+When the answer is no, skip to the next step.
 When it is yes:
 
 - Ask only what the ADR still lacks beyond the spec: at most what would make the person reverse the decision and what must stay true afterwards.
@@ -72,14 +72,26 @@ When it is yes:
 
 The Done sign-off in plan.md moves the ADR from `proposed` to `accepted`.
 
-### 5. Commit
+### 5. Offer spec methods
+
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage spec --target <spec.md path>`.
+Offer each printed line once as a yes or no question.
+A line reads `<method>: <when> -> <offer>`; a line with `needs <plugin>` means that method is not installed, so say so and move on.
+On no, or with nothing printed, go straight to the next step, so the command runs as it always has.
+
+After a goldfish review, keep the fixes EGM applied to the draft.
+For each Blocker or Major finding still open, write one line of your own under Flagged concerns in your words with no quoted file content; show those lines before committing.
+The review writes `goldfish_review_report.md` in the working directory; leave it untracked and name its path in the report.
+
+### 6. Commit
 
 - `git add <intent dir>/spec.md`, and when step 4 wrote an ADR, that file and the index too, so they land in the same commit.
 - `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date prefix.
 
 Never stage other files, never pass `--no-verify` and do not push.
+Check `git status` that nothing else got staged.
 
-### 6. Report
+### 7. Report
 
 The path, the commit hash, the number of requirements, the ADR path when one was drafted, each flagged concern in one line and the open questions that block planning.
 Suggest `/plan <intent dir>/spec.md` as the next step.

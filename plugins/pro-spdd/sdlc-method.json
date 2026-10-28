@@ -1,0 +1,11 @@
+{
+  "method": "spdd",
+  "requires": null,
+  "handoffs": [
+    {
+      "stage": "intent",
+      "when": "A client or team-facing structured spec is wanted instead of the plain intent",
+      "offer": "/spdd-story"
+    }
+  ]
+}

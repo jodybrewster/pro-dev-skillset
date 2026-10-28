@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "engines": [
     {
       "id": "lavish",
@@ -847,6 +847,57 @@
       ],
       "why": "Browser end-to-end testing.",
       "note": "Cross-marketplace companion from claude-plugins-official. Never a manifest dependency (PR 44). Needs that marketplace registered; templates/install-companions.sh does that."
+    },
+    {
+      "id": "egm",
+      "owner": "pro-egm",
+      "bridges": [
+        "egm-bridge"
+      ],
+      "kind": "claude-plugin",
+      "default": true,
+      "detect": {
+        "plugin": "egm@egm"
+      },
+      "install": [
+        "claude",
+        "plugin",
+        "install",
+        "egm@egm",
+        "--scope",
+        "project"
+      ],
+      "update": [
+        "claude",
+        "plugin",
+        "update",
+        "egm@egm",
+        "--scope",
+        "project"
+      ],
+      "marketplace": {
+        "name": "egm",
+        "source": "google/elephant-goldfish-model"
+      },
+      "surface": {
+        "agents": 9,
+        "skills": 7,
+        "tools": [
+          "Agent",
+          "Bash",
+          "Edit",
+          "Glob",
+          "Grep",
+          "Read",
+          "Write"
+        ],
+        "hooksMcpSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+      },
+      "why": "Elephant-Goldfish review loop: fresh-context reviewer subagents check a spec or plan and the fixes are applied round by round.",
+      "note": "Third-party plugin from its own marketplace, registered by this row's marketplace step (a user-wide write, ADR-0007) and installed only while its surface stays inside the pinned one. Never a manifest dependency (PR 44). Run pro-dev.py surface egm on a reviewed install to refill the pin.",
+      "upstream": [
+        "gh api repos/google/elephant-goldfish-model/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
+      ]
     }
   ]
 }
