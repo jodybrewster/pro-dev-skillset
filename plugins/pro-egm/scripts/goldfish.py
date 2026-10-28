@@ -413,6 +413,55 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     return 0
 
 
+# ----------------------------------------------------------------------- egm
+# Every EGM skill sets disable-model-invocation, so the Skill tool refuses them.
+# EGM's own guide says a caller reads the SKILL.md and follows it; this finds it.
+EGM_ID = "egm@egm"
+EGM_LOOP = os.path.join("skills", "egm-review-loop", "SKILL.md")
+
+
+def covers(entry: dict, repo: str) -> bool:
+    if entry.get("scope") == "user":
+        return True
+    pp = entry.get("projectPath")
+    if not isinstance(pp, str) or not pp:
+        return False
+    real = os.path.realpath(pp)
+    return real == repo or real.startswith(repo + os.sep)
+
+
+def egm_loop(repo: str) -> str | None:
+    """Path of egm-review-loop's SKILL.md in an enabled egm@egm install covering repo."""
+    try:
+        # enabled is reported for the cwd's project, so list from the repo itself
+        out = subprocess.run(["claude", "plugin", "list", "--json"], cwd=repo, capture_output=True,
+                             text=True, timeout=30, stdin=subprocess.DEVNULL)
+        installs = json.loads(out.stdout) if out.returncode == 0 else []
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    if not isinstance(installs, list):
+        return None
+    for entry in installs:
+        if not isinstance(entry, dict) or entry.get("id") != EGM_ID or entry.get("enabled") is False:
+            continue
+        if not covers(entry, repo) or not isinstance(entry.get("installPath"), str):
+            continue
+        base = os.path.realpath(entry["installPath"])
+        path = os.path.join(base, EGM_LOOP)
+        try:
+            st = os.lstat(path)
+        except OSError:
+            continue
+        if stat.S_ISREG(st.st_mode) and os.path.realpath(path).startswith(base + os.sep):
+            return path
+    return None
+
+
+def cmd_egm(args: argparse.Namespace) -> int:
+    print(json.dumps({"egmLoop": egm_loop(repo_root(args.repo))}, indent=2))
+    return 0
+
+
 # ---------------------------------------------------------------------- init
 
 
@@ -524,9 +573,11 @@ def main(argv: list[str]) -> int:
     r.add_argument("--token")
     i = sub.add_parser("init")
     i.add_argument("--repo")
+    e = sub.add_parser("egm")
+    e.add_argument("--repo")
     try:
         args = ap.parse_args(argv)
-        return cmd_resolve(args) if args.cmd == "resolve" else cmd_init(args)
+        return {"resolve": cmd_resolve, "init": cmd_init, "egm": cmd_egm}[args.cmd](args)
     except Refuse as exc:
         print(f"goldfish: refused: {exc}", file=sys.stderr)
         return 2
