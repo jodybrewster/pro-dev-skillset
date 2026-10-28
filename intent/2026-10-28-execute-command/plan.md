@@ -89,9 +89,16 @@ Live check C runs after merge and is recorded in Done before sign-off.
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1: <pass or fail, with what was observed>
+- Build commit: 545df8f
+- Checks run: `node tests/execute.mjs` 28/28 execute cases passed; `node tests/check.mjs` 22 checks, 0 failures, 38 warnings; `node tests/eval.mjs --dry` 72 cases reference real skills; `claude plugin validate . --strict` passed; all 16 plugins passed `claude plugin validate <plugin> --strict`; the personal-path `git grep` printed nothing.
+- Verifier (sonnet, fresh context): found a crash on a dangling env symlink, symlinks copied as their targets' contents and gaps in `execute.md` for R3, R16 and per-stage output; all fixed in 545df8f and listed under Departures.
+- AC1: partly passed. `execute-gate.py` refuses `intent/2026-10-17-intent-in-core/plan.md` ("plan Status is implemented, not approved") and this folder's plan ("branch execute-command already exists locally"), and fixture cases g5 and g6 cover uncommitted and draft plans; a live `/execute` run is not done yet.
+- AC2: not run; live check C after merge.
+- AC3: passed in fixtures (c1 to c7): ignored `.env.local` and `apps/web/.env` copied with mode 0600 kept, tracked `.env.example` untouched, `node_modules` skipped, worktree `git status` clean.
+- AC4: passed for the scripts (c5, c11, c16 find no marker in any output); the transcript and PR body half waits on live check C.
+- AC5: not run; live check B needs the plugin installed at 0.3.0.
+- AC6: not run; live check C after merge.
+- AC7: passed; pro-ai-sdlc is 0.3.0 in both manifests and the marketplace entry, `metadata.version` is 1.50.0.
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
