@@ -2,7 +2,7 @@
 description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /execute <path to plan.md>"
 argument-hint: "<path to plan.md>"
 model: opus
-allowed-tools: Bash(python3:*), Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(node:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
+allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
 ---
 
 ## Context
@@ -29,6 +29,10 @@ Env files hold secrets.
 `copy-env.py` copies them; you never open, read, print, echo, grep, diff, hash, stage or quote them, in the main checkout or the worktree.
 Only their relative paths may appear in output, a commit message, a log line or the PR body.
 If a failure looks like a missing or wrong env value, say which variable name the error mentions and stop; do not inspect the file to find out.
+Command output can echo a value from an env file, such as a connection string in a database error.
+Record each check in plan.md, a commit or the PR body as the command, pass or fail and its counts, never as pasted output.
+Copy this section into the prompt of every subagent you dispatch.
+`python3` and `node` are not pre-approved, so a one-off interpreter call asks the person first.
 
 ## Your task
 
