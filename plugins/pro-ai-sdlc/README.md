@@ -3,6 +3,7 @@
 The AI-native SDLC as one plugin, stack-agnostic.
 The playbook is the guide and this plugin is where it is encoded.
 The whole loop works from Claude Code alone in any repo that has the plugin installed; mieruka is only a UI over it and reads the plugin's templates and rules.
+It is a Claude Code only plugin: its commands target Claude Code and make no promise for Codex.
 
 Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this one if present, the kit installed into a repo.
 `/sdlc-init` writes toward that shape, with one departure: `intent/<date>-<slug>/{intent,spec,plan}.md` live in one folder instead of flat `specs/` and `plans/`.
@@ -14,6 +15,7 @@ Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this o
 | Intent | `/intent` | `intent/<date>-<slug>/intent.md` |
 | Spec | `/spec` | `spec.md` beside the intent |
 | Plan | `/plan` | `plan.md` beside the spec |
+| Build | `/execute` | a worktree and branch off the default branch, the built change, the plan's Done section and an open PR; never a merge |
 | Decision | `/adr` | an ADR for a decision with no change behind it |
 | Review | `/review` | findings, nothing on disk |
 | PR | `/pr-babysit` | fixes on the PR branch, never a merge |
@@ -31,6 +33,18 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 
 The interview rules for `/intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
+
+## Building a plan
+
+`/execute <path to plan.md>` runs on Opus, which builds the plan and dispatches subagents when a step benefits from one.
+Two scripts hold the parts that must not depend on the model:
+
+- `scripts/execute-gate.py` passes only a plan that is tracked, committed, `Status: approved` and not yet built, whose branch name is free locally and on origin.
+- `scripts/copy-env.py` copies the main checkout's git-ignored `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*` files into the worktree, outside `node_modules`.
+  It prints relative paths only, never contents, and removes every copy if one would not be ignored in the worktree.
+
+The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`, and the session moves into it.
+The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
 
 ## Decisions
 
