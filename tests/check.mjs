@@ -386,7 +386,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-speckit", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-ai-sdlc", "pro-spdd", "pro-egm", "pro-speckit", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))

@@ -4,7 +4,7 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.55.0.
+Marketplace `metadata.version`: 1.56.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
@@ -13,7 +13,7 @@ Marketplace `metadata.version`: 1.55.0.
 | pro-core | 0.20.0 | 2026-10-28 | The `uv-tool` row kind: `pro-dev.py` detects a pinned `uv tool` CLI from `direct_url.json`, runs a repo-writing row only on a clean tree by an absolute path and hashes `pinnedFiles` in `/pro-dev check`; adds the `specify-cli` and `spec-kit` rows and the `uv` stop line. Also carries 0.19.0 (PR 70) | PR 71 | pro-core--v0.13.0 |
 | pro-data | 0.4.5 | 2026-07-26 | Hooks merged into one `hooks/hooks.json` | 8597453 (PR 34) | pro-data--v0.2.0 |
 | pro-design | 0.12.0 | 2026-10-28 | `/pro-design:install` sets up its engines (needs pro-core installed). Also carries 0.11.0 (PR 68) | PR 70 | pro-design--v0.3.0 |
-| pro-dev-starter | 2.0.6 | 2026-10-28 | Version bump only, because pro-core ships a new version | PR 71 | none |
+| pro-dev-starter | 3.0.0 | 2026-10-28 | Drops `pro-ai-sdlc` from the default stack: it is now opt-in beside `pro-nextjs` and `pro-astro`; `pro-pdd` stays | PR 73 | none |
 | pro-egm | 0.2.0 | 2026-10-28 | `/pro-egm:install` sets up its engines (needs pro-core installed). Also carries 0.1.1 (PR 67) | PR 70 | none |
 | pro-execution | 0.4.0 | 2026-10-25 | Removed the `/worktrunk` command; herdr worktrees and the harness's native worktree tool cover parallel work | this PR | none |
 | pro-legal | 0.1.2 | 2026-10-17 | Agent `software-counsel` declares `model: opus` | this PR | none |
@@ -26,5 +26,5 @@ Marketplace `metadata.version`: 1.55.0.
 | pro-ship | 0.2.0 | 2026-10-28 | `/pro-ship:install` sets up its engines (needs pro-core installed). Also carries 0.1.0 (PR 68) | PR 70 | none |
 | pro-spdd | 0.3.6 | 2026-10-28 | Adds `sdlc-method.json` so pro-ai-sdlc offers `/spdd-story` at the intent stage. Also carries the PORT-PLAN placeholder change (0.3.5) | PR 66 | pro-spdd--v0.2.1 |
 | pro-speckit | 0.1.0 | 2026-10-28 | First release: bridge skill for GitHub spec-kit, `/pro-speckit:install` and `/pro-speckit:remove` and an `sdlc-method.json` hand-off at the intent stage. The `specify-cli` and `spec-kit` rows live in pro-core | PR 71 | none |
-| pro-starter | 1.14.2 | 2026-10-28 | Version bump only, because pro-dev-starter ships a new version | PR 71 | pro-starter--v1.0.3 |
+| pro-starter | 1.14.3 | 2026-10-28 | Version bump only, because pro-dev-starter ships a new version | PR 73 | pro-starter--v1.0.3 |
 | pro-testing | 0.7.0 | 2026-10-28 | `/pro-testing:install` sets up its engines (needs pro-core installed). Also carries 0.6.0 | PR 70 | pro-testing--v0.2.0 |
