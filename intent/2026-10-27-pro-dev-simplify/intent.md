@@ -40,7 +40,7 @@ Every item below has its intent written as of 2026-10-28.
 A is done: built in PR 60 (pro-quality 0.10.0) and signed off after its live check on 2026-10-28.
 F is done: built and merged in PR 63 (pro-ai-sdlc 0.3.0) on 2026-10-28; its live checks wait on the next approved plan.
 
-The items ship as six intents, in this order:
+The items ship as seven intents, in this order:
 
 - A. done - Quiet validation hook - item 6. Small and independent, so it went first. Intent: `intent/2026-10-28-quiet-validation-hook/`.
 - B. /pro-dev setup - items 1 to 5. Builds the registry the later intents add rows to. Intent: `intent/2026-10-28-pro-dev-setup/`.
@@ -48,6 +48,7 @@ The items ship as six intents, in this order:
 - D. Design and Vercel bridges - items 8 to 11. Needs B's registry; can run alongside C. Intent: `intent/2026-10-28-design-vercel-bridges/`.
 - E. spec-kit as its own plugin, `pro-speckit` - the spec-kit part of item 7. Intent: `intent/2026-10-28-pro-speckit/`.
 - F. done - `/execute <plan.md>` in pro-ai-sdlc: worktree, env files, baseline, build to the plan and a pull request. Independent of B. Intent: `intent/2026-10-28-execute-command/`.
+- G. todo - Codex engine setup from the registry: point `templates/codex-bootstrap.sh` at `pro-dev.py run <id> install` so Codex sites follow the same registry and its own lavish install goes away. Needs B. Deferred from B's spec (Flagged concern 3, 2026-10-28). No intent yet.
 
 1. todo - `/pro-dev install|update|check` in pro-core with an engine registry; answers to optional engines saved in `.claude/pro-dev.json`; `check` replaces `/pro-dev-doctor`.
 2. todo - delete the setup commands `/pro-dev` replaces: `/pro-starter`, `/design-engine`, `/design-skills`, `/taste-skills`, `/next-skills`, `/lavish-engine`, `/qa-engine`; fold `/sdlc-init` into `/pro-dev install`.
