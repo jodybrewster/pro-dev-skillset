@@ -23,4 +23,4 @@ Moved from `CLAUDE.md`, whose "Things Claude gets wrong" list keeps the short fo
   Fix it or delete it and run `/pro-dev install` again.
 - A site still enables `pro-starter`?
   The shim keeps it loading for one release because it depends on `pro-dev-starter`.
-  `/pro-dev update` offers to swap it.
+  `/pro-dev update` offers to swap it; a disabled `pro-starter` or a disabled plugin it bundles is skipped, so the swap never turns them back on.

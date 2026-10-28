@@ -98,6 +98,8 @@ The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is
 - Adding a bridge skill without a row in `plugins/pro-core/registry/engines.json`.
   The `registry` check fails and the row needs a pro-core bump per [ADR-0006](./docs/decisions/0006-engine-registry-and-pro-dev.md).
 - Returning `block` from a `Stop` hook without checking `stop_hook_active`, which loops the session ([docs/hook-loading.md](./docs/hook-loading.md)).
+- Running `claude plugin install` over an install the person disabled, which turns it back on.
+  `plugins swap-starter` did that until pro-core 0.18.1 learned to skip disabled installs.
 - Calling a third-party skill that sets `disable-model-invocation` through the Skill tool, which refuses it.
   `/pro-egm:goldfish` 0.1.0 shipped that way and could not start EGM's review loop until 0.1.1 read the skill's `SKILL.md` and followed it, as EGM's own guide says.
 - Writing a home-directory path into a command or doc; use a path relative to the repo root.
