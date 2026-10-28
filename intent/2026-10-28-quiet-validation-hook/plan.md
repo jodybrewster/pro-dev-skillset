@@ -96,3 +96,5 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 
 ## Departures from plan
 
+- The nudge says "1 file" for one file and "N files" otherwise, and a commit-only session says it committed changes.
+- The nudge's file count and the `block` summary use the session's accumulated paths from the state file, so a later stop reports the whole session and an edit to an already-reported file stays silent.

@@ -28,4 +28,5 @@ A referenced script that exists locally but is not tracked by git warns during d
 A hook that returns `{"decision":"block","reason":"..."}` on `Stop` forces the session to keep working with `reason` injected as instruction.
 That is the only deterministic way to make something happen at end-of-turn.
 Always guard it: check `stop_hook_active` so the continuation turn passes through, and track per-session progress so the work the block causes cannot re-trigger the block.
-`plugins/pro-quality/scripts/user-validation.py` is the reference implementation.
+`plugins/pro-quality/scripts/user-validation.py` is the reference implementation in its `block` mode (`PRO_DEV_VALIDATION=block`).
+Its default mode only prints a `systemMessage` and never blocks.
