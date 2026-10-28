@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-28-quiet-validation-hook/intent.md
 intent-status: accepted
-status: draft
+status: accepted
 created: 2026-10-28T06:50:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: quiet validation hook
 
 Built from `intent.md` in this folder.
-Status: draft.
+Status: accepted.
 Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `docs/hook-loading.md`, `docs/codex-parity.md`, ADRs 0002 to 0005 in `docs/decisions/`, the `user-validation` skill and `/validate` command in pro-quality and `tests/sdlc-hooks.mjs` as the pattern for hook tests.
 
 ## Summary
