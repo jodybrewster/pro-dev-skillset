@@ -208,6 +208,12 @@ It also moves ADR-0006 from `proposed` to `accepted`.
 
 ## Departures from plan
 
+- Push-gate security review of e316347 (safe to push, nothing at 8 or above) left three follow-ups:
+  - Narrow the `status*` and `answer*` patterns in the six `install.md` files and `pro-dev.md` to exact forms after a live check of whether a redirect prompts under them.
+  - A project install for a subfolder of the repo can outrank a user-scope pro-core, because the owner script mirrors `covers_repo`; the copy must still be inside the trusted cache at 0.19.0 or later.
+  - `answerCommitted` marks every saved answer once the file is tracked; compare each answer with `git show HEAD:.claude/pro-dev.json` and report unknown when git fails.
+- Step 9 live check, 2026-10-28, under a scratch config with this branch copied as a directory marketplace: the directory source was refused; with the entry rewritten to the github source the owner script printed `pro-core 0.19.0` from the scratch cache and listed only `next-skills`, `vercel` and `vercel-skills`; a disabled pro-core was refused before `pro-dev.py` ran; `--owner pro-nextjs run impeccable install` printed `impeccable: owned by pro-design, not pro-nextjs` and exited 2 with nothing installed.
+
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
@@ -217,7 +223,7 @@ An empty section tells the reviewer the diff follows the plan.
   A dependency re-enables a disabled pro-core, so Jody dropped the pro-core dependency from the six owning plugins ("yes you don't need pro-core for pro-nextjs", 2026-10-28).
   The installer checks for pro-core instead and the `installers` check now fails if an owner declares the dependency.
   A directory marketplace source has the shape `{"source": "directory", "path": ...}`, which R32 refuses; only the github source of `jodybrewster/pro-dev-skillset` passes.
-  Whether a `status*` redirect can slip past the allowed-tools pattern still needs a live check, so the patterns stay exact as the `installers` check requires.
+  The `status*` redirect question still needs a live check; the `installers` check keeps the `status*` and `answer*` wildcard forms that `/pro-dev` already uses, so narrowing them to exact forms is a follow-up once that check runs.
   `CLAUDE_CODE_PLUGIN_DIRS` must be unset in isolated scripts or the real plugins load into the scratch config.
 - Build departures.
   Step 0 and steps 1 to 3 ran in parallel.
