@@ -71,8 +71,10 @@ Then open Codex in the project and run `/skills` to confirm the pro-dev skills a
 
 ## Work with a spec method
 
-Every change starts as an intent and ends as a reviewed PR.
-`pro-ai-sdlc` is the default loop (`/intent`, `/spec`, `/plan`, `/execute`, `/review`, `/pr-babysit`) and comes with `pro-dev-starter`.
+`pro-pdd` is the default: plan-driven development, which is Claude Code as it is plus a written plan you approve before `pro-execution` builds it test first.
+
+`pro-ai-sdlc` also comes with `pro-dev-starter` for changes that need a record: `/intent`, `/spec`, `/plan`, `/execute`, `/review` and `/pr-babysit` check each change against the repo's rules and record sign-off.
+
 Three more methods are opt-in plugins:
 
 - `pro-egm` adds a goldfish review of your spec and plan by reviewers with no history.
