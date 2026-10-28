@@ -52,7 +52,7 @@ const EXTERNAL = new Set([
 const BRIDGES = [
   "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
   "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
-  "next-skills-bridge", "egm-bridge",
+  "next-skills-bridge", "egm-bridge", "spec-kit-bridge",
   "vercel-skills-bridge", "vercel-deploy-bridge", "react-patterns-bridge",
 ];
 const CLAUDE_ONLY_AGGREGATORS = new Set(["pro-starter", "pro-dev-starter"]);
@@ -386,7 +386,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-speckit", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -780,7 +780,47 @@ checks.registry = (m) => {
     if (seen.has(id)) failures.push(`engines.json: duplicate id "${id}"`);
     seen.add(id);
     if (!pluginNames.has(row.owner)) failures.push(`engines.json ${id}: owner "${row.owner}" is not a plugin in this marketplace`);
-    if (!["skills-cli", "npx", "claude-plugin"].includes(row.kind)) failures.push(`engines.json ${id}: kind "${row.kind}" is not skills-cli, npx or claude-plugin`);
+    if (!["skills-cli", "npx", "claude-plugin", "uv-tool"].includes(row.kind)) failures.push(`engines.json ${id}: kind "${row.kind}" is not skills-cli, npx, claude-plugin or uv-tool`);
+    if (row.kind === "uv-tool") {
+      // a uv-tool row is pinned: argv that starts with uv carries --exclude-newer and a --from ending in @<40 hex>
+      const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+      for (const k of ["install", "update"]) {
+        const a = row[k];
+        if (!argvOk(a) || a[0] !== "uv") continue;
+        const after = (flag) => { const i = a.indexOf(flag); return i >= 0 ? a[i + 1] : undefined; };
+        if (!ISO.test(after("--exclude-newer") ?? "")) failures.push(`engines.json ${id}: ${k} needs --exclude-newer with an ISO timestamp`);
+        if (!/@[0-9a-f]{40}$/.test(after("--from") ?? "")) failures.push(`engines.json ${id}: ${k} needs --from ending in @<40 hex commit>`);
+      }
+      // a row that runs something other than uv writes into the repo and must opt in to the clean-tree gate
+      for (const k of ["install", "update"])
+        if (argvOk(row[k]) && row[k][0] !== "uv" && row.writesRepo !== true)
+          failures.push(`engines.json ${id}: ${k} runs "${row[k][0]}" not uv, so the row needs writesRepo: true`);
+    }
+    if (row.writesRepo !== undefined && typeof row.writesRepo !== "boolean") failures.push(`engines.json ${id}: writesRepo must be true or false`);
+    if (row.pinnedFiles !== undefined) {
+      const pf = row.pinnedFiles;
+      const goodKey = (x) => typeof x === "string" && !x.startsWith("/") && !x.split("/").includes("..") && !/[\\\x00-\x1f\x7f]/.test(x)
+        && ([".claude/skills/speckit-", ".specify/scripts/", ".specify/templates/"].some((g) => x.startsWith(g)) || x === ".specify/workflows/speckit/workflow.yml");
+      if (!pf || typeof pf !== "object" || Array.isArray(pf)) failures.push(`engines.json ${id}: pinnedFiles must be an object`);
+      else for (const [key, v] of Object.entries(pf)) {
+        if (!goodKey(key)) failures.push(`engines.json ${id}: pinnedFiles key "${key}" must be a relative path under .claude/skills/speckit-*, .specify/scripts/ or .specify/templates/, or .specify/workflows/speckit/workflow.yml`);
+        if (typeof v !== "string" || !/^[0-9a-f]{64}$/.test(v)) failures.push(`engines.json ${id}: pinnedFiles["${key}"] must be 64 lowercase hex characters`);
+      }
+    }
+    if (row.knownUnpinned !== undefined) {
+      const ku = row.knownUnpinned;
+      if (!Array.isArray(ku)) failures.push(`engines.json ${id}: knownUnpinned must be an array of repo-relative paths`);
+      else for (const x of ku) {
+        if (typeof x !== "string" || x.startsWith("/") || x.split("/").includes("..") || /[\\\x00-\x1f\x7f]/.test(x) || !x.startsWith(".specify/"))
+          failures.push(`engines.json ${id}: knownUnpinned entry ${JSON.stringify(x)} must be a relative path under .specify/ with no ..`);
+        else if (row.pinnedFiles && Object.hasOwn(row.pinnedFiles, x)) failures.push(`engines.json ${id}: knownUnpinned entry "${x}" is also in pinnedFiles`);
+      }
+    }
+    if (row.needs !== undefined) {
+      const earlier = reg.engines.slice(0, reg.engines.indexOf(row)).find((r) => r?.id === row.needs);
+      if (typeof row.needs !== "string" || !earlier) failures.push(`engines.json ${id}: needs "${row.needs}" must name an earlier row`);
+      else if (earlier.owner !== row.owner) failures.push(`engines.json ${id}: needs "${row.needs}" must be a row with the same owner`);
+    }
     if (typeof row.default !== "boolean") failures.push(`engines.json ${id}: default must be true or false`);
     if (!row.detect || typeof row.detect !== "object") failures.push(`engines.json ${id}: detect is missing`);
     for (const k of ["install", "update"])

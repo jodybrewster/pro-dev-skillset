@@ -75,12 +75,12 @@ Expected output, from a real run on 2026-10-28 (the 38 warnings are skills and a
 
 ```
 ✓ 27 checks · 0 failures · 38 warnings
-✓ 79 cases reference real skills · 93 skills in catalog + 7 distractors
+✓ 80 cases reference real skills · 94 skills in catalog + 7 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
 ✔ Validation passed
 ```
 
-Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 19 times.
+Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 20 times.
 CI runs these automatically on PR (see `.github/workflows/`).
 All must pass before tagging.
 The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).

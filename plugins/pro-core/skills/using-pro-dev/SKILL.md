@@ -24,6 +24,7 @@ Task arrives
   │   ├ plan touches auth/data/input → security-architect, /threat-model (pro-security; hooks require a `## Security challenge` section before approval)
   │   ├ plan touches licensing/personal data/AI/scraping/payments → software-counsel, /legal-review (pro-legal, opt-in; hooks require a `## Legal review` section before approval)
   │   ├ fresh-context spec/plan review → egm-bridge → egm@egm goldfish reviewers (pro-egm, opt-in, bridge: /pro-dev install)
+  │   ├ GitHub spec-kit flow (/speckit-specify, plan, tasks) → spec-kit-bridge (pro-speckit, opt-in, bridge: /pro-dev install or /pro-speckit:install)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:
   │   ├ execute an approved plan ────→ subagent-driven-development (pro-execution)
@@ -148,6 +149,7 @@ The pro-dev-specific rules are:
 | Define | interview-me, idea-refine, brainstorming, adhd | pro-pdd | Clarify → variant → gated ideation → parallel divergent ideation |
 | Plan | planning mode for drafting, writing-plans for structured plans, lavish (bridge → lavish-axi, via `/pro-dev`) for review | pro-pdd | Draft the plan, then render substantive plans as annotatable HTML artifacts |
 | Spec (branch) | egm-bridge → egm@egm goldfish review of a spec or plan (bridge: /pro-dev install) | pro-egm (opt-in) | Fresh-context reviewers with no history; offered at /spec and /plan once installed |
+| Spec (branch) | spec-kit-bridge → GitHub spec-kit's constitution, specify, plan, tasks and implement commands (bridge: /pro-dev install) | pro-speckit (opt-in) | Pinned spec-kit CLI and repo setup with checks; offered at /intent once installed |
 | Spec (branch) | open-SPDD: spdd-story → analysis → reasons-canvas → generate → code-review/api-test → sync/reverse | pro-spdd | Structured client/team spec pipeline |
 | Build | test-driven-development, subagent-driven-development, using-git-worktrees, api-and-interface-design, source-driven-development | pro-execution | Core implementation skills |
 | Build | context-engineering, doubt-driven-development | pro-core | Better context hygiene; high-stakes caution |

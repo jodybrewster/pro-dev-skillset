@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "engines": [
     {
       "id": "lavish",
@@ -1144,6 +1144,110 @@
         "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
       ],
       "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs."
+    },
+    {
+      "id": "specify-cli",
+      "owner": "pro-speckit",
+      "bridges": [],
+      "kind": "uv-tool",
+      "default": true,
+      "detect": {
+        "uvTool": "specify-cli"
+      },
+      "why": "The pinned GitHub spec-kit CLI, installed once per machine with uv tool.",
+      "install": [
+        "uv",
+        "tool",
+        "install",
+        "specify-cli",
+        "--exclude-newer",
+        "2026-10-27T18:07:43Z",
+        "--from",
+        "git+https://github.com/github/spec-kit.git@43486672fe826d230d884815be7cc2026469a6ba"
+      ],
+      "update": [
+        "uv",
+        "tool",
+        "install",
+        "specify-cli",
+        "--exclude-newer",
+        "2026-10-27T18:07:43Z",
+        "--from",
+        "git+https://github.com/github/spec-kit.git@43486672fe826d230d884815be7cc2026469a6ba"
+      ],
+      "note": "spec-kit v1.2.4 (tag v1.2.4, commit 4348667), installed user-wide with uv tool. The commit and the --exclude-newer timestamp pin the CLI and its build and runtime dependencies; /pro-dev update never moves it. Moving the pin is a reviewed PR that changes the commit, the timestamp, pinnedFiles and the 10 core skill names in pro-dev.py together. See ADR-0008."
+    },
+    {
+      "id": "spec-kit",
+      "owner": "pro-speckit",
+      "bridges": [
+        "spec-kit-bridge"
+      ],
+      "kind": "uv-tool",
+      "default": false,
+      "needs": "specify-cli",
+      "writesRepo": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/speckit-specify/SKILL.md",
+            "scopes": [
+              "project"
+            ]
+          }
+        ]
+      },
+      "why": "Sets up the repo for GitHub spec-kit's flow: 10 user-invocable skills and .specify/.",
+      "install": [
+        "specify",
+        "init",
+        "--here",
+        "--force",
+        "--non-interactive",
+        "--script",
+        "sh",
+        "--ignore-agent-tools",
+        "--integration",
+        "claude",
+        "--integration-options=--no-model-invocation --events false"
+      ],
+      "update": [
+        "specify",
+        "integration",
+        "upgrade",
+        "claude",
+        "--integration-options=--no-model-invocation --events false"
+      ],
+      "note": "Sets up the repo with the pinned specify CLI: 10 core skills as user-invocable only plus .specify/. Refuses a dirty tree, an existing .specify/ or a symlink on a written path. pinnedFiles holds the sha256 of the pinned files; knownUnpinned lists generated files that carry timestamps.",
+      "pinnedFiles": {
+        ".claude/skills/speckit-analyze/SKILL.md": "b504aae5effc0154c904752e02fe397e7fd19d06dc9c62b93391fa60a4b506ee",
+        ".claude/skills/speckit-checklist/SKILL.md": "9af8c06a6b24e545e1cbb94c7cccbc49e58871cdea758ba200226e769c313423",
+        ".claude/skills/speckit-clarify/SKILL.md": "5394c7e52f448105e3284e089a2f589c182b4a61aedbed47b101363826a4e4d5",
+        ".claude/skills/speckit-constitution/SKILL.md": "d6132cee98e20f3dd7f71c48822896151a8043be6dd8a8a69135b96e65098142",
+        ".claude/skills/speckit-converge/SKILL.md": "e49dc670485e5b8dba1d90112961e6aaad87751b19220d73f7c7fa38f9862df6",
+        ".claude/skills/speckit-implement/SKILL.md": "035dab1d3c9035f4c7f9fcf7d2b38c1d3eb5a2b26378fe5928de85d6d880dd20",
+        ".claude/skills/speckit-plan/SKILL.md": "daf45b7455fcbe132df6a60ce25d7555d3964ff3b343cbf20b504a1ea875087e",
+        ".claude/skills/speckit-specify/SKILL.md": "df4523796847aac3092912749665ad8c842e1b226734d080ae922b5225c83760",
+        ".claude/skills/speckit-tasks/SKILL.md": "d5f59b5c3de66deb1396784a114e260b674dcf5ab3e4dff02bf22e68ffd99cc7",
+        ".claude/skills/speckit-taskstoissues/SKILL.md": "73767ac4ffbd6c19b560dbe0d637e2a19bb35b993ccf27b013524239e56ce745",
+        ".specify/scripts/bash/check-prerequisites.sh": "e127735bbc5ac42181e2a3c773a2d639979f865f18e74a1a977cdf53392a0a7d",
+        ".specify/scripts/bash/common.sh": "53cb1c23e349db4586c272436ce35c6e2f36a9c0b5351a85e0b216d9887a26b7",
+        ".specify/scripts/bash/create-new-feature.sh": "972f03ed8ca5ee17b7baad6d56d821d46269d77abc337496beafb0fe85a725f2",
+        ".specify/scripts/bash/resolve-template.sh": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7",
+        ".specify/scripts/bash/setup-plan.sh": "d378ec66ba20d2da01c71dad8935062c1c27f0bba890be9a6d3dda52ea056a4e",
+        ".specify/scripts/bash/setup-tasks.sh": "4a33dd1e6c32ddc7d570f4b538572c54069192573eed0ec654d9fb826e31a4fe",
+        ".specify/templates/checklist-template.md": "856532b3cb66171c662cc16f16b31a5856e4655a8666aad1e545bbfc7f603ca1",
+        ".specify/templates/constitution-template.md": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3",
+        ".specify/templates/plan-template.md": "7e637502d41eccf0ca672496636365691fdca62ef37b27ec07fcb412dbfa90d4",
+        ".specify/templates/spec-template.md": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e",
+        ".specify/templates/tasks-template.md": "fc29a233f6f5a27ca31f1aa46b596af6500c627441c6e62b2bc4a1d721525842",
+        ".specify/workflows/speckit/workflow.yml": "177761c5e7df28126beea043b5cb45aeaf7958090c022dc11ac71399422fcfbc"
+      },
+      "knownUnpinned": [
+        ".specify/integrations/claude.manifest.json",
+        ".specify/integrations/speckit.manifest.json",
+        ".specify/workflows/workflow-registry.json"
+      ]
     }
   ]
 }

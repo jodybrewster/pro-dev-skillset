@@ -1,0 +1,11 @@
+{
+  "method": "pro-speckit",
+  "requires": null,
+  "handoffs": [
+    {
+      "stage": "intent",
+      "when": "This feature can run through spec-kit instead of /spec and /plan; run /pro-dev check first so the spec-kit files are clean, then type /speckit-specify yourself because spec-kit's skills are user-invocable only. Link the feature's specs/ folder from intent.md",
+      "offer": "/speckit-specify {target}"
+    }
+  ]
+}
