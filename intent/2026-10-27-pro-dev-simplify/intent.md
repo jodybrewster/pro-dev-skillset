@@ -36,14 +36,15 @@ Jody: "Having four different spec driven methods means I can try them out easily
 ## Running list
 
 Status per item: todo, intent (its own intent folder exists), in PR, done or dropped.
+Every item below has its intent written as of 2026-10-28; A also has its spec.
 
 The items ship as five intents, in this order:
 
 - A. Quiet validation hook - item 6. Small and independent, so it goes first. Intent: `intent/2026-10-28-quiet-validation-hook/`.
-- B. /pro-dev setup - items 1 to 5. Builds the registry the later intents add rows to.
-- C. Swappable spec methods - item 7 apart from spec-kit: the EGM bridge plugin and pro-ai-sdlc routing between whichever methods are installed. Needs B's registry.
-- D. Design and Vercel bridges - items 8 to 11. Needs B's registry; can run alongside C.
-- E. spec-kit as its own plugin, `pro-speckit` - the spec-kit part of item 7. Intent: `intent/2026-10-28-pro-speckit/` (branch `pro-speckit`).
+- B. /pro-dev setup - items 1 to 5. Builds the registry the later intents add rows to. Intent: `intent/2026-10-28-pro-dev-setup/`.
+- C. Swappable spec methods - item 7 apart from spec-kit: the EGM bridge plugin and pro-ai-sdlc routing between whichever methods are installed. Needs B's registry. Intent: `intent/2026-10-28-spec-methods/`.
+- D. Design and Vercel bridges - items 8 to 11. Needs B's registry; can run alongside C. Intent: `intent/2026-10-28-design-vercel-bridges/`.
+- E. spec-kit as its own plugin, `pro-speckit` - the spec-kit part of item 7. Intent: `intent/2026-10-28-pro-speckit/`.
 
 1. todo - `/pro-dev install|update|check` in pro-core with an engine registry; answers to optional engines saved in `.claude/pro-dev.json`; `check` replaces `/pro-dev-doctor`.
 2. todo - delete the setup commands `/pro-dev` replaces: `/pro-starter`, `/design-engine`, `/design-skills`, `/taste-skills`, `/next-skills`, `/lavish-engine`, `/qa-engine`; fold `/sdlc-init` into `/pro-dev install`.
