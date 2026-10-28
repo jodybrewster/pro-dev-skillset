@@ -297,7 +297,7 @@ def last_commit(repo: str, rel: str) -> tuple[str, str, str]:
     """Return (author as 'name <email>', short hash, signature) of the last commit touching rel.
 
     The author is what the commit claims; anyone can set it. signature is good, unsigned,
-    bad or unknown (from git's %G?), and only good says anything about who made the commit.
+    bad or unknown (from git's %G?); only good says anything about who made the commit.
     """
     try:
         out = subprocess.run(

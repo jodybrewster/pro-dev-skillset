@@ -34,8 +34,8 @@ If the `/egm:egm-review-loop` skill is not available in this session, print "pro
    If it exits non-zero, print its message as it is and stop.
 3. Show the person the reviewers, the standard each uses and the reading list (`context`) from its JSON.
    Say that the review runs several subagents on the session model.
-4. If `newOrChanged` is not empty, list each file in it as `path`, `author (claimed): <author>`, `commit` and `signature: <signature>`, and ask for a yes or no before going on: these are custom reviewer or standard files that are new or changed since the person last accepted them.
-   The author is only what the commit claims; say so, and say that only `signature: good` is evidence of who made it.
+4. If `newOrChanged` is not empty, list each file in it as `path`, `author (claimed): <author>`, `commit` and `signature: <signature>`; ask for a yes or no before going on: these are custom reviewer or standard files that are new or changed since the person last accepted them.
+   The author is only what the commit claims; say so. Say also that only `signature: good` is evidence of who made it.
    On no, stop.
    On yes, run the same `resolve` command again with `--accept --token <acceptToken>` added, using the `acceptToken` from the JSON you just showed.
    If it refuses because the token does not match, the files changed since you showed them: start again from step 2.
