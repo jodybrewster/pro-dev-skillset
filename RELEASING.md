@@ -103,7 +103,7 @@ Check these once a quarter too:
 - [agents-inc/skills](https://github.com/agents-inc/skills) - `shadcn-ui-composition`
 
 Bridged engines are deliberately absent from this list.
-`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, `taste-skills-bridge` and `egm-bridge` vendor nothing, and `/pro-dev check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
+`web-design-engineer-bridge`, `tastemaker-bridge`, `mengto-skills-bridge`, `taste-skills-bridge`, `egm-bridge`, `react-patterns-bridge`, `vercel-skills-bridge` and `vercel-deploy-bridge` vendor nothing, and `/pro-dev check` diffs the installed copy against upstream live, so there is no fork to keep in sync.
 
 `pro-security` adapts the `cso` skill from [garrytan/gstack](https://github.com/garrytan/gstack) (MIT) into `security-audit` (+ `phases.md`, `false-positives.md`, `report-format.md`) and draws on it for `security-architect`.
 Check upstream `cso/SKILL.md` once a quarter for new phases, exclusions or precedents worth porting.

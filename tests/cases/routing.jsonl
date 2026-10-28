@@ -71,3 +71,9 @@
 {"prompt": "Turn on Cache Components in our Next.js app and work through the blocking-route errors the build throws.", "expect": "next-skills-bridge", "notOneOf": ["next-upgrade"], "note": "Cache Components adoption is an upstream vercel/next.js skill reached through the bridge"}
 {"prompt": "Upgrade this app from Next.js 15 to 16 and run the codemods.", "expect": "next-upgrade", "notOneOf": ["next-skills-bridge"]}
 {"prompt": "Run a goldfish review of this spec with fresh-context reviewers.", "expect": "egm-bridge", "note": "Elephant-Goldfish review of a spec through the opt-in pro-egm bridge"}
+{"prompt": "Lint this component against the web interface guidelines", "expect": "web-design-guidelines", "notOneOf": ["accessibility-audit"]}
+{"prompt": "Audit this signup form for WCAG 2.2 conformance", "expect": "accessibility-audit", "notOneOf": ["web-design-guidelines"]}
+{"prompt": "Deploy this to Vercel", "expect": "vercel-deploy-bridge", "note": "competes with the upstream deploy-to-vercel skill; the bridge owns the deploy rules"}
+{"prompt": "Our Vercel bill doubled; find the expensive routes", "expect": ["vercel-skills-bridge", "vercel-optimize"], "note": "with the upstream installed the model may pick vercel-optimize directly; either is fine, the bridge only routes there"}
+{"prompt": "Cut the client bundle on our Next.js home page", "expect": "next-skills-bridge", "notOneOf": ["vercel-skills-bridge"], "note": "bundle asks go to next-bundle-optimizer"}
+{"prompt": "This component has eight boolean props; turn it into compound components", "expect": "react-patterns-bridge", "notOneOf": ["shadcn-ui-composition"]}

@@ -1,6 +1,6 @@
 ---
 name: shadcn-ui-composition
-description: shadcn/ui component composition, CLI usage, OKLCH theming, cva variants, Field form layout, compound component patterns, and Tailwind v4 integration.
+description: shadcn/ui component composition, CLI usage, OKLCH theming, cva variants, Field form layout, compound component patterns, and Tailwind v4 integration. For component API design outside shadcn/ui (compound components, boolean-prop sprawl, render props) use `react-patterns-bridge`.
 ---
 
 # shadcn/ui Component Patterns

@@ -44,6 +44,8 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-design | web-design-engineer-bridge | [ConardLi/garden-skills](https://github.com/ConardLi/garden-skills) | MIT | Copyright (c) 2026 | bridged |
 | pro-design | tastemaker-bridge | [codeswithroh/tastemaker](https://github.com/codeswithroh/tastemaker) | MIT | Copyright (c) 2026 codeswithroh | bridged |
 | pro-design | mengto-skills-bridge | [MengTo/Skills](https://github.com/MengTo/Skills) | MIT | Copyright (c) 2026 Meng To | bridged |
+| pro-design | web-design-guidelines | [vercel-labs/web-interface-guidelines](https://github.com/vercel-labs/web-interface-guidelines) (rules fetched at run time from the pinned commit) | MIT | Copyright (c) 2025 Vercel Labs | original skill; no upstream content vendored |
+| pro-design | react-patterns-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-design | taste-skills-bridge | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT | Copyright (c) 2026 Leonxlnx | bridged |
 | pro-execution | subagent-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | systematic-debugging | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
@@ -51,6 +53,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-execution | using-git-worktrees | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-nextjs | next-best-practices | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
 | pro-nextjs | next-skills-bridge | [vercel/next.js `skills/`](https://github.com/vercel/next.js/tree/canary/skills) | MIT | Copyright (c) 2025 Vercel, Inc. | bridged |
+| pro-nextjs | vercel-skills-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-nextjs | next-upgrade | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
 | pro-pdd | brainstorming | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | writing-plans | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
@@ -68,6 +71,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-security | security-audit | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted |
 | pro-security | security-architect (skill and agent) | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted (draws on the threat framing; the challenge procedure is original) |
 | pro-egm | egm-bridge | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) | Apache-2.0 | no copyright line in the upstream LICENSE | bridged |
+| pro-ship | vercel-deploy-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-spdd | spdd-story-lead, spdd-analysis-lead, spdd-reasons-canvas-lead, spdd-generate-lead, spdd-code-review-lead, spdd-api-test-lead, spdd-prompt-update-lead, spdd-reverse-lead, spdd-sync-lead | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) | MIT | Copyright (c) 2026 gszhangwei | adapted (the engine is vendored under `upstream/`) |
 | pro-testing | vitest | [PaulRBerg/agent-skills](https://github.com/PaulRBerg/agent-skills) | MIT | Copyright (c) 2025 Paul Razvan Berg | forked |
 | pro-testing | storybook-interactions | [peterknezek/skills](https://github.com/peterknezek/skills) | MIT | Copyright (c) 2026 Peter Knezek | forked |

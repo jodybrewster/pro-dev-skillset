@@ -71,16 +71,16 @@ claude plugin validate . --strict
 ( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
-Expected output, from a real run on 2026-10-28 (the 39 warnings are skills and agents with no routing case):
+Expected output, from a real run on 2026-10-28 (the 38 warnings are skills and agents with no routing case):
 
 ```
-✓ 26 checks · 0 failures · 39 warnings
-✓ 73 cases reference real skills · 89 skills in catalog + 4 distractors
+✓ 26 checks · 0 failures · 38 warnings
+✓ 79 cases reference real skills · 93 skills in catalog + 7 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
 ✔ Validation passed
 ```
 
-Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 18 times.
+Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 19 times.
 CI runs these automatically on PR (see `.github/workflows/`).
 All must pass before tagging.
 The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).

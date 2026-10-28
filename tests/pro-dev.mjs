@@ -1267,6 +1267,147 @@ CASES.push(
   },
 );
 
+// --- gitExclude (R31) ----------------------------------------------------------
+
+const GX_DIR = ".claude/skills/deploy-to-vercel/";
+const GX_FILE = `${GX_DIR}SKILL.md`;
+function gxRow(paths = [GX_DIR]) {
+  return {
+    id: "gx", owner: "pro-ship", bridges: [], kind: "skills-cli", default: true,
+    detect: { all: [{ file: "skills/deploy-to-vercel/SKILL.md", scopes: ["project"] }] },
+    install: ["npx", "skills", "add", "x/y", "-a", "claude-code", "-y", "-s", "deploy-to-vercel"],
+    update: ["npx", "skills", "add", "x/y", "-a", "claude-code", "-y", "-s", "deploy-to-vercel"],
+    gitExclude: paths, why: "test row",
+  };
+}
+const gxWorld = (s, paths) => {
+  s.useRows([gxRow(paths)]);
+  s.setPlugins([s.entry("pro-ship", "project", s.repo)]);
+  return { extra: { FAKE_NPX_FILES: GX_FILE } };
+};
+const gitIn = (cwd, args) => spawnSync("git", args, { cwd, encoding: "utf8" });
+const excludeFile = (repo) => join(repo, ".git", "info", "exclude");
+const excludeText = (repo) => (existsSync(excludeFile(repo)) ? read(excludeFile(repo)) : "");
+const gxCount = (text) => text.split("\n").filter((l) => l === GX_DIR).length;
+
+CASES.push(
+  {
+    id: "gitExclude/already-installed-still-gets-the-exclude",
+    run: (s) => {
+      const o = gxWorld(s);
+      mkdirSync(join(s.repo, GX_DIR), { recursive: true });
+      writeFileSync(join(s.repo, GX_FILE), "# hand install\n");
+      const r = s.run(["run", "gx", "install"], o);
+      if (!/already installed/.test(r.out)) return bad(`not reported installed: ${r.out}`);
+      return gxCount(excludeText(s.repo)) === 1 ? ok() : bad(`exclude: ${JSON.stringify(excludeText(s.repo))}`);
+    },
+  },
+  {
+    id: "gitExclude/tracked-folder-is-named",
+    run: (s) => {
+      const o = gxWorld(s);
+      mkdirSync(join(s.repo, GX_DIR), { recursive: true });
+      writeFileSync(join(s.repo, GX_FILE), "# committed\n");
+      gitIn(s.repo, ["add", "-f", GX_FILE]);
+      const r = s.run(["run", "gx", "install"], o);
+      return /already committed/.test(r.out) && /git rm -r --cached/.test(r.out) ? ok() : bad(`no warning: ${r.out}`);
+    },
+  },
+  {
+    id: "gitExclude/added-once-across-install-and-update",
+    run: (s) => {
+      const o = gxWorld(s);
+      const a = s.run(["run", "gx", "install"], o);
+      const b = s.run(["run", "gx", "update"], o);
+      if (a.code !== 0 || b.code !== 0) return bad(`exit ${a.code}/${b.code}: ${a.out} ${b.out}`);
+      if (gxCount(excludeText(s.repo)) !== 1) return bad(`want one line, file: ${JSON.stringify(excludeText(s.repo))}`);
+      if (!/added/.test(a.out) || !/already in/.test(b.out)) return bad(`messages: ${a.out} | ${b.out}`);
+      return ok();
+    },
+  },
+  {
+    id: "gitExclude/git-add-all-leaves-the-folder-untracked",
+    run: (s) => {
+      const o = gxWorld(s);
+      s.run(["run", "gx", "install"], o);
+      writeFileSync(join(s.repo, "keep.txt"), "x");
+      gitIn(s.repo, ["add", "-A"]);
+      const staged = gitIn(s.repo, ["diff", "--cached", "--name-only"]).stdout.split("\n");
+      if (!staged.includes("keep.txt")) return bad(`keep.txt not staged: ${staged}`);
+      if (staged.some((f) => f.startsWith(".claude/skills/"))) return bad(`skill folder staged: ${staged}`);
+      const tracked = gitIn(s.repo, ["ls-files", "--", GX_DIR]).stdout.trim();
+      return tracked === "" && existsSync(join(s.repo, GX_FILE)) ? ok() : bad(`tracked: ${tracked}`);
+    },
+  },
+  {
+    id: "gitExclude/bad-paths-are-refused-and-nothing-written",
+    run: (s) => {
+      for (const badPath of ["../x", "/abs/path", "docs/x", ".claude/skills/../../x", ".claude/skills/", ".claude/skills/a\nb/"]) {
+        const o = gxWorld(s, [badPath]);
+        const r = s.run(["run", "gx", "install"], o);
+        if (!/refused/.test(r.out)) return bad(`${JSON.stringify(badPath)} not refused: ${r.out}`);
+        const text = excludeText(s.repo);
+        if (text.includes("x") && /(^|\n)(\.\.\/x|\/abs\/path|docs\/x)/.test(text)) return bad(`wrote ${badPath}: ${text}`);
+        if (/skills\/\.\.|(^|\n)\.claude\/skills\/(\n|$)|a\nb/.test(text)) return bad(`wrote ${JSON.stringify(badPath)}: ${JSON.stringify(text)}`);
+        rmSync(join(s.repo, ".claude"), { recursive: true, force: true });
+      }
+      return ok();
+    },
+  },
+  {
+    id: "gitExclude/good-path-written-beside-a-refused-one",
+    run: (s) => {
+      const o = gxWorld(s, ["../x", GX_DIR]);
+      const r = s.run(["run", "gx", "install"], o);
+      const text = excludeText(s.repo);
+      return /refused/.test(r.out) && gxCount(text) === 1 && !text.includes("../x") ? ok() : bad(`${r.out} | ${JSON.stringify(text)}`);
+    },
+  },
+  {
+    id: "gitExclude/not-a-git-repo-is-skipped-with-a-note",
+    run: (s) => {
+      rmSync(join(s.repo, ".git"), { recursive: true, force: true });
+      const o = gxWorld(s);
+      const r = s.run(["run", "gx", "install"], o);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return /not a git work tree/.test(r.out) && !existsSync(join(s.repo, ".git")) ? ok() : bad(`out: ${r.out}`);
+    },
+  },
+  {
+    id: "gitExclude/symlinked-exclude-file-is-refused",
+    run: (s) => {
+      const o = gxWorld(s);
+      const victim = join(s.root, "victim.txt");
+      writeFileSync(victim, "keep\n");
+      mkdirSync(join(s.repo, ".git", "info"), { recursive: true });
+      rmSync(excludeFile(s.repo), { force: true });
+      symlinkSync(victim, excludeFile(s.repo));
+      const r = s.run(["run", "gx", "install"], o);
+      return /symlink/.test(r.out) && read(victim) === "keep\n" ? ok() : bad(`victim: ${JSON.stringify(read(victim))} out: ${r.out}`);
+    },
+  },
+  {
+    id: "gitExclude/linked-worktree-writes-the-file-git-reads",
+    run: (s) => {
+      gitIn(s.repo, ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "init"]);
+      const wt = join(s.root, "linked");
+      const add = gitIn(s.repo, ["worktree", "add", "-q", "-b", "side", wt]);
+      if (add.status !== 0) return bad(`worktree add: ${add.stderr}`);
+      s.useRows([gxRow()]);
+      s.setPlugins([s.entry("pro-ship", "project", wt)]);
+      const r = spawnSync("python3", [s.script, "--repo", wt, "run", "gx", "install"], {
+        encoding: "utf8", env: s.env("both", { FAKE_NPX_FILES: GX_FILE }), cwd: wt,
+      });
+      if (r.status !== 0) return bad(`exit ${r.status}: ${r.stdout}${r.stderr}`);
+      const want = gitIn(wt, ["rev-parse", "--git-path", "info/exclude"]).stdout.trim();
+      const wantAbs = want.startsWith("/") ? want : join(wt, want);
+      if (!existsSync(wantAbs) || gxCount(read(wantAbs)) !== 1) return bad(`not in ${wantAbs}: ${r.stdout}`);
+      const ign = gitIn(wt, ["check-ignore", "-q", GX_FILE]);
+      return ign.status === 0 ? ok() : bad(`git check-ignore exit ${ign.status}`);
+    },
+  },
+);
+
 export function runProDevCases({ pluginRoot = DEFAULT_PLUGIN_ROOT, only = null } = {}) {
   const selected = only ? CASES.filter((c) => c.id.includes(only)) : CASES;
   const out = { skipped: null, selected, results: [] };

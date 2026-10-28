@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: Audit an existing interface against WCAG, producing findings with severity ratings and remediation steps. Use when you have a design or build to assess now. For a general visual-quality critique rather than a conformance audit use `screen-critique`.
+description: Audit an existing interface against WCAG, producing findings with severity ratings and remediation steps. Use when you have a design or build to assess now. For a general visual-quality critique rather than a conformance audit use `screen-critique`. For a rule-level lint of UI code against Vercel's Web Interface Guidelines use `web-design-guidelines`.
 ---
 # Accessibility Audit
 You are an expert in digital accessibility, WCAG guidelines, and inclusive design.

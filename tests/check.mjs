@@ -53,6 +53,7 @@ const BRIDGES = [
   "qa-suite", "impeccable-bridge", "lavish", "taste-skills-bridge",
   "web-design-engineer-bridge", "tastemaker-bridge", "mengto-skills-bridge",
   "next-skills-bridge", "egm-bridge",
+  "vercel-skills-bridge", "vercel-deploy-bridge", "react-patterns-bridge",
 ];
 const CLAUDE_ONLY_AGGREGATORS = new Set(["pro-starter", "pro-dev-starter"]);
 const COMMANDS = new Set(["code-review", "simplify", "pro-dev", "validate", "document", "api-docs", "critique-screen", "security-audit", "security-review", "threat-model"]);
@@ -385,7 +386,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-spdd", "pro-egm", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -742,6 +743,16 @@ checks.bridges = (m) => {
     const body = readFileSync(s.path, "utf8");
     if (!/\/pro-dev\b/.test(body))
       failures.push(`bridge ${p.name}/${s.slug}: does not name /pro-dev`);
+    if (s.slug === "vercel-deploy-bridge") {
+      // this bridge owns its deploy rules; the other bridges do defer to upstream for the work
+      if (body.includes("Defer to the upstream skill"))
+        failures.push(`bridge ${p.name}/${s.slug}: contains "Defer to the upstream skill"; this bridge owns its rules and must not hand control to upstream`);
+      body.split("\n").forEach((line, i) => {
+        if (!line.includes("deploy-to-vercel")) return;
+        const ok = /skills add\b/.test(line) || /^For `vercel inspect`.*follow the installed `deploy-to-vercel` skill/.test(line) || /^Do not commit `\.claude\/skills\/deploy-to-vercel\/`/.test(line);
+        if (!ok) failures.push(`bridge ${p.name}/${s.slug}: line ${i + 1} names deploy-to-vercel outside the result hand-off, an install command or the do-not-commit line`);
+      });
+    }
   }
   return { failures, warnings };
 };
@@ -782,6 +793,13 @@ checks.registry = (m) => {
         if (typeof mk.source !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(mk.source))
           failures.push(`engines.json ${id}: marketplace.source must look like owner/repo`);
       }
+    }
+    if (row.gitExclude !== undefined) {
+      const ge = row.gitExclude;
+      const goodPath = (x) => typeof x === "string" && x.startsWith(".claude/skills/") && x.split("/").slice(2).some(Boolean)
+        && !x.split("/").includes("..") && !/[\\\x00-\x1f\x7f]/.test(x);
+      if (!Array.isArray(ge) || ge.length === 0 || ge.some((x) => !goodPath(x)))
+        failures.push(`engines.json ${id}: gitExclude must be a non-empty array of relative paths under .claude/skills/ (no leading /, no .., no backslash)`);
     }
     if (row.surface !== undefined) {
       const sf = row.surface;

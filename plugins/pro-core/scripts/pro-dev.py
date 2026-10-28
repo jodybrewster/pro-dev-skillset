@@ -844,6 +844,86 @@ def retry_line(engine_id: str, action: str) -> str:
     return f"python3 {os.path.abspath(__file__)} run {engine_id} {action}"
 
 
+def exclude_path_problem(path) -> str | None:
+    """Why a gitExclude path is refused, or None when it is fine."""
+    if not isinstance(path, str) or not path:
+        return "is not a string"
+    if any(ord(c) < 32 or ord(c) == 127 or c == "\\" for c in path):
+        return "has a control character or a backslash"
+    if path.startswith("/"):
+        return "starts with /"
+    parts = path.split("/")
+    if ".." in parts:
+        return "has a .. component"
+    if not path.startswith(".claude/skills/") or not any(parts[2:]):
+        return "is not under .claude/skills/"
+    return None
+
+
+def git_out(args: list[str], repo: str) -> tuple[bool, str]:
+    try:
+        res = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True,
+                             timeout=15, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return False, ""
+    return res.returncode == 0, res.stdout.strip()
+
+
+def apply_git_exclude(row: dict, repo: str) -> list[str]:
+    """After a good install or update: add the row's gitExclude paths to the repo's local exclude file."""
+    paths = row.get("gitExclude")
+    if paths is None:
+        return []
+    eid = row["id"]
+    if not isinstance(paths, list):
+        return [f"{eid}: gitExclude is not a list, nothing written"]
+    ok_tree, inside = git_out(["rev-parse", "--is-inside-work-tree"], repo)
+    if not ok_tree or inside != "true":
+        return [f"{eid}: not a git work tree, skipped gitExclude"]
+    lines: list[str] = []
+    good: list[str] = []
+    for path in paths:
+        problem = exclude_path_problem(path)
+        if problem:
+            lines.append(f"{eid}: gitExclude path {path!r} refused, it {problem}")
+        else:
+            good.append(path)
+    if not good:
+        return lines
+    ok_path, where = git_out(["rev-parse", "--git-path", "info/exclude"], repo)
+    if not ok_path or not where:
+        return lines + [f"{eid}: could not find the git exclude file, nothing written"]
+    target = where if os.path.isabs(where) else os.path.join(repo, where)
+    folder = os.path.dirname(target)
+    try:
+        if os.path.islink(folder):
+            return lines + [f"{eid}: {folder} is a symlink, gitExclude refused"]
+        if os.path.lexists(target) and stat.S_ISLNK(os.lstat(target).st_mode):
+            return lines + [f"{eid}: {target} is a symlink, gitExclude refused"]
+        os.makedirs(folder, exist_ok=True)
+        have: list[str] = []
+        needs_newline = False
+        if os.path.lexists(target):
+            with open(target, "rb") as fh:
+                raw = fh.read()
+            have = raw.decode("utf-8", errors="replace").splitlines()
+            needs_newline = bool(raw) and not raw.endswith(b"\n")
+        fresh = [p for p in good if p not in have]
+        if fresh:
+            fd = os.open(target, os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o644)
+            with os.fdopen(fd, "a", encoding="utf-8") as fh:
+                fh.write(("\n" if needs_newline else "") + "".join(p + "\n" for p in fresh))
+    except OSError as exc:
+        return lines + [f"{eid}: could not write {target} ({type(exc).__name__}: {exc})"]
+    for path in good:
+        lines.append(f"{eid}: {'added' if path in fresh else 'already in'} {target}: {path}")
+        ok, tracked = git_out(["ls-files", "--", path], repo)
+        if ok and tracked.strip():  # an exclude line never untracks a committed folder
+            lines.append(f"{eid}: {path} is already committed, so the exclude does nothing for it; "
+                         f"remove it from the index with: git rm -r --cached {path}")
+    return lines
+
+
 def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers: dict) -> tuple[str, str]:
     """Return (outcome, message). outcome: done, skipped, failed, question."""
     st = engine_state(row, repo, installs, answers)
@@ -859,6 +939,8 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
         if kind != "ok":
             return "failed", f"{eid}: {text}"
     if action == "install" and installed:
+        for line in apply_git_exclude(row, repo):  # a hand-installed copy needs the exclude too
+            say(line)
         return "skipped", f"{eid}: already installed"
     pinned = has_pin(row)
     pid = "@".join(row_plugin(row)) if pinned else ""
@@ -900,6 +982,8 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
                           + f" at {scope} scope: {'; '.join(diffs)}")
         if states:
             return "failed", f"{eid}: {action} left a surface beyond the pin, " + " | ".join(states)
+    for line in apply_git_exclude(row, repo):
+        say(line)
     return "done", f"{eid}: {action} ok"
 
 

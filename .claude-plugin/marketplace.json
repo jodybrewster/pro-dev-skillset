@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.52.1"
+    "version": "1.53.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -17,7 +17,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev (install, update, check) installs the engines, updates the plugins and health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.17.0",
+      "version": "0.18.0",
       "category": "development",
       "strict": true
     },
@@ -48,8 +48,8 @@
     {
       "name": "pro-nextjs",
       "source": "./plugins/pro-nextjs",
-      "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs: file conventions, Server and Client Components, async request APIs, data, errors, metadata, images, fonts), next-upgrade (structured upgrade workflow with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js for Cache Components, Partial Prefetching, bundles and the dev loop; /pro-dev install installs them), shadcn (component installation, theming, composition patterns). Also installs vercel and figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.10.0",
+      "description": "Next.js skills: next-best-practices (App Router conventions written from the Next.js docs: file conventions, Server and Client Components, async request APIs, data, errors, metadata, images, fonts), next-upgrade (structured upgrade workflow with the official codemods), next-skills-bridge (routes to the MIT Next.js agent skills in vercel/next.js for Cache Components, Partial Prefetching, bundles and the dev loop; /pro-dev install installs them), shadcn (component installation, theming, composition patterns). Also installs vercel and figma from claude-plugins-official via install-companions.sh. vercel-skills-bridge routes React and Next.js performance and Vercel cost tuning to two pinned vercel-labs skills.",
+      "version": "0.11.0",
       "category": "development",
       "strict": true
     },
@@ -64,8 +64,8 @@
     {
       "name": "pro-design",
       "source": "./plugins/pro-design",
-      "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /pro-dev install, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /pro-dev install, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with /pro-dev install. Install figma from claude-plugins-official via install-companions.sh.",
-      "version": "0.10.0",
+      "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /pro-dev install, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /pro-dev install, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with /pro-dev install. Install figma from claude-plugins-official via install-companions.sh. Bridges: react-patterns-bridge (Vercel composition and view-transition patterns). Lint: web-design-guidelines (file:line check of UI code against Vercel Web Interface Guidelines at a pinned commit).",
+      "version": "0.11.0",
       "category": "development",
       "strict": true
     },
@@ -98,6 +98,14 @@
       "source": "./plugins/pro-egm",
       "description": "Glue for Google's Elephant-Goldfish Model (egm@egm): /pro-egm:goldfish runs its review loop on a spec or plan with goldfish reviewers a repo keeps in .egm/, shows the resolved reviewers and reading list first and confines custom paths to the repo. The egm-bridge skill points to /pro-dev install, which installs egm@egm. Opt-in: pro-ai-sdlc offers the review at /spec and /plan once it is installed.",
       "version": "0.1.1",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-ship",
+      "source": "./plugins/pro-ship",
+      "description": "Opt-in deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install.",
+      "version": "0.1.0",
       "category": "development",
       "strict": true
     },
@@ -153,7 +161,7 @@
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, research and security). Run /pro-dev install after it. pro-nextjs and pro-astro are opt-in and installed by hand.",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "category": "development",
       "strict": true
     }

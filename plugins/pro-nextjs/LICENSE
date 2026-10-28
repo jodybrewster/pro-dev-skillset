@@ -14,6 +14,11 @@ install the Next.js agent skills from vercel/next.js
 (https://github.com/vercel/next.js/tree/canary/skills), which are governed by that
 repository's MIT License.
 
+The `vercel-skills-bridge` skill and its `/pro-dev` registry row vendor nothing; they
+install the React performance and cost skills from vercel-labs/agent-skills
+(https://github.com/vercel-labs/agent-skills), which states MIT in its README and
+is governed by that repository.
+
 The `shadcn` skill is original work written from the public shadcn/ui documentation
 (https://ui.shadcn.com/docs). All other content in this plugin is original work,
 Copyright (c) 2026 Jody Brewster, under the license below.

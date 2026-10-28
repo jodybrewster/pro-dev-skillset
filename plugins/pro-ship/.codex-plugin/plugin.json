@@ -1,0 +1,6 @@
+{
+  "name": "pro-ship",
+  "version": "0.1.0",
+  "description": "Opt-in shipping plugin. Today it holds the Vercel deploy bridge: a deploy walk with its own token and .env checks that asks before staging, committing, pushing, linking, installing the CLI, an anonymous --temporary deploy or production. Install the upstream skill with /pro-dev install.",
+  "skills": "./skills/"
+}
