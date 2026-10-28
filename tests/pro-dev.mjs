@@ -1070,6 +1070,29 @@ const CASES = [
     },
   },
   {
+    id: "plugins/swap-starter-skips-a-disabled-shim",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-starter", "user", null, { enabled: false })]);
+      const r = s.run(["plugins", "swap-starter"]);
+      return r.code === 0 && !s.calls("claude").length && /pro-starter user: disabled, skipped/.test(r.out) ? ok() : bad(`code ${r.code}, calls ${s.calls().length}, out ${r.out}`);
+    },
+  },
+  {
+    id: "plugins/swap-starter-leaves-a-disabled-dep-alone",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-starter", "project", s.repo), s.entry("pro-nextjs", "project", s.repo), s.entry("pro-astro", "project", s.repo, { enabled: false })]);
+      const r = s.run(["plugins", "swap-starter"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      const want = [
+        `plugin install pro-nextjs@${MS} --scope project`,
+        `plugin install pro-dev-starter@${MS} --scope project`,
+        `plugin uninstall pro-starter@${MS} --scope project`,
+      ];
+      return same(a, want) ? ok() : bad(JSON.stringify(a));
+    },
+  },
+  {
     id: "plugins/swap-starter-keeps-the-shim-when-the-install-fails",
     run: (s) => {
       s.setPlugins([s.entry("pro-starter", "project", s.repo)]);

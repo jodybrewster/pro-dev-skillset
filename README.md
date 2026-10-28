@@ -49,7 +49,7 @@ A SessionStart nudge tells you to run `/pro-dev update` when a plugin update bro
 
 `pro-starter` is now a shim that depends only on `pro-dev-starter` and stays for one release.
 An existing site keeps loading.
-`/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`.
+`/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`; an install you disabled is left as it is.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
 

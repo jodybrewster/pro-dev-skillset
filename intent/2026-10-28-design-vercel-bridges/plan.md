@@ -296,17 +296,17 @@ Verdict: proceed with required changes.
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit:
-- Checks run:
+- Build commit: 8a0837f (PR 68), squash of 587fc4b and bf30e2f.
+- Checks run: `node tests/check.mjs && node tests/eval.mjs --dry` gave 26 checks, 0 failures, 38 warnings and 79 cases over 93 skills plus 7 distractors; strict validation passed for the marketplace and all 19 plugins; `tests/pro-dev.mjs` 103 cases; live routing eval 76 of 79, with the three misses recorded under Departures; CI passed on PR 68.
 - Step 0, pin test from an older commit (parent of dfeeb54; installed `SKILL.md` hash against the old file): pass. The parent is `4f8ed6022d21339a541a9bcd81e0fd921df99cac`; installing from its tree URL gave `SKILL.md` sha256 `3ac2790bccd66964...`, the same as that commit's file through `gh api` and not the pinned `418ca2a60d35c551...`.
 - Step 0, pin test with a made-up SHA (must fail, no fallback to main): pass. `0123456789abcdef0123456789abcdef01234567` exited 1 with nothing installed.
 - Step 0, pin test at the real pin (only `deploy-to-vercel`; R28 folder digest recorded): pass. Only `deploy-to-vercel` landed, holding one file, `SKILL.md` (`418ca2a60d35c551...`). The R28 folder digest, sha256 of the sorted `<path> <sha256>` lines, is `9e0944ebe282cc1d398899a47a9767d97a7f22cdbeb475ae45e0583e44cb055a`.
 - Step 0, linked-worktree exclude path: `git rev-parse --git-path info/exclude` names the file git reads; the `gitExclude/linked-worktree-writes-the-file-git-reads` case proves it with `git check-ignore`.
 - Step 0, `vercel deploy` and `.gitignore`: not honored. `getVercelIgnore` in `vercel/vercel` `packages/client/src/utils/index.ts` reads only `.vercelignore` (or `.nowignore`) plus a built-in list; that list skips `.env.local` and `.env.*.local` but not `.env` or `.env.production`. So the R10b `.vercelignore` requirement applies, repo or not.
 - Step 0, R30 for 434b7f9 (compare status and `command.md` diff read): `identical`, so there is no diff to read.
-- AC1 (non-Hallmark):
-- AC2 (non-Hallmark):
-- AC3:
+- AC1 (non-Hallmark): pass. Live check on 2026-10-28 in a fresh scratch repo with pro-dev-starter, pro-nextjs and pro-ship at project scope from the published marketplace: `status` asked about `vercel-skills`, `vercel-deploy` and `vercel-react`; after a yes to each, `run <id> install` installed all three and `status` reported them installed.
+- AC2 (non-Hallmark): pass. `.claude/skills/` held `deploy-to-vercel`, `vercel-composition-patterns`, `vercel-optimize`, `vercel-react-best-practices` and `vercel-react-view-transitions` with nothing else from vercel-labs; `vercel-deploy` added `.claude/skills/deploy-to-vercel/` to `.git/info/exclude` and `git add -A -n` then listed nothing under that folder.
+- AC3: pass. With pro-nextjs disabled, `status` reported `vercel-skills` as not-applicable while pro-design's `vercel-react` stayed installed.
 - AC4:
 - AC5 (non-Hallmark):
 - AC6 (non-Hallmark):

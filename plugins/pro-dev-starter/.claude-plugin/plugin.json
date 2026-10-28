@@ -1,6 +1,6 @@
 {
   "name": "pro-dev-starter",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Installs Jody's default pro dev stack: core + ai-sdlc + pdd + execution + quality + design + motion + testing + data + research + security. Run /pro-dev install after it. pro-nextjs and pro-astro are opt-in.",
   "author": {
     "name": "Jody Brewster",

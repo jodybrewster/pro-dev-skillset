@@ -4,16 +4,16 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.53.0.
+Marketplace `metadata.version`: 1.53.1.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
 | pro-ai-sdlc | 0.5.1 | 2026-10-28 | `methods.py` lists plugins from the repo folder so `enabled` is read for that repo. Also carries (0.5.0, PR 66): `/intent`, `/spec`, `/plan` and `/review` offer the hand-offs an installed spec method declares, through the new `scripts/methods.py`; prints nothing when no method is installed. Also carries removed `/sdlc-init` (0.4.0) and `/execute` (0.3.0, PR 63) | PR 67 | none |
 | pro-astro | 0.1.1 | 2026-10-16 | Standard original-skill footer on the four Astro skills | this PR | none |
-| pro-core | 0.18.0 | 2026-10-28 | Registry version 3: rows `vercel-skills`, `vercel-deploy` and `vercel-react` pinned to a vercel-labs/agent-skills commit; optional `gitExclude` row field keeps an installed folder out of commits through `.git/info/exclude`; router names the new skills and pro-ship. Also carries 0.17.0 (PR 66) | PR 68 | pro-core--v0.13.0 |
+| pro-core | 0.18.1 | 2026-10-28 | `plugins swap-starter` skips a disabled pro-starter install and re-installs only enabled stack plugins, so a deliberately disabled plugin is not switched back on. Also carries 0.18.0 (PR 68) | PR 69 | pro-core--v0.13.0 |
 | pro-data | 0.4.5 | 2026-07-26 | Hooks merged into one `hooks/hooks.json` | 8597453 (PR 34) | pro-data--v0.2.0 |
 | pro-design | 0.11.0 | 2026-10-28 | `react-patterns-bridge` and the `web-design-guidelines` lint (rules from a pinned commit, no shell); hand-off clauses in `accessibility-audit`, `screen-critique` and `shadcn-ui-composition` | PR 68 | pro-design--v0.3.0 |
-| pro-dev-starter | 2.0.3 | 2026-10-28 | Version bump only, because pro-core and pro-design ship new versions; pro-ship is not a dependency | PR 68 | none |
+| pro-dev-starter | 2.0.4 | 2026-10-28 | Version bump only, because pro-core ships a new version | PR 69 | none |
 | pro-egm | 0.1.1 | 2026-10-28 | `/pro-egm:goldfish` reads EGM's `egm-review-loop` skill file and follows it, since every EGM skill refuses model invocation; `goldfish.py egm` finds it. First release (0.1.0, PR 66): `/pro-egm:goldfish` runs egm@egm's goldfish review on a spec or plan with repo-confined reviewers, plus the `egm-bridge` skill and `sdlc-method.json` | PR 67 | none |
 | pro-execution | 0.4.0 | 2026-10-25 | Removed the `/worktrunk` command; herdr worktrees and the harness's native worktree tool cover parallel work | this PR | none |
 | pro-legal | 0.1.2 | 2026-10-17 | Agent `software-counsel` declares `model: opus` | this PR | none |

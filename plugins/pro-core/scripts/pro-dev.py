@@ -1237,6 +1237,9 @@ def cmd_swap_starter(args, repo: str) -> int:
         return 0
     failed = False
     for s in shims:
+        if s.get("enabled") is False:
+            say(f"pro-starter {s['scope']}: disabled, skipped")
+            continue
         cwd = install_cwd(s, repo)
         if cwd is None:
             say(f"pro-starter {s['scope']}: project folder is missing, skipped")
@@ -1245,7 +1248,7 @@ def cmd_swap_starter(args, repo: str) -> int:
         steps = []
         for dep in STARTER_DEPS:
             has = any(i.get("id") == f"{dep}@{MARKETPLACE}" and i.get("scope") == scope
-                      and i.get("projectPath") == s.get("projectPath") for i in installs)
+                      and i.get("enabled") is not False and i.get("projectPath") == s.get("projectPath") for i in installs)
             if has:
                 steps.append(["claude", "plugin", "install", f"{dep}@{MARKETPLACE}", "--scope", scope])
         steps.append(["claude", "plugin", "install", f"pro-dev-starter@{MARKETPLACE}", "--scope", scope])
