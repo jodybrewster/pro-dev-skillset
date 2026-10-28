@@ -4,8 +4,9 @@
 Reads {"tool_input": {"file_path": "..."}} from stdin. Blocks writes to
 ~/.claude/ (except the auto-memory directory) and doc files that belong to
 some other repository or to no repository at all. Agent instruction files
-(CLAUDE.md, AGENTS.md, CLAUDE.local.md) and temp or scratchpad paths are always
-allowed. Exits 2 (BLOCK) with a redirect message; exits 0 otherwise.
+(CLAUDE.md, AGENTS.md, CLAUDE.local.md) are allowed directly in ~/.claude/ and
+in the session repo; Claude scratchpad paths (claude-* under /tmp or $TMPDIR)
+are always allowed. Exits 2 (BLOCK) with a redirect message; exits 0 otherwise.
 """
 from __future__ import annotations
 
@@ -13,10 +14,9 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 
-# Agent instruction files are meant to live where the tool looks for them,
-# including the user-level ~/.claude/CLAUDE.md.
+# Agent instruction files are meant to live where the tool looks for them: the
+# user-level ~/.claude/CLAUDE.md and the session repo's own files.
 AGENT_FILES = {"CLAUDE.md", "AGENTS.md", "CLAUDE.local.md"}
 
 # A PreToolUse hook sits in front of the user's turn, so every git call is bounded.
@@ -71,18 +71,21 @@ def is_within(path: str, root: str) -> bool:
 
 
 def in_scratch_space(path: str) -> bool:
-    """True for the system temp dir, $TMPDIR and the Claude session scratchpad.
+    """True for the Claude session scratchpad: /tmp/claude-*, /private/tmp/claude-*
+    and any path under $TMPDIR with a claude- segment.
 
-    The scratchpad is /tmp/claude-<uid>/... (/private/tmp on macOS). It is
-    throwaway by design, so nothing written there is a doc that went astray.
+    Deliberately not all of /tmp or $TMPDIR: where those point differs by platform,
+    and a stray doc dropped there is still a stray doc.
     """
     real = os.path.realpath(path)
-    roots = {tempfile.gettempdir(), os.environ.get("TMPDIR") or ""}
-    if any(r and is_within(real, os.path.realpath(r)) for r in roots):
-        return True
     for base in ("/tmp", "/private/tmp"):
         rel = os.path.relpath(real, os.path.realpath(base))
         if not rel.startswith("..") and rel.split(os.sep)[0].startswith("claude-"):
+            return True
+    tmpdir = os.environ.get("TMPDIR")
+    if tmpdir:
+        rel = os.path.relpath(real, os.path.realpath(tmpdir))
+        if not rel.startswith("..") and any(seg.startswith("claude-") for seg in rel.split(os.sep)[:-1]):
             return True
     return False
 
@@ -120,9 +123,15 @@ def main() -> int:
     # abspath, not normpath: a relative file_path has to resolve against the session
     # cwd rather than fall through the containment check as "outside the project".
     expanded = os.path.abspath(os.path.expanduser(file_path))
-    cwd = os.getcwd()
+    # The session's own repo: CLAUDE_PROJECT_DIR when the harness sets it, else cwd.
+    cwd = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
 
-    if os.path.basename(expanded) in AGENT_FILES or in_scratch_space(expanded):
+    if in_scratch_space(expanded):
+        return 0
+    # Agent files: directly in ~/.claude/ (the user-level file). Inside the session's
+    # own repo they pass the project check below; in other repos and in ~/.claude/
+    # subfolders such as plans/ they stay blocked.
+    if os.path.basename(expanded) in AGENT_FILES and os.path.dirname(expanded) == claude_dir:
         return 0
 
     if expanded.startswith(claude_dir):

@@ -33,7 +33,7 @@ const ALLOW = "allow";
 const BLOCK = "block";
 
 function git(cwd, ...args) {
-  const r = spawnSync("git", ["-c", "user.name=T", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8" });
+  const r = spawnSync("git", ["-c", "user.name=fixture", "-c", "user.email=fixture", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8" });
   if (r.status !== 0) throw new Error(`git ${args.join(" ")} failed in ${cwd}: ${r.stderr}`);
   return r.stdout.trim();
 }
@@ -76,6 +76,10 @@ function buildFixtures(root) {
   fx.codeOnly = wt("code-only", { "src/c.ts": "export const c = 1;\n" });
   fx.mdOnly = wt("md-only", { "intent/2026-x/intent.md": "# intent\n", "notes.md": "n\n" });
   fx.codeAndIntent = wt("code-and-intent", { "intent/2026-y/intent.md": "# intent\n", "src/e.ts": "export const e = 1;\n" });
+  fx.skillOnly = wt("skill-only", { "plugins/p/skills/s/SKILL.md": "# skill\n" });
+  fx.commandOnly = wt("command-only", { "plugins/p/commands/c.md": "# command\n" });
+  fx.agentOnly = wt("agent-only", { "plugins/p/agents/a.md": "# agent\n" });
+  fx.docsDirOnly = wt("docs-dir-only", { "docs/guide.md": "# guide\n", "docs/notes.txt": "n\n" });
   fx.upstream = wt("upstream", { "src/d.ts": "export const d = 1;\n", "README.md": "# app\nd\n" }, { pushFirst: true });
   commitFiles(fx.upstream, { "src/d2.ts": "export const d2 = 1;\n" }, "more code");
   fx.upstreamClean = wt("upstream-clean", { "src/f.ts": "export const f = 1;\n", "README.md": "# app\nf\n" }, { pushFirst: true });
@@ -83,13 +87,25 @@ function buildFixtures(root) {
 }
 
 function runHook(script, payload, { cwd, env }) {
-  const res = spawnSync("python3", [script], { input: JSON.stringify(payload), encoding: "utf8", timeout: 30_000, cwd, env: { ...process.env, ...env } });
+  // CLAUDE_PROJECT_DIR is blanked unless a case sets it, so a run inside Claude Code cannot leak in.
+  const res = spawnSync("python3", [script], { input: JSON.stringify(payload), encoding: "utf8", timeout: 30_000, cwd, env: { ...process.env, CLAUDE_PROJECT_DIR: "", ...env } });
   return res;
 }
 
 function pushCases(fx) {
   const bash = (command) => ({ tool_name: "Bash", tool_input: { command }, cwd: fx.hq });
-  const c = (id, expect, command, mustSay = null, mustNotSay = null) => ({ id: `push/${id}`, expect, script: PUSH_HOOK, payload: bash(command), cwd: fx.hq, mustSay, mustNotSay });
+  const c = (id, expect, command, mustSay = null, mustNotSay = null, session = fx.hq) => ({
+    id: `push/${id}`, expect, script: PUSH_HOOK, payload: { ...bash(command), cwd: session }, cwd: session, mustSay, mustNotSay,
+  });
+  const P = "pu" + "sh"; // the subcommand, split so this file's own shell commands never spell it out
+  const heredoc = (dir, tag) => [
+    `cd ${dir} && git commit --allow-empty -m "$(cat <<${tag}`,
+    "subject",
+    "",
+    `cd ${fx.docsUpdated}`,
+    tag.replace(/['"]/g, ""),
+    `)" && git ${P}`,
+  ].join("\n");
   return [
     c("git-C-judges-the-pushed-repo", ALLOW, `git -C ${fx.docsUpdated} push`),
     c("cd-and-push-judges-the-pushed-repo", ALLOW, `cd ${fx.docsUpdated} && git push`),
@@ -102,27 +118,58 @@ function pushCases(fx) {
     c("upstream-range-ignores-already-pushed-commits", ALLOW, `git -C ${fx.upstreamClean} push`),
     c("session-repo-without-remote-allows", ALLOW, "git push"),
     c("non-push-command-allows", ALLOW, `git -C ${fx.codeOnly} status`),
+    // docs-only rule: root *.md, docs/** and intent/** only
+    c("skill-md-is-code", BLOCK, `git -C ${fx.skillOnly} ${P} -u origin skill-only`, "plugins/p/skills/s/SKILL.md"),
+    c("command-md-is-code", BLOCK, `git -C ${fx.commandOnly} ${P} -u origin command-only`, "plugins/p/commands/c.md"),
+    c("agent-md-is-code", BLOCK, `git -C ${fx.agentOnly} ${P} -u origin agent-only`, "plugins/p/agents/a.md"),
+    c("docs-dir-allows", ALLOW, `git -C ${fx.docsDirOnly} ${P} -u origin docs-dir-only`),
+    // the message names the repo it judged
+    c("block-message-names-the-judged-repo", BLOCK, `git -C ${fx.codeOnly} ${P}`, fx.codeOnly),
+    // heredoc bodies are data, not commands
+    c("heredoc-cd-line-is-not-a-cd-quoted", BLOCK, heredoc(fx.codeOnly, "'EOF'"), "src/c.ts"),
+    c("heredoc-cd-line-is-not-a-cd-bare", BLOCK, heredoc(fx.codeOnly, "EOF"), "src/c.ts"),
+    c("heredoc-body-mentioning-a-push-allows", ALLOW, `cat <<'EOF'\ngit -C ${fx.codeOnly} ${P}\nEOF`, null, null, fx.codeOnly),
+    // wrappers
+    c("env-wrapper", BLOCK, `env GIT_TERMINAL_PROMPT=0 git -C ${fx.codeOnly} ${P}`, "src/c.ts"),
+    c("command-wrapper", BLOCK, `command git -C ${fx.codeOnly} ${P}`, "src/c.ts"),
+    c("timeout-wrapper", BLOCK, `timeout 30 git -C ${fx.codeOnly} ${P}`, "src/c.ts"),
+    c("bash-c-wrapper", BLOCK, `bash -c 'cd ${fx.codeOnly} && git ${P}'`, "src/c.ts"),
+    c("sh-c-wrapper", BLOCK, `sh -c "git -C ${fx.codeOnly} ${P}"`, "src/c.ts"),
+    // unresolvable targets stay fail-open (the session repo is the blocking one, so a fallback to it would block)
+    c("variable-cd-is-fail-open", ALLOW, `cd $WT && git ${P}`, null, null, fx.codeOnly),
+    c("variable-git-C-is-fail-open", ALLOW, `git -C "$WT" ${P}`, null, null, fx.codeOnly),
+    c("pushd-is-fail-open", ALLOW, `pushd ${fx.docsUpdated} && git ${P}`, null, null, fx.codeOnly),
     c("path-outside-any-repo-allows", ALLOW, `git -C ${tmpdir()} push`),
   ];
 }
 
-function projectCases(env) {
+function projectCases(env, fx) {
   const { HOME: home, TMPDIR: tmp, PROJECT: project } = env;
-  const w = (id, expect, file_path, extra = {}) => ({
+  const w = (id, expect, file_path, { cwd = project, hookEnv = {}, extra = {} } = {}) => ({
     id: `project/${id}`,
     expect,
     script: PROJECT_HOOK,
     payload: { tool_name: "Write", tool_input: { file_path }, ...extra },
-    cwd: project,
+    cwd,
+    hookEnv,
   });
   return [
     w("user-level-CLAUDE.md-allows", ALLOW, join(home, ".claude", "CLAUDE.md")),
     w("user-level-AGENTS.md-allows", ALLOW, join(home, ".claude", "AGENTS.md")),
     w("CLAUDE.local.md-allows", ALLOW, join(home, ".claude", "CLAUDE.local.md")),
-    w("agent-file-in-another-repo-allows", ALLOW, join(home, "Elsewhere", "AGENTS.md")),
+    w("agent-file-in-session-repo-allows", ALLOW, join(project, "CLAUDE.md")),
+    w("agent-file-in-session-repo-subdir-allows", ALLOW, join(project, "sub", "AGENTS.md")),
+    w("agent-file-via-CLAUDE_PROJECT_DIR-allows", ALLOW, join(project, "AGENTS.md"), { cwd: home, hookEnv: { CLAUDE_PROJECT_DIR: project } }),
+    w("agent-file-in-another-repo-blocks", BLOCK, join(fx.hq, "AGENTS.md")),
+    w("agent-file-outside-any-repo-blocks", BLOCK, join(home, "Elsewhere", "AGENTS.md")),
+    w("agent-file-in-claude-plans-blocks", BLOCK, join(home, ".claude", "plans", "CLAUDE.md")),
+    w("agent-file-in-claude-subfolder-blocks", BLOCK, join(home, ".claude", "notes", "AGENTS.md")),
     w("session-scratchpad-allows", ALLOW, "/private/tmp/claude-501/proj/session/scratchpad/security-challenge.md"),
     w("tmp-claude-dir-allows", ALLOW, "/tmp/claude-501/proj/session/scratchpad/notes.md"),
-    w("TMPDIR-allows", ALLOW, join(tmp, "notes.md")),
+    w("TMPDIR-claude-segment-allows", ALLOW, join(tmp, "claude-501", "proj", "scratchpad", "notes.md")),
+    w("TMPDIR-without-claude-segment-blocks", BLOCK, join(tmp, "notes.md")),
+    w("tmp-without-claude-dir-blocks", BLOCK, "/tmp/other-tool/plan.md"),
+    w("tmp-nested-claude-segment-blocks", BLOCK, "/tmp/other-tool/claude-501/plan.md"),
     w("auto-memory-still-allows", ALLOW, join(home, ".claude", "projects", "p", "memory", "MEMORY.md")),
     w("plan-in-claude-dir-blocks", BLOCK, join(home, ".claude", "analysis.md")),
     w("plans-dir-outside-plan-mode-blocks", BLOCK, join(home, ".claude", "plans", "x.md")),
@@ -149,9 +196,9 @@ export function runDocHookCases({ only = null } = {}) {
     const env = { HOME: home, TMPDIR: tmp, PROJECT: project };
     const fx = buildFixtures(root);
 
-    const cases = [...pushCases(fx), ...projectCases(env)].filter((c) => !only || c.id.includes(only));
+    const cases = [...pushCases(fx), ...projectCases(env, fx)].filter((c) => !only || c.id.includes(only));
     for (const c of cases) {
-      const res = runHook(c.script, c.payload, { cwd: c.cwd, env: { HOME: home, TMPDIR: tmp } });
+      const res = runHook(c.script, c.payload, { cwd: c.cwd, env: { HOME: home, TMPDIR: tmp, ...(c.hookEnv || {}) } });
       if (res.error) return { ...out, skipped: `could not run the hook (${res.error.message})` };
       const actual = res.status === 2 ? BLOCK : ALLOW;
       const stderr = (res.stderr || "").trim();
