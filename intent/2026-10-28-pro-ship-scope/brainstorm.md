@@ -24,16 +24,16 @@ Every feature proposed so far, grouped by the intent it would land in, each link
 12. A test set for the reviewer built from this repo's past bugs, rerun when the reviewer changes. [Evals](#improving-the-reviewer-past-bugs-become-evals)
 13. Settings in a REVIEW.md block so the same gate scales from solo to a team; the reviewers also run in GitHub Actions. [Scaling](#built-to-scale-up-jody-2026-10-28)
 
-### Intent C: the doc set
+### Intent C: docs and architecture review
 
 14. A required set of documents that depends on the project: README, CLAUDE.md, AGENTS.md, REVIEW.md and ADRs always; ARCHITECTURE, PRODUCT and DESIGN when they apply. [Doc set](#the-doc-set-proposal)
 15. New templates for README, ARCHITECTURE and PRODUCT; `/pro-dev install` writes missing documents from the code. [Doc set](#the-doc-set-proposal)
 16. pr-check lists missing documents and the reviewer flags lines a diff makes untrue. [Doc set](#the-doc-set-proposal)
+17. An architecture review with twelve-factor as its checklist: challenges a spec or plan, reviews high-risk diffs that change the architecture and audits a whole repo on demand; ARCHITECTURE.md records how the app meets each factor. [Architecture review](#twelve-factor-is-part-of-the-architecture-review-jody-2026-10-28)
 
 ### Intent B: the rest of pro-ship v0.1
 
-17. `/pro-ship:ship`, the preflight report (Blocking, Should-fix, OK), with no new release hook. [Release gate](#release-gate-no-new-hook)
-18. `/pro-ship:twelve-factor`, with a platform-owned status. [Scope pushback](#scope-pushback-still-open)
+18. `/pro-ship:ship`, the preflight report (Blocking, Should-fix, OK), with no new release hook. [Release gate](#release-gate-no-new-hook)
 19. `/pro-ship:pipeline`, which generates or audits GitHub Actions, including the CI version of the gate. See [intent.md](intent.md).
 20. `/pro-ship:repo-hygiene`, which writes rulesets, CODEOWNERS and Dependabot from the REVIEW.md settings; recommended over `release` for v0.1. [Scope pushback](#scope-pushback-still-open), [Scaling](#built-to-scale-up-jody-2026-10-28)
 
@@ -54,6 +54,7 @@ In the order he raised them on 2026-10-28, in his words, with where each is answ
 7. The article https://claude.dev/blog/solving-code-review-at-anthropic/: "I want to make sure that we're applying the phases most importantly to what we're doing here." See "Mapped against Solving code review at Anthropic".
 8. "I need my plugin repo to scale up if needed, not anthropic scale but yes, it needs to scale up" See "Built to scale up".
 9. "make sure that each project has the required documentation. REVIEW.md, ARCHITECTURE.md, CLAUDE.md, README.md, PRODUCT.md, DESIGN.md, etc" See "Every project has its required documents".
+10. "ok so 12 factor apps should be a part of the architecture review" See "Twelve-factor is part of the architecture review".
 
 Earlier the same day, already in [intent.md](intent.md): GitHub practices and portable twelve-factor apps.
 
@@ -376,14 +377,49 @@ Open: whether AGENTS.md stays a full copy of CLAUDE.md, as in this repo, or beco
 
 This touches pro-core (`/pro-dev install`), pro-ai-sdlc (templates) and pro-quality (`documentation-engineer`), so it is its own intent, C; pr-check only consumes it.
 
+## Twelve-factor is part of the architecture review (Jody, 2026-10-28)
+
+Jody's call: twelve-factor belongs in the architecture review, not in a standalone pro-ship audit.
+This replaces `/pro-ship:twelve-factor` from the research and intent.md.
+
+### There is no architecture review today
+
+pro-security has `security-architect`, which challenges a plan before code exists and reviews a diff before push.
+Nothing does the same for architecture; the code reviewer's design lens covers fit with surrounding code, not the shape of the system.
+Jody asked on 2026-10-25 for technical and solution architects in the starter, so this fills a known gap.
+
+### Shape (proposal)
+
+An `architect` agent and an `architecture-review` skill that mirror `security-architect`, with the twelve factors plus API-first, telemetry and authN/Z as the checklist, one row per factor with status (pass, partial, fail, platform-owned), file and line evidence and the fix.
+The Node/Next.js and Python checks from the research become a sidecar of the skill.
+
+Three modes, each when the fix is cheapest:
+
+- Plan mode, at `/spec` and `/plan`: challenges the design before code exists (new backing service, new config, new deployable, state kept in a process).
+- Diff mode, from pr-check: only when the risk classifier sees an architecture signal (a new deployable, Dockerfile or infrastructure change, a new env var or backing service, a new process type); otherwise it stays out of the PR so it does not add noise.
+- Audit mode, on demand: the whole repo against every factor, the old `/pro-ship:twelve-factor`.
+
+It follows the same rules as the other reviewers: fresh context, the four-field handoff, REVIEW.md for project rules and its findings tagged Important, nit or Pre-existing.
+
+### Ties to the rest
+
+- ARCHITECTURE.md gains a twelve-factor section: how this app meets each factor and which ones the platform owns.
+  The audit writes it the first time and the reviewer flags a diff that makes it untrue, so the doc and the review share one source.
+- Mechanical factors run in pr-check, per Jody's runnable-checks rule: a committed lockfile (dependencies), config read from env with an `.env.example` and no hard-coded URLs or secrets (config), logs to stdout (logs), one build command (build, release, run).
+  Judgment factors (backing services, processes, disposability, dev/prod parity) go to the architect.
+- The classifier's architecture signals are a new row in its risky-path list.
+
+Open: which plugin owns the architect.
+Recommendation: pro-quality, beside `code-reviewer`, since it is a review lens and pro-quality is in the starter; pro-ship only calls it from `/ship`.
+
 ## Proposed split
 
 The scope now touches pro-ship, pro-quality (new agent and its Codex `.toml`, removing `pr-quality-gate.py`) and pro-security (push gate accepts the stamp).
-Recommendation: two intents.
+Recommendation: three intents.
 
 - A, the PR gate: `pr-check`, its hook, the risk classifier, `code-reviewer` and the shared stamp with the push gate.
   Used on every PR, so it goes first.
-- C, the doc set: templates, `/pro-dev install` scaffolding from the code and the existence check pr-check runs.
-- B, the rest of pro-ship v0.1: `ship`, `twelve-factor`, `pipeline` and `release` or `repo-hygiene`.
+- C, docs and architecture review: templates, `/pro-dev install` scaffolding from the code, the existence check pr-check runs and the architect with twelve-factor as its checklist.
+- B, the rest of pro-ship v0.1: `ship`, `pipeline` and `repo-hygiene` (`twelve-factor` moved to C, `release` to later).
 
 Shared stamps across gates (`production-gate`, push gate, PR gate) are a rule for every gate hook, so they likely need an ADR.
