@@ -22,7 +22,7 @@ It never runs one on its own and never lets a method replace `spec.md` or `plan.
 Method files from other marketplaces are ignored, because their text reaches the model's prompt.
 
 A third-party method plugin stays as its upstream ships it.
-A pro-dev glue plugin holds the bridge skill, any command and the `sdlc-method.json`; for EGM that is `pro-dev-egm`, which runs EGM's review loop on our own spec and plan with goldfish a repo keeps in `.egm/`.
+A pro-dev glue plugin holds the bridge skill, any command and the `sdlc-method.json`; for EGM that is `pro-egm`, which runs EGM's review loop on our own spec and plan with goldfish a repo keeps in `.egm/`.
 
 ADR-0006's registry row gains an optional `marketplace` object, `{ "name", "source" }` with `source` as `owner/repo`.
 `/pro-dev` registers that marketplace before the row's install and refuses when a marketplace of that name points at a different source.
@@ -36,7 +36,7 @@ Such a row may default to installed, since installing its glue plugin is the opt
 Adding or removing a method touches no pro-ai-sdlc file; intent E's spec-kit plugin is the second method and must fit this contract unchanged.
 With no method installed the loop runs exactly as before.
 A glue plugin depends on its upstream's inputs, so an upstream change can break it without a release of ours.
-Reverse it if EGM keeps changing its review-loop inputs often enough that pro-dev-egm keeps breaking: drop pro-dev-egm and run EGM by hand, keeping the `sdlc-method.json` contract for the other methods.
+Reverse it if EGM keeps changing its review-loop inputs often enough that pro-egm keeps breaking: drop pro-egm and run EGM by hand, keeping the `sdlc-method.json` contract for the other methods.
 
 ## Enforced by
 
