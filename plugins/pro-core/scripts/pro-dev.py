@@ -56,6 +56,8 @@ SCOPES = ("user", "project", "local")
 ANSWERS_FILE = os.path.join(".claude", "pro-dev.json")
 PLUGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*@[A-Za-z0-9][A-Za-z0-9._-]*$")
 ENGINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+OWNER_RE = ENGINE_ID_RE
+OWNER = None  # set once in main from --owner; None means the unfiltered /pro-dev run
 STARTER_DEPS = ("pro-nextjs", "pro-astro")
 
 
@@ -841,6 +843,8 @@ def valid_argv(value) -> bool:
 
 
 def retry_line(engine_id: str, action: str) -> str:
+    if OWNER:
+        return f"/{OWNER}:install" + (" update" if action == "update" else "")
     return f"python3 {os.path.abspath(__file__)} run {engine_id} {action}"
 
 
@@ -1020,6 +1024,18 @@ def row_findings(row: dict, repo: str, installs: list[dict], st: dict) -> dict:
     return out
 
 
+def owned_rows(rows: list) -> list:
+    """The registry rows, or only the owner's under --owner."""
+    return [r for r in rows if not OWNER or (isinstance(r, dict) and r.get("owner") == OWNER)]
+
+
+def foreign_row(row: dict) -> str | None:
+    """The refusal line when --owner is set and the row belongs to another plugin."""
+    if OWNER and row.get("owner") != OWNER:
+        return f"{row['id']}: owned by {row.get('owner')}, not {OWNER}"
+    return None
+
+
 def cmd_status(args, repo: str) -> int:
     reg = load_registry()
     installs, source = read_installs()
@@ -1036,10 +1052,12 @@ def cmd_status(args, repo: str) -> int:
             "installPath": i.get("installPath"), "enabled": i.get("enabled") is not False,
             "covers": cov, "lagging": lag,
         })
+    tracked = bool(git_out(["ls-files", "--", ANSWERS_FILE], repo)[1])
     engines = []
-    for r in reg["engines"]:
+    for r in owned_rows(reg["engines"]):
         e = engine_state(r, repo, installs, data)
         e.update(row_findings(r, repo, installs, e))
+        e["answerCommitted"] = tracked and e["answer"] is not None
         engines.append(e)
     sdlc = next((p["installPath"] for p in plugins if p["name"] == "pro-ai-sdlc" and p["covers"]
                  and p["installPath"]), None)
@@ -1052,6 +1070,8 @@ def cmd_status(args, repo: str) -> int:
         "plugins": plugins, "engines": engines, "aiSdlcInstallPath": sdlc, "starterShim": starter,
         "staleCount": len(find_stale()[0]),
     }
+    if OWNER:
+        out["owner"] = OWNER
     if args.json:
         say(json.dumps(out, indent=2))
         return 0
@@ -1099,9 +1119,16 @@ def cmd_run(args, repo: str) -> int:
         if args.id not in rows or not ENGINE_ID_RE.match(args.id):
             say(f"unknown engine id: {args.id}")
             return 2
+        refusal = foreign_row(rows[args.id])
+        if refusal:
+            say(refusal)
+            return 2
         outcome, msg = run_engine(rows[args.id], action, repo, installs, data)
         say(msg)
         return 1 if outcome in ("failed", "question") else 0
+
+    if OWNER:
+        rows = {k: r for k, r in rows.items() if r.get("owner") == OWNER}
 
     # all: update every installed row (update only), then install what is missing
     if action == "update":
@@ -1125,7 +1152,7 @@ def cmd_run(args, repo: str) -> int:
             say(msg)
             if outcome == "failed":
                 failures.append(msg)
-    if not write_run_version(repo, reg):
+    if not OWNER and not write_run_version(repo, reg):
         failures.append("answers file not updated")
     if failures:
         say("")
@@ -1141,6 +1168,10 @@ def cmd_answer(args, repo: str) -> int:
     rows = {r["id"]: r for r in reg["engines"] if isinstance(r, dict) and "id" in r}
     if args.id not in rows:
         say(f"unknown engine id: {args.id}")
+        return 2
+    refusal = foreign_row(rows[args.id])
+    if refusal:
+        say(refusal)
         return 2
     if rows[args.id].get("default"):
         say(f"{args.id} is a default engine and is not asked about")
@@ -1347,6 +1378,7 @@ def cmd_stale(args, repo: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pro-dev.py", description=__doc__.split("\n")[0])
     p.add_argument("--repo", help="repo root (default: git toplevel of the current folder)")
+    p.add_argument("--owner", help="act only on the registry rows this plugin owns (used by /<plugin>:install)")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("status")
     s.add_argument("--json", action="store_true")
@@ -1366,7 +1398,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str]) -> int:
+    global OWNER
     args = build_parser().parse_args(argv)
+    if args.owner is not None:
+        owners = {r.get("owner") for r in load_registry()["engines"] if isinstance(r, dict)}
+        if not OWNER_RE.match(args.owner) or args.owner not in owners:
+            say(f"unknown owner: {args.owner}")
+            return 2
+        if args.cmd in ("plugins", "stale", "surface"):
+            say("not available with --owner; use /pro-dev")
+            return 2
+        OWNER = args.owner
     repo = find_repo(args.repo)
     try:
         if args.cmd == "status":

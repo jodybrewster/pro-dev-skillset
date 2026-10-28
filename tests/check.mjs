@@ -828,6 +828,75 @@ checks.registry = (m) => {
   return { failures, warnings };
 };
 
+// installers: every registry owner ships /<plugin>:install and its own copy of
+// scripts/pro-dev-owner.py, and the command stays inside the owner script
+const INSTALL_RELAY_SENTENCE = "If that line is not `pro-core <version> at <path>` followed by status JSON, relay the output exactly as printed and stop; never run the fix line, `claude plugin` or any other pro-core script yourself.";
+checks.installers = (m) => {
+  const failures = [], warnings = [];
+  const regPath = join(ROOT, "plugins", "pro-core", "registry", "engines.json");
+  let reg;
+  try { reg = readJSON(regPath); } catch { return { failures: ["engines.json missing or unparseable (see the registry check)"], warnings }; }
+  const rows = Array.isArray(reg.engines) ? reg.engines.filter((r) => r && typeof r.id === "string") : [];
+  const owners = [...new Set(rows.map((r) => r.owner).filter((o) => typeof o === "string"))];
+  const rowOwner = new Map(rows.map((r) => [r.id, r.owner]));
+  const byName = new Map(m.plugins.map((p) => [p.name, p]));
+  const allowed = ["status", "answer"].flatMap((verb) => [
+    `Bash(python3 \${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py ${verb}*)`,
+    `Bash(python3 "\${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" ${verb}*)`,
+  ]);
+  const scripts = [];
+  for (const p of m.plugins) {
+    const sp = join(p.dir, "scripts", "pro-dev-owner.py");
+    if (existsSync(sp)) scripts.push({ plugin: p.name, path: sp, bytes: readFileSync(sp) });
+  }
+  for (const owner of owners) {
+    const p = byName.get(owner);
+    if (!p) continue; // the registry check reports an owner that is not a plugin
+    const missing = [];
+    const cmdPath = join(p.dir, "commands", "install.md");
+    if (!existsSync(cmdPath)) missing.push("commands/install.md");
+    if (!existsSync(join(p.dir, "scripts", "pro-dev-owner.py"))) missing.push("scripts/pro-dev-owner.py");
+    const deps = Array.isArray(p.manifest?.dependencies) ? p.manifest.dependencies : [];
+    // a pro-core dependency would re-enable a pro-core the person disabled (Jody, 2026-10-28)
+    if (deps.some((d) => d && (d === "pro-core" || d.name === "pro-core")))
+      failures.push(`installer ${owner}: declares a pro-core dependency, which re-enables a pro-core the person disabled; the installer checks for pro-core instead`);
+    if (missing.length) failures.push(`installer ${owner}: owns registry rows but is missing ${missing.join(", ")}`);
+    if (!existsSync(cmdPath)) continue;
+    const text = readFileSync(cmdPath, "utf8");
+    const head = text.startsWith("---\n") ? text.slice(4).split("\n---\n")[0] : "";
+    const body = text.startsWith("---\n") ? text.slice(4).split("\n---\n").slice(1).join("\n---\n") : text;
+    const lines = head.split("\n");
+    const at = lines.findIndex((l) => /^allowed-tools:\s*$/.test(l));
+    const got = [];
+    if (at >= 0) {
+      for (const l of lines.slice(at + 1)) {
+        const mm = l.match(/^\s+-\s+(.*)$/);
+        if (!mm) break;
+        let v = mm[1].trim();
+        if (v.startsWith('"')) { try { v = JSON.parse(v); } catch { /* keep raw */ } }
+        else if (v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1);
+        got.push(v);
+      }
+    }
+    if (at < 0 || got.length !== allowed.length || allowed.some((a) => !got.includes(a)))
+      failures.push(`installer ${owner}: commands/install.md allowed-tools must be exactly ${allowed.join(" | ")}${got.length ? `; found ${got.join(" | ")}` : ""}`);
+    if (/pro-dev\.py/.test(body)) failures.push(`installer ${owner}: commands/install.md names pro-dev.py; it runs only scripts/pro-dev-owner.py`);
+    if (/--owner/.test(body)) failures.push(`installer ${owner}: commands/install.md passes --owner; the owner script adds it`);
+    if (!body.includes(INSTALL_RELAY_SENTENCE)) failures.push(`installer ${owner}: commands/install.md lacks the relay-and-stop sentence: ${INSTALL_RELAY_SENTENCE}`);
+    for (const mm of body.matchAll(/\brun ([A-Za-z0-9][A-Za-z0-9._-]*)/g)) {
+      const o = rowOwner.get(mm[1]);
+      if (o && o !== owner) failures.push(`installer ${owner}: commands/install.md names "run ${mm[1]}", a row owned by ${o}`);
+    }
+  }
+  const ownerSet = new Set(owners);
+  for (const s of scripts)
+    if (!ownerSet.has(s.plugin)) failures.push(`installer ${s.plugin}: ships scripts/pro-dev-owner.py but owns no registry row`);
+  const ref = scripts.find((s) => s.plugin === "pro-nextjs") ?? scripts[0];
+  for (const s of scripts)
+    if (s !== ref && !s.bytes.equals(ref.bytes)) failures.push(`installer ${s.plugin}: scripts/pro-dev-owner.py differs from ${ref.plugin}'s copy`);
+  return { failures, warnings };
+};
+
 // spec-method files: every plugins/*/sdlc-method.json is valid JSON of the shape methods.py reads
 checks.methods = () => {
   const failures = [], warnings = [];

@@ -74,7 +74,7 @@ claude plugin validate . --strict
 Expected output, from a real run on 2026-10-28 (the 38 warnings are skills and agents with no routing case):
 
 ```
-✓ 26 checks · 0 failures · 38 warnings
+✓ 27 checks · 0 failures · 38 warnings
 ✓ 79 cases reference real skills · 93 skills in catalog + 7 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
 ✔ Validation passed
@@ -89,6 +89,7 @@ The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is
 
 - Editing plugin content without a version bump.
   The plugin cache serves the stale copy on update and nothing warns; bump per the version-bump law.
+- Declaring a pro-core dependency on a plugin that owns registry rows, which re-enables a pro-core the person disabled; the installer checks for pro-core instead.
 - Naming a hook file per concern.
   Eight hook files in pro-core, pro-data and pro-quality never ran until 8597453 (PR 34) merged them into `hooks/hooks.json`.
 - Declaring a hard dependency on a plugin from another marketplace.
