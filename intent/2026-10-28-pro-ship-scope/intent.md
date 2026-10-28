@@ -1,7 +1,7 @@
 ---
 source: research
 kind: change
-status: proposed
+status: draft
 risk: medium
 created: 2026-10-28T15:45:00-0400
 author: Jody Brewster
@@ -10,8 +10,8 @@ author: Jody Brewster
 # Intent: fill the Ship phase with pro-ship v0.1
 
 Author: Jody Brewster (pro-dev-skillset).
-Source: research Jody brought on 2026-10-28, "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
-Status: proposed.
+Source: research Jody brought on 2026-10-28 (kept in full in [research.md](research.md)), "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
+Status: draft; Jody is still brainstorming and evaluating the scope before `/spec`.
 Created: 2026-10-28.
 
 ## Problem
