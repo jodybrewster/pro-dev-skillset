@@ -162,6 +162,7 @@ It also moves ADR-0006 from `proposed` to `accepted`.
 - Upstream taste-skill is now one skill (`design-taste-frontend`), so `taste-skills-bridge` and the smoke test's 13-name table are stale; changing the bridge is outside this intent and is left for a follow-up.
 - The security challenge of the diff found that a symlinked `.claude/pro-dev.json` let a repo overwrite a file outside it; the script now refuses non-regular files, writes through a temp file and `os.replace` and drops the `.bak` copy. The same pass narrowed the command's pre-approved tools to `status` and `answer`, bounded the nudge's read, added a hook timeout and made `stale` skip installs on unmounted drives.
 - The AC9 grep also excludes `docs/plans/`, which holds old plans kept as history like `docs/releases.md`.
+- PR 63 (`/execute`) merged first and took pro-ai-sdlc 0.3.0 and marketplace 1.50.0, so this change ships pro-ai-sdlc 0.4.0 and marketplace 1.51.0; the branch was rebuilt on `origin/main` with only this intent's commits.
 - Manifest descriptions that named a deleted command were rewritten to name `/pro-dev`, beyond the marketplace descriptions the plan listed.
 
 <!--
