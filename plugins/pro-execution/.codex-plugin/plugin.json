@@ -1,6 +1,6 @@
 {
   "name": "pro-execution",
-  "version": "0.3.3",
-  "description": "Execution discipline skills: TDD, systematic debugging, git worktrees, Worktrunk parallel worktree management (/wt), and subagent-driven development. Depends on pro-core for universal guardrails and repo safety. worktrunk is an optional companion, not a hard dependency - install it with templates/install-companions.sh or `brew install worktrunk`.",
+  "version": "0.4.0",
+  "description": "Execution discipline skills: TDD, systematic debugging, git worktrees and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
   "skills": "./skills/"
 }
