@@ -27,10 +27,29 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.s
 ```
 
 This writes the project settings and installs `pro-dev-starter`, the meta-plugin that pulls the default stack: `pro-core`, `pro-ai-sdlc`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-testing`, `pro-data`, `pro-research` and `pro-security`.
-It then tells you to run `/pro-dev install` in a Claude Code session, which installs the bridge engines and project-local skills (`lavish`, `impeccable` and `qa-skills`) from the engine registry.
-`pro-nextjs` and `pro-astro` are opt-in and installed by hand: `claude plugin install pro-nextjs@pro-dev-skillset`.
-After each `claude plugin update`, run `/pro-dev update` to bring the plugins and engines in line.
-`/pro-dev check` health-checks the install.
+It then tells you to run `/pro-dev install` in a Claude Code session.
+
+### Set up a site
+
+1. Install `pro-dev-starter` and any stack or method plugins you want, such as `claude plugin install pro-nextjs@pro-dev-skillset`.
+   `pro-nextjs` and `pro-astro` are opt-in.
+2. Run `/pro-dev install` in a Claude Code session.
+3. After each `claude plugin update`, run `/pro-dev update`.
+4. Run `/pro-dev check` any time to see what is installed and what is stale.
+
+Every bridge skill routes to an external engine.
+Each engine is a row in the registry at `plugins/pro-core/registry/engines.json`.
+`/pro-dev install` installs the default rows (`lavish`, `impeccable` and `qa-skills` among them) and asks once per optional engine.
+It saves the answers in `.claude/pro-dev.json`, which is meant to be committed so a team shares its choices.
+
+`/pro-dev update` updates the pro-dev plugins in user scope and in project installs at or under the repo, such as `demo/app`.
+It then updates the engines and offers to remove dead installs, after you confirm and with a backup of `installed_plugins.json`.
+It ends with a reminder to restart Claude Code.
+A SessionStart nudge tells you to run `/pro-dev update` when a plugin update brought a newer registry than the one `.claude/pro-dev.json` records.
+
+`pro-starter` is now a shim that depends only on `pro-dev-starter` and stays for one release.
+An existing site keeps loading.
+`/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`.
 
 Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
 
@@ -182,7 +201,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 
-*(opt-in)* = not in `pro-dev-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/pro-dev install`, `impeccable-bridge` → `impeccable` via `/design-engine`).
+*(opt-in)* = not in `pro-dev-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/pro-dev install`, `impeccable-bridge` → `impeccable` via `/pro-dev install`).
 
 ### Plugins
 

@@ -30,3 +30,8 @@ That is the only deterministic way to make something happen at end-of-turn.
 Always guard it: check `stop_hook_active` so the continuation turn passes through, and track per-session progress so the work the block causes cannot re-trigger the block.
 `plugins/pro-quality/scripts/user-validation.py` is the reference implementation in its `block` mode (`PRO_DEV_VALIDATION=block`).
 Its default mode only prints a `systemMessage` and never blocks.
+
+## Registered by pro-core
+
+`pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
+It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.

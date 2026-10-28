@@ -71,16 +71,16 @@ claude plugin validate . --strict
 ( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
-Expected output, from a real run on 2026-10-16 (the 34 warnings are skills and agents with no routing case):
+Expected output, from a real run on 2026-10-28 (the 38 warnings are skills and agents with no routing case):
 
 ```
-✓ 17 checks · 0 failures · 34 warnings
-✓ 72 cases reference real skills · 83 skills in catalog + 4 distractors
+✓ 24 checks · 0 failures · 38 warnings
+✓ 72 cases reference real skills · 87 skills in catalog + 4 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
 ✔ Validation passed
 ```
 
-Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin, 15 times.
+Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 17 times.
 CI runs these automatically on PR (see `.github/workflows/`).
 All must pass before tagging.
 The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
@@ -93,7 +93,10 @@ The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is
   Eight hook files in pro-core, pro-data and pro-quality never ran until 8597453 (PR 34) merged them into `hooks/hooks.json`.
 - Declaring a hard dependency on a plugin from another marketplace.
   The `worktrunk@worktrunk` dependency blocked pro-execution and pro-starter from loading until 4337f0a (PR 44) dropped it, because an upstream with no `version` resolves to `unknown` and a `*` constraint cannot match it.
-  Install companions from `templates/install-companions.sh` instead.
+  Companions are optional rows in the `/pro-dev` engine registry and `/pro-dev install` asks about them.
+  `templates/install-companions.sh` still works standalone.
+- Adding a bridge skill without a row in `plugins/pro-core/registry/engines.json`.
+  The `registry` check fails and the row needs a pro-core bump per [ADR-0006](./docs/decisions/0006-engine-registry-and-pro-dev.md).
 - Returning `block` from a `Stop` hook without checking `stop_hook_active`, which loops the session ([docs/hook-loading.md](./docs/hook-loading.md)).
 - Writing a home-directory path into a command or doc; use a path relative to the repo root.
 
