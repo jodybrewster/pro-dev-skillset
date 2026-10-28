@@ -101,3 +101,5 @@ It also moves any ADR with Status `proposed` from this change to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 6, `allowed-tools`: `cp` is left out because `copy-env.py` does the copying; `node`, `make`, `git show`, `git merge-base` and `gh repo view` are added so the verify command, the verifier and the PR step run without a prompt in repos like this one.
