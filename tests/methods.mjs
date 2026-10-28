@@ -19,6 +19,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = resolve(HERE, "..", "plugins", "pro-ai-sdlc", "scripts", "methods.py");
 const EGM_JSON = resolve(HERE, "..", "plugins", "pro-egm", "sdlc-method.json");
 const SPDD_JSON = resolve(HERE, "..", "plugins", "pro-spdd", "sdlc-method.json");
+const SPECKIT_JSON = resolve(HERE, "..", "plugins", "pro-speckit", "sdlc-method.json");
 const MS = "pro-dev-skillset";
 
 const FAKE_CLAUDE = `#!/usr/bin/env python3
@@ -186,6 +187,12 @@ t("pro-spdd prints its intent offer", () => {
   const r = run("intent");
   must(r.out.startsWith("spdd: ") && r.out.trim().endsWith("-> /spdd-story"), r.out);
   must(run("spec").out === "", "spdd should print nothing at spec");
+});
+t("pro-speckit offers /speckit-specify at intent and nothing at spec, plan or review", () => {
+  setMarket(GOOD); setList([core(), install(`pro-speckit@${MS}`, { method: readText(SPECKIT_JSON) })]);
+  const r = run("intent", { target: "intent/a/intent.md" });
+  must(r.code === 0 && r.out.startsWith("pro-speckit: ") && r.out.includes("-> /speckit-specify intent/a/intent.md"), r.out);
+  for (const s of ["spec", "plan", "review"]) must(run(s).out === "", `${s} should print nothing`);
 });
 t("50 installs finish in under 2 seconds", () => {
   setMarket(GOOD);

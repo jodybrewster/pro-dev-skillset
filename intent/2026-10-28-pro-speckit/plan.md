@@ -294,9 +294,17 @@ It also moves ADR-0008 from `proposed` to `accepted`.
   - Reinstalling a different commit, then the pin, replaces the install without `--force`; at the pin the argv is a no-op.
   - `specify init` exits 1 with nothing written when `claude` is not on `PATH`; the `spec-kit` row adds `--ignore-agent-tools` since it already names `--integration claude`.
   - `init` writes 30 files (10 `.claude/skills/speckit-*/SKILL.md` and 20 under `.specify/`), nothing outside the repo, no `.claude/settings.json`; every core skill carries one `disable-model-invocation: true`.
-  - Across three repos 27 of the 30 files are byte-identical; the two `.specify/integrations/*.manifest.json` files and `workflows/workflow-registry.json` differ only in timestamps, so R20 pins the other 27; no repo path, name or user name appears in any file. The Linux run was not done.
+  - Across three repos 27 of the 30 files are byte-identical; the two `.specify/integrations/*.manifest.json` files and `workflows/workflow-registry.json` differ only in timestamps, so R20 pins the skills, scripts, templates and `workflow.yml` (22 files, see the next bullet); no repo path, name or user name appears in any file. The Linux run was not done.
   - `specify integration upgrade claude` does not stop on an edited script: it exits 0, keeps the edit, names it and rewrites a manifest timestamp. An edited skill stops it with exit 1. The update never passes `--force`, so an edited script stays and the R20 hash check reports it.
   - `specify integration uninstall claude` removes unedited skills, keeps and names an edited one and leaves `.specify/`; `--force` must be given on the first run because a second run errors "not installed".
+  - Build, 2026-10-28: the registry row holds `pinnedFiles` for 22 files (10 skills, 6 scripts, 5 templates and `.specify/workflows/speckit/workflow.yml`), checked with two fresh repos that gave identical hashes.
+    The 27 identical files include the constitution, `integration.json`, `init-options.json`, `.specify/.gitignore` and `.constitution-template.json`, which are not pinned.
+  - A new `knownUnpinned` field on the `spec-kit` row lists the two integration manifests and `workflow-registry.json`; `tests/check.mjs` validates it (repo-relative, no `..`, under `.specify/`).
+    `.specify/workflows` is on the surface list that `/pro-dev check` reports, so the workflows answer is: `workflow.yml` is pinned and `workflow-registry.json` is known-unpinned and anything else under `.specify/workflows` is reported.
+  - `update` also runs the clean-tree and symlink gates, because the `writesRepo` check sits before any argv for install and update alike.
+  - The method name in `sdlc-method.json` is `pro-speckit`, not `spec-kit` as spec R12 said, so the needs line in the hand-offs names the plugin.
+  - The core skill names are hardcoded in `pro-dev.py` (`SPEC_KIT_CORE`); ADR-0008 says a pin move that renames commands updates that list.
+  - The checks-and-docs builder ran `git stash` by mistake; the stash was reverted and nothing was lost.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.

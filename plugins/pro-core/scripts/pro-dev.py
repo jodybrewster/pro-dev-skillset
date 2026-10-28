@@ -24,7 +24,21 @@ Rules this script keeps:
     installed_plugins.json after writing a backup beside it, plus a row's
     `marketplace` step: `claude plugin marketplace add` is a user-wide write that
     outlives the plugin (accepted by ADR-0007), run only when no marketplace of that
-    name is registered and refused when the registered one has another source
+    name is registered and refused when the registered one has another source, plus a
+    `uv-tool` row's `uv tool install`, a second user-wide write (ADR-0008): it puts a
+    CLI in uv's tool folder and a shim on PATH. The commit in its `--from` is the pin,
+    detected from uv's own direct_url.json and receipt and never by running the CLI;
+    success and the update no-op both need the pinned commit; uv itself is never
+    installed, only explained
+  - a row with `needs` runs only while the row it names is installed at its pin; a row
+    with `writesRepo: true` also refuses to run unless the repo is a git work tree whose
+    status (read once before any row runs) lists nothing but the answers file, has no
+    `.specify` on install and has no symlink on any path the CLI writes; the CLI runs by
+    the absolute path in `uv tool dir --bin` and never when another one comes first on
+    PATH. These gates sit inside run_engine, so the retry line cannot bypass them
+  - status never executes a third-party CLI; for a row with `pinnedFiles` it reads the
+    spec-kit files in the repo and reports `specKitFindings` (hashes, flags, hook and
+    extension paths), turning every unreadable path into a finding
   - a claude-plugin row may pin the `surface` it was reviewed with (agent and skill
     counts, the tools of each agent, skill and command, a hash of every hook, MCP and
     LSP declaration); a plugin beyond the pin, or one whose surface cannot be read, is
@@ -41,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import glob
 import hashlib
 import json
 import os
@@ -59,6 +74,21 @@ ENGINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 OWNER_RE = ENGINE_ID_RE
 OWNER = None  # set once in main from --owner; None means the unfiltered /pro-dev run
 STARTER_DEPS = ("pro-nextjs", "pro-astro")
+TOOL_NAME_RE = ENGINE_ID_RE
+PIN_FROM_RE = re.compile(r"^git\+(https://[^@\s]+)@([0-9a-f]{40})$")
+SHA40_RE = re.compile(r"^[0-9a-f]{40}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+SPECIFY_WORD_RE = re.compile(r"(?<![A-Za-z0-9_-])specify(?![A-Za-z0-9_])")
+UV_DOCS = "https://docs.astral.sh/uv/getting-started/installation/"
+MAX_FINDING_BYTES = 1024 * 1024
+MAX_WALK_ENTRIES = 5000
+# the core commands spec-kit v1.2.4 writes as .claude/skills/speckit-<command>/SKILL.md
+SPEC_KIT_CORE = ("analyze", "checklist", "clarify", "constitution", "converge", "implement", "plan",
+                 "specify", "tasks", "taskstoissues")
+# paths that hold extension, preset, workflow or event-hook surface (R22)
+SPEC_KIT_SURFACE = (".specify/extensions.yml", ".specify/extensions", ".specify/presets", ".specify/workflows",
+                    ".specify/integration-events.yml", ".specify/integrations/packages")
+TREE_SNAPSHOT = None  # (ok, changed paths, why) read once at the start of cmd_run for a writesRepo row
 
 
 # --- environment --------------------------------------------------------------
@@ -767,6 +797,110 @@ def skill_root(scope: str, repo: str) -> str | None:
     return None
 
 
+def uv_row(row: dict) -> bool:
+    det = row.get("detect")
+    return isinstance(det, dict) and isinstance(det.get("uvTool"), str)
+
+
+def uv_tool_dir(bin_dir: bool = False) -> str | None:
+    """The folder `uv tool dir` (or `--bin`) prints, or None when uv is missing or answers oddly."""
+    argv = ["uv", "tool", "dir"] + (["--bin"] if bin_dir else [])
+    try:
+        res = subprocess.run(argv, capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    lines = [ln.strip() for ln in res.stdout.splitlines() if ln.strip()]
+    if res.returncode != 0 or len(lines) != 1 or not os.path.isabs(lines[0]):
+        return None
+    return lines[0]
+
+
+def uv_pin(row: dict) -> dict | None:
+    """The source URL, commit and --exclude-newer value parsed from the row's own install argv."""
+    argv = row.get("install")
+    if not valid_argv(argv):
+        return None
+    try:
+        found = PIN_FROM_RE.match(argv[argv.index("--from") + 1])
+        stamp = argv[argv.index("--exclude-newer") + 1] if "--exclude-newer" in argv else None
+    except (ValueError, IndexError):
+        return None
+    return {"url": found.group(1), "sha": found.group(2), "exclude": stamp} if found else None
+
+
+def uv_tool_info(row: dict) -> dict:
+    """Read what uv recorded for a `uvTool` row without running the tool.
+
+    Returns {"present", "drift"}. present is False when there is no dist-info folder or no
+    direct_url.json. drift is None at the pin, else {"installed", "pinned"} plus a "reason"
+    when something other than the commit differs: the source URL, the uv-receipt.toml
+    (rev, source and exclude-newer must match the row) or more than one dist-info folder.
+    """
+    out: dict = {"present": False, "drift": None}
+    name = row["detect"]["uvTool"]
+    pin = uv_pin(row)
+    if not TOOL_NAME_RE.match(name) or pin is None:
+        out["problem"] = "the registry row has no usable uvTool name or pinned --from"
+        return out
+    found = uv_tool_dir()
+    if found is None:
+        out["problem"] = "uv tool dir failed"
+        return out
+    root = os.path.realpath(found)
+    base = os.path.join(root, name)
+    dist = name.replace("-", "_").replace(".", "_")
+    pattern = os.path.join(glob.escape(base), "lib", "python*", "site-packages", glob.escape(dist) + "-*.dist-info")
+    dists = sorted(d for d in glob.glob(pattern) if os.path.isdir(d))
+    if not dists:
+        return out
+    reasons: list[str] = []
+    installed = "unknown"
+    if len(dists) > 1:
+        reasons.append(f"{len(dists)} {dist} dist-info folders")
+    else:
+        try:
+            raw = read_plugin_file(root, os.path.join(dists[0], "direct_url.json"))
+        except SurfaceError as exc:
+            raw = b""
+            reasons.append(f"direct_url.json: {exc}")
+        if raw is None:
+            return out  # no direct_url.json: not a source install uv recorded
+        try:
+            data = json.loads(raw.decode("utf-8")) if raw else None
+        except (ValueError, RecursionError):
+            data = None
+            reasons.append("direct_url.json is not valid JSON")
+        vcs = data.get("vcs_info") if isinstance(data, dict) else None
+        commit = vcs.get("commit_id") if isinstance(vcs, dict) else None
+        if isinstance(commit, str) and SHA40_RE.match(commit):
+            installed = commit
+        elif data is not None:
+            reasons.append("direct_url.json has no commit_id")
+        if data is not None and not (data.get("url") == pin["url"] and isinstance(vcs, dict) and vcs.get("vcs") == "git"):
+            reasons.append("direct_url.json names another source")
+    out["present"] = True
+    try:
+        receipt = read_plugin_file(root, os.path.join(base, "uv-receipt.toml"))
+    except SurfaceError as exc:
+        receipt = b""
+        reasons.append(f"uv-receipt.toml: {exc}")
+    if receipt is None:
+        reasons.append("uv-receipt.toml is missing")
+    elif receipt:
+        text = receipt.decode("utf-8", "replace")
+        if f'{pin["url"]}?rev={pin["sha"]}"' not in text:
+            reasons.append("uv-receipt.toml does not name the pinned source and commit")
+        if pin["exclude"] is not None:
+            stamp = re.search(r'^\s*exclude-newer\s*=\s*"([^"]*)"', text, re.M)
+            if not stamp or stamp.group(1) != pin["exclude"]:
+                reasons.append("uv-receipt.toml exclude-newer differs from the row")
+    if installed != pin["sha"] or reasons:
+        out["drift"] = {"installed": installed, "pinned": pin["sha"]}
+        if reasons:
+            out["drift"]["reason"] = "; ".join(reasons)
+    return out
+
+
 def detected(row: dict, repo: str, installs: list[dict]) -> bool:
     det = row.get("detect")
     if not isinstance(det, dict):
@@ -774,6 +908,8 @@ def detected(row: dict, repo: str, installs: list[dict]) -> bool:
     if isinstance(det.get("plugin"), str):
         return any(i.get("id") == det["plugin"] and i.get("enabled") is not False and covers_repo(i, repo)
                    for i in installs)
+    if isinstance(det.get("uvTool"), str):
+        return uv_tool_info(row)["present"]
     needed = det.get("all")
     if not isinstance(needed, list) or not needed:
         return False
@@ -792,21 +928,29 @@ def detected(row: dict, repo: str, installs: list[dict]) -> bool:
 def engine_state(row: dict, repo: str, installs: list[dict], answers: dict) -> dict:
     owner = row["owner"]
     ans = saved_answer(answers, row["id"])
+    info = None
     if not owner_active(installs, owner, repo):
         state = "not-applicable"
+    elif uv_row(row):
+        info = uv_tool_info(row)  # the one place a uv-tool row starts uv (active owners only)
+        state = "installed" if info["present"] else "missing"
     elif detected(row, repo, installs):
         state = "installed"
-    elif not row.get("default") and ans == "no":
-        state = "declined"
     else:
         state = "missing"
-    return {
+    if state == "missing" and not row.get("default") and ans == "no":
+        state = "declined"
+    out = {
         "id": row["id"], "owner": owner, "kind": row.get("kind"), "default": bool(row.get("default")),
         "bridges": row.get("bridges", []), "state": state, "answer": ans,
         "why": row.get("why", ""),
         "needsQuestion": state == "missing" and not row.get("default") and ans is None,
         "wantsInstall": state == "missing" and (bool(row.get("default")) or ans == "yes"),
     }
+    if state == "installed" and info is not None and info["drift"]:
+        out["versionDrift"] = info["drift"]  # replacing the install is a run, so the row wants one
+        out["wantsInstall"] = True
+    return out
 
 
 # --- running commands ---------------------------------------------------------
@@ -819,6 +963,8 @@ def tool_missing(argv: list[str]) -> str | None:
         return "claude is not on PATH. Install Claude Code, then retry."
     if exe == "npx":
         return "npx is not on PATH. Install Node.js (it ships npx), then retry."
+    if exe == "uv":
+        return f"uv is not on PATH. Install uv from its official docs ({UV_DOCS}), then retry. pro-dev never installs it."
     return f"{exe} is not on PATH."
 
 
@@ -928,6 +1074,195 @@ def apply_git_exclude(row: dict, repo: str) -> list[str]:
     return lines
 
 
+def safe_rel(rel) -> bool:
+    """A repo-relative path with no leading slash, no .. or . part, no backslash or control character."""
+    if not isinstance(rel, str) or not rel or rel.startswith("/"):
+        return False
+    if any(ord(c) < 32 or ord(c) == 127 or c == "\\" for c in rel):
+        return False
+    return all(part not in ("", ".", "..") for part in rel.split("/"))
+
+
+def take_tree_snapshot(repo: str) -> tuple[bool, list[str], str]:
+    """Return (ok, changed paths, why). ok is False when the state cannot be read: never read as clean.
+
+    `git status --porcelain=v1 -z --untracked-files=all` lists every untracked file, not a
+    collapsed folder. Only the exact path of the answers file is dropped, because
+    /pro-dev install saves the answer there before any row runs.
+    """
+    ok, inside = git_out(["rev-parse", "--is-inside-work-tree"], repo)
+    if not ok or inside != "true":
+        return False, [], "this folder is not a git work tree"
+    ok, top = git_out(["rev-parse", "--show-toplevel"], repo)
+    if not ok or os.path.realpath(top) != os.path.realpath(repo):
+        return False, [], "this folder is not the top of a git work tree"
+    try:
+        res = subprocess.run(["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=repo,
+                             capture_output=True, timeout=60, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, [], f"git status failed ({type(exc).__name__})"
+    if res.returncode != 0:
+        return False, [], f"git status failed (exit {res.returncode})"
+    fields = res.stdout.split(b"\0")
+    paths: list[str] = []
+    i = 0
+    while i < len(fields):
+        rec = fields[i]
+        i += 1
+        if len(rec) < 4:
+            continue
+        paths.append(os.fsdecode(rec[3:]))
+        if rec[0:1] in (b"R", b"C") or rec[1:2] in (b"R", b"C"):  # a rename or copy adds its source field
+            if i < len(fields):
+                paths.append(os.fsdecode(fields[i]))
+                i += 1
+    return True, [p for p in paths if p != ANSWERS_FILE.replace(os.sep, "/")], ""
+
+
+def walk_tree(repo: str, rel: str) -> tuple[list[tuple[str, str]], list[str]]:
+    """Every entry below repo/rel as (relative path, kind) plus per-path errors; links are never followed.
+
+    kind is file, dir, link or other. A rel that is itself a file or a link gives that one entry.
+    """
+    entries: list[tuple[str, str]] = []
+    errors: list[str] = []
+
+    def kind_of(path: str) -> str:
+        mode = os.lstat(path).st_mode
+        return "link" if stat.S_ISLNK(mode) else "dir" if stat.S_ISDIR(mode) else "file" if stat.S_ISREG(mode) else "other"
+
+    try:
+        first = kind_of(os.path.join(repo, *rel.split("/")))
+    except FileNotFoundError:
+        return entries, errors
+    except OSError as exc:
+        return entries, [f"cannot inspect {rel} ({type(exc).__name__})"]
+    if first != "dir":
+        return [(rel, first)], errors
+    stack = [rel]
+    while stack:
+        cur = stack.pop()
+        try:
+            names = sorted(os.listdir(os.path.join(repo, *cur.split("/"))))
+        except OSError as exc:
+            errors.append(f"cannot list {cur} ({type(exc).__name__})")
+            continue
+        for name in names:
+            child = f"{cur}/{name}"
+            try:
+                kind = kind_of(os.path.join(repo, *child.split("/")))
+            except OSError as exc:
+                errors.append(f"cannot inspect {child} ({type(exc).__name__})")
+                continue
+            entries.append((child, kind))
+            if kind == "dir":
+                stack.append(child)
+            if len(entries) > MAX_WALK_ENTRIES:
+                errors.append(f"more than {MAX_WALK_ENTRIES} entries under {rel}, stopped looking")
+                return entries, errors
+    return entries, errors
+
+
+def speckit_skill_names(repo: str) -> tuple[list[str], str | None]:
+    """The speckit-* folders under .claude/skills, plus an error text when the folder cannot be listed."""
+    folder = os.path.join(repo, ".claude", "skills")
+    try:
+        return sorted(n for n in os.listdir(folder) if n.startswith("speckit-")), None
+    except (FileNotFoundError, NotADirectoryError):
+        return [], None
+    except OSError as exc:
+        return [], f"cannot list .claude/skills ({type(exc).__name__})"
+
+
+def symlink_problem(repo: str, row: dict) -> str | None:
+    """A refusal reason when any path the CLI writes, or a parent below the repo root, is a symlink.
+
+    The write set is the ten core skills, `.specify`, every pinned path and whatever already
+    sits under `.specify` and the speckit-* skill folders. A symlink there reads clean to git
+    while `specify init --force` writes through it.
+    """
+    rels = {f".claude/skills/speckit-{c}/SKILL.md" for c in SPEC_KIT_CORE}
+    rels.add(".specify")
+    pinned = row.get("pinnedFiles")
+    if isinstance(pinned, dict):
+        rels.update(k for k in pinned if isinstance(k, str))
+    names, why = speckit_skill_names(repo)
+    if why:
+        return why
+    for top in [".specify"] + [f".claude/skills/{n}" for n in names]:
+        entries, errors = walk_tree(repo, top)
+        if errors:
+            return errors[0]
+        rels.update(r for r, _ in entries)
+    for rel in sorted(rels):
+        if not safe_rel(rel):
+            return f"the path {rel!r} is not a plain path inside the repo"
+        cur = repo
+        for part in rel.split("/"):
+            cur = os.path.join(cur, part)
+            try:
+                mode = os.lstat(cur).st_mode
+            except (FileNotFoundError, NotADirectoryError):
+                break
+            except OSError as exc:
+                return f"{os.path.relpath(cur, repo)} cannot be inspected ({type(exc).__name__})"
+            if stat.S_ISLNK(mode):
+                return f"{os.path.relpath(cur, repo)} is a symlink and specify would write through it"
+    return None
+
+
+def repo_refusal(row: dict, action: str, repo: str) -> str | None:
+    """Why a writesRepo row may not run now, or None (R9)."""
+    if action == "install" and os.path.lexists(os.path.join(repo, ".specify")):
+        return ".specify already exists in this repo"
+    snap = TREE_SNAPSHOT if TREE_SNAPSHOT is not None else take_tree_snapshot(repo)
+    ok, changed, why = snap
+    if not ok:
+        return f"the git state cannot be read ({why})"
+    if changed:
+        shown = ", ".join(changed[:3]) + (f" plus {len(changed) - 3} more" if len(changed) > 3 else "")
+        return f"the working tree has uncommitted changes ({shown}); commit or stash them first"
+    return symlink_problem(repo, row)
+
+
+def trusted_argv(row: dict, argv: list[str]) -> tuple[list[str] | None, str]:
+    """Replace argv[0] of a uv-tool row with its absolute path in `uv tool dir --bin` (R24).
+
+    Returns (argv, "") or (None, reason). Refuses when the same name on PATH resolves to another file.
+    """
+    name = argv[0]
+    if not TOOL_NAME_RE.match(name):
+        return None, f"{name!r} is not a plain command name"
+    folder = uv_tool_dir(bin_dir=True)
+    if folder is None:
+        return None, "uv tool dir --bin failed, so the pinned CLI cannot be located"
+    exe = os.path.join(folder, name)
+    if not (os.path.isfile(exe) and os.access(exe, os.X_OK)):
+        return None, f"{exe} is not an executable file"
+    first = shutil.which(name)
+    if first and os.path.realpath(first) != os.path.realpath(exe):
+        return None, (f"{name} on PATH is {os.path.realpath(first)} but the pinned CLI is {os.path.realpath(exe)}; "
+                      f"put the pinned one first or remove the other")
+    return [exe] + argv[1:], ""
+
+
+def needs_refusal(row: dict, repo: str, installs: list[dict], answers: dict) -> tuple[str, str] | None:
+    """(outcome, message) when the row it needs is not installed at its pin right now, else None (R8)."""
+    need = row.get("needs")
+    if need is None:
+        return None
+    eid = row["id"]
+    if not isinstance(need, str) or not ENGINE_ID_RE.match(need):
+        return "failed", f"{eid}: registry row has an invalid needs value"
+    other = next((r for r in load_registry()["engines"] if isinstance(r, dict) and r.get("id") == need), None)
+    if other is None:
+        return "failed", f"{eid}: needs {need}, which is not in the registry"
+    st = engine_state(other, repo, installs, answers)  # read fresh: the CLI may have just been installed
+    if st["state"] != "installed" or st.get("versionDrift"):
+        return "skipped", f"{eid}: needs {need} first"
+    return None
+
+
 def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers: dict) -> tuple[str, str]:
     """Return (outcome, message). outcome: done, skipped, failed, question."""
     st = engine_state(row, repo, installs, answers)
@@ -937,12 +1272,23 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     if action == "update" and st["state"] != "installed":
         return "skipped", f"{eid}: not installed, nothing to update"
     installed = st["state"] == "installed"
+    drift = st.get("versionDrift")
+    if action == "update" and installed and uv_row(row) and not drift:
+        return "skipped", f"{eid}: at pin"  # nothing to replace, so dependencies are not resolved again
+    if not (action == "install" and installed and not drift):  # a no-op install needs no gate
+        refusal = needs_refusal(row, repo, installs, answers)
+        if refusal:
+            return refusal
+        if row.get("writesRepo") is True:
+            why = repo_refusal(row, action, repo)
+            if why:
+                return "failed", f"{eid}: refused, {why}. Retry: {retry_line(eid, action)}"
     mp = row.get("marketplace")
     if isinstance(mp, dict):  # before everything else, even for a row that is already detected
         kind, text = check_marketplace(mp, repo, allow_add=action == "install" and not installed)
         if kind != "ok":
             return "failed", f"{eid}: {text}"
-    if action == "install" and installed:
+    if action == "install" and installed and not drift:
         for line in apply_git_exclude(row, repo):  # a hand-installed copy needs the exclude too
             say(line)
         return "skipped", f"{eid}: already installed"
@@ -963,10 +1309,23 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     argv = row.get(action)
     if not valid_argv(argv):
         return "failed", f"{eid}: registry row has no valid {action} argv"
+    if row.get("kind") == "uv-tool" and argv[0] != "uv":
+        argv, why = trusted_argv(row, argv)
+        if argv is None:
+            return "failed", f"{eid}: refused, {why}. Retry: {retry_line(eid, action)}"
     ok, detail = run_argv(argv, repo)
     if not ok:
         return "failed", f"{eid}: {action} failed ({detail}). Retry: {retry_line(eid, action)}"
-    if not detected(row, repo, installs) and row.get("kind") != "claude-plugin":
+    if uv_row(row):  # presence is not enough: the pinned commit must be what is installed now
+        info = uv_tool_info(row)
+        if not info["present"]:
+            return "failed", f"{eid}: {action} exited 0 but the tool is still not installed. Retry: {retry_line(eid, action)}"
+        if info["drift"]:
+            d = info["drift"]
+            return "failed", (f"{eid}: {action} exited 0 but the installed commit is {d['installed']}, not the pin "
+                              f"{d['pinned']}" + (f" ({d['reason']})" if d.get("reason") else "")
+                              + f". Retry: {retry_line(eid, action)}")
+    elif not detected(row, repo, installs) and row.get("kind") != "claude-plugin":
         after = detected(row, repo, read_installs()[0])
         if not after:
             return "failed", f"{eid}: {action} exited 0 but the engine is still not detected. Retry: {retry_line(eid, action)}"
@@ -991,6 +1350,260 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     return "done", f"{eid}: {action} ok"
 
 
+# --- spec-kit findings (read only) ----------------------------------------------
+
+def read_repo_file(repo: str, rel: str) -> tuple[bytes | None, str | None]:
+    """Return (bytes, None) or (None, problem). problem is "missing" for an absent file.
+
+    Repo files are third-party input: no component may be a symlink, the leaf must be a
+    regular file and the read is capped.
+    """
+    if not safe_rel(rel):
+        return None, "not a relative path inside the repo"
+    cur = repo
+    parts = rel.split("/")
+    for i, part in enumerate(parts):
+        cur = os.path.join(cur, part)
+        try:
+            mode = os.lstat(cur).st_mode
+        except FileNotFoundError:
+            return None, "missing"
+        except NotADirectoryError:
+            return None, "a parent is not a folder"
+        except OSError as exc:
+            return None, f"cannot inspect it ({type(exc).__name__})"
+        if stat.S_ISLNK(mode):
+            return None, "a symlink" if i == len(parts) - 1 else f"{'/'.join(parts[:i + 1])} is a symlink"
+        if i == len(parts) - 1 and not stat.S_ISREG(mode):
+            return None, "not a regular file"
+    try:
+        fd = os.open(cur, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
+        with os.fdopen(fd, "rb") as fh:
+            if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+                return None, "not a regular file"
+            raw = fh.read(MAX_FINDING_BYTES + 1)
+    except OSError as exc:
+        return None, f"cannot read it ({type(exc).__name__})"
+    if len(raw) > MAX_FINDING_BYTES:
+        return None, f"larger than {MAX_FINDING_BYTES} bytes"
+    return raw, None
+
+
+def path_kind(repo: str, rel: str) -> str | None:
+    """file, dir, link or other for a path that exists (lexists), None when it does not."""
+    entries, errors = walk_tree(repo, rel)
+    if entries and entries[0][0] == rel:
+        return entries[0][1]
+    if os.path.lexists(os.path.join(repo, *rel.split("/"))):
+        return "dir"
+    return None
+
+
+def flag_problem(text: str) -> str | None:
+    """Why a skill's first frontmatter block lacks exactly one plain top-level `disable-model-invocation: true`."""
+    lines = text.splitlines()
+    if not lines or lines[0].rstrip() != "---":
+        return "no frontmatter"
+    end = next((i for i in range(1, len(lines)) if lines[i].rstrip() == "---"), None)
+    if end is None:
+        return "no closing frontmatter line"
+    hits = []
+    for line in lines[1:end]:
+        if line[:1] in (" ", "\t"):
+            continue
+        found = re.match(r"^([\"']?)disable-model-invocation\1\s*:(.*)$", line)
+        if found:
+            hits.append((found.group(1), found.group(2).strip()))
+    if len(hits) != 1:
+        return f"{len(hits)} keys found"
+    quote, value = hits[0]
+    return None if not quote and value == "true" else "the key or its value is quoted or not true"
+
+
+def hook_commands(node, event: str = "", depth: int = 0):
+    """Every string under a `command` key in a hooks value, with the event name it sits under."""
+    if depth > 20:
+        return
+    if isinstance(node, dict):
+        for key, val in node.items():
+            if key == "command" and isinstance(val, str):
+                yield val, event
+            else:
+                yield from hook_commands(val, event or (key if depth == 0 else ""), depth + 1)
+    elif isinstance(node, list):
+        for item in node:
+            yield from hook_commands(item, event, depth + 1)
+
+
+def leaves_specs(repo: str, value: str) -> bool:
+    """True when a feature directory resolves to anything but a folder inside <repo>/specs."""
+    base = os.path.realpath(repo)
+    specs = os.path.join(base, "specs")
+    target = os.path.realpath(value if os.path.isabs(value) else os.path.join(base, value))
+    return target == specs or not is_inside(target, specs)
+
+
+def spec_kit_findings(repo: str, row: dict) -> list[str] | None:
+    """Read-only integrity findings for spec-kit's files; None when the repo has none of them.
+
+    Runs whenever `.specify` or any `.claude/skills/speckit-*` exists, whatever state the row
+    is in, so deleting one skill hides nothing. It never runs specify and never raises: every
+    per-path error becomes a "could not check <path>" finding, so an error never leaves an
+    empty list.
+    """
+    try:
+        names, why = speckit_skill_names(repo)
+        if not names and not why and not os.path.lexists(os.path.join(repo, ".specify")):
+            return None
+        out: list[str] = []
+        if why:
+            out.append(f"could not check .claude/skills: {why}")
+        _spec_kit_checks(repo, row, names, out)
+        return out
+    except Exception as exc:
+        return [f"could not check the spec-kit files: {type(exc).__name__}"]
+
+
+def _spec_kit_checks(repo: str, row: dict, names: list[str], out: list[str]) -> None:
+    def add(msg: str) -> None:
+        if msg not in out:
+            out.append(msg)
+
+    pinned = row.get("pinnedFiles")
+    if not isinstance(pinned, dict):
+        add("could not check the pinned spec-kit files: the registry row has no pinnedFiles map")
+        pinned = {}
+    known = {k for k in pinned if isinstance(k, str)}
+    listed = row.get("knownUnpinned")
+    if isinstance(listed, list):
+        known.update(k for k in listed if isinstance(k, str))
+
+    def guarded(label: str, fn) -> None:
+        try:
+            fn()
+        except Exception as exc:  # one broken check must not hide the others
+            add(f"could not check {label}: {type(exc).__name__}")
+
+    def hashes() -> None:
+        for rel, want in sorted(pinned.items(), key=lambda kv: str(kv[0])):
+            if not safe_rel(rel):
+                add(f"could not check {rel}: not a relative path inside the repo")
+            elif not (isinstance(want, str) and SHA256_RE.match(want)):
+                add(f"could not check {rel}: the registry hash is not a sha256")
+            else:
+                raw, problem = read_repo_file(repo, rel)
+                if problem == "missing":
+                    add(f"{rel} is missing (a pinned file)")
+                elif problem:
+                    add(f"could not check {rel}: {problem}")
+                else:
+                    got = hashlib.sha256(raw).hexdigest()
+                    if got != want:
+                        add(f"{rel} changed (sha256 {got[:12]}, pinned {want[:12]})")
+
+    def extras() -> None:
+        for top in [".specify/scripts", ".specify/templates"] + [f".claude/skills/{n}" for n in names]:
+            entries, errors = walk_tree(repo, top)
+            for err in errors:
+                add(f"could not check {top}: {err}")
+            for rel, kind in entries:
+                if kind == "link" and rel not in known:
+                    add(f"{rel} is a symlink")
+                elif kind in ("file", "other") and rel not in known:
+                    add(f"{rel} is not in the pinned set")
+
+    def flags() -> None:
+        for name in names:
+            rel = f".claude/skills/{name}/SKILL.md"
+            raw, problem = read_repo_file(repo, rel)
+            if problem == "missing":
+                continue
+            if problem:
+                add(f"could not check {rel}: {problem}")
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                add(f"could not check {rel}: not valid UTF-8")
+                continue
+            bad_flag = flag_problem(text)
+            if bad_flag:
+                add(f"{rel}: disable-model-invocation: true is not set exactly once ({bad_flag}), so the model can start it")
+
+    def surface() -> None:
+        for top in SPEC_KIT_SURFACE:
+            kind = path_kind(repo, top)
+            if kind is None:
+                continue
+            if kind != "dir":
+                if kind == "link":
+                    add(f"{top} is a symlink")
+                elif top not in known:
+                    add(f"{top} exists (extension, preset, workflow or event-hook surface)")
+                continue
+            entries, errors = walk_tree(repo, top)
+            for err in errors:
+                add(f"could not check {top}: {err}")
+            if not entries and not errors:
+                add(f"{top}/ exists but is empty (extension, preset, workflow or event-hook surface)")
+            for rel, kind2 in entries:
+                if kind2 == "link":
+                    add(f"{rel} is a symlink")
+                elif kind2 != "dir" and rel not in known:
+                    add(f"{rel} is not part of the pinned install ({top}/ holds extension, preset, workflow or event-hook surface)")
+
+    def settings() -> None:
+        rel = ".claude/settings.json"
+        raw, problem = read_repo_file(repo, rel)
+        if problem == "missing":
+            return
+        if problem:
+            add(f"could not check {rel}: {problem}")
+            return
+        try:
+            data = json.loads(raw.decode("utf-8"))
+        except (ValueError, RecursionError):
+            add(f"could not check {rel}: not valid JSON")
+            return
+        hooks = data.get("hooks") if isinstance(data, dict) else None
+        for command, event in hook_commands(hooks):
+            if SPECIFY_WORD_RE.search(command):
+                shown = re.sub(r"[^\x20-\x7e]", "?", command[:60])
+                add(f"{rel}: a {event or 'hook'} hook runs `{shown}`, which calls specify")
+
+    def feature() -> None:
+        rel = ".specify/feature.json"
+        if path_kind(repo, rel) is not None:
+            ok, tracked = git_out(["ls-files", "--", rel], repo)
+            if not ok:
+                add(f"could not check {rel}: git ls-files failed")
+            elif tracked.strip():
+                add(f"{rel} is tracked by git, so a branch can point spec-kit's scripts at another folder")
+            raw, problem = read_repo_file(repo, rel)
+            if problem:
+                add(f"could not check {rel}: {problem}")
+            else:
+                try:
+                    data = json.loads(raw.decode("utf-8"))
+                except (ValueError, RecursionError):
+                    add(f"could not check {rel}: not valid JSON")
+                    data = None
+                if data is not None:
+                    value = data.get("feature_directory") if isinstance(data, dict) else None
+                    if not isinstance(value, str) or not value:
+                        add(f"could not check {rel}: no feature_directory string")
+                    elif leaves_specs(repo, value):
+                        add(f"{rel} feature_directory {value!r} is outside specs/")
+        env = os.environ.get("SPECIFY_FEATURE_DIRECTORY")
+        if env and leaves_specs(repo, env):
+            add(f"SPECIFY_FEATURE_DIRECTORY {env!r} in the environment is outside specs/")
+
+    for label, fn in (("the pinned files", hashes), ("the files under the pinned folders", extras),
+                      ("the skill flags", flags), ("the extension and preset paths", surface),
+                      (".claude/settings.json", settings), (".specify/feature.json", feature)):
+        guarded(label, fn)
+
+
 # --- subcommands --------------------------------------------------------------
 
 def row_findings(row: dict, repo: str, installs: list[dict], st: dict) -> dict:
@@ -1001,6 +1614,10 @@ def row_findings(row: dict, repo: str, installs: list[dict], st: dict) -> dict:
     its pin or unreadable, so the row needs a decision and is not installed.
     """
     out: dict = {}
+    if "pinnedFiles" in row:  # whatever the row's state: a deleted skill must not hide an edited script
+        found = spec_kit_findings(repo, row)
+        if found is not None:
+            out["specKitFindings"] = found
     if st["state"] == "not-applicable":
         return out
     installed = st["state"] == "installed"
@@ -1065,7 +1682,8 @@ def cmd_status(args, repo: str) -> int:
                if p["name"] == "pro-starter" and p["covers"]]
     out = {
         "repo": repo, "registryVersion": reg.get("version"), "source": source,
-        "tools": {"claude": bool(shutil.which("claude")), "npx": bool(shutil.which("npx"))},
+        "tools": {"claude": bool(shutil.which("claude")), "npx": bool(shutil.which("npx")),
+                  "uv": bool(shutil.which("uv"))},
         "answersFileMalformed": malformed, "savedRegistryVersion": data.get("registryVersion"),
         "plugins": plugins, "engines": engines, "aiSdlcInstallPath": sdlc, "starterShim": starter,
         "staleCount": len(find_stale()[0]),
@@ -1085,6 +1703,11 @@ def cmd_status(args, repo: str) -> int:
     say("engines:")
     for e in engines:
         say(f"  {e['id']}: {e['state']}")
+        if e.get("versionDrift"):
+            d = e["versionDrift"]
+            say(f"    version: installed {d['installed']}, pinned {d['pinned']}" + (f" ({d['reason']})" if d.get("reason") else ""))
+        for f in e.get("specKitFindings", []):
+            say(f"    spec-kit: {f}")
         if e.get("marketplaceProblem"):
             say(f"    marketplace: {e['marketplaceProblem']}")
         for d in e.get("surfaceProblem", []) + e.get("surfaceGrew", []):
@@ -1107,6 +1730,19 @@ def write_run_version(repo: str, reg: dict) -> bool:
     return True
 
 
+def snapshot_tree(rows, installs: list[dict], repo: str) -> None:
+    """Read the git state once, before any row runs, when an active owner has a writesRepo row.
+
+    Earlier rows and the saved answer write into the repo before the writesRepo row runs, so
+    the gate in run_engine judges this snapshot. A site without such an owner starts no git process.
+    """
+    global TREE_SNAPSHOT
+    TREE_SNAPSHOT = None
+    if any(isinstance(r, dict) and r.get("writesRepo") is True and owner_active(installs, str(r.get("owner")), repo)
+           for r in rows):
+        TREE_SNAPSHOT = take_tree_snapshot(repo)
+
+
 def cmd_run(args, repo: str) -> int:
     reg = load_registry()
     rows = {r["id"]: r for r in reg["engines"] if isinstance(r, dict) and "id" in r}
@@ -1123,23 +1759,29 @@ def cmd_run(args, repo: str) -> int:
         if refusal:
             say(refusal)
             return 2
+        snapshot_tree([rows[args.id]], installs, repo)
         outcome, msg = run_engine(rows[args.id], action, repo, installs, data)
         say(msg)
         return 1 if outcome in ("failed", "question") else 0
 
     if OWNER:
         rows = {k: r for k, r in rows.items() if r.get("owner") == OWNER}
+    snapshot_tree(rows.values(), installs, repo)
+    ran: set[str] = set()
 
     # all: update every installed row (update only), then install what is missing
     if action == "update":
         for row in rows.values():
             if engine_state(row, repo, installs, data)["state"] == "installed":
+                ran.add(row["id"])
                 outcome, msg = run_engine(row, "update", repo, installs, data)
                 say(msg)
                 if outcome in ("failed", "question"):
                     failures.append(msg)
     installs, _ = read_installs()
     for row in rows.values():
+        if row["id"] in ran:  # a drifted row that just had its update is not tried a second time
+            continue
         st = engine_state(row, repo, installs, data)
         if st["wantsInstall"]:
             say(f"{row['id']}: installing")

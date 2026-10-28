@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.54.0"
+    "version": "1.55.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -17,7 +17,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev (install, update, check) installs the engines, updates the plugins and health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.19.0",
+      "version": "0.20.0",
       "category": "development",
       "strict": true
     },
@@ -102,6 +102,14 @@
       "strict": true
     },
     {
+      "name": "pro-speckit",
+      "source": "./plugins/pro-speckit",
+      "description": "Glue for GitHub's spec-kit: a bridge skill for its constitution, specify, plan, tasks and implement flow plus a remove command that takes it out of a repo. spec-kit and its specify CLI are installed by /pro-dev install or /pro-speckit:install, which needs pro-core installed.",
+      "version": "0.1.0",
+      "category": "development",
+      "strict": true
+    },
+    {
       "name": "pro-ship",
       "source": "./plugins/pro-ship",
       "description": "Opt-in deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
@@ -153,7 +161,7 @@
       "name": "pro-starter",
       "source": "./plugins/pro-starter",
       "description": "Deprecated shim for one release: renamed to pro-dev-starter. Run /pro-dev update to switch.",
-      "version": "1.14.1",
+      "version": "1.14.2",
       "category": "development",
       "strict": true
     },
@@ -161,7 +169,7 @@
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, ai-sdlc, pdd, execution, quality, design, motion, testing, data, research and security). Run /pro-dev install after it. pro-nextjs and pro-astro are opt-in and installed by hand.",
-      "version": "2.0.5",
+      "version": "2.0.6",
       "category": "development",
       "strict": true
     }
