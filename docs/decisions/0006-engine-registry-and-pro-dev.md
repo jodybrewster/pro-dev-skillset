@@ -25,7 +25,9 @@ A row names its owning plugin, the bridge skills that use it, how to detect it, 
 Every plugin that owns registry rows also ships one `/<plugin>:install`, which installs and with `update` updates that plugin's rows and no others.
 It runs pro-core's `pro-dev.py --owner <plugin>` through the plugin's own `scripts/pro-dev-owner.py`, a script identical in every owning plugin.
 That script reads the owner from its own manifest and runs only a pro-core from the trusted marketplace that Claude Code loads for this repo.
-Each owning plugin depends on pro-core and says so in its description.
+No owning plugin depends on pro-core: installing a dependent silently re-enables a pro-core the person disabled, with its `git-safe`, `memory-recall`, session-start and Stop hooks.
+Jody decided 2026-10-28: "yes you don't need pro-core for pro-nextjs".
+`/<plugin>:install` needs pro-core installed and enabled and otherwise prints one line saying so and stops.
 Rows stay in pro-core's one registry for now.
 Before running, both `/pro-dev` and every `/<plugin>:install` list each row that will install, mark answers taken from the committed `.claude/pro-dev.json` and wait for a yes.
 Health checks stay in `/pro-dev check`.
@@ -37,8 +39,7 @@ A new bridge adds a registry row in the same PR, so `/pro-dev update` picks up i
 `tests/check.mjs` fails when a bridge skill has no row, which keeps the rule enforced.
 Every row lives in pro-core, so a bridge change in any plugin also bumps pro-core under the version-bump law.
 A person who installs one plugin alone gets its engines from `/<plugin>:install` without learning `/pro-dev`; a new row reaches that command only after pro-core updates too.
-The pro-core dependency loads pro-core's hooks in every session of a person who installed only one owning plugin.
-What installing an owning plugin does to a disabled pro-core is checked when the installers are built and recorded here.
+A person who installed only one owning plugin gets none of pro-core's hooks and installs pro-core to use the installer.
 Codex has no installer; Codex users keep the manual install lines in the bridge skills.
 Optional-engine answers live in `.claude/pro-dev.json`, so a team shares them.
 Reverse it if keeping every plugin's rows in pro-core makes pro-core bump on most releases or rows drift from their bridges; the fallback is one registry file per plugin, collected at run time.
@@ -47,6 +48,6 @@ Reverse it if keeping every plugin's rows in pro-core makes pro-core bump on mos
 
 - [`plugins/pro-core/registry/engines.json`](../../plugins/pro-core/registry/engines.json) holds the rows.
 - [`plugins/pro-core/commands/pro-dev.md`](../../plugins/pro-core/commands/pro-dev.md) and [`plugins/pro-core/scripts/pro-dev.py`](../../plugins/pro-core/scripts/pro-dev.py) read them.
-- [`tests/check.mjs`](../../tests/check.mjs) fails on a bridge with no row and on a malformed row; its `installers` check fails when a row owner ships no `commands/install.md` or `scripts/pro-dev-owner.py`, lacks the pro-core dependency, ships a differing `pro-dev-owner.py` or an installer that reaches rows it does not own.
+- [`tests/check.mjs`](../../tests/check.mjs) fails on a bridge with no row and on a malformed row; its `installers` check fails when a row owner ships no `commands/install.md` or `scripts/pro-dev-owner.py`, declares a pro-core dependency, ships a differing `pro-dev-owner.py` or an installer that reaches rows it does not own.
 - Each owning plugin's `scripts/pro-dev-owner.py` finds and checks pro-core before running `pro-dev.py --owner`.
 - [`tests/pro-dev.mjs`](../../tests/pro-dev.mjs) covers `--owner` and the owner script's refusals.

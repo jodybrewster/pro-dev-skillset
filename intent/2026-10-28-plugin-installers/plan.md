@@ -3,7 +3,7 @@
 Built from `spec.md` (commit a60e1aa) and `intent.md` in this folder.
 Status: draft.
 Approver: Jody Brewster, as owner and architect of the marketplace.
-This is not auto-mode work: it adds a script that finds and runs another plugin's code, widens what a command may run without a prompt and adds a pro-core dependency to six plugins, so every new permission pattern and every script run needs his eye.
+This is not auto-mode work: it adds a script that finds and runs another plugin's code, widens what a command may run without a prompt and adds an installer to six plugins, so every new permission pattern and every script run needs his eye.
 Dated: 2026-10-28.
 
 ## Files that change
@@ -12,7 +12,7 @@ Dated: 2026-10-28.
 - `plugins/pro-core/commands/pro-dev.md` (modified): the pre-run list and yes step in install and update (R34) and one line naming `/<plugin>:install` (R9).
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/scripts/pro-dev-owner.py` (new, six byte-identical copies): reads the owner from its own manifest, checks argv, the marketplace source, scope, path and version, then runs pro-core's `pro-dev.py --owner` with `sys.executable -I` (R10 to R17, R32, N1, N2); it has no flag or environment variable that overrides R32, R14 or R15.
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/commands/install.md` (new, six copies that differ only in the plugin name): the `/<plugin>:install [update]` flow (R18 to R22, R34), which relays a refusal and stops.
-- `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.claude-plugin/plugin.json` (modified): the `{ "name": "pro-core", "version": "*" }` dependency, a description that says so with the step 0 finding and a minor bump (R23, R28).
+- `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.claude-plugin/plugin.json` (modified): a description clause, no pro-core dependency (Jody, 2026-10-28) and a minor bump (R23, R28).
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.codex-plugin/plugin.json` (modified): version and the clause that `/<plugin>:install` is Claude Code only, nothing else (R29).
 - `plugins/pro-core/.claude-plugin/plugin.json` and `plugins/pro-core/.codex-plugin/plugin.json` (modified): minor bump to 0.19.0.
 - `plugins/pro-dev-starter/.claude-plugin/plugin.json` and `plugins/pro-starter/.claude-plugin/plugin.json` (modified): patch bumps as meta-plugins over bumped plugins (R28); neither has a Codex manifest.
@@ -78,7 +78,7 @@ Intent E (pro-speckit) builds on this change, so this PR merges first and E's ve
    Check: `node tests/check.mjs installers` passes and `claude plugin validate plugins/pro-nextjs --strict` passes once the step 7 dependency is in place.
 6. `pro-dev.md` (R9, R34): the pre-run list and yes step goes in install between step 2 and step 3 and in update between step 3 and step 4, built from a fresh `status --json` after answers are saved with only the person's reply as the yes and a non-interactive run listing and stopping; one line after the Context block names `/<plugin>:install`.
    Check: `claude plugin validate plugins/pro-core --strict` and a read-through that no other section moved.
-7. Manifests, ADR and docs: the six dependencies and descriptions (R23) carrying the step 0 finding, the six Codex clauses (R29), the marketplace descriptions, the ADR-0006 Consequences line (R30), README and the mirrored `CLAUDE.md` and `AGENTS.md` bullet (R31).
+7. Manifests, ADR and docs: the six descriptions (R23) with no dependency, the six Codex clauses (R29), the marketplace descriptions, the ADR-0006 Consequences line (R30), README and the mirrored `CLAUDE.md` and `AGENTS.md` bullet (R31).
    Check: `node tests/check.mjs` passes and `diff CLAUDE.md AGENTS.md` shows only the lines that differed before.
 8. Version bumps in one pass, re-reading `.claude-plugin/marketplace.json` first in case `main` moved: pro-core 0.18.1 to 0.19.0; pro-design 0.11.0 to 0.12.0; pro-nextjs 0.11.0 to 0.12.0; pro-testing 0.6.0 to 0.7.0; pro-pdd 0.5.0 to 0.6.0; pro-egm 0.1.1 to 0.2.0; pro-ship 0.1.0 to 0.2.0; pro-dev-starter 2.0.4 to 2.0.5; pro-starter 1.14.0 to 1.14.1; `metadata.version` 1.53.1 to 1.54.0; each in both manifests where it has two and in its marketplace entry, with a row each in `docs/releases.md`.
    If `main` has moved, bump from the new numbers and keep `pro-dev-owner.py`'s minimum equal to the pro-core version this PR ships.
@@ -210,3 +210,16 @@ It also moves ADR-0006 from `proposed` to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 0 findings.
+  `enabled` is one effective value per plugin id for the cwd, decided by the git root, so a subfolder with its own local disable does not change it.
+  `projectEnabled` is not the effective state and the owner script does not read it.
+  A dependency re-enables a disabled pro-core, so Jody dropped the pro-core dependency from the six owning plugins ("yes you don't need pro-core for pro-nextjs", 2026-10-28).
+  The installer checks for pro-core instead and the `installers` check now fails if an owner declares the dependency.
+  A directory marketplace source has the shape `{"source": "directory", "path": ...}`, which R32 refuses; only the github source of `jodybrewster/pro-dev-skillset` passes.
+  Whether a `status*` redirect can slip past the allowed-tools pattern still needs a live check, so the patterns stay exact as the `installers` check requires.
+  `CLAUDE_CODE_PLUGIN_DIRS` must be unset in isolated scripts or the real plugins load into the scratch config.
+- Build departures.
+  Step 0 and steps 1 to 3 ran in parallel.
+  The fake `claude` uses entries carrying the step 0 extra fields instead of the raw JSON files.
+  The owner script reads the pro-core version from the list entry.

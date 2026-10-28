@@ -47,6 +47,14 @@ It then updates the engines and offers to remove dead installs, after you confir
 It ends with a reminder to restart Claude Code.
 A SessionStart nudge tells you to run `/pro-dev update` when a plugin update brought a newer registry than the one `.claude/pro-dev.json` records.
 
+### Install one plugin on its own
+
+A plugin that owns engine rows also ships `/<plugin>:install`, which sets up only that plugin's engines and asks first.
+The six are `/pro-design:install`, `/pro-nextjs:install`, `/pro-testing:install`, `/pro-pdd:install`, `/pro-egm:install` and `/pro-ship:install`.
+Add `update` to update them.
+They need `pro-core` installed and enabled and print one line saying so when it is not.
+Codex users keep the install lines in each bridge skill.
+
 `pro-starter` is now a shim that depends only on `pro-dev-starter` and stays for one release.
 An existing site keeps loading.
 `/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`; an install you disabled is left as it is.

@@ -18,7 +18,7 @@
 
 import {
   mkdtempSync, mkdirSync, rmSync, existsSync, realpathSync, symlinkSync,
-  writeFileSync, readFileSync, readdirSync, chmodSync,
+  writeFileSync, readFileSync, readdirSync, chmodSync, cpSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
@@ -260,6 +260,9 @@ const growth = (s, w) => {
   if (r.code === 0 || installCalls(s).length) return bad(`row was installed past the pin: ${r.out}`);
   return r.out.includes(w) ? ok() : bad(`no "${w}" in: ${r.out}`);
 };
+
+const NEXT_FILES = ["next-cache-components-adoption", "next-cache-components-optimizer", "next-partial-prefetching-adoption",
+  "next-partial-prefetching-optimizer", "next-bundle-optimizer", "next-dev-loop"].map((n) => `.claude/skills/${n}/SKILL.md`).join(":");
 
 const CASES = [
   {
@@ -1427,6 +1430,444 @@ CASES.push(
       if (!existsSync(wantAbs) || gxCount(read(wantAbs)) !== 1) return bad(`not in ${wantAbs}: ${r.stdout}`);
       const ign = gitIn(wt, ["check-ignore", "-q", GX_FILE]);
       return ign.status === 0 ? ok() : bad(`git check-ignore exit ${ign.status}`);
+    },
+  },
+  // --- --owner (R1 to R7) and answerCommitted (R33) --------------------------------
+  {
+    id: "owner/unknown-or-malformed-owner-exits-2-before-any-claude-call",
+    run: (s) => {
+      for (const name of ["nobody", "a b", "x/y", "..", "pro-nextjs;ls"]) {
+        const r = s.run(["--owner", name, "status", "--json"]);
+        if (r.code !== 2) return bad(`${name}: exit ${r.code}: ${r.out}`);
+        if (!r.out.includes(`unknown owner: ${name}`)) return bad(`${name}: no unknown owner line: ${r.out}`);
+      }
+      return existsSync(s.logPath) ? bad(`claude was called: ${read(s.logPath)}`) : ok();
+    },
+  },
+  {
+    id: "owner/status-json-lists-only-the-owners-rows-and-adds-owner",
+    run: (s, pr) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo)]);
+      const all = s.status();
+      const st = JSON.parse(s.run(["--owner", "pro-nextjs", "status", "--json"]).stdout);
+      if (st.owner !== "pro-nextjs") return bad(`owner field ${st.owner}`);
+      const want = registry(pr).engines.filter((r) => r.owner === "pro-nextjs").map((r) => r.id);
+      if (!same(st.engines.map((e) => e.id), want)) return bad(`rows ${JSON.stringify(st.engines.map((e) => e.id))}`);
+      const { owner, engines, ...rest } = st;
+      const { engines: e2, ...rest2 } = all;
+      if (!same(rest, rest2)) return bad("a field other than owner and engines changed");
+      return same(st.engines, all.engines.filter((e) => e.owner === "pro-nextjs")) ? ok() : bad("row content differs");
+    },
+  },
+  {
+    id: "owner/status-text-lists-only-the-owners-rows",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo)]);
+      const r = s.run(["--owner", "pro-nextjs", "status"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return /next-skills:/.test(r.out) && !/impeccable:/.test(r.out) ? ok() : bad(r.out);
+    },
+  },
+  {
+    id: "owner/run-all-install-reaches-only-the-owners-argv",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo), s.entry("pro-pdd", "project", s.repo)]);
+      const r = s.run(["--owner", "pro-nextjs", "run", "all", "install"], { extra: { FAKE_NPX_FILES: NEXT_FILES } });
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const c = s.calls();
+      if (c.length !== 1 || c[0].tool !== "npx" || !c[0].argv.includes("https://github.com/vercel/next.js/tree/canary/skills")) {
+        return bad(`calls ${JSON.stringify(c)}`);
+      }
+      return ok();
+    },
+  },
+  {
+    id: "owner/run-all-update-acts-only-on-the-owners-installed-rows",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo)]);
+      const files = [".claude/skills/impeccable/SKILL.md", ...["next-cache-components-adoption", "next-cache-components-optimizer",
+        "next-partial-prefetching-adoption", "next-partial-prefetching-optimizer", "next-bundle-optimizer", "next-dev-loop"]
+        .map((n) => `.claude/skills/${n}/SKILL.md`)];
+      for (const f of files) { mkdirSync(dirname(join(s.repo, f)), { recursive: true }); writeFileSync(join(s.repo, f), "---\nname: x\n---\n"); }
+      const r = s.run(["--owner", "pro-nextjs", "run", "all", "update"]);
+      const c = s.calls();
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return c.length === 1 && c[0].argv.includes("https://github.com/vercel/next.js/tree/canary/skills") ? ok() : bad(`calls ${JSON.stringify(c)}`);
+    },
+  },
+  {
+    id: "owner/run-and-answer-refuse-another-owners-row-and-write-nothing",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo)]);
+      const a = s.run(["--owner", "pro-nextjs", "run", "impeccable", "install"]);
+      if (a.code !== 2 || !a.out.includes("impeccable: owned by pro-design, not pro-nextjs")) return bad(`run: exit ${a.code}: ${a.out}`);
+      const b = s.run(["--owner", "pro-nextjs", "answer", "taste-skill", "yes"]);
+      if (b.code !== 2 || !b.out.includes("taste-skill: owned by pro-design, not pro-nextjs")) return bad(`answer: exit ${b.code}: ${b.out}`);
+      if (s.calls().length) return bad(`engine tools ran: ${JSON.stringify(s.calls())}`);
+      return existsSync(s.answersPath) ? bad("answers file was written") : ok();
+    },
+  },
+  {
+    id: "owner/own-row-answer-is-saved",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      const r = s.run(["--owner", "pro-nextjs", "answer", "vercel", "yes"]);
+      return r.code === 0 && json(s.answersPath).answers.vercel.answer === "yes" ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "owner/plugins-stale-and-surface-are-refused",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      for (const args of [["plugins", "update"], ["plugins", "swap-starter"], ["stale"], ["stale", "--remove"], ["surface", "vercel"]]) {
+        const r = s.run(["--owner", "pro-nextjs", ...args]);
+        if (r.code !== 2 || !r.out.includes("not available with --owner; use /pro-dev")) return bad(`${args.join(" ")}: exit ${r.code}: ${r.out}`);
+      }
+      return s.calls().length ? bad("something ran") : ok();
+    },
+  },
+  {
+    id: "owner/run-writes-no-registry-version",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      const r = s.run(["--owner", "pro-nextjs", "run", "all", "install"], { extra: { FAKE_NPX_FILES: NEXT_FILES } });
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return existsSync(s.answersPath) ? bad(`answers file written: ${read(s.answersPath)}`) : ok();
+    },
+  },
+  {
+    id: "owner/run-leaves-an-existing-registry-version-alone",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      mkdirSync(dirname(s.answersPath), { recursive: true });
+      writeFileSync(s.answersPath, JSON.stringify({ registryVersion: 1, answers: {} }));
+      s.run(["--owner", "pro-nextjs", "run", "all", "install"]);
+      return json(s.answersPath).registryVersion === 1 ? ok() : bad(read(s.answersPath));
+    },
+  },
+  {
+    id: "owner/retry-lines-name-the-installer-command",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      const i = s.run(["--owner", "pro-nextjs", "run", "all", "install"], { extra: { FAKE_FAIL_MATCH: "next.js" } });
+      if (i.code !== 1 || !i.out.includes("/pro-nextjs:install") || i.out.includes("pro-dev.py")) return bad(`install: exit ${i.code}: ${i.out}`);
+      if (i.out.includes("/pro-nextjs:install update")) return bad(`install line says update: ${i.out}`);
+      const files = ["next-cache-components-adoption", "next-cache-components-optimizer", "next-partial-prefetching-adoption",
+        "next-partial-prefetching-optimizer", "next-bundle-optimizer", "next-dev-loop"].map((n) => `.claude/skills/${n}/SKILL.md`);
+      for (const f of files) { mkdirSync(dirname(join(s.repo, f)), { recursive: true }); writeFileSync(join(s.repo, f), "---\nname: x\n---\n"); }
+      const u = s.run(["--owner", "pro-nextjs", "run", "all", "update"], { extra: { FAKE_FAIL_MATCH: "next.js" } });
+      return u.code === 1 && u.out.includes("/pro-nextjs:install update") && !u.out.includes("pro-dev.py") ? ok() : bad(`update: exit ${u.code}: ${u.out}`);
+    },
+  },
+  {
+    id: "owner/no-owner-retry-line-still-names-the-script",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      const r = s.run(["run", "all", "install"], { extra: { FAKE_FAIL_MATCH: "next.js" } });
+      return r.code === 1 && r.out.includes("pro-dev.py") && !r.out.includes(":install") ? ok() : bad(r.out);
+    },
+  },
+  {
+    id: "status/answer-committed-follows-git-ls-files",
+    run: (s) => {
+      s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
+      let st = s.status();
+      if (!st.engines.every((e) => e.answerCommitted === false)) return bad("no file: expected false everywhere");
+      if (s.run(["answer", "vercel", "yes"]).code !== 0) return bad("answer failed");
+      st = s.status();
+      if (st.engines.some((e) => e.answerCommitted !== false)) return bad("untracked file reported as committed");
+      gitIn(s.repo, ["add", "-f", ".claude/pro-dev.json"]);
+      st = s.status();
+      if (st.engines.find((e) => e.id === "vercel").answerCommitted !== true) return bad("tracked file not reported");
+      // a row with no saved answer in a tracked file is still false
+      return st.engines.find((e) => e.id === "next-skills").answerCommitted === false ? ok() : bad("row without an answer reported true");
+    },
+  },
+);
+
+// --- pro-dev-owner.py (R10 to R17, R32) -------------------------------------------
+
+const OWNER_PLUGINS = ["pro-nextjs", "pro-design", "pro-testing", "pro-pdd", "pro-egm", "pro-ship"];
+const OWNER_SCRIPT = (name) => join(dirname(DEFAULT_PLUGIN_ROOT), name, "scripts", "pro-dev-owner.py");
+const GOOD_SRC = { source: { source: "github", repo: "jodybrewster/pro-dev-skillset" } };
+
+// A config dir with the trusted marketplace and a sandbox copy of pro-core under the cache.
+function ownerBox(s, pluginRoot, { cfg = join(s.root, "cfg"), versions = ["0.19.0"], market = GOOD_SRC } = {}) {
+  const base = join(cfg, "plugins", "cache", MS, "pro-core");
+  const paths = {};
+  for (const v of versions) {
+    paths[v] = join(base, v);
+    mkdirSync(paths[v], { recursive: true });
+    cpSync(pluginRoot, paths[v], { recursive: true });
+  }
+  mkdirSync(join(cfg, "plugins"), { recursive: true });
+  if (market) writeFileSync(join(cfg, "plugins", "known_marketplaces.json"), JSON.stringify({ [MS]: market }));
+  const core = (scope, v, extra = {}) => ({
+    id: `pro-core@${MS}`, scope, version: v, enabled: true, installPath: paths[v],
+    readFromFolder: "/x", folderVersion: v, installedAt: "t", lastUpdated: "t", projectEnabled: true,
+    ...(scope === "user" ? {} : { projectPath: s.repo }), ...extra,
+  });
+  const go = (args, { owner = "pro-nextjs", extra = {}, bin = "both" } = {}) => {
+    const r = spawnSync("python3", [OWNER_SCRIPT(owner), ...args], {
+      encoding: "utf8", cwd: s.repo, env: s.env(bin, { CLAUDE_CONFIG_DIR: cfg, ...extra }),
+    });
+    return { code: r.status, stdout: r.stdout ?? "", stderr: r.stderr ?? "", out: (r.stdout ?? "") + (r.stderr ?? "") };
+  };
+  return { cfg, paths, core, go };
+}
+
+const listCalls = (s) => (existsSync(s.logPath) ? read(s.logPath).trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) : []);
+const refused = (r, text) => (r.code === 2 && r.out.includes(text) ? ok() : bad(`exit ${r.code}: ${r.out}`));
+
+CASES.push(
+  {
+    id: "owner-script/copies-are-byte-identical",
+    run: () => {
+      const want = read(OWNER_SCRIPT("pro-nextjs"));
+      const lines = want.split("\n").length - 1;
+      if (lines >= 150) return bad(`${lines} lines`);
+      for (const p of OWNER_PLUGINS) if (read(OWNER_SCRIPT(p)) !== want) return bad(`${p} differs`);
+      return ok();
+    },
+  },
+  {
+    id: "owner-script/argument-shapes-outside-r12-exit-2-before-any-claude-call",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      s.setPlugins([b.core("project", "0.19.0")]);
+      const bads = [[], ["status", "--json", "x"], ["plugins", "update"], ["stale"], ["surface", "vercel"], ["run", "vercel", "install"],
+        ["run", "all"], ["run", "all", "remove"], ["answer", "vercel"], ["answer", "vercel", "maybe"], ["answer", "-x", "yes"],
+        ["--owner", "pro-egm", "status", "--json"], ["--repo", "/", "status"]];
+      for (const a of bads) {
+        const r = b.go(a);
+        if (r.code !== 2) return bad(`${a.join(" ")}: exit ${r.code}: ${r.out}`);
+      }
+      return listCalls(s).length ? bad("claude was called") : ok();
+    },
+  },
+  {
+    id: "owner-script/refuses-a-marketplace-that-is-not-the-trusted-github-repo",
+    run: (s, pr) => {
+      const line = "pro-dev-skillset is not the trusted marketplace jodybrewster/pro-dev-skillset; refusing to run its pro-core";
+      const sources = [
+        { source: { source: "github", repo: "someone/else" } },
+        { source: { source: "directory", path: join(s.root, "mp") } },
+        { source: { source: "git", url: "https://github.com/jodybrewster/pro-dev-skillset.git" } },
+        { source: "github" }, null,
+      ];
+      for (const [i, market] of sources.entries()) {
+        const b = ownerBox(s, pr, { cfg: join(s.root, `cfg${i}`), market });
+        s.setPlugins([b.core("user", "0.19.0")]);
+        const r = b.go(["status", "--json"]);
+        if (r.code !== 2 || !r.out.includes(line)) return bad(`${JSON.stringify(market)}: exit ${r.code}: ${r.out}`);
+      }
+      return listCalls(s).length ? bad("claude was called") : ok();
+    },
+  },
+  {
+    id: "owner-script/trusts-the-github-repo-ignoring-case",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { market: { source: { source: "github", repo: "JodyBrewster/Pro-Dev-Skillset" } } });
+      s.setPlugins([b.core("project", "0.19.0")]);
+      const r = b.go(["status", "--json"]);
+      return r.code === 0 ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "owner-script/a-failed-claude-list-refuses-and-reads-no-installed-plugins-file",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      // a valid-looking installed_plugins.json that must never be read
+      writeFileSync(join(b.cfg, "plugins", "installed_plugins.json"), JSON.stringify({
+        version: 2, plugins: { [`pro-core@${MS}`]: [{ scope: "user", installPath: b.paths["0.19.0"], version: "0.19.0" }] },
+      }));
+      const line = "cannot read plugin installs: claude plugin list --json failed; run it to see why";
+      const missing = b.go(["status", "--json"], { bin: "noClaude" });
+      if (missing.code !== 2 || !missing.out.includes(line)) return bad(`no claude: exit ${missing.code}: ${missing.out}`);
+      const fail = join(s.root, "bin-fail");
+      mkdirSync(fail, { recursive: true });
+      writeFileSync(join(fail, "claude"), "#!/bin/sh\nexit 1\n");
+      chmodSync(join(fail, "claude"), 0o755);
+      const r = spawnSync("python3", [OWNER_SCRIPT("pro-nextjs"), "status", "--json"], {
+        encoding: "utf8", cwd: s.repo, env: { PATH: `${fail}:${s.tools}`, HOME: s.home, CLAUDE_CONFIG_DIR: b.cfg },
+      });
+      return refused({ code: r.status, out: r.stdout + r.stderr }, line);
+    },
+  },
+  {
+    id: "owner-script/no-covering-pro-core-refuses-with-the-install-line",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      const line = "pro-core is not installed for this repo; install it with claude plugin install pro-core@pro-dev-skillset";
+      s.setPlugins([]);
+      const a = b.go(["status", "--json"]);
+      if (a.code !== 2 || !a.out.includes(line)) return bad(`empty: exit ${a.code}: ${a.out}`);
+      // another repo's project install and a session-scope entry do not count
+      s.setPlugins([b.core("project", "0.19.0", { projectPath: join(s.root, "other") }),
+        b.core("session", "0.19.0", { projectPath: s.repo }), { ...b.core("user", "0.19.0"), id: "pro-nextjs@" + MS }]);
+      const r = b.go(["status", "--json"]);
+      return refused(r, line);
+    },
+  },
+  {
+    id: "owner-script/a-parent-folder-pro-core-is-never-picked",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { versions: ["0.19.0", "0.19.1"] });
+      const line = "pro-core is not installed for this repo";
+      s.setPlugins([b.core("project", "0.19.1", { projectPath: dirname(s.repo) })]);
+      const a = b.go(["status", "--json"]);
+      if (a.code !== 2 || !a.out.includes(line)) return bad(`parent only: exit ${a.code}: ${a.out}`);
+      s.setPlugins([b.core("project", "0.19.1", { projectPath: dirname(s.repo) }), b.core("user", "0.19.0")]);
+      const r = b.go(["status", "--json"]);
+      return r.code === 0 && r.stderr.startsWith(`pro-core 0.19.0 at ${realpathSync(b.paths["0.19.0"])}`) ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "owner-script/a-folder-inside-the-repo-counts-like-covers-repo",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      const sub = join(s.repo, "sub");
+      mkdirSync(sub);
+      s.setPlugins([b.core("project", "0.19.0", { projectPath: sub })]);
+      const r = b.go(["status", "--json"]);
+      return r.code === 0 ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "owner-script/narrowest-covering-scope-wins",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { versions: ["0.19.0", "0.19.1", "0.19.2"] });
+      const at = (v) => `pro-core ${v} at ${realpathSync(b.paths[v])}`;
+      s.setPlugins([b.core("user", "0.19.0"), b.core("project", "0.19.1")]);
+      const a = b.go(["status", "--json"]);
+      if (a.code !== 0 || !a.stderr.startsWith(at("0.19.1"))) return bad(`project over user: ${a.out}`);
+      s.setPlugins([b.core("user", "0.19.0"), b.core("project", "0.19.1"), b.core("local", "0.19.2")]);
+      const l = b.go(["status", "--json"]);
+      if (l.code !== 0 || !l.stderr.startsWith(at("0.19.2"))) return bad(`local first: ${l.out}`);
+      // within one scope the entry whose projectPath is the repo root beats one deeper inside it
+      const sub = join(s.repo, "sub");
+      mkdirSync(sub);
+      s.setPlugins([b.core("project", "0.19.0", { projectPath: sub }), b.core("project", "0.19.1")]);
+      const e = b.go(["status", "--json"]);
+      return e.code === 0 && e.stderr.startsWith(at("0.19.1")) ? ok() : bad(`exact projectPath: ${e.out}`);
+    },
+  },
+  {
+    id: "owner-script/a-disabled-narrowest-entry-refuses-beside-an-enabled-user-entry",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { versions: ["0.19.0", "0.19.1"] });
+      s.setPlugins([b.core("user", "0.19.0"), b.core("project", "0.19.1", { enabled: false })]);
+      const r = b.go(["status", "--json"]);
+      if (!r.out.includes("pro-core is disabled for this repo; enable it with claude plugin enable pro-core@pro-dev-skillset") || r.code !== 2) return bad(`exit ${r.code}: ${r.out}`);
+      return r.out.includes("pro-core 0.19") ? bad("it reported a pick") : ok();
+    },
+  },
+  {
+    id: "owner-script/only-enabled-is-read-never-projectEnabled",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      s.setPlugins([b.core("project", "0.19.0", { enabled: false, projectEnabled: true })]);
+      const off = b.go(["status", "--json"]);
+      if (off.code !== 2) return bad(`disabled but projectEnabled: exit ${off.code}`);
+      s.setPlugins([b.core("project", "0.19.0", { enabled: true, projectEnabled: false })]);
+      const on = b.go(["status", "--json"]);
+      return on.code === 0 ? ok() : bad(`enabled but not projectEnabled: ${on.out}`);
+    },
+  },
+  {
+    id: "owner-script/two-candidates-with-different-install-paths-refuse",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { versions: ["0.19.0", "0.19.1"] });
+      s.setPlugins([b.core("project", "0.19.0"), b.core("project", "0.19.1")]);
+      const r = b.go(["status", "--json"]);
+      if (r.code !== 2 || !r.out.includes("more than one pro-core install covers this repo")) return bad(`exit ${r.code}: ${r.out}`);
+      s.setPlugins([b.core("project", "0.19.0"), b.core("project", "0.19.0")]);
+      const same2 = b.go(["status", "--json"]);
+      return same2.code === 0 ? ok() : bad(`same installPath should pass: ${same2.out}`);
+    },
+  },
+  {
+    id: "owner-script/an-install-path-inside-the-repo-is-refused",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { cfg: join(s.repo, ".cfg") });
+      s.setPlugins([b.core("project", "0.19.0")]);
+      const r = b.go(["status", "--json"]);
+      if (r.code !== 2 || !r.out.includes("inside the repo")) return bad(`exit ${r.code}: ${r.out}`);
+      return r.out.includes("pro-core 0.19.0 at") ? bad("it announced a pick") : ok();
+    },
+  },
+  {
+    id: "owner-script/an-install-path-outside-the-cache-is-refused",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      const elsewhere = join(s.root, "elsewhere", "pro-core");
+      mkdirSync(elsewhere, { recursive: true });
+      cpSync(pr, elsewhere, { recursive: true });
+      s.setPlugins([b.core("project", "0.19.0", { installPath: elsewhere })]);
+      const a = b.go(["status", "--json"]);
+      if (a.code !== 2 || !a.out.includes("outside")) return bad(`outside: exit ${a.code}: ${a.out}`);
+      // a script symlinked out of the cache is judged by its real path
+      rmSync(join(b.paths["0.19.0"], "scripts", "pro-dev.py"));
+      symlinkSync(join(elsewhere, "scripts", "pro-dev.py"), join(b.paths["0.19.0"], "scripts", "pro-dev.py"));
+      s.setPlugins([b.core("project", "0.19.0")]);
+      const l = b.go(["status", "--json"]);
+      if (l.code !== 2 || !l.out.includes("outside")) return bad(`symlink: exit ${l.code}: ${l.out}`);
+      // a missing script is refused too
+      rmSync(join(b.paths["0.19.0"], "scripts", "pro-dev.py"));
+      const m = b.go(["status", "--json"]);
+      return m.code === 2 && m.out.includes("refusing to run") ? ok() : bad(`missing: exit ${m.code}: ${m.out}`);
+    },
+  },
+  {
+    id: "owner-script/a-pro-core-below-the-floor-is-refused",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr, { versions: ["0.18.1"] });
+      s.setPlugins([b.core("project", "0.18.1")]);
+      const r = b.go(["status", "--json"]);
+      return refused(r, "pro-core 0.18.1 is older than 0.19.0; update it with /pro-dev update or claude plugin update pro-core@pro-dev-skillset");
+    },
+  },
+  {
+    id: "owner-script/success-runs-pro-dev-with-owner-and-passes-output-through",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      s.setPlugins([b.core("project", "0.19.0"), s.entry("pro-nextjs", "project", s.repo)]);
+      const r = b.go(["status", "--json"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      if (!r.stderr.startsWith(`pro-core 0.19.0 at ${realpathSync(b.paths["0.19.0"])}${"/scripts/pro-dev.py"}\n`)) return bad(`first line: ${r.stderr}`);
+      const st = JSON.parse(r.stdout);
+      if (st.owner !== "pro-nextjs") return bad(`owner ${st.owner}`);
+      const want = registry(pr).engines.filter((e) => e.owner === "pro-nextjs").map((e) => e.id);
+      if (!same(st.engines.map((e) => e.id), want)) return bad("rows differ from the owner's rows");
+      const i = b.go(["run", "all", "install"], { extra: { FAKE_NPX_FILES: NEXT_FILES } });
+      if (i.code !== 0) return bad(`run: exit ${i.code}: ${i.out}`);
+      const argvs = s.calls().map((c) => `${c.tool} ${c.argv.join(" ")}`);
+      const foreign = registry(pr).engines.filter((e) => e.owner !== "pro-nextjs").map((e) => e.id);
+      const leaked = foreign.find((id) => argvs.some((a) => a.includes(id)));
+      if (leaked) return bad(`another owner's argv reached the log: ${leaked}`);
+      return s.calls("npx").length ? ok() : bad("the owner's rows never reached npx");
+    },
+  },
+  {
+    id: "owner-script/exit-code-and-stdin-pass-through",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      s.setPlugins([b.core("project", "0.19.0"), s.entry("pro-nextjs", "project", s.repo)]);
+      const r = b.go(["run", "all", "install"], { extra: { FAKE_FAIL_MATCH: "next.js" } });
+      return r.code === 1 && r.out.includes("/pro-nextjs:install") ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "owner-script/every-copy-uses-its-own-plugin-name-as-the-owner",
+    run: (s, pr) => {
+      const b = ownerBox(s, pr);
+      s.setPlugins([b.core("project", "0.19.0")]);
+      for (const p of OWNER_PLUGINS) {
+        if (!existsSync(OWNER_SCRIPT(p))) return bad(`${p} has no copy`);
+        const r = b.go(["status", "--json"], { owner: p });
+        if (r.code !== 0 || JSON.parse(r.stdout).owner !== p) return bad(`${p}: exit ${r.code}: ${r.out}`);
+      }
+      return ok();
     },
   },
 );
