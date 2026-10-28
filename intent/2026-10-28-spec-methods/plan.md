@@ -219,7 +219,7 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-000
 - Step 9: the catalog counts 89 skills where Proof of done said 88; the numbers in `CLAUDE.md` are from the real run.
 - Review fixes before push (fresh `security-architect` diff review and `reviewer` on b679452):
   - `update` refreshes the marketplace clone and checks it against the pin before `claude plugin update` runs; after any install or update the installed copy is checked again and disabled when it is beyond the pin.
-  - The pin keeps tools per agent, skill and command instead of one union, and the hash also covers command `!` lines, LSP servers and frontmatter hooks.
+  - The pin keeps tools per agent, skill and command instead of one union; the hash also covers command `!` lines, LSP servers and frontmatter hooks.
   - `goldfish.py` accepts a root doc that is a symlink to a file inside the repo (this repo's `AGENTS.md`), allows only EGM's own shortnames, hashes `.egm/goldfish.json` and makes `--accept` take a token from the list it printed; `/pro-egm:goldfish` limits `Write` and `Edit` to the report, `intent/` and `.egm/`.
   - The `/intent` and `/review` Context lines end in `; true`; the needs line reads "pro-egm needs egm@egm: run /pro-dev install".
 
