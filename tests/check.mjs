@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
+import { runExecuteCases } from "./execute.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
@@ -754,6 +755,22 @@ checks["sdlc-hooks"] = () => {
   }
   if (!results.length) failures.push("tests/sdlc-hooks.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`sdlc hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// pro-ai-sdlc /execute scripts. execute-gate.py decides whether a plan may be built
+// and copy-env.py moves secrets between checkouts, so a gate that lets a draft
+// through or a copy that leaks a value or lands unignored is the failure to catch.
+// The case table lives in tests/execute.mjs.
+checks["execute-scripts"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runExecuteCases();
+  if (skipped) {
+    warnings.push(`execute script cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/execute.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`execute ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

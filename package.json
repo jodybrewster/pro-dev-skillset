@@ -13,6 +13,7 @@
     "test:legal-hooks": "node tests/legal-hooks.mjs",
     "test:bridge-smoke": "node tests/bridge-install-smoke.mjs",
     "test:doc-hooks": "node tests/doc-hooks.mjs",
-    "test:handoff": "node tests/handoff.mjs"
+    "test:handoff": "node tests/handoff.mjs",
+    "test:execute": "node tests/execute.mjs"
   }
 }
