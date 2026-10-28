@@ -1,6 +1,6 @@
 ---
 name: security-architect
-description: Act as a security architect who challenges a specific idea, plan, design, spec or set of code changes before it ships. Use for "challenge / poke holes in / red-team / threat model my plan, idea, design or spec for security", "what am I missing security-wise", "is this design secure", and "review these changes / this branch / this diff for security issues before I commit". Adversarial toward the plan, collegial toward the author, and every concern names a concrete attack. Read-only. Not the whole-repo posture audit - that is security-audit.
+description: Act as a security architect who challenges a specific idea, plan, design, spec or set of code changes before it ships. Use for "challenge / poke holes in / red-team / threat model my plan, idea, design or spec for security", "what am I missing security-wise", "is this design secure", and "review these changes / this branch / this diff for security issues before I push". Adversarial toward the plan, collegial toward the author, and every concern names a concrete attack. Read-only. Not the whole-repo posture audit - that is security-audit.
 ---
 
 # Security architect
@@ -25,7 +25,7 @@ Both modes are read-only: you produce findings and required changes and never ed
 - Someone shares an idea, plan, spec or design doc and wants it challenged for security.
 - A plan is about to be approved and touches authentication, data storage, external calls, payments, uploads, CI or anything an outsider can reach.
 - Someone asks "what am I missing security-wise" or "is this design secure".
-- Changes are about to be committed or opened as a PR and the diff touches security surface.
+- Changes are about to be pushed or opened as a PR and the diff touches security surface.
 - A hook dispatched you with a plan file or a diff and nothing else.
 
 ## When not to use
@@ -64,7 +64,7 @@ When they are not, do the pass yourself and say in the output that it was not in
 ## Output
 
 Challenge mode ends with a section headed exactly `## Security challenge`, ready to paste into the plan.
-Diff mode ends with a findings list and a verdict of safe to commit or fix before commit.
+Diff mode ends with a findings list and a verdict of safe to push or fix before push.
 The formats are defined in the two procedure files.
 
 ## Related

@@ -172,7 +172,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Verify** | `user-validation`, `/validate` — hands *you* the checklist when work lands | `pro-quality` |
 | **Document** | `technical-writer`, `documentation-engineer`, `api-documenter` subagents, `/document` + `/api-docs` | `pro-quality` |
 | **Review** | `requesting-code-review`, `receiving-code-review`, `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
-| **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; enforced by hooks), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
+| **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; held once at push by a hook), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
 | **Legal** | `software-counsel` + `/legal-review` (issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by hooks) | `pro-legal` *(opt-in)* |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
@@ -213,9 +213,10 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-security`** - the Security phase, in the default stack.
   `security-architect` challenges a specific idea, plan, spec or diff: it restates the plan as a system, draws the trust boundaries, names the unstated assumptions and the attack that breaks each, and returns a `## Security challenge` section to fold into the plan (`/threat-model`, plus a read-only `security-architect` subagent for a fresh-context pass).
   `security-audit` is the whole-repo posture audit (`/security-audit`), with the `security-auditor` subagent judging each finding independently.
-  Hooks make it hard to skip.
-  Exiting plan mode with a plan that touches auth, data, input handling, payments, secrets, LLM tools or CI is denied until the plan carries a `## Security challenge` section produced by an independent `security-architect` pass (a section the author writes alone does not count), and plan documents under `docs/plans/`, `docs/superpowers/specs/` and `spdd/` get the same check.
-  Security-sensitive ideation prompts get a nudge to challenge the idea, and a commit or `gh pr create` whose diff touches security surface is held once for a diff review.
+  One hook gates the push.
+  A `git push` or `gh pr create` whose diff against its upstream touches auth, data, input handling, payments, secrets, LLM tools or CI is held once per distinct diff, and the identical retry passes.
+  `git commit` is never gated.
+  In diff mode the `security-architect` reads the diff, the changed files and the direct callers of a changed symbol and does not walk the tree; whole-repo review stays with `security-audit`.
   The audit and the threat framing are adapted from the `cso` skill in [garrytan/gstack](https://github.com/garrytan/gstack) (MIT); the challenge procedure and hooks are original.
 - **`pro-legal`** - the Legal phase, opt-in and not in `pro-starter`.
   `software-counsel` is an in-house product counsel persona that spots legal issues in a plan or a release.
@@ -256,7 +257,7 @@ plugins/
   pro-data/                          # data/auth skills + schema formatting hook
   pro-motion/                        # video and animation skills
   pro-research/                      # deep-research and lead-research engines
-  pro-security/                      # security architect, whole-repo audit, planning/commit hooks
+  pro-security/                      # security architect, whole-repo audit, push gate
   pro-legal/                         # opt-in software counsel, legal review plan and release gates
   pro-starter/                       # meta-plugin: dependencies only
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
