@@ -93,8 +93,8 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 |---|---------|-----------------|------------|
 | 1 | Codex does not load plugin commands, so `/execute` has no Codex path, the same as the other six pro-ai-sdlc commands; the global rule says the loop works "from Claude Code alone" while ADR-0004 asks for parity on skill-bearing plugins only. | ADR-0004, Jody | open: accept the existing command-only gap, or add a Codex prompt or skill for the loop in a later intent. |
 | 2 | The intent lists "routing cases" as affected, but `tests/cases/routing.jsonl` only targets skills and pro-ai-sdlc has none, so there is nothing a routing case can point at. | `tests/eval.mjs`, intent | open: drop routing cases from this change unless concern 1 adds a skill. |
-| 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | open: R7 checks ignore status after the copy; a `security-architect` challenge of this spec is still owed before `/plan` (open question 5). |
-| 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | open: same risk as installing in the main checkout; the security challenge should say whether `--ignore-scripts` or installing before the copy is worth it. |
+| 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | deferred: R7 checks ignore status after the copy; the `security-architect` challenge moves to a later intent (Jody, 2026-10-28) and does not block `/plan`. |
+| 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | deferred: same risk as installing in the main checkout; the later security intent decides whether `--ignore-scripts` or installing before the copy is worth it. |
 | 5 | The success criterion names `intent/2026-10-28-quiet-validation-hook/plan.md`, but that plan was already built in PR 60. Its Status still reads `approved` so R2 refuses it. | intent "Success looks like" | open: pick an unbuilt approved plan for the live check. Decide whether `/execute` or the Done sign-off should move a plan's Status to `implemented`. |
 | 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | resolved: R4 uses the harness's tool only when it can base on `origin/<default branch>` and falls back to a sibling folder rather than an unignored `.worktrees/` (Jody, 2026-10-28). |
 
@@ -112,7 +112,7 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
    Proposed: the current session builds by default; when `subagent-driven-development` is available and the plan marks steps as parallel, dispatch a builder subagent per step on Sonnet per the model split.
    Owner: Jody, still open.
 5. Security challenge for copying secrets.
-   Still open: run `security-architect` in challenge mode on this spec before `/plan` and fold its findings into concerns 3 and 4.
+   Deferred to a later intent (Jody, 2026-10-28); it covers concerns 3 and 4 and does not block `/plan`.
 
 ## Acceptance criteria
 
