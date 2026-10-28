@@ -64,7 +64,7 @@ def main():
         stop(f"plan Status is {value}, not approved; approve it in {rel} and commit")
 
     done = re.search(r"^## Done\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    built = re.search(r"^- Build commit:\s*(.*?)\s*$", done.group(1), re.M) if done else None
+    built = re.search(r"^-\s*(?:\*\*)?Build commit:(?:\*\*)?\s*(.*?)\s*$", done.group(1), re.M) if done else None
     if built and built.group(1) and not built.group(1).startswith("<"):
         stop(f"plan was already built (Build commit: {built.group(1)})")
 
@@ -74,6 +74,8 @@ def main():
         stop(f"cannot name a branch from {intent_dir or 'the repo root'}")
     if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{slug}").returncode == 0:
         stop(f"branch {slug} already exists locally")
+    if git(top, "remote", "get-url", "origin").returncode != 0:
+        stop("no origin remote; /execute pushes the branch and opens a pull request there")
     remote = git(top, "ls-remote", "--exit-code", "--heads", "origin", slug)
     if remote.returncode == 0:
         stop(f"branch {slug} already exists on origin")

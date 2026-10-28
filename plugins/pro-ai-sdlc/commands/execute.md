@@ -18,6 +18,10 @@ Requested plan: $ARGUMENTS
 This is the build stage of the SDLC loop, between `/plan` and `/pr-babysit`.
 The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails.
 You are the builder: build the plan in this session and dispatch subagents only when a step benefits from one.
+Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, proof of done, verifier, PR opened).
+Name any stage that was skipped and why.
+On a stop, print the stage, the reason and what the person can do next.
+pro-execution's `using-git-worktrees` and `subagent-driven-development` skills are used when installed, never required; this plugin declares no dependency on pro-execution.
 
 ## Secrets
 
@@ -31,7 +35,7 @@ If a failure looks like a missing or wrong env value, say which variable name th
 ### 1. Gate the plan
 
 If no path was given, stop and ask for one; `/execute` never guesses which plan to build.
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/execute-gate.py" <plan path>` from the repo root after `git fetch origin`.
+From the repo root run `git fetch origin`, then `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/execute-gate.py" <plan path>`.
 On exit 1 print its reason and stop; nothing has changed yet.
 On success it prints `slug`, `branch`, `intent_dir` and `default_branch`; use them below.
 Read the plan in full, then the spec and intent beside it.
@@ -41,12 +45,14 @@ Read the plan in full, then the spec and intent beside it.
 Run `git worktree add ../<repo>.<slug> -b <branch> origin/<default_branch>`, where `<repo>` is the repo root's folder name.
 The branch always starts from `origin/<default_branch>`, never from the current `HEAD`.
 Then move this session into it with Claude Code's worktree tool, passing that path.
+When `using-git-worktrees` is installed, follow its checks for an existing worktree first, but keep this path, branch and base.
 Every later step runs in the worktree; the main checkout is never switched, stashed or written to.
 
 ### 3. Copy the env files
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/copy-env.py" <main checkout> <worktree>` and print its output as it is.
-On exit 2 a copy would not be ignored in the worktree and every copy has been removed: print the paths it names, keep the worktree and stop.
+On exit 2 a copy would not be ignored in the worktree or could not be made; every copy has been removed, so print the paths it names, keep the worktree and stop.
+On exit 1 the arguments were wrong: check the two paths and run it once more, then stop if it fails again.
 
 ### 4. Prove the baseline
 

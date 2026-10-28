@@ -103,3 +103,5 @@ Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
 - Step 6, `allowed-tools`: `cp` is left out because `copy-env.py` does the copying; `node`, `make`, `git show`, `git merge-base` and `gh repo view` are added so the verify command, the verifier and the PR step run without a prompt in repos like this one.
+- R4: the worktree is always made with `git worktree add` and entered with Claude Code's worktree tool, rather than made by that tool when it can base on `origin/<default branch>`, for the reasons under Options not taken; the base and the session following the worktree still hold.
+- Verifier findings: `copy-env.py` now recreates a symlinked env file as the same link, where it used to copy the target's contents (one outside the repo included) or crash on a dangling link; any copy error rolls back and exits 2. The gate also reads a bold `**Build commit:**` line and says when there is no origin remote. Cases c14 to c16, g11 and g12 cover them.

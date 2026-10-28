@@ -41,9 +41,11 @@ Two scripts hold the parts that must not depend on the model:
 
 - `scripts/execute-gate.py` passes only a plan that is tracked, committed, `Status: approved` and not yet built, whose branch name is free locally and on origin.
 - `scripts/copy-env.py` copies the main checkout's git-ignored `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*` files into the worktree, outside `node_modules`.
-  It prints relative paths only, never contents, and removes every copy if one would not be ignored in the worktree.
+  It prints relative paths only, never contents.
+  A symlink is recreated as the same link.
+  Every copy is removed if one would not be ignored in the worktree or fails.
 
-The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`, and the session moves into it.
+The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`; the session moves into it.
 The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
 
 ## Decisions
