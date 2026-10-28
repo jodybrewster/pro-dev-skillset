@@ -1,0 +1,505 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="wf" viewBox="0 0 1600 2198" width="1600" height="2198" role="img" aria-label="Spec workflows compared">
+<style>
+svg.wf{--bg:#f6f7f9;--lane:#ffffff;--card:#fbfcfd;--line:#d6dbe3;--fg:#17202b;--muted:#5b6676;--soft:#8590a0;--arrow:#9aa5b5;--gate:#c2410c;
+--c-pdd:#0f766e;--c-sdlc:#4338ca;--c-egm:#b45309;--c-speckit:#15803d;--c-spdd:#be185d;--c-openspec:#7c3aed;--c-shared:#475569;--display:'Fraunces',Georgia,serif;--body:'IBM Plex Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace;}
+@media (prefers-color-scheme: dark){svg.wf{--bg:#0f141b;--lane:#151c25;--card:#1b232e;--line:#2c3644;--fg:#e6ebf2;--muted:#a3adbb;--soft:#7d8796;--arrow:#5c6878;--gate:#fb923c;
+--c-pdd:#2dd4bf;--c-sdlc:#a5b4fc;--c-egm:#fbbf24;--c-speckit:#4ade80;--c-spdd:#f472b6;--c-openspec:#c4b5fd;--c-shared:#94a3b8;}}
+.page{fill:var(--bg)}
+
+.lane-bg{fill:var(--lane);stroke:var(--line)}
+.card{fill:var(--card);stroke:var(--line)}
+.lane-name{font:700 19px var(--display);fill:var(--fg)}
+.lane-tag{font:600 11px var(--mono);fill:var(--muted);letter-spacing:.04em}
+.lane-sub{font:13px var(--body);fill:var(--muted)}
+.kind{font:600 9.5px var(--mono);fill:var(--soft);letter-spacing:.08em}
+.cmd{font:600 13.5px var(--mono)}
+.desc{font:11.5px var(--body);fill:var(--muted)}
+.out{font:10.5px var(--mono);fill:var(--fg);opacity:.85}
+.arrow{stroke:var(--arrow);stroke-width:1.6;fill:none}
+.arrowhead{fill:var(--arrow)}
+.gate-mark{fill:var(--gate)}
+.hook-chip{fill:none;stroke:var(--line)}
+.hook-name{font:600 11px var(--mono);fill:var(--fg)}
+.hook-desc{font:12px var(--body);fill:var(--muted)}
+.hook-plug{font-weight:600;fill:var(--fg)}
+.lane-pdd .lane-mark{fill:var(--c-pdd)} .lane-pdd .cmd{fill:var(--c-pdd)} .lane-pdd .gate .card{stroke:var(--c-pdd)}
+.lane-sdlc .lane-mark{fill:var(--c-sdlc)} .lane-sdlc .cmd{fill:var(--c-sdlc)} .lane-sdlc .gate .card{stroke:var(--c-sdlc)}
+.lane-egm .lane-mark{fill:var(--c-egm)} .lane-egm .cmd{fill:var(--c-egm)} .lane-egm .gate .card{stroke:var(--c-egm)}
+.lane-speckit .lane-mark{fill:var(--c-speckit)} .lane-speckit .cmd{fill:var(--c-speckit)} .lane-speckit .gate .card{stroke:var(--c-speckit)}
+.lane-spdd .lane-mark{fill:var(--c-spdd)} .lane-spdd .cmd{fill:var(--c-spdd)} .lane-spdd .gate .card{stroke:var(--c-spdd)}
+.lane-openspec .lane-mark{fill:var(--c-openspec)} .lane-openspec .cmd{fill:var(--c-openspec)} .lane-openspec .gate .card{stroke:var(--c-openspec)}
+.lane-shared .lane-mark{fill:var(--c-shared)} .lane-shared .cmd{fill:var(--c-shared)} .lane-shared .gate .card{stroke:var(--c-shared)}
+.lane-shared .lane-name{fill:var(--c-shared)}
+
+</style>
+<rect class="page" width="1600" height="2198"/>
+<g class="lane lane-pdd" id="lane-pdd">
+<rect class="lane-bg" x="8" y="24" width="1584" height="282" rx="14"/>
+<rect class="lane-mark" x="8" y="24" width="6" height="282" rx="3"/>
+<text class="lane-name" x="24" y="54">pro-pdd</text>
+<text class="lane-tag" x="118.5" y="54">Default · in pro-dev-starter</text>
+<text class="lane-sub" x="24" y="76">Plan-driven development: Claude Code as it is, plus a plan you approve before it builds.</text>
+<g class="step">
+<rect class="card" x="24" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="114">YOU, IN CHAT</text>
+<text class="cmd" x="36" y="134">Describe it</text>
+<text class="desc" x="36" y="153">Say what you want. No command</text>
+<text class="desc" x="36" y="167">needed: the skills trigger from</text>
+<text class="desc" x="36" y="181">what you write.</text>
+</g>
+<path class="arrow" d="M224 178.0 H244"/>
+<path class="arrowhead" d="M244 173.0 L251 178.0 L244 183.0 Z"/>
+<g class="step">
+<rect class="card" x="250" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="114">SKILL · /ADHD ON DEMAND</text>
+<text class="cmd" x="262" y="134">interview-me</text>
+<text class="desc" x="262" y="153">One question at a time until the</text>
+<text class="desc" x="262" y="167">real need is clear. idea-refine</text>
+<text class="desc" x="262" y="181">offers a few directions; /adhd</text>
+<text class="desc" x="262" y="195">brainstorms in parallel.</text>
+</g>
+<path class="arrow" d="M450 178.0 H470"/>
+<path class="arrowhead" d="M470 173.0 L477 178.0 L470 183.0 Z"/>
+<g class="step gate">
+<rect class="card" x="476" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="114">SKILL</text>
+<text class="cmd" x="488" y="134">brainstorming</text>
+<text class="desc" x="488" y="153">Proposes a design and waits for</text>
+<text class="desc" x="488" y="167">your yes before any code.</text>
+<text class="out" x="488" y="237">docs/superpowers/specs/</text>
+<text class="out" x="488" y="250">&lt;date&gt;-&lt;topic&gt;-design.md</text>
+<path class="gate-mark" d="M656 103 L663 110 L656 117 L649 110 Z"/>
+</g>
+<path class="arrow" d="M676 178.0 H696"/>
+<path class="arrowhead" d="M696 173.0 L703 178.0 L696 183.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="114">SKILL</text>
+<text class="cmd" x="714" y="134">writing-plans</text>
+<text class="desc" x="714" y="153">Turns the design into a step-by-</text>
+<text class="desc" x="714" y="167">step, test-first plan.</text>
+<text class="out" x="714" y="237">docs/plans/</text>
+<text class="out" x="714" y="250">&lt;date&gt;-&lt;feature&gt;.md</text>
+</g>
+<path class="arrow" d="M902 178.0 H922"/>
+<path class="arrowhead" d="M922 173.0 L929 178.0 L922 183.0 Z"/>
+<g class="step gate">
+<rect class="card" x="928" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="114">SKILL · /LAVISH</text>
+<text class="cmd" x="940" y="134">lavish</text>
+<text class="desc" x="940" y="153">Renders a substantial plan as an</text>
+<text class="desc" x="940" y="167">HTML page you annotate in the</text>
+<text class="desc" x="940" y="181">browser before approving.</text>
+<path class="gate-mark" d="M1108 103 L1115 110 L1108 117 L1101 110 Z"/>
+</g>
+<path class="arrow" d="M1128 178.0 H1148"/>
+<path class="arrowhead" d="M1148 173.0 L1155 178.0 L1148 183.0 Z"/>
+<g class="step">
+<rect class="card" x="1154" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="1166" y="114">PRO-EXECUTION SKILLS</text>
+<text class="cmd" x="1166" y="134">Build</text>
+<text class="desc" x="1166" y="153">subagent-driven-development works</text>
+<text class="desc" x="1166" y="167">task by task; test-driven-</text>
+<text class="desc" x="1166" y="181">development writes each failing</text>
+<text class="desc" x="1166" y="195">test first; using-git-worktrees</text>
+<text class="out" x="1166" y="250">code + tests</text>
+</g>
+<path class="arrow" d="M1354 178.0 H1374"/>
+<path class="arrowhead" d="M1374 173.0 L1381 178.0 L1374 183.0 Z"/>
+<g class="step">
+<rect class="card" x="1380" y="94" width="196" height="168" rx="10"/>
+<text class="kind" x="1392" y="114">/GH · YOUR FLOW</text>
+<text class="cmd" x="1392" y="134">Ship</text>
+<text class="desc" x="1392" y="153">Commit and open the PR. /review</text>
+<text class="desc" x="1392" y="167">and /pr-babysit work here too</text>
+<text class="desc" x="1392" y="181">when pro-ai-sdlc is installed.</text>
+<text class="out" x="1392" y="250">pull request</text>
+</g>
+</g>
+<g class="lane lane-sdlc" id="lane-sdlc">
+<rect class="lane-bg" x="8" y="324" width="1584" height="384" rx="14"/>
+<rect class="lane-mark" x="8" y="324" width="6" height="384" rx="3"/>
+<text class="lane-name" x="24" y="354">pro-ai-sdlc</text>
+<text class="lane-tag" x="164.5" y="354">Opt-in · inspired by Anthropic&#x27;s AI-native SDLC playbook</text>
+<text class="lane-sub" x="24" y="376">The full record: each step writes one file in intent/&lt;date&gt;-&lt;slug&gt;/, checked against the repo&#x27;s rules.</text>
+<g class="step">
+<rect class="card" x="24" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="414">COMMAND</text>
+<text class="cmd" x="36" y="434">/intent</text>
+<text class="desc" x="36" y="453">Brainstorms the idea until it is</text>
+<text class="desc" x="36" y="467">concrete: problem, outcome, out</text>
+<text class="desc" x="36" y="481">of scope.</text>
+<text class="out" x="36" y="550">intent.md</text>
+</g>
+<path class="arrow" d="M224 478.0 H244"/>
+<path class="arrowhead" d="M244 473.0 L251 478.0 L244 483.0 Z"/>
+<g class="step gate">
+<rect class="card" x="250" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="414">COMMAND</text>
+<text class="cmd" x="262" y="434">/spec</text>
+<text class="desc" x="262" y="453">Testable requirements traced to</text>
+<text class="desc" x="262" y="467">the intent, checked against</text>
+<text class="desc" x="262" y="481">REVIEW.md, CLAUDE.md and ADRs.</text>
+<text class="desc" x="262" y="495">You settle each flagged concern.</text>
+<text class="out" x="262" y="550">spec.md (+ ADR)</text>
+<path class="gate-mark" d="M430 403 L437 410 L430 417 L423 410 Z"/>
+</g>
+<path class="arrow" d="M450 478.0 H470"/>
+<path class="arrowhead" d="M470 473.0 L477 478.0 L470 483.0 Z"/>
+<g class="step gate">
+<rect class="card" x="476" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="414">COMMAND</text>
+<text class="cmd" x="488" y="434">/plan</text>
+<text class="desc" x="488" y="453">Files, order of work, tests per</text>
+<text class="desc" x="488" y="467">step, risks, proof of done. A</text>
+<text class="desc" x="488" y="481">security challenge runs on risky</text>
+<text class="desc" x="488" y="495">plans.</text>
+<text class="out" x="488" y="550">plan.md</text>
+<path class="gate-mark" d="M656 403 L663 410 L656 417 L649 410 Z"/>
+</g>
+<path class="arrow" d="M676 478.0 H696"/>
+<path class="arrowhead" d="M696 473.0 L703 478.0 L696 483.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="414">COMMAND</text>
+<text class="cmd" x="714" y="434">/execute</text>
+<text class="desc" x="714" y="453">Builds the approved plan in its</text>
+<text class="desc" x="714" y="467">own worktree and opens the PR.</text>
+<text class="out" x="714" y="550">branch + PR</text>
+</g>
+<path class="arrow" d="M902 478.0 H922"/>
+<path class="arrowhead" d="M922 473.0 L929 478.0 L922 483.0 Z"/>
+<g class="step">
+<rect class="card" x="928" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="414">COMMAND</text>
+<text class="cmd" x="940" y="434">/review</text>
+<text class="desc" x="940" y="453">Bugs, security and compliance</text>
+<text class="desc" x="940" y="467">passes against REVIEW.md and the</text>
+<text class="desc" x="940" y="481">intent, spec and plan.</text>
+<text class="out" x="940" y="550">review findings</text>
+</g>
+<path class="arrow" d="M1128 478.0 H1148"/>
+<path class="arrowhead" d="M1148 473.0 L1155 478.0 L1148 483.0 Z"/>
+<g class="step gate">
+<rect class="card" x="1154" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="1166" y="414">COMMAND</text>
+<text class="cmd" x="1166" y="434">/pr-babysit</text>
+<text class="desc" x="1166" y="453">Loops on CI and review threads</text>
+<text class="desc" x="1166" y="467">until the PR waits only on you.</text>
+<text class="out" x="1166" y="550">green PR</text>
+<path class="gate-mark" d="M1334 403 L1341 410 L1334 417 L1327 410 Z"/>
+</g>
+<path class="arrow" d="M1354 478.0 H1374"/>
+<path class="arrowhead" d="M1374 473.0 L1381 478.0 L1374 483.0 Z"/>
+<g class="step gate">
+<rect class="card" x="1380" y="394" width="196" height="168" rx="10"/>
+<text class="kind" x="1392" y="414">PLAN.MD DONE</text>
+<text class="cmd" x="1392" y="434">Sign-off</text>
+<text class="desc" x="1392" y="453">Live check and your words move</text>
+<text class="desc" x="1392" y="467">the intent, spec and ADRs to</text>
+<text class="desc" x="1392" y="481">accepted.</text>
+<text class="out" x="1392" y="550">accepted</text>
+<path class="gate-mark" d="M1560 403 L1567 410 L1560 417 L1553 410 Z"/>
+</g>
+<rect class="hook-chip" x="24" y="572" width="140" height="22" rx="11"/>
+<text class="hook-name" x="34" y="587">production-gate</text>
+<text class="hook-desc" x="176" y="587">PreToolUse Bash: flags a push to the default branch, a production deploy, a publish, a merge or a release</text>
+<rect class="hook-chip" x="24" y="606" width="124" height="22" rx="11"/>
+<text class="hook-name" x="34" y="621">protect-tests</text>
+<text class="hook-desc" x="160" y="621">PreToolUse Edit/Write: in /fix mode, blocks edits to test files</text>
+<rect class="hook-chip" x="24" y="640" width="92" height="22" rx="11"/>
+<text class="hook-name" x="34" y="655">plan-sync</text>
+<text class="hook-desc" x="128" y="655">Stop: code changed but plan.md did not, so record the departure</text>
+</g>
+<g class="lane lane-egm" id="lane-egm">
+<rect class="lane-bg" x="8" y="726" width="1584" height="316" rx="14"/>
+<rect class="lane-mark" x="8" y="726" width="6" height="316" rx="3"/>
+<text class="lane-name" x="24" y="756">pro-egm</text>
+<text class="lane-tag" x="118.5" y="756">Opt-in add-on to pro-ai-sdlc · Google EGM</text>
+<text class="lane-sub" x="24" y="778">Not a loop of its own: a cold-read review offered at /spec and /plan.</text>
+<g class="step">
+<rect class="card" x="24" y="796" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="816">COMMAND</text>
+<text class="cmd" x="36" y="836">/pro-egm:install</text>
+<text class="desc" x="36" y="855">Installs Google&#x27;s egm@egm after</text>
+<text class="desc" x="36" y="869">showing what it carries. Needs</text>
+<text class="desc" x="36" y="883">pro-core.</text>
+<text class="out" x="36" y="952">egm@egm</text>
+</g>
+<path class="arrow" d="M224 880.0 H244"/>
+<path class="arrowhead" d="M244 875.0 L251 880.0 L244 885.0 Z"/>
+<g class="step gate">
+<rect class="card" x="250" y="796" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="816">PRO-AI-SDLC HAND-OFF</text>
+<text class="cmd" x="262" y="836">Offer at /spec, /plan</text>
+<text class="desc" x="262" y="855">&quot;Run a goldfish review?&quot; Only on</text>
+<text class="desc" x="262" y="869">your yes.</text>
+<path class="gate-mark" d="M430 805 L437 812 L430 819 L423 812 Z"/>
+</g>
+<path class="arrow" d="M450 880.0 H470"/>
+<path class="arrowhead" d="M470 875.0 L477 880.0 L470 885.0 Z"/>
+<g class="step">
+<rect class="card" x="476" y="796" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="816">COMMAND</text>
+<text class="cmd" x="488" y="836">/pro-egm:goldfish</text>
+<text class="desc" x="488" y="855">Runs EGM&#x27;s review loop on your</text>
+<text class="desc" x="488" y="869">draft with the reviewers for that</text>
+<text class="desc" x="488" y="883">stage.</text>
+</g>
+<path class="arrow" d="M676 880.0 H696"/>
+<path class="arrowhead" d="M696 875.0 L703 880.0 L696 885.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="796" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="816">SUBAGENTS</text>
+<text class="cmd" x="714" y="836">Goldfish reviewers</text>
+<text class="desc" x="714" y="855">Fresh reviewers see only the</text>
+<text class="desc" x="714" y="869">draft and its reading list.</text>
+<text class="desc" x="714" y="883">Custom ones in .egm/ run read-</text>
+<text class="desc" x="714" y="897">only.</text>
+</g>
+<path class="arrow" d="M902 880.0 H922"/>
+<path class="arrowhead" d="M922 875.0 L929 880.0 L922 885.0 Z"/>
+<g class="step gate">
+<rect class="card" x="928" y="796" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="816">YOU</text>
+<text class="cmd" x="940" y="836">Resolve</text>
+<text class="desc" x="940" y="855">Accept or contest each finding.</text>
+<text class="desc" x="940" y="869">Fixes land in the draft; open</text>
+<text class="desc" x="940" y="883">Blocker and Major findings go to</text>
+<text class="desc" x="940" y="897">Flagged concerns or Risks.</text>
+<text class="out" x="940" y="939">goldfish_review_report.md</text>
+<text class="out" x="940" y="952">(untracked)</text>
+<path class="gate-mark" d="M1108 805 L1115 812 L1108 819 L1101 812 Z"/>
+</g>
+<rect class="hook-chip" x="24" y="974" width="188" height="22" rx="11"/>
+<text class="hook-name" x="34" y="989">changed-goldfish gate</text>
+<text class="hook-desc" x="224" y="989">a goldfish file changed since your last run asks for your yes first</text>
+</g>
+<g class="lane lane-speckit" id="lane-speckit">
+<rect class="lane-bg" x="8" y="1060" width="1584" height="316" rx="14"/>
+<rect class="lane-mark" x="8" y="1060" width="6" height="316" rx="3"/>
+<text class="lane-name" x="24" y="1090">pro-speckit</text>
+<text class="lane-tag" x="164.5" y="1090">Opt-in · GitHub spec-kit</text>
+<text class="lane-sub" x="24" y="1112">spec-kit&#x27;s own loop under specs/&lt;NNN&gt;-&lt;feature&gt;/. You type every /speckit-* command.</text>
+<g class="step gate">
+<rect class="card" x="24" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="1150">COMMAND</text>
+<text class="cmd" x="36" y="1170">/pro-speckit:install</text>
+<text class="desc" x="36" y="1189">Installs the specify CLI pinned</text>
+<text class="desc" x="36" y="1203">to a reviewed release, then sets</text>
+<text class="desc" x="36" y="1217">up the repo. Refuses a dirty</text>
+<text class="desc" x="36" y="1231">tree. Needs uv.</text>
+<text class="out" x="36" y="1286">.specify/ + 10 skills</text>
+<path class="gate-mark" d="M204 1139 L211 1146 L204 1153 L197 1146 Z"/>
+</g>
+<path class="arrow" d="M224 1214.0 H244"/>
+<path class="arrowhead" d="M244 1209.0 L251 1214.0 L244 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="250" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="1150">SPEC-KIT</text>
+<text class="cmd" x="262" y="1170">/speckit-constitution</text>
+<text class="desc" x="262" y="1189">The project&#x27;s ground rules, once</text>
+<text class="desc" x="262" y="1203">per repo.</text>
+<text class="out" x="262" y="1273">.specify/memory/</text>
+<text class="out" x="262" y="1286">constitution.md</text>
+</g>
+<path class="arrow" d="M450 1214.0 H470"/>
+<path class="arrowhead" d="M470 1209.0 L477 1214.0 L470 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="476" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="1150">SPEC-KIT</text>
+<text class="cmd" x="488" y="1170">/speckit-specify</text>
+<text class="desc" x="488" y="1189">Describe the feature.</text>
+<text class="out" x="488" y="1286">specs/&lt;NNN&gt;/spec.md</text>
+</g>
+<path class="arrow" d="M676 1214.0 H696"/>
+<path class="arrowhead" d="M696 1209.0 L703 1214.0 L696 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="1150">SPEC-KIT</text>
+<text class="cmd" x="714" y="1170">/speckit-plan</text>
+<text class="desc" x="714" y="1189">How to build it.</text>
+<text class="out" x="714" y="1286">specs/&lt;NNN&gt;/plan.md</text>
+</g>
+<path class="arrow" d="M902 1214.0 H922"/>
+<path class="arrowhead" d="M922 1209.0 L929 1214.0 L922 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="928" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="1150">SPEC-KIT</text>
+<text class="cmd" x="940" y="1170">/speckit-tasks</text>
+<text class="desc" x="940" y="1189">Break it into ordered tasks.</text>
+<text class="out" x="940" y="1286">specs/&lt;NNN&gt;/tasks.md</text>
+</g>
+<path class="arrow" d="M1128 1214.0 H1148"/>
+<path class="arrowhead" d="M1148 1209.0 L1155 1214.0 L1148 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="1154" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="1166" y="1150">SPEC-KIT</text>
+<text class="cmd" x="1166" y="1170">/speckit-implement</text>
+<text class="desc" x="1166" y="1189">Builds the tasks.</text>
+<text class="out" x="1166" y="1286">code</text>
+</g>
+<path class="arrow" d="M1354 1214.0 H1374"/>
+<path class="arrowhead" d="M1374 1209.0 L1381 1214.0 L1374 1219.0 Z"/>
+<g class="step">
+<rect class="card" x="1380" y="1130" width="196" height="168" rx="10"/>
+<text class="kind" x="1392" y="1150">PRO-CORE</text>
+<text class="cmd" x="1392" y="1170">/pro-dev check</text>
+<text class="desc" x="1392" y="1189">Fingerprints spec-kit&#x27;s 22 files</text>
+<text class="desc" x="1392" y="1203">against the registry and flags</text>
+<text class="desc" x="1392" y="1217">any change. Never runs the CLI.</text>
+<text class="out" x="1392" y="1286">findings</text>
+</g>
+<rect class="hook-chip" x="24" y="1308" width="140" height="22" rx="11"/>
+<text class="hook-name" x="34" y="1323">clean-tree gate</text>
+<text class="hook-desc" x="176" y="1323">setup refuses uncommitted changes, an existing .specify/, symlinks or a different specify on PATH</text>
+</g>
+<g class="lane lane-spdd" id="lane-spdd">
+<rect class="lane-bg" x="8" y="1394" width="1584" height="282" rx="14"/>
+<rect class="lane-mark" x="8" y="1394" width="6" height="282" rx="3"/>
+<text class="lane-name" x="24" y="1424">pro-spdd</text>
+<text class="lane-tag" x="130.0" y="1424">Opt-in · open-SPDD</text>
+<text class="lane-sub" x="24" y="1446">Structured Prompt-Driven Development: a story and a REASONS Canvas prompt kept in sync with the code.</text>
+<g class="step">
+<rect class="card" x="24" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="1484">COMMAND</text>
+<text class="cmd" x="36" y="1504">/spdd-story</text>
+<text class="desc" x="36" y="1523">Breaks the requirement into</text>
+<text class="desc" x="36" y="1537">INVEST stories with acceptance</text>
+<text class="desc" x="36" y="1551">criteria.</text>
+<text class="out" x="36" y="1620">stories</text>
+</g>
+<path class="arrow" d="M224 1548.0 H244"/>
+<path class="arrowhead" d="M244 1543.0 L251 1548.0 L244 1553.0 Z"/>
+<g class="step">
+<rect class="card" x="250" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="1484">COMMAND</text>
+<text class="cmd" x="262" y="1504">/spdd-analysis</text>
+<text class="desc" x="262" y="1523">Adds business, domain and code</text>
+<text class="desc" x="262" y="1537">context.</text>
+<text class="out" x="262" y="1620">spdd/analysis/</text>
+</g>
+<path class="arrow" d="M450 1548.0 H470"/>
+<path class="arrowhead" d="M470 1543.0 L477 1548.0 L470 1553.0 Z"/>
+<g class="step gate">
+<rect class="card" x="476" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="1484">COMMAND</text>
+<text class="cmd" x="488" y="1504">/spdd-reasons-canvas</text>
+<text class="desc" x="488" y="1523">Writes the structured prompt.</text>
+<text class="out" x="488" y="1620">spdd/prompt/&lt;id&gt;.md</text>
+<path class="gate-mark" d="M656 1473 L663 1480 L656 1487 L649 1480 Z"/>
+</g>
+<path class="arrow" d="M676 1548.0 H696"/>
+<path class="arrowhead" d="M696 1543.0 L703 1548.0 L696 1553.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="1484">COMMAND</text>
+<text class="cmd" x="714" y="1504">/spdd-generate</text>
+<text class="desc" x="714" y="1523">Writes the code from that prompt.</text>
+<text class="out" x="714" y="1620">code</text>
+</g>
+<path class="arrow" d="M902 1548.0 H922"/>
+<path class="arrowhead" d="M922 1543.0 L929 1548.0 L922 1553.0 Z"/>
+<g class="step">
+<rect class="card" x="928" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="1484">COMMAND</text>
+<text class="cmd" x="940" y="1504">/spdd-code-review</text>
+<text class="desc" x="940" y="1523">Checks the code against the</text>
+<text class="desc" x="940" y="1537">canvas; /spdd-api-test writes</text>
+<text class="desc" x="940" y="1551">cURL tests.</text>
+<text class="out" x="940" y="1620">spdd/review/</text>
+</g>
+<path class="arrow" d="M1128 1548.0 H1148"/>
+<path class="arrowhead" d="M1148 1543.0 L1155 1548.0 L1148 1553.0 Z"/>
+<g class="step">
+<rect class="card" x="1154" y="1464" width="196" height="168" rx="10"/>
+<text class="kind" x="1166" y="1484">COMMAND</text>
+<text class="cmd" x="1166" y="1504">/spdd-sync</text>
+<text class="desc" x="1166" y="1523">Updates the prompt after code</text>
+<text class="desc" x="1166" y="1537">changes. /spdd-prompt-update and</text>
+<text class="desc" x="1166" y="1551">/spdd-reverse cover the other</text>
+<text class="desc" x="1166" y="1565">directions.</text>
+<text class="out" x="1166" y="1620">prompt in sync</text>
+</g>
+</g>
+<g class="lane lane-openspec" id="lane-openspec">
+<rect class="lane-bg" x="8" y="1694" width="1584" height="282" rx="14"/>
+<rect class="lane-mark" x="8" y="1694" width="6" height="282" rx="3"/>
+<text class="lane-name" x="24" y="1724">OpenSpec</text>
+<text class="lane-tag" x="130.0" y="1724">Candidate · not installed · Fission-AI, MIT</text>
+<text class="lane-sub" x="24" y="1746">Changes are proposals beside living specs: openspec/specs/ is the source of truth, each change is a folder until archived.</text>
+<g class="step">
+<rect class="card" x="24" y="1764" width="196" height="168" rx="10"/>
+<text class="kind" x="36" y="1784">CLI</text>
+<text class="cmd" x="36" y="1804">openspec init</text>
+<text class="desc" x="36" y="1823">Sets up openspec/ and the /opsx</text>
+<text class="desc" x="36" y="1837">commands for your tools.</text>
+<text class="out" x="36" y="1920">openspec/</text>
+</g>
+<path class="arrow" d="M224 1848.0 H244"/>
+<path class="arrowhead" d="M244 1843.0 L251 1848.0 L244 1853.0 Z"/>
+<g class="step">
+<rect class="card" x="250" y="1764" width="196" height="168" rx="10"/>
+<text class="kind" x="262" y="1784">COMMAND</text>
+<text class="cmd" x="262" y="1804">/opsx:explore</text>
+<text class="desc" x="262" y="1823">A thinking partner that reads the</text>
+<text class="desc" x="262" y="1837">code and shapes a plan. Optional.</text>
+</g>
+<path class="arrow" d="M450 1848.0 H470"/>
+<path class="arrowhead" d="M470 1843.0 L477 1848.0 L470 1853.0 Z"/>
+<g class="step gate">
+<rect class="card" x="476" y="1764" width="196" height="168" rx="10"/>
+<text class="kind" x="488" y="1784">COMMAND</text>
+<text class="cmd" x="488" y="1804">/opsx:propose &lt;name&gt;</text>
+<text class="desc" x="488" y="1823">Writes the change: why,</text>
+<text class="desc" x="488" y="1837">requirement deltas with</text>
+<text class="desc" x="488" y="1851">scenarios, approach, checklist.</text>
+<text class="out" x="488" y="1894">changes/&lt;name&gt;/</text>
+<text class="out" x="488" y="1907">proposal.md, specs/,</text>
+<text class="out" x="488" y="1920">design.md, tasks.md</text>
+<path class="gate-mark" d="M656 1773 L663 1780 L656 1787 L649 1780 Z"/>
+</g>
+<path class="arrow" d="M676 1848.0 H696"/>
+<path class="arrowhead" d="M696 1843.0 L703 1848.0 L696 1853.0 Z"/>
+<g class="step">
+<rect class="card" x="702" y="1764" width="196" height="168" rx="10"/>
+<text class="kind" x="714" y="1784">COMMAND</text>
+<text class="cmd" x="714" y="1804">/opsx:apply</text>
+<text class="desc" x="714" y="1823">Implements the checklist in</text>
+<text class="desc" x="714" y="1837">tasks.md.</text>
+<text class="out" x="714" y="1920">code</text>
+</g>
+<path class="arrow" d="M902 1848.0 H922"/>
+<path class="arrowhead" d="M922 1843.0 L929 1848.0 L922 1853.0 Z"/>
+<g class="step gate">
+<rect class="card" x="928" y="1764" width="196" height="168" rx="10"/>
+<text class="kind" x="940" y="1784">COMMAND</text>
+<text class="cmd" x="940" y="1804">/opsx:archive</text>
+<text class="desc" x="940" y="1823">Merges the spec deltas into</text>
+<text class="desc" x="940" y="1837">openspec/specs/ and files the</text>
+<text class="desc" x="940" y="1851">change away.</text>
+<text class="out" x="940" y="1920">openspec/specs/ updated</text>
+<path class="gate-mark" d="M1108 1773 L1115 1780 L1108 1787 L1101 1780 Z"/>
+</g>
+</g>
+<g class="lane lane-shared" id="lane-shared">
+<rect class="lane-bg" x="8" y="1994" width="1584" height="188" rx="14"/>
+<text class="lane-name" x="24" y="2024">Always on</text>
+<text class="lane-tag" x="142" y="2024">Hooks from the starter that fire under every workflow</text>
+<rect class="hook-chip" x="24" y="2036" width="84" height="22" rx="11"/>
+<text class="hook-name" x="34" y="2051">git-safe</text>
+<text class="hook-desc" x="194" y="2051"><tspan class="hook-plug">pro-core</tspan>  PreToolUse Bash: blocks dangerous git and shell patterns</text>
+<rect class="hook-chip" x="24" y="2062" width="124" height="22" rx="11"/>
+<text class="hook-name" x="34" y="2077">memory-recall</text>
+<text class="hook-desc" x="194" y="2077"><tspan class="hook-plug">pro-core</tspan>  UserPromptSubmit: adds relevant project memory to each prompt</text>
+<rect class="hook-chip" x="24" y="2088" width="148" height="22" rx="11"/>
+<text class="hook-name" x="34" y="2103">docs-before-push</text>
+<text class="hook-desc" x="194" y="2103"><tspan class="hook-plug">pro-quality</tspan>  PreToolUse Bash: a push must update README, CLAUDE.md and other key docs</text>
+<rect class="hook-chip" x="24" y="2114" width="92" height="22" rx="11"/>
+<text class="hook-name" x="34" y="2129">push-gate</text>
+<text class="hook-desc" x="194" y="2129"><tspan class="hook-plug">pro-security</tspan>  PreToolUse Bash: security review of the diff before push or PR</text>
+<rect class="hook-chip" x="24" y="2140" width="140" height="22" rx="11"/>
+<text class="hook-name" x="34" y="2155">user-validation</text>
+<text class="hook-desc" x="194" y="2155"><tspan class="hook-plug">pro-quality</tspan>  Stop: suggests what you should check yourself</text>
+</g>
+</svg>
