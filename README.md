@@ -185,7 +185,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Skill-bearing plugins:**
 
-- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/review`, `/pr-babysit` and `/sdlc-init`, the intent, spec, plan and REVIEW templates, the `researcher`, `verifier`, `simplifier` and `reviewer` agents, and warn-mode hooks for protected tests, plan drift and production actions.
+- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/execute` (build an approved plan in its own worktree and open the PR), `/review`, `/pr-babysit` and `/sdlc-init`, the intent, spec, plan and REVIEW templates, the `researcher`, `verifier`, `simplifier` and `reviewer` agents, and warn-mode hooks for protected tests, plan drift and production actions.
 - **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/gh` GitHub workflow command, `dream` memory consolidation, and safety/parallelism hooks.
   `dream` (forked from [`grandamenium/dream-skill`](https://github.com/grandamenium/dream-skill), MIT) reads this project's Claude Code auto-memory at `~/.claude/projects/<project-slug>/memory/`, scans the project's session transcripts for corrections, decisions, preferences, and patterns, merges what it finds into the memory files, and rebuilds `MEMORY.md` as a lean index under 200 lines.
   Run it with `/dream`; `/dream dry-run` previews the proposed merges, rewrites, and deletions without writing, and `/dream status` reports the timer.
