@@ -12,6 +12,7 @@ author: Jody Brewster
 Author: Jody Brewster (pro-dev-skillset).
 Source: research Jody brought on 2026-10-28 (kept in full in [research.md](research.md)), "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
 Status: draft; Jody is still brainstorming and evaluating the scope before `/spec`.
+The brainstorm so far, which widens this scope and proposes splitting it into three intents, is in [brainstorm.md](brainstorm.md).
 Created: 2026-10-28.
 
 ## Problem
