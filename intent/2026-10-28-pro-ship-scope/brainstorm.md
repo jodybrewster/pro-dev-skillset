@@ -4,6 +4,43 @@ Running notes from the brainstorm on 2026-10-28, after [intent.md](intent.md) wa
 Nothing here is decided until it moves into an intent or a spec.
 Each section says whether it is a recommendation, a proposal or still open.
 
+## Features at a glance
+
+Every feature proposed so far, grouped by the intent it would land in, each linked to its section.
+
+### Intent A: the PR gate (first)
+
+1. `/pro-ship:pr-check`: runs build, lint, typecheck and unit tests, plus any `check:*` scripts that installed skills add, then dispatches the reviewers and writes a stamp for HEAD. [The pre-PR gate](#the-pre-pr-gate-proposal)
+2. A hook on `gh pr create` that only checks the stamp and denies once when it is missing; replaces pro-quality's `pr-quality-gate.py`, which never fires. [Shape](#shape)
+3. `code-reviewer`, a detailed reviewer agent in pro-quality: correctness, tests, design, performance and compliance, with file and line evidence. [A detailed code reviewer](#a-detailed-code-reviewer)
+4. Fresh context for every reviewer through a fixed four-field handoff, held by a check in `tests/check.mjs`. [Fresh context](#fresh-context-is-a-hard-requirement-jody-2026-10-28)
+5. Codex as a second reviewer running the same agent; findings both models raise count as stronger. [Codex](#codex-as-a-second-reviewer-jody-2026-10-28)
+6. The security review joins the gate: pro-security's push gate accepts the stamp so it runs once per PR. [Shape](#shape)
+7. A risk classifier that sorts each diff into low, medium or high and sets the review depth and approval. [Risk gate](#risk-based-approval-gate-with-a-classifier)
+8. Approval tiers at one-person scale: low merges on green, medium and high need Jody, an agent's approval never counts and approval covers one commit. [Approval](#approval-at-one-person-scale)
+9. Round limits for agent loops: three rounds, then only new commits, no repeated findings, Pre-existing tag. [Convergence](#convergence-the-lesson-that-matters-most-for-agents)
+10. REVIEW.md as the only project review policy, with an improved template. [REVIEW.md](#reviewmd-is-the-reviewers-only-project-policy), [template](#reviewmd-template-changes)
+11. Installed skills bring runnable checks, not review checklists. [Runnable checks](#installable-skills-carry-build-knowledge-and-runnable-checks)
+12. A test set for the reviewer built from this repo's past bugs, rerun when the reviewer changes. [Evals](#improving-the-reviewer-past-bugs-become-evals)
+13. Settings in a REVIEW.md block so the same gate scales from solo to a team; the reviewers also run in GitHub Actions. [Scaling](#built-to-scale-up-jody-2026-10-28)
+
+### Intent C: the doc set
+
+14. A required set of documents that depends on the project: README, CLAUDE.md, AGENTS.md, REVIEW.md and ADRs always; ARCHITECTURE, PRODUCT and DESIGN when they apply. [Doc set](#the-doc-set-proposal)
+15. New templates for README, ARCHITECTURE and PRODUCT; `/pro-dev install` writes missing documents from the code. [Doc set](#the-doc-set-proposal)
+16. pr-check lists missing documents and the reviewer flags lines a diff makes untrue. [Doc set](#the-doc-set-proposal)
+
+### Intent B: the rest of pro-ship v0.1
+
+17. `/pro-ship:ship`, the preflight report (Blocking, Should-fix, OK), with no new release hook. [Release gate](#release-gate-no-new-hook)
+18. `/pro-ship:twelve-factor`, with a platform-owned status. [Scope pushback](#scope-pushback-still-open)
+19. `/pro-ship:pipeline`, which generates or audits GitHub Actions, including the CI version of the gate. See [intent.md](intent.md).
+20. `/pro-ship:repo-hygiene`, which writes rulesets, CODEOWNERS and Dependabot from the REVIEW.md settings; recommended over `release` for v0.1. [Scope pushback](#scope-pushback-still-open), [Scaling](#built-to-scale-up-jody-2026-10-28)
+
+### Later
+
+`release`, two-person approval, a merge queue, feature flags, staged releases, rollback and tracking revert rate and review rounds per PR. [Scaling](#built-to-scale-up-jody-2026-10-28), [intent.md](intent.md)
+
 ## Jody's asks in this brainstorm
 
 In the order he raised them on 2026-10-28, in his words, with where each is answered below.
