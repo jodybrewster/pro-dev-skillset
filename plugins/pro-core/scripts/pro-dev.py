@@ -26,9 +26,12 @@ Rules this script keeps:
     outlives the plugin (accepted by ADR-0007), run only when no marketplace of that
     name is registered and refused when the registered one has another source
   - a claude-plugin row may pin the `surface` it was reviewed with (agent and skill
-    counts, the union of their tools, a hash of every hook and MCP declaration); a
-    plugin beyond the pin, or one whose surface cannot be read, is never installed or
-    updated by this script and status names it. Nothing about surfaces is written to
+    counts, the tools of each agent, skill and command, a hash of every hook, MCP and
+    LSP declaration); a plugin beyond the pin, or one whose surface cannot be read, is
+    never installed by this script and status names it. An update first refreshes the
+    marketplace clone and is refused when the clone is beyond the pin. After any install
+    or update the installed copy is checked again and, if it is beyond the pin, disabled
+    at project scope and reported as a failure. Nothing about surfaces is written to
     the repo, so a repo change cannot raise the baseline. Plugin files are third-party
     input: only regular files that stay inside the plugin folder are opened, each
     read is capped and any failure reads as "surface unknown"
@@ -437,54 +440,114 @@ def split_tools(value: str) -> list[str]:
     return [t.strip().strip("\"'") for t in out if t.strip().strip("\"'")]
 
 
-def frontmatter_tools(text: str, key: str) -> list[str] | None:
-    """The tools named by `key` in a file's frontmatter, or None when the key is absent."""
+def frontmatter_head(text: str) -> list[str]:
+    """The lines between the opening and closing `---` of a file, [] when there is no frontmatter."""
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
-        return None
+        return []
     end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
-    if end is None:
+    return [] if end is None else lines[1:end]
+
+
+def key_match(line: str, key: str):
+    """Match `key: value` or a quoted `"key": value` at the start of a frontmatter line."""
+    return re.match(rf"^[\"']?{re.escape(key)}[\"']?\s*:\s*(.*)$", line)
+
+
+def frontmatter_tools(text: str, key: str) -> list[str] | None:
+    """The tools named by `key` in a file's frontmatter (the last occurrence wins), or None when absent."""
+    head = frontmatter_head(text)
+    found = [i for i, line in enumerate(head) if key_match(line, key)]
+    if not found:
         return None
-    head = lines[1:end]
-    for i, line in enumerate(head):
-        m = re.match(rf"^{re.escape(key)}\s*:\s*(.*)$", line)
-        if not m:
-            continue
-        val = m.group(1).strip()
-        if val:
-            if val.startswith("[") and val.endswith("]"):
-                val = val[1:-1]
-            return split_tools(val)
-        items = []
-        for nxt in head[i + 1:]:
-            if nxt.strip().startswith("- "):
-                items.extend(split_tools(nxt.strip()[2:]))
-            elif nxt.strip() and nxt[:1] not in " \t":
-                break
-        return items
-    return None
+    i = found[-1]
+    val = key_match(head[i], key).group(1).strip()
+    if val:
+        if val.startswith("[") and val.endswith("]"):
+            val = val[1:-1]
+        return split_tools(val)
+    items = []
+    for nxt in head[i + 1:]:
+        if nxt.strip().startswith("- "):
+            items.extend(split_tools(nxt.strip()[2:]))
+        elif nxt.strip() and nxt[:1] not in " \t":
+            break
+    return items
 
 
-def agent_paths(root: str, manifest: dict) -> list[str]:
-    spec = manifest.get("agents")
+def frontmatter_block(text: str, key: str) -> str | None:
+    """The raw text of a frontmatter key and its indented lines (the last occurrence), or None."""
+    head = frontmatter_head(text)
+    found = [i for i, line in enumerate(head) if key_match(line, key)]
+    if not found:
+        return None
+    out = [head[found[-1]].rstrip()]
+    for nxt in head[found[-1] + 1:]:
+        if nxt.strip() and nxt[:1] not in " \t-":
+            break
+        out.append(nxt.rstrip())
+    return "\n".join(out)
+
+
+def command_shell_digest(text: str) -> str | None:
+    """sha256 of the body lines of a command that run shell (start with `!` or hold a !`...` call)."""
+    lines = text.splitlines()
+    if lines and lines[0].strip() == "---":
+        end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
+        if end is not None:
+            lines = lines[end + 1:]
+    bang = [ln for ln in lines if ln.lstrip().startswith("!") or "!`" in ln]
+    return hashlib.sha256("\n".join(bang).encode("utf-8")).hexdigest() if bang else None
+
+
+def declared_paths(root: str, manifest: dict, key: str) -> list[str]:
+    """Paths plugin.json gives for agents, skills or commands (they replace the default folder); each must stay inside the plugin."""
+    spec = manifest.get(key)
     if spec is None:
-        base = os.path.join(root, "agents")
-        return [os.path.join(base, n) for n in list_plugin_dir(root, base) if n.endswith(".md")]
+        return []
     items = [spec] if isinstance(spec, str) else spec
     if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
-        raise SurfaceError("plugin.json agents has an unexpected shape")
+        raise SurfaceError(f"plugin.json {key} has an unexpected shape")
     out = []
     for item in items:
         path = os.path.normpath(os.path.join(root, item))
-        try:
-            is_dir = stat.S_ISDIR(os.lstat(path).st_mode)
-        except OSError:
-            is_dir = False
-        if is_dir:
+        if not is_inside(path, root):
+            raise SurfaceError(f"plugin.json {key} path {item} resolves outside the plugin folder")
+        out.append(path)
+    return out
+
+
+def is_plain_dir(path: str) -> bool:
+    try:
+        return stat.S_ISDIR(os.lstat(path).st_mode)
+    except OSError:
+        return False
+
+
+def md_files(root: str, manifest: dict, key: str) -> list[str]:
+    """Every agent or command file: the paths plugin.json gives, else the default folder."""
+    base = os.path.join(root, key)
+    custom = declared_paths(root, manifest, key)
+    out = [] if custom else [os.path.join(base, n) for n in list_plugin_dir(root, base) if n.endswith(".md")]
+    for path in custom:
+        if is_plain_dir(path):
             out.extend(os.path.join(path, n) for n in list_plugin_dir(root, path) if n.endswith(".md"))
         else:
             out.append(path)
-    return out
+    return list(dict.fromkeys(out))
+
+
+def skill_dirs(root: str, manifest: dict) -> list[str]:
+    """Every skill folder: the folders plugin.json gives (or their subfolders), else skills/<name>."""
+    base = os.path.join(root, "skills")
+    custom = declared_paths(root, manifest, "skills")
+    out = [] if custom else [os.path.join(base, n) for n in list_plugin_dir(root, base)]
+    for path in custom:
+        if not is_plain_dir(path):
+            raise SurfaceError(f"plugin.json skills path {os.path.relpath(path, root)} is not a folder")
+        out.append(path)
+        out.extend(os.path.join(path, n) for n in list_plugin_dir(root, path))
+    return list(dict.fromkeys(out))
 
 
 def declaration_refs(value) -> list[str]:
@@ -496,10 +559,13 @@ def declaration_refs(value) -> list[str]:
 def compute_surface(folder: str, market_entry: dict | None = None) -> tuple[dict | None, str]:
     """Return (surface, reason) for a plugin folder; surface is None when it cannot be read.
 
-    surface is {"agents", "skills", "tools", "hooksMcpSha256"}. An agent with no `tools`
-    line inherits every tool and counts as "*". The hash covers hooks/hooks.json, .mcp.json
-    and the hooks and mcpServers declared inline in plugin.json and in the plugin's
-    marketplace entry, with any file those point at.
+    surface is {"agents", "skills", "tools", "hooksMcpSha256"}. tools maps each agent file,
+    skill folder and command file (path from the plugin root) to its sorted tools: an agent
+    with no `tools` line inherits every tool and reads ["*"], a skill or command reads its
+    `allowed-tools`. The hash covers hooks/hooks.json, .mcp.json, .lsp.json, the hooks,
+    mcpServers and lspServers declared inline in plugin.json and in the plugin's marketplace
+    entry (with any file those point at), `hooks` in agent, skill and command frontmatter
+    and a digest of the shell lines (`!`) of each command.
     """
     try:
         return _surface(folder, market_entry), ""
@@ -517,29 +583,47 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
     manifest = parse_plugin_json(raw, "plugin.json")
     if not isinstance(manifest, dict):
         raise SurfaceError("plugin.json is not an object")
-    tools: set[str] = set()
-    agents = agent_paths(root, manifest)
+    declared: dict = {}
+    tools: dict[str, list[str]] = {}
+
+    def rel_of(path: str) -> str:
+        return os.path.relpath(path, root).replace(os.sep, "/")
+
+    def fold_hooks(rel: str, text: str) -> None:
+        block = frontmatter_block(text, "hooks")
+        if block is not None:
+            declared[f"frontmatter-hooks:{rel}"] = block
+
+    agents = md_files(root, manifest, "agents")
     for path in agents:
         text = read_plugin_file(root, path, required=True).decode("utf-8", "replace")
         listed = frontmatter_tools(text, "tools")
-        tools.update(["*"] if listed is None else listed)
+        tools[rel_of(path)] = ["*"] if listed is None else sorted(set(listed))
+        fold_hooks(rel_of(path), text)
     skills = 0
-    skills_dir = os.path.join(root, "skills")
-    for name in list_plugin_dir(root, skills_dir):
-        raw = read_plugin_file(root, os.path.join(skills_dir, name, "SKILL.md"))
+    for sdir in skill_dirs(root, manifest):
+        raw = read_plugin_file(root, os.path.join(sdir, "SKILL.md"))
         if raw is None:
             continue
         skills += 1
-        tools.update(frontmatter_tools(raw.decode("utf-8", "replace"), "allowed-tools") or [])
-    declared: dict = {}
-    for rel in ("hooks/hooks.json", ".mcp.json"):
+        text = raw.decode("utf-8", "replace")
+        tools[rel_of(sdir)] = sorted(set(frontmatter_tools(text, "allowed-tools") or []))
+        fold_hooks(rel_of(sdir), text)
+    for path in md_files(root, manifest, "commands"):
+        text = read_plugin_file(root, path, required=True).decode("utf-8", "replace")
+        tools[rel_of(path)] = sorted(set(frontmatter_tools(text, "allowed-tools") or []))
+        fold_hooks(rel_of(path), text)
+        digest = command_shell_digest(text)
+        if digest is not None:
+            declared[f"command-shell:{rel_of(path)}"] = digest
+    for rel in ("hooks/hooks.json", ".mcp.json", ".lsp.json"):
         raw = read_plugin_file(root, os.path.join(root, *rel.split("/")))
         if raw is not None:
             declared[rel] = parse_plugin_json(raw, rel)
     if market_entry is not None and not isinstance(market_entry, dict):
         raise SurfaceError("the marketplace entry is not an object")
     for site, obj in (("plugin.json", manifest), ("marketplace", market_entry or {})):
-        for key in ("hooks", "mcpServers"):
+        for key in ("hooks", "mcpServers", "lspServers"):
             if key not in obj:
                 continue
             declared[f"{site}:{key}"] = obj[key]
@@ -548,7 +632,7 @@ def _surface(folder: str, market_entry: dict | None) -> dict:
                 declared["file:" + os.path.relpath(path, root)] = parse_plugin_json(
                     read_plugin_file(root, path, required=True), ref)
     digest = hashlib.sha256(json.dumps(declared, sort_keys=True).encode("utf-8")).hexdigest()
-    return {"agents": len(agents), "skills": skills, "tools": sorted(tools), "hooksMcpSha256": digest}
+    return {"agents": len(agents), "skills": skills, "tools": tools, "hooksMcpSha256": digest}
 
 
 def clone_plugin(mp_name: str, plugin: str) -> tuple[str, dict]:
@@ -609,7 +693,11 @@ def row_surface(row: dict, repo: str, installs: list[dict], installed: bool) -> 
 
 
 def surface_diff(pin: dict, surface: dict) -> list[str]:
-    """What the surface has beyond the pin; empty when it is equal or smaller."""
+    """What the surface has beyond the pin; empty when it is equal or smaller.
+
+    Tools are compared per entry: a new entry, or a tool added to an existing one, is growth.
+    Removed entries and removed tools are not.
+    """
     diffs = []
     for key in ("agents", "skills"):
         want = pin.get(key)
@@ -618,10 +706,17 @@ def surface_diff(pin: dict, surface: dict) -> list[str]:
         elif surface[key] > want:
             diffs.append(f"{surface[key]} {key}, pinned {want}")
     pinned = pin.get("tools")
-    pinned = set(pinned) if isinstance(pinned, list) else set()
-    extra = sorted(set(surface["tools"]) - pinned)
-    if extra:
-        diffs.append("tools not in the pin: " + " ".join(extra))
+    if not isinstance(pinned, dict):
+        diffs.append("the pin has no per-entry tools map")
+        pinned = {}
+    for entry, have in sorted(surface["tools"].items()):
+        if entry not in pinned:
+            diffs.append(f"new entry {entry} (tools {' '.join(have) or 'none'})")
+            continue
+        want = pinned[entry] if isinstance(pinned[entry], list) else []
+        extra = sorted(set(have) - set(want))
+        if extra:
+            diffs.append(f"{entry}: tools not in the pin: " + " ".join(extra))
     if surface["hooksMcpSha256"] != pin.get("hooksMcpSha256"):
         diffs.append("hooks/MCP declarations differ from the pin")
     return diffs
@@ -634,8 +729,9 @@ def surface_report(row: dict, repo: str, installs: list[dict], installed: bool) 
     if surface is None:
         return f"{row['id']}: surface unknown ({reason})", [f"surface unknown ({reason})"]
     match = "matches" if surface["hooksMcpSha256"] == pin.get("hooksMcpSha256") else "differs from"
+    union = sorted({t for have in surface["tools"].values() for t in have})
     line = (f"{row['id']}: {surface['agents']} agents, {surface['skills']} skills, "
-            f"tools {' '.join(surface['tools']) or 'none'}, hooks/MCP hash {match} pin")
+            f"tools {' '.join(union) or 'none'}, hooks/MCP hash {match} pin")
     return line, surface_diff(pin, surface)
 
 
@@ -749,8 +845,14 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     if action == "install" and installed:
         return "skipped", f"{eid}: already installed"
     pinned = has_pin(row)
+    pid = "@".join(row_plugin(row)) if pinned else ""
     if pinned:
-        line, diffs = surface_report(row, repo, installs, installed)
+        if action == "update":  # read what the update would bring: refresh the clone, then check it
+            mp_name = mp["name"] if isinstance(mp, dict) else row_plugin(row)[1]
+            ok, detail = run_argv(["claude", "plugin", "marketplace", "update", mp_name], repo)
+            if not ok:
+                return "failed", f"{eid}: marketplace update failed ({detail}). Retry: {retry_line(eid, action)}"
+        line, diffs = surface_report(row, repo, installs, False)
         say(line)
         if diffs:
             say(f"{eid}: surface beyond the pin: {'; '.join(diffs)}")
@@ -766,10 +868,12 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
         after = detected(row, repo, read_installs()[0])
         if not after:
             return "failed", f"{eid}: {action} exited 0 but the engine is still not detected. Retry: {retry_line(eid, action)}"
-    if pinned and action == "update":  # the new copy is on disk now; say so if it grew
+    if pinned:  # the copy on disk is what runs: check it, whatever the clone said before
         _, diffs = surface_report(row, repo, read_installs()[0], True)
         if diffs:
-            return "done", f"{eid}: update ok, but the surface is now beyond the pin: {'; '.join(diffs)}"
+            off, off_detail = run_argv(["claude", "plugin", "disable", pid, "--scope", "project"], repo)
+            state = "disabled it" if off else f"could not disable it ({off_detail}); run: claude plugin disable {pid} --scope project"
+            return "failed", f"{eid}: {action} left a surface beyond the pin, {state}: {'; '.join(diffs)}"
     return "done", f"{eid}: {action} ok"
 
 

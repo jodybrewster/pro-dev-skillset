@@ -789,7 +789,9 @@ checks.registry = (m) => {
       else {
         for (const k of ["agents", "skills"])
           if (!Number.isInteger(sf[k]) || sf[k] < 0) failures.push(`engines.json ${id}: surface.${k} must be a non-negative integer`);
-        if (!Array.isArray(sf.tools) || sf.tools.some((t) => typeof t !== "string")) failures.push(`engines.json ${id}: surface.tools must be an array of strings`);
+        if (!sf.tools || typeof sf.tools !== "object" || Array.isArray(sf.tools)
+          || Object.values(sf.tools).some((v) => !Array.isArray(v) || v.some((t) => typeof t !== "string")))
+          failures.push(`engines.json ${id}: surface.tools must map each agent, skill and command path to an array of strings`);
         if (typeof sf.hooksMcpSha256 !== "string" || !/^[0-9a-f]{64}$/.test(sf.hooksMcpSha256))
           failures.push(`engines.json ${id}: surface.hooksMcpSha256 must be 64 hex characters`);
       }

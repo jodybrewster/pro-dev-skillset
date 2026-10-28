@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """Resolve the inputs for an Elephant-Goldfish review of a spec or plan.
 
-    goldfish.py resolve --stage spec|plan --target PATH [--repo ROOT] [--accept]
+    goldfish.py resolve --stage spec|plan --target PATH [--repo ROOT] [--accept --token HEX]
     goldfish.py init [--repo ROOT]
 
 `resolve` prints JSON: target, semanticTarget, reviewers, standards, context and
 newOrChanged. It reads the repo's `.egm/goldfish.json` when present and the plugin's
 own defaults otherwise. Every path it prints must be a regular file inside the repo
 (no symlink in any component, never under .git/); reviewers and standards from a
-config must also sit under .egm/. A violation exits 2 with the entry named.
+config must be an EGM shortname or sit under .egm/. A root reading-list doc (REVIEW.md,
+CLAUDE.md, AGENTS.md) may be a symlink when it resolves to a regular file inside the
+repo; it is listed once under its resolved path. A violation exits 2 with the entry named.
 `init` is the only writer: it creates files under .egm/ and never overwrites.
 The sha256 of each custom reviewer and standard is kept in <git dir>/egm-seen.json
-so a changed file is listed before the run. Standard library only, no network.
+so a changed file is listed before the run. `.egm/goldfish.json` is tracked the same way.
+`resolve` prints `acceptToken`, the sha256 of the printed newOrChanged list; `--accept`
+records the files only when `--token` matches the current list. Standard library only, no network.
 """
 from __future__ import annotations
 
@@ -28,10 +32,21 @@ import tempfile
 PLUGIN = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 STARTERS = os.path.join(PLUGIN, "goldfish")
 CAP = 64 * 1024
-SHORTNAME = re.compile(r"^[a-z0-9_-]+$")
 SEEN = "egm-seen.json"
 STAGES = ("spec", "plan")
 ROOT_DOCS = ("REVIEW.md", "CLAUDE.md", "AGENTS.md")
+CONFIG_REL = ".egm/goldfish.json"
+FIELD_CAP = 120
+# EGM's own shortnames. Anything else must be a path under .egm/.
+REVIEWER_NAMES = frozenset({
+    "zoom_out", "design_critic", "structural", "style", "comprehension",
+    "implementation_readiness", "codebase_details",
+})
+STANDARD_NAMES = frozenset({
+    "zoom-out-standard", "feature-spec-standard", "implementation-readiness-standard",
+    "heilmeier-standard", "re-implementation-standard",
+})
+CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
 
 
 class Refuse(Exception):
@@ -96,11 +111,33 @@ def check_rel(repo: str, entry: object, label: str, under: str | None = None) ->
     return "/".join(parts)
 
 
-def check_name(repo: str, entry: object, label: str) -> str:
-    """A reviewer or standard: an EGM shortname or a path under .egm/."""
-    if isinstance(entry, str) and SHORTNAME.match(entry):
+def check_name(repo: str, entry: object, label: str, known: frozenset) -> str:
+    """A reviewer or standard: one of EGM's shortnames in `known` or a path under .egm/."""
+    if isinstance(entry, str) and entry in known:
         return entry
     return check_rel(repo, entry, label, under=".egm")
+
+
+def check_root_doc(repo: str, name: str) -> str:
+    """A root reading-list doc. A symlink is fine when it resolves to a regular file inside the repo.
+
+    Returns the repo-relative path of the resolved file so a link and its target list once.
+    """
+    path = os.path.join(repo, name)
+    try:
+        st = os.lstat(path)
+    except OSError as exc:
+        raise Refuse(f"reading list: {name!r} cannot be inspected ({exc})")
+    if not stat.S_ISLNK(st.st_mode):
+        return check_rel(repo, name, "reading list")
+    real = os.path.realpath(path)
+    if not (real + os.sep).startswith(repo + os.sep):
+        raise Refuse(f"reading list: {name!r} is a symlink that resolves outside the repo")
+    rel = os.path.relpath(real, repo)
+    try:
+        return check_rel(repo, rel, "reading list")
+    except Refuse as exc:
+        raise Refuse(f"reading list: {name!r} is a symlink and its target is refused ({exc})")
 
 
 def check_starter(path: str, label: str) -> str:
@@ -155,7 +192,7 @@ def default_stage(stage: str) -> dict:
 
 
 def load_config(repo: str) -> dict | None:
-    rel = ".egm/goldfish.json"
+    rel = CONFIG_REL
     if not os.path.lexists(os.path.join(repo, ".egm", "goldfish.json")):
         return None
     check_rel(repo, rel, rel)
@@ -185,13 +222,13 @@ def stage_from_config(repo: str, cfg: dict, stage: str) -> dict | None:
         raise Refuse(f"{label}.standards: must be an object")
     if not isinstance(context, list):
         raise Refuse(f"{label}.context: must be a list")
-    out_rev = [check_name(repo, r, f"{label}.reviewers") for r in reviewers]
+    out_rev = [check_name(repo, r, f"{label}.reviewers", REVIEWER_NAMES) for r in reviewers]
     out_std = {}
     for k, v in standards.items():
-        key = check_name(repo, k, f"{label}.standards key")
+        key = check_name(repo, k, f"{label}.standards key", REVIEWER_NAMES)
         if key not in out_rev:
             raise Refuse(f"{label}.standards: {k!r} is not in reviewers")
-        out_std[key] = check_name(repo, v, f"{label}.standards[{k}]")
+        out_std[key] = check_name(repo, v, f"{label}.standards[{k}]", STANDARD_NAMES)
     out_ctx = [check_rel(repo, c, f"{label}.context") for c in context]
     return {"reviewers": out_rev, "standards": out_std, "context": out_ctx, "starter": False}
 
@@ -246,15 +283,30 @@ def save_seen(gdir: str, seen: dict) -> None:
         raise
 
 
-def last_author(repo: str, rel: str) -> str:
+def clean(value: str) -> str:
+    """Make a value safe to print in a prompt: no control characters, at most FIELD_CAP characters."""
+    text = " ".join(CONTROL.sub(" ", value).split())
+    return text if len(text) <= FIELD_CAP else text[: FIELD_CAP - 3] + "..."
+
+
+def last_commit(repo: str, rel: str) -> tuple[str, str]:
+    """Return (author as 'name <email>', short hash) of the last commit touching rel."""
     try:
         out = subprocess.run(
-            ["git", "log", "-1", "--format=%an", "--", rel], cwd=repo, capture_output=True, text=True, timeout=10
+            ["git", "log", "-1", "--format=%an%x00%ae%x00%h", "--", rel],
+            cwd=repo, capture_output=True, text=True, timeout=10,
         )
     except (OSError, subprocess.SubprocessError):
-        return "unknown"
-    name = out.stdout.strip() if out.returncode == 0 else ""
-    return name or "uncommitted"
+        return "unknown", ""
+    parts = out.stdout.strip("\n").split("\0") if out.returncode == 0 else []
+    if len(parts) != 3 or not parts[0]:
+        return "uncommitted", ""
+    return clean(f"{clean(parts[0])} <{clean(parts[1])}>"), clean(parts[2])
+
+
+def token_for(changed: list) -> str:
+    blob = json.dumps(changed, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def digest(repo: str, rel: str) -> str:
@@ -297,18 +349,34 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         names.append(sibling("spec.md"))
     names.extend(ROOT_DOCS)
     for name in names:
-        if os.path.lexists(os.path.join(repo, name)):
+        if not os.path.lexists(os.path.join(repo, name)):
+            continue
+        if name in ROOT_DOCS:
+            reading.append(check_root_doc(repo, name))
+        else:
             reading.append(check_rel(repo, name, "reading list"))
     context = list(dict.fromkeys(reading + sect["context"]))
 
-    custom = sorted(
-        {p for p in sect["reviewers"] + list(sect["standards"].values()) if not SHORTNAME.match(p) and not os.path.isabs(p)}
-    )
+    custom = {
+        p for p in sect["reviewers"] + list(sect["standards"].values())
+        if p not in REVIEWER_NAMES and p not in STANDARD_NAMES and not os.path.isabs(p)
+    }
+    if cfg is not None:
+        custom.add(CONFIG_REL)
+    custom = sorted(custom)
     gdir = git_dir(repo)
     seen = load_seen(gdir)
     hashes = {p: digest(repo, p) for p in custom}
-    changed = [{"path": p, "author": last_author(repo, p)} for p in custom if seen.get(p) != hashes[p]]
+    changed = []
+    for p in custom:
+        if seen.get(p) != hashes[p]:
+            author, commit = last_commit(repo, p)
+            changed.append({"path": clean(p), "author": author, "commit": commit, "sha256": hashes[p]})
     if args.accept:
+        if not args.token:
+            raise Refuse("--accept needs --token <acceptToken from the previous resolve>")
+        if args.token != token_for(changed):
+            raise Refuse("--accept token does not match the current newOrChanged list; run resolve again and ask again")
         seen.update(hashes)
         save_seen(gdir, seen)
         changed = []
@@ -320,6 +388,7 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         "standards": sect["standards"],
         "context": context,
         "newOrChanged": changed,
+        "acceptToken": token_for(changed),
     }, indent=2))
     return 0
 
@@ -432,6 +501,7 @@ def main(argv: list[str]) -> int:
     r.add_argument("--target", required=True)
     r.add_argument("--repo")
     r.add_argument("--accept", action="store_true")
+    r.add_argument("--token")
     i = sub.add_parser("init")
     i.add_argument("--repo")
     try:

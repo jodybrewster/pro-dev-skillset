@@ -881,17 +881,68 @@
       },
       "surface": {
         "agents": 9,
+        "hooksMcpSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "skills": 7,
-        "tools": [
-          "Agent",
-          "Bash",
-          "Edit",
-          "Glob",
-          "Grep",
-          "Read",
-          "Write"
-        ],
-        "hooksMcpSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+        "tools": {
+          ".claude-plugin/agents/bootstrap_orchestrator.md": [
+            "Agent",
+            "Bash",
+            "Edit",
+            "Glob",
+            "Grep",
+            "Read",
+            "Write"
+          ],
+          ".claude-plugin/agents/codebase_details.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/comprehension.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/design_critic.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/implementation_readiness.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/structural.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/style.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          ".claude-plugin/agents/synthesizer.md": [
+            "Agent",
+            "Glob",
+            "Grep",
+            "Read",
+            "Write"
+          ],
+          ".claude-plugin/agents/zoom_out.md": [
+            "Glob",
+            "Grep",
+            "Read"
+          ],
+          "skills/egm-bootstrap": [],
+          "skills/egm-brainstorm": [],
+          "skills/egm-draft": [],
+          "skills/egm-drift-report": [],
+          "skills/egm-resolve": [],
+          "skills/egm-review": [],
+          "skills/egm-review-loop": []
+        }
       },
       "why": "Elephant-Goldfish review loop: fresh-context reviewer subagents check a spec or plan and the fixes are applied round by round.",
       "note": "Third-party plugin from its own marketplace, registered by this row's marketplace step (a user-wide write, ADR-0007) and installed only while its surface stays inside the pinned one. Never a manifest dependency (PR 44). Run pro-dev.py surface egm on a reviewed install to refill the pin.",

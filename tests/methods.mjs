@@ -88,7 +88,7 @@ t("no method installed prints nothing", () => {
 t("pro-egm with egm@egm prints spec and plan offers with the target filled", () => {
   setMarket(GOOD); setList([core(), egm(), install("egm@egm")]);
   const s = run("spec", { target: "intent/a/spec.md" });
-  must(s.code === 0 && s.out.startsWith("egm: "), s.out);
+  must(s.code === 0 && s.out.startsWith("pro-egm: "), s.out);
   must(s.out.includes("-> /pro-egm:goldfish intent/a/spec.md --stage spec"), s.out);
   must(s.out.includes("several subagents on the session model"), s.out);
   must(s.out.trim().split("\n").length === 1, s.out);
@@ -102,7 +102,7 @@ t("pro-egm prints nothing for intent and review", () => {
 t("pro-egm without egm@egm prints the needs line", () => {
   setMarket(GOOD); setList([core(), egm()]);
   const r = run("spec");
-  must(r.out.trim() === "egm: needs egm@egm: run /pro-dev install", r.out);
+  must(r.out.trim() === "pro-egm needs egm@egm: run /pro-dev install", r.out);
   must(run("intent").out === "", "intent should print nothing");
 });
 t("a disabled egm@egm counts as not installed", () => {

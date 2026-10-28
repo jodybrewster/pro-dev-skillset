@@ -11,7 +11,7 @@ allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git
 - Working tree: !`git status --short --branch`
 - Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null`
 - Intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -10`
-- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage review`
+- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage review; true`
 
 Target: $ARGUMENTS
 
@@ -42,7 +42,7 @@ For a large or risky diff, hand the passes to the `reviewer` subagent with the d
 ### 4. Offer spec methods
 
 If "Spec methods" in Context lists lines, offer each one once as a yes or no question.
-A line reads `<method>: <when> -> <offer>`; a line with `needs <plugin>` means that method is not installed, so say so and move on.
+A line reads `<method>: <when> -> <offer>`; a line `<method> needs <plugin>: run /pro-dev install` means that method is not installed, so say so and move on.
 On yes, run the offer; on no, carry on.
 With nothing listed, skip this step.
 

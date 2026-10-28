@@ -1,5 +1,5 @@
 {
-  "method": "egm",
+  "method": "pro-egm",
   "requires": "egm@egm",
   "handoffs": [
     {

@@ -176,7 +176,7 @@ def main() -> int:
         seen.add(method)
         name = one_line(method)
         if requires is not None and requires not in live_ids:
-            print("%s: needs %s: run /pro-dev install" % (name, requires))
+            print("%s needs %s: run /pro-dev install" % (name, requires))
             continue
         for h in mine:
             print("%s: %s -> %s" % (name, one_line(h["when"]),

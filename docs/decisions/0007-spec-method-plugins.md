@@ -27,8 +27,9 @@ A pro-dev glue plugin holds the bridge skill, any command and the `sdlc-method.j
 ADR-0006's registry row gains an optional `marketplace` object, `{ "name", "source" }` with `source` as `owner/repo`.
 `/pro-dev` registers that marketplace before the row's install and refuses when a marketplace of that name points at a different source.
 This is a user-wide write, accepted for rows that name a marketplace.
-Before installing a third-party plugin `/pro-dev` shows what it carries.
-`/pro-dev check` names one that gained a hook or MCP server since the last run.
+Such a row pins the surface it was reviewed with: the tools of each agent, skill and command plus a hash of every hook, MCP, LSP and `!` line declaration.
+`/pro-dev` installs or updates the plugin only while the copy it is about to install stays inside that pin, checks the installed copy again afterwards and disables it when it does not.
+`/pro-dev check` names an installed plugin that has grown past its pin; raising a pin is a reviewed registry change.
 Such a row may default to installed, since installing its glue plugin is the opt-in.
 
 ## Consequences

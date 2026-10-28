@@ -58,11 +58,30 @@ if argv[:2] == ["plugin", "update"] and nv and lst and os.path.exists(lst):
         if e.get("id") == argv[2]:
             e["version"] = nv
     json.dump(data, open(lst, "w"))
-uw = os.environ.get("FAKE_UPDATE_WRITE")
-if argv[:2] == ["plugin", "update"] and uw:
-    path, content = uw.split("|", 1)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    open(path, "w").write(content)
+def write_spec(name):
+    spec = os.environ.get(name)
+    if spec:
+        path, content = spec.split("|", 1)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, "w").write(content)
+if argv[:2] == ["plugin", "update"]:
+    write_spec("FAKE_UPDATE_WRITE")
+if argv[:3] == ["plugin", "marketplace", "update"]:
+    write_spec("FAKE_MPUPDATE_WRITE")
+ip = os.environ.get("FAKE_INSTALL_PATH")
+if argv[:2] == ["plugin", "install"]:
+    write_spec("FAKE_INSTALL_WRITE")
+    if ip and lst:
+        data = json.load(open(lst)) if os.path.exists(lst) else []
+        data.append({"id": argv[2], "scope": "project", "projectPath": os.getcwd(), "installPath": ip,
+                     "version": "1.0.0", "enabled": True})
+        json.dump(data, open(lst, "w"))
+if argv[:2] == ["plugin", "disable"] and lst and os.path.exists(lst):
+    data = json.load(open(lst))
+    for e in data:
+        if e.get("id") == argv[2]:
+            e["enabled"] = False
+    json.dump(data, open(lst, "w"))
 sys.exit(0)
 `;
 
@@ -132,8 +151,10 @@ function buildSandbox(pluginRoot) {
   const entry = (name, scope, projectPath, extra = {}) => ({
     id: `${name}@${MS}`, scope, ...(projectPath ? { projectPath } : {}), ...extra,
   });
+  let installTarget = null; // where the fake `claude plugin install` says the plugin landed
   const env = (bin, extra = {}) => ({
-    PATH: `${bins[bin ?? "both"]}:${tools}`, HOME: home, FAKE_LOG: logPath, FAKE_PLUGIN_LIST: listPath, ...extra,
+    PATH: `${bins[bin ?? "both"]}:${tools}`, HOME: home, FAKE_LOG: logPath, FAKE_PLUGIN_LIST: listPath,
+    ...(installTarget ? { FAKE_INSTALL_PATH: installTarget } : {}), ...extra,
   });
   const run = (args, { bin, extra, cwd } = {}) => {
     const r = spawnSync("python3", [script, "--repo", repo, ...args], {
@@ -158,7 +179,7 @@ function buildSandbox(pluginRoot) {
   const answersPath = join(repo, ".claude", "pro-dev.json");
   const installedFile = join(home, ".claude", "plugins", "installed_plugins.json");
   return { root, home, repo, tools, bins, run, status, engine, calls, setPlugins, entry, env, logPath, listPath,
-    answersPath, installedFile, nudge, get script() { return script; }, useRows };
+    answersPath, installedFile, nudge, get script() { return script; }, useRows, setInstallTarget: (p) => { installTarget = p; } };
 }
 
 const ok = (detail = "") => ({ ok: true, detail });
@@ -184,9 +205,13 @@ function egmRow(extra = {}) {
   };
 }
 
-// a plugin folder: two agents, one skill, one hook file
+// a plugin folder: two agents, one skill, one hook file; commands are { name: { allowed, body } }
 function writePlugin(dir, { agents = { a: "Read, Grep", b: "Read, Glob" }, skills = { s: null }, hooks = { hooks: {} },
-  manifest = {} } = {}) {
+  manifest = {}, commands = {} } = {}) {
+  for (const [n, c] of Object.entries(commands)) {
+    mkdirSync(join(dir, "commands"), { recursive: true });
+    writeFileSync(join(dir, "commands", `${n}.md`), `---\ndescription: ${n}\n${c.allowed ? `allowed-tools: ${c.allowed}\n` : ""}---\n${c.body ?? "body"}\n`);
+  }
   mkdirSync(join(dir, ".claude-plugin"), { recursive: true });
   writeFileSync(join(dir, ".claude-plugin", "plugin.json"), JSON.stringify({ name: "egm", ...manifest }));
   for (const [n, tools] of Object.entries(agents)) {
@@ -218,6 +243,7 @@ function egmWorld(s, { plugin = {}, rowExtra = {}, source = "./", pin = true } =
   const inst = join(s.root, "mp", "inst");
   writePlugin(inst, plugin);
   s.useRows([egmRow()]);
+  s.setInstallTarget(inst);
   s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
   let surface = null;
   if (pin) {
@@ -358,7 +384,8 @@ const CASES = [
       const keys = Object.keys(surface).sort().join();
       if (keys !== "agents,hooksMcpSha256,skills,tools") return bad(`keys ${keys}`);
       if (!/^[0-9a-f]{64}$/.test(surface.hooksMcpSha256)) return bad(`hash ${surface.hooksMcpSha256}`);
-      return same(surface.tools, ["Bash(git status:*)", "Glob", "Grep", "Read", "Write"]) ? ok() : bad(`tools ${JSON.stringify(surface.tools)}`);
+      const want = { "agents/a.md": ["Grep", "Read"], "agents/b.md": ["Glob", "Read"], "skills/s": ["Bash(git status:*)", "Write"] };
+      return same(surface.tools, want) ? ok() : bad(`tools ${JSON.stringify(surface.tools)}`);
     },
   },
   {
@@ -375,7 +402,7 @@ const CASES = [
     run: (s) => {
       const { clone } = egmWorld(s);
       writePlugin(clone, { agents: { a: "Read, Grep, Bash", b: "Read, Glob" } });
-      const g = growth(s, "tools not in the pin: Bash");
+      const g = growth(s, "agents/a.md: tools not in the pin: Bash");
       if (!g.ok) return g;
       const e = s.engine(s.status(), "egm");
       return e.needsQuestion === true && e.wantsInstall === false && e.surfaceProblem?.length ? ok() : bad(`status ${JSON.stringify(e)}`);
@@ -394,7 +421,7 @@ const CASES = [
     run: (s) => {
       const { clone } = egmWorld(s);
       writePlugin(clone, { agents: { a: "Read, Grep", b: null } });
-      return growth(s, "tools not in the pin: *");
+      return growth(s, "agents/b.md: tools not in the pin: *");
     },
   },
   {
@@ -465,18 +492,185 @@ const CASES = [
     },
   },
   {
-    id: "surface/update-then-check-reports-growth",
+    id: "surface/update-of-a-grown-install-is-disabled-and-fails",
     run: (s) => {
       const { inst } = egmWorld(s);
       s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
       if (s.engine(s.status(), "egm").surfaceGrew) return bad("grew before the update");
       const grown = "---\nname: c\ntools: Bash\n---\n";
       const r = s.run(["run", "egm", "update"], { extra: { FAKE_UPDATE_WRITE: `${join(inst, "agents", "c.md")}|${grown}` } });
-      if (r.code !== 0 || !r.out.includes("now beyond the pin")) return bad(`update output: ${r.out}`);
-      const e = s.engine(s.status(), "egm");
-      if (!e.surfaceGrew?.join().includes("Bash")) return bad(`status ${JSON.stringify(e)}`);
-      const again = s.run(["run", "egm", "update"]);
-      return again.code === 1 && /beyond the pin/.test(again.out) ? ok() : bad(`second update ran: ${again.out}`);
+      if (r.code === 0) return bad(`exit 0: ${r.out}`);
+      if (!r.out.includes("beyond the pin") || !r.out.includes("agents/c.md")) return bad(`output: ${r.out}`);
+      const off = s.calls("claude").map((c) => c.argv.join(" "));
+      if (!off.includes("plugin disable egm@egm --scope project")) return bad(`no disable: ${JSON.stringify(off)}`);
+      const live = json(s.listPath).filter((e) => e.id === "egm@egm" && e.enabled !== false);
+      return live.length === 0 ? ok() : bad(`still enabled: ${JSON.stringify(live)}`);
+    },
+  },
+  {
+    id: "surface/update-refreshes-the-clone-and-runs-when-it-matches",
+    run: (s) => {
+      const { inst } = egmWorld(s);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
+      const r = s.run(["run", "egm", "update"]);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return same(a, ["plugin marketplace update egm", "plugin update egm@egm --scope project"]) ? ok() : bad(`calls ${JSON.stringify(a)}`);
+    },
+  },
+  {
+    id: "surface/update-blocked-by-a-grown-clone-never-runs-update",
+    run: (s) => {
+      const { clone, inst } = egmWorld(s);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
+      // the clone only grows when the marketplace refresh runs, as it does for real
+      const grown = "---\nname: c\ntools: Bash\n---\n";
+      const r = s.run(["run", "egm", "update"], { extra: { FAKE_MPUPDATE_WRITE: `${join(clone, "agents", "c.md")}|${grown}` } });
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      if (r.code === 0) return bad(`exit 0: ${r.out}`);
+      if (a.some((x) => x.startsWith("plugin update "))) return bad(`update ran: ${JSON.stringify(a)}`);
+      if (a.some((x) => x.startsWith("plugin disable"))) return bad(`disabled: ${JSON.stringify(a)}`);
+      if (!a.includes("plugin marketplace update egm")) return bad(`no refresh: ${JSON.stringify(a)}`);
+      return /new entry agents\/c\.md/.test(r.out) && /not updated/.test(r.out) ? ok() : bad(`output: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/update-with-an-unreadable-clone-is-a-question",
+    run: (s) => {
+      const { clone, inst } = egmWorld(s);
+      s.setPlugins([s.entry("pro-egm", "project", s.repo), { id: "egm@egm", scope: "project", projectPath: s.repo, installPath: inst }]);
+      rmSync(join(clone, ".claude-plugin", "plugin.json"));
+      const r = s.run(["run", "egm", "update"]);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      return r.code !== 0 && /surface unknown/.test(r.out) && !a.some((x) => x.startsWith("plugin update ")) ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/install-that-drifts-from-the-clone-is-disabled-and-fails",
+    run: (s) => {
+      const { inst } = egmWorld(s);
+      const grown = "---\nname: c\ntools: Bash\n---\n";
+      const r = s.run(["run", "egm", "install"], { extra: { FAKE_INSTALL_WRITE: `${join(inst, "agents", "c.md")}|${grown}` } });
+      if (r.code === 0) return bad(`exit 0: ${r.out}`);
+      const a = s.calls("claude").map((c) => c.argv.join(" "));
+      if (!a.includes("plugin disable egm@egm --scope project")) return bad(`no disable: ${JSON.stringify(a)}`);
+      const live = json(s.listPath).filter((e) => e.id === "egm@egm" && e.enabled !== false);
+      return live.length === 0 && r.out.includes("agents/c.md") ? ok() : bad(`still enabled or no name: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/tools-are-pinned-per-entry-not-as-a-union",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { agents: { a: "Read, Grep, Glob", b: "Read" } }); // Glob moved from b to a: same union
+      return growth(s, "agents/a.md: tools not in the pin: Glob");
+    },
+  },
+  {
+    id: "surface/removed-entries-and-tools-are-fine",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { agents: { a: "Read" } });
+      rmSync(join(clone, "agents", "b.md"));
+      const r = s.run(["run", "egm", "install"]);
+      return r.code === 0 && installCalls(s).length === 1 ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/command-allowed-tools-are-in-the-map",
+    run: (s) => {
+      const { surface, clone } = egmWorld(s, { plugin: { commands: { go: { allowed: "Bash(git:*), Read" } } } });
+      if (!same(surface.tools["commands/go.md"], ["Bash(git:*)", "Read"])) return bad(`tools ${JSON.stringify(surface.tools)}`);
+      writePlugin(clone, { commands: { go: { allowed: "Bash(git:*), Read, Write" } } });
+      return growth(s, "commands/go.md: tools not in the pin: Write");
+    },
+  },
+  {
+    id: "surface/command-shell-line-change-moves-the-hash",
+    run: (s) => {
+      const { clone } = egmWorld(s, { plugin: { commands: { go: { allowed: "Read", body: "text\n!echo one" } } } });
+      writePlugin(clone, { commands: { go: { allowed: "Read", body: "text\n!echo two" } } });
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/command-prose-change-does-not-move-the-hash",
+    run: (s) => {
+      const { clone } = egmWorld(s, { plugin: { commands: { go: { allowed: "Read", body: "text\n!echo one" } } } });
+      writePlugin(clone, { commands: { go: { allowed: "Read", body: "other prose\n!echo one" } } });
+      const r = s.run(["run", "egm", "install"]);
+      return r.code === 0 ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/lsp-declarations-are-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, ".lsp.json"), JSON.stringify({ x: { command: "other-lsp" } }));
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/inline-lsp-in-plugin-json-is-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { manifest: { lspServers: { x: { command: "other-lsp" } } } });
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/inline-lsp-in-the-marketplace-entry-is-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, ".claude-plugin", "marketplace.json"), JSON.stringify({
+        plugins: [{ name: "egm", source: "./", lspServers: { x: { command: "other" } } }],
+      }));
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/frontmatter-hooks-in-skill-and-agent-are-counted",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, "skills", "s", "SKILL.md"), "---\nname: s\nhooks:\n  PreToolUse:\n    - command: other\n---\nbody\n");
+      const g = growth(s, "hooks/MCP declarations differ from the pin");
+      if (!g.ok) return g;
+      writePlugin(clone, {});
+      writeFileSync(join(clone, "agents", "a.md"), "---\nname: a\ntools: Read, Grep\nhooks:\n  Stop:\n    - command: other\n---\nbody\n");
+      return growth(s, "hooks/MCP declarations differ from the pin");
+    },
+  },
+  {
+    id: "surface/custom-skills-and-agents-paths-are-read",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { manifest: { skills: ["./extra"], agents: ["./more"] } });
+      mkdirSync(join(clone, "extra", "z"), { recursive: true });
+      writeFileSync(join(clone, "extra", "z", "SKILL.md"), "---\nname: z\nallowed-tools: Bash\n---\n");
+      mkdirSync(join(clone, "more"), { recursive: true });
+      writeFileSync(join(clone, "more", "m.md"), "---\nname: m\n---\n");
+      const r = s.run(["run", "egm", "install"]);
+      if (r.code === 0) return bad(`installed: ${r.out}`);
+      return /new entry extra\/z \(tools Bash\)/.test(r.out) && /new entry more\/m\.md \(tools \*\)/.test(r.out) ? ok() : bad(`output: ${r.out}`);
+    },
+  },
+  {
+    id: "surface/custom-path-outside-the-plugin-is-unknown",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writePlugin(clone, { manifest: { skills: "../../elsewhere" } });
+      return growth(s, "surface unknown");
+    },
+  },
+  {
+    id: "surface/last-key-wins-and-quoted-keys-are-read",
+    run: (s) => {
+      const { clone } = egmWorld(s);
+      writeFileSync(join(clone, "agents", "a.md"), "---\nname: a\ntools: Read\ntools: Read, Grep, Bash\n---\nbody\n");
+      const g = growth(s, "agents/a.md: tools not in the pin: Bash");
+      if (!g.ok) return g;
+      writeFileSync(join(clone, "agents", "a.md"), "---\nname: a\n\"tools\": Read, Grep, Write\n---\nbody\n");
+      return growth(s, "agents/a.md: tools not in the pin: Write");
     },
   },
   {

@@ -12,7 +12,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Author: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
 - Existing intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -20`
-- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage intent`
+- Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage intent; true`
 
 The idea: $ARGUMENTS
 
@@ -25,7 +25,7 @@ It says what and why, never how.
 ### 0. Offer spec methods
 
 If "Spec methods" in Context lists lines, offer each one once as a yes or no question.
-A line reads `<method>: <when> -> <offer>`; a line with `needs <plugin>` means that method is not installed, so say so and move on.
+A line reads `<method>: <when> -> <offer>`; a line `<method> needs <plugin>: run /pro-dev install` means that method is not installed, so say so and move on.
 On yes, run the offer and stop; on no, carry on.
 With nothing listed, skip this step.
 

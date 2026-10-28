@@ -44,7 +44,7 @@ The status JSON lists:
 
 - `plugins`: each pro-dev-skillset install with scope, version, `latest`, `covers` (true when its scope is user or its folder is this repo or inside it) and `lagging`.
 - `engines`: each registry row with `state` (`installed`, `missing`, `declined` or `not-applicable`), `needsQuestion`, `why` and `bridges`.
-- `engines` rows may also carry `marketplaceProblem` (the marketplace registered under the row's name has another source, or cannot be read), `surfaceGrew` (an installed plugin has more agents, skills, tools or hooks than its registry pin, or its surface cannot be read) and `surfaceProblem` (the same for a plugin about to be installed, which then has `needsQuestion` true and `wantsInstall` false).
+- `engines` rows may also carry `marketplaceProblem` (the marketplace registered under the row's name has another source, or cannot be read), `surfaceGrew` (an installed plugin has more agents, skills, tools, hooks or LSP servers than its registry pin, or its surface cannot be read) and `surfaceProblem` (the same for a plugin about to be installed, which then has `needsQuestion` true and `wantsInstall` false).
 - `aiSdlcInstallPath`: where pro-ai-sdlc is installed, or null.
 - `starterShim`: installs of the old `pro-starter` that cover this repo.
 - `staleCount`: installs whose project folder no longer exists.
@@ -96,7 +96,7 @@ Print a short report, then one line naming the next command to run.
    It installs every default row that is missing and every optional row answered yes, skips what is installed, records `registryVersion` in `.claude/pro-dev.json` and lists each failure with the command to retry.
    A failure does not stop the run; report each one.
    A row that names a marketplace may register it with `claude plugin marketplace add`; the script prints a line saying so, which is a user-wide change that stays after the plugin is removed.
-   Before it installs a plugin row that pins a surface, it prints one surface line (agents, skills, tools and whether the hooks and MCP hash matches the pin).
+   Before it installs a plugin row that pins a surface, it prints one surface line (agents, skills, tools and whether the hooks, MCP and LSP hash matches the pin; tools are pinned per agent, skill and command).
    Relay that line, any `surface beyond the pin` difference line and any marketplace mismatch exactly as printed.
    A row beyond its pin, or whose surface cannot be read, is not installed: tell the person which row it is and that the pin in `registry/engines.json` is reviewed before it is raised.
    Never install such a row another way.
@@ -120,7 +120,8 @@ Print each step as it finishes.
    It updates every installed engine, installs default rows now missing and optional rows answered yes.
    It also records `registryVersion`.
    Relay surface lines, difference lines and marketplace mismatches exactly as printed, as in install step 3.
-   An update of a pinned plugin that finishes with "the surface is now beyond the pin" is listed with the failures in step 6.
+   An update of a pinned plugin first runs `claude plugin marketplace update` and reads the refreshed clone; a clone beyond the pin is a question and the update never runs.
+   After any install or update the installed copy is read again; one beyond the pin is disabled at project scope and listed with the failures in step 6.
 5. If `staleCount` is above zero, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale`, show the list and ask once whether to remove them.
    On yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale --remove`.
    It writes a backup of `installed_plugins.json` beside the file and removes only pro-dev-skillset entries whose folder is gone.
