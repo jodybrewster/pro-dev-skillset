@@ -29,7 +29,7 @@ agent-skills measures three things we do not:
 - behavioral evals that run headless `claude` in a throwaway repo built from fixtures and grade the trace against written expectations, including pressure cases (deadline, sunk cost, authority);
 - plugin evals under `claude plugin eval`, scored with and without the plugin, as pairs of a case where a skill must fire and one where it must stay quiet.
 
-Their README shows why it matters: one clause in a description took the review skill from 7 of 27 fires to 21 of 27, and nothing short of a real run would have shown it.
+Their README shows why it matters: one clause in a description took the review skill from 7 of 27 fires to 21 of 27. Nothing short of a real run would have shown it.
 
 ## Proposed outcome
 

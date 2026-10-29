@@ -49,7 +49,7 @@ Steps 2 and 3, step 4 and step 5 touch disjoint files after step 1, so three Son
 
 ## Risks
 
-- The lexical rank-1 rate on prompts written for an LLM router may be low; the floor is set from the measured number, and a low number is reported as a finding rather than gamed by editing prompts.
+- The lexical rank-1 rate on prompts written for an LLM router may be low; the floor is set from the measured number. A low number is reported as a finding rather than gamed by editing prompts.
 - Forked skills with near-identical descriptions may trip the collision check on day one; they go in the allow list with a reason.
 - Skill firing is stochastic; plugin eval numbers are read from the report and Δ, never as a CI pass or fail.
 
