@@ -138,6 +138,23 @@ The container runs with `--privileged` because the eval sandbox uses bubblewrap,
 `--include-git` still tries the git cases on macOS without Docker; they fail there.
 Pin the model and note the Claude Code version whenever you quote numbers.
 
+## The loop test
+
+`node tests/loop.mjs` runs the whole pro-ai-sdlc loop with pro-egm in the same Linux container.
+It installs both plugins from the GitHub marketplace at the current branch (push it first, or pass `--ref`), so `methods.py` sees a trusted install and offers the Goldfish review.
+It scaffolds the tiny-tasks fixture with an accepted intent and a local `origin`, then runs `/spec`, `/plan` and `/execute` as real `claude -p` sessions.
+Between them it accepts the spec and approves the plan the way a person would, by editing the status line and committing.
+
+```bash
+export ANTHROPIC_API_KEY=...   # GH_TOKEN too, else it asks gh for one: the marketplace repo is private
+node tests/loop.mjs
+```
+
+It checks that `/spec` and `/plan` offer the Goldfish review and commit their file, that `/execute` builds on its own branch and worktree without touching main, pushes, changes `src/` and `test/`, adds tests that pass and fills in the plan's Done section.
+Google's `egm@egm` is not installed, so the offer is the "needs egm@egm" line and the review itself is not run.
+Transcripts and `checks.json` land in `tests/loop-results/`, which git ignores.
+The first run on 2026-10-29 passed 17 of 17 checks for $1.35 on Sonnet: `/execute` built due dates in four test-first commits and the suite went from 3 tests to 16.
+
 ## Measured changes
 
 ### 2026-10-29: four discipline skills ([intent](../intent/2026-10-29-skill-firing/))
