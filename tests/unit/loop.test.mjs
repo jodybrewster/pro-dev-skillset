@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseArgs, offersGoldfish, setStatus, passCount } from "../loop.mjs";
+import { parseArgs, offersGoldfish, offersReview, ranGoldfish, setStatus, passCount } from "../loop.mjs";
 
 test("parseArgs reads the ref, cap and model", () => {
-  assert.deepEqual(parseArgs([]), { ref: null, maxCostUsd: 8, model: "sonnet", inside: false, out: null });
+  assert.deepEqual(parseArgs([]), { ref: null, maxCostUsd: 12, model: "sonnet", inside: false, out: null, egm: true });
   const o = parseArgs(["--ref", "main", "--max-cost-usd", "5", "--model", "opus"]);
   assert.equal(o.ref, "main");
   assert.equal(o.maxCostUsd, 5);
   assert.equal(o.model, "opus");
+  assert.equal(parseArgs(["--no-egm"]).egm, false);
   assert.throws(() => parseArgs(["--max-cost-usd", "0"]));
   assert.throws(() => parseArgs(["--nope"]));
 });
@@ -28,4 +29,16 @@ test("passCount reads node --test totals", () => {
   assert.equal(passCount("# tests 9\n# pass 9\n# fail 0"), 9);
   assert.equal(passCount("ℹ tests 5\nℹ pass 5\n"), 5);
   assert.equal(passCount("nothing"), 0);
+});
+
+test("offersReview needs the real offer and no install line", () => {
+  assert.ok(offersReview("pro-egm: Goldfish review -> /pro-egm:goldfish intent/x/spec.md --stage spec"));
+  assert.ok(!offersReview("pro-egm needs egm@egm: run /pro-dev install"));
+  assert.ok(!offersReview("/pro-egm:goldfish a/spec.md --stage spec\npro-egm needs egm@egm: run /pro-dev install"));
+});
+
+test("ranGoldfish needs the command and its resolve step", () => {
+  assert.ok(ranGoldfish('{"skill":"pro-egm:goldfish"} ... python3 \\"/x/scripts/goldfish.py\\" resolve --stage spec'));
+  assert.ok(ranGoldfish('pro-egm:goldfish then goldfish.py resolve --stage plan'));
+  assert.ok(!ranGoldfish("pro-egm:goldfish offered only"));
 });

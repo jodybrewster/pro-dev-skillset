@@ -11,8 +11,9 @@
 //
 // Needs Docker, ANTHROPIC_API_KEY and a GitHub token (GH_TOKEN, else `gh auth token`),
 // since the marketplace repo is private. Transcripts land in tests/loop-results/.
-// egm@egm (Google's plugin) is not installed, so the Goldfish step checks that the
-// review is offered at /spec and /plan, not the review itself.
+// It runs /pro-egm:install first, which installs Google's egm@egm through pro-core, then
+// says yes to the Goldfish review at /spec and /plan. `--no-egm` skips egm@egm and checks
+// only that the review is offered.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -23,10 +24,11 @@ const SCAFFOLD = "plugins/pro-ai-sdlc/evals/spec-from-intent/scaffold.sh";
 const INTENT = "intent/2026-01-05-due-dates";
 
 export function parseArgs(argv) {
-  const o = { ref: null, maxCostUsd: 8, model: "sonnet", inside: false, out: null };
+  const o = { ref: null, maxCostUsd: 12, model: "sonnet", inside: false, out: null, egm: true };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--ref") o.ref = argv[++i];
+    else if (a === "--no-egm") o.egm = false;
     else if (a === "--max-cost-usd") o.maxCostUsd = Number(argv[++i]);
     else if (a === "--model") o.model = argv[++i];
     else if (a === "--inside") o.inside = true;
@@ -40,6 +42,16 @@ export function parseArgs(argv) {
 // The reply or transcript offers the Goldfish review, or says egm@egm is missing.
 export function offersGoldfish(text) {
   return /pro-egm:goldfish|pro-egm needs egm@egm/i.test(text);
+}
+
+// With egm@egm installed: the review itself is offered, not the install line.
+export function offersReview(text) {
+  return /\/pro-egm:goldfish \S+ --stage (spec|plan)/.test(text) && !/pro-egm needs egm@egm/.test(text);
+}
+
+// The goldfish command ran and resolved its reviewers.
+export function ranGoldfish(text) {
+  return /pro-egm:goldfish/.test(text) && /goldfish\.py\\?"? resolve/.test(text);
 }
 
 // Flips the first `Status: <from>` line and any `status: <from>` frontmatter key.
@@ -86,7 +98,7 @@ function host(opts) {
     "run", "--rm", "-e", "ANTHROPIC_API_KEY", "-e", "GH_TOKEN",
     "-v", `${ROOT}:/repo:ro`, "-v", `${out}:/out`, "pro-dev-evals",
     "node", "tests/loop.mjs", "--inside", "--ref", ref, "--model", opts.model,
-    "--max-cost-usd", String(opts.maxCostUsd), "--out", "/out",
+    "--max-cost-usd", String(opts.maxCostUsd), "--out", "/out", ...(opts.egm ? [] : ["--no-egm"]),
   ], { stdio: "inherit", env: { ...process.env, GH_TOKEN: token } });
   console.log(`transcripts: ${out}`);
   return r.status ?? 1;
@@ -133,7 +145,7 @@ function inside(opts) {
   sh("git", ["config", "--global", "url.https://x-access-token:" + process.env.GH_TOKEN + "@github.com/.insteadOf", "https://github.com/"]);
   const add = sh("claude", ["plugin", "marketplace", "add", `jodybrewster/pro-dev-skillset#${opts.ref}`]);
   check("marketplace added", add.code === 0, add.code ? add.out.trim().split("\n").pop() : opts.ref);
-  for (const p of ["pro-ai-sdlc", "pro-egm"]) {
+  for (const p of ["pro-core", "pro-ai-sdlc", "pro-egm"]) {
     const r = sh("claude", ["plugin", "install", `${p}@pro-dev-skillset`]);
     check(`${p} installed`, r.code === 0);
   }
@@ -148,28 +160,57 @@ function inside(opts) {
   git("push", "-q", "-u", "origin", "main");
   git("remote", "set-head", "origin", "main");
 
-  // /spec, with the Goldfish offer.
+  // pro-egm's own installer brings in Google's egm@egm, as a person would run it.
+  if (opts.egm) {
+    const egmInstalled = () => {
+      try { return JSON.parse(sh("claude", ["plugin", "list", "--json"], { cwd: repo }).out).some((p) => p.id === "egm@egm" && p.enabled !== false); }
+      catch { return false; }
+    };
+    let r = claude("0-install", "/pro-egm:install");
+    const replies = ["Yes to egm.", "Yes, install it."];
+    for (let i = 0; i < replies.length && r && !egmInstalled(); i++) r = claude(`0${"bc"[i]}-install`, replies[i], r.session);
+    check("/pro-egm:install installed egm@egm", egmInstalled());
+    if (!egmInstalled()) return report();
+  }
+
+  // One stage: run the command, answer its questions as the person would until the file
+  // is committed, and with egm@egm installed say yes to the Goldfish review.
+  const stage = (n, name, command, file) => {
+    const replies = opts.egm
+      ? ["Yes, run the Goldfish review.", `Apply the fixes the review recommends, then commit the ${name}.`, `Commit the ${name} now.`]
+      : [`No Goldfish review this time. Commit the ${name}.`];
+    let r = claude(`${n}-${name}`, command);
+    if (!r) return false;
+    const transcripts = [r.transcript];
+    for (let i = 0; i < replies.length && !tracked(file); i++) {
+      r = claude(`${n}${"bcd"[i]}-${name}`, replies[i], r.session);
+      if (!r) break;
+      transcripts.push(r.transcript);
+    }
+    const all = transcripts.join("\n");
+    check(`/${name} offers the Goldfish review`, opts.egm ? offersReview(all) : offersGoldfish(all));
+    if (opts.egm) {
+      check(`Goldfish review ran on the ${name}`, ranGoldfish(all));
+      const rep = join(repo, "goldfish_review_report.md");
+      check(`Goldfish wrote its report on the ${name}`, existsSync(rep));
+      if (existsSync(rep)) { writeFileSync(join(opts.out, `goldfish-${name}.md`), readFileSync(rep)); sh("rm", [rep]); }
+    }
+    check(`/${name} wrote and committed ${name}.md`, tracked(file));
+    return existsSync(join(repo, file));
+  };
+
+  // /spec.
   const spec = `${INTENT}/spec.md`;
-  let s = claude("1-spec", `/pro-ai-sdlc:spec ${INTENT}`);
-  if (!s) return report();
-  check("/spec offers the Goldfish review", offersGoldfish(s.transcript));
-  if (!tracked(spec)) s = claude("1b-spec-commit", "No Goldfish review this time. Commit the spec.", s.session) || s;
-  check("/spec wrote and committed spec.md", tracked(spec));
-  if (!existsSync(join(repo, spec))) return report();
+  if (!stage(1, "spec", `/pro-ai-sdlc:spec ${INTENT}`, spec)) return report();
   check("spec has numbered requirements", /^- R1\b/m.test(readFileSync(join(repo, spec), "utf8")));
 
   // The person accepts the spec.
   writeFileSync(join(repo, spec), setStatus(readFileSync(join(repo, spec), "utf8"), "draft", "accepted"));
   git("commit", "-qam", "spec: accepted");
 
-  // /plan, with the Goldfish offer.
+  // /plan.
   const plan = `${INTENT}/plan.md`;
-  let p = claude("2-plan", `/pro-ai-sdlc:plan ${spec}`);
-  if (!p) return report();
-  check("/plan offers the Goldfish review", offersGoldfish(p.transcript));
-  if (!tracked(plan)) p = claude("2b-plan-commit", "No Goldfish review this time. The plan looks right; commit it.", p.session) || p;
-  check("/plan wrote and committed plan.md", tracked(plan));
-  if (!existsSync(join(repo, plan))) return report();
+  if (!stage(2, "plan", `/pro-ai-sdlc:plan ${spec}`, plan)) return report();
 
   // The person approves the plan.
   writeFileSync(join(repo, plan), setStatus(readFileSync(join(repo, plan), "utf8"), "draft", "approved"));
