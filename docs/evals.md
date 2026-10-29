@@ -107,13 +107,13 @@ Covered on 2026-10-29: `test-driven-development` and `systematic-debugging` (pro
 
 Sonnet pinned, Claude Code 2.1.312, 3 runs per case and arm.
 "Before" is the old description on the sharpened case; "after" is the shipped description.
-Reply is the share of runs whose reply graders passed, with the plugin and without it.
+Reply is the share of runs whose reply graders passed, with the plugin and without it; for review it is the mean score of its two graders (the reviewer dispatch and the review content).
 
 | Skill | Fired before | Fired after | Reply after, with | Reply after, without |
 |---|---|---|---|---|
 | `test-driven-development` | 0 of 3 | 3 of 3 | 3 of 3 | 0 of 3 |
 | `verification-before-completion` | 0 of 3 | 3 of 3 | 2 of 3 | 1 of 3 |
-| `requesting-code-review` | 1 of 3 | 3 of 3 | 2.5 of 3 | 1.5 of 3 |
+| `requesting-code-review` | 1 of 3 | 3 of 3 | 83% | 50% |
 | `systematic-debugging` | 0 of 3 | 0 of 3 | 3 of 3 | 3 of 3 |
 
 All 16 stays-quiet cases in pro-execution and pro-quality stayed at 0 fires in both arms.

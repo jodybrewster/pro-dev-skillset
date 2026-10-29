@@ -50,7 +50,7 @@ Branch: `feat/skill-firing`, rebased onto the PR quality gate fix before the fir
 - R1, R2: four sharpened fires cases and four `-stays-quiet-2` cases; `node tests/check.mjs evals` passes.
 - R3: with the old descriptions the TDD, verification and debugging reply graders passed without the plugin in 0, 0 and 1 of 3 runs.
 - R4, R5, R6: four descriptions and the verification first rule changed; no other description or routing case changed.
-- R7: TDD fires 3 of 3 with reply 3 of 3 against 0 of 3; verification fires 3 of 3 with reply 2 of 3 against 1 of 3. Review fires 3 of 3 with its graders at 2.5 of 3 against 1.5 of 3 (the reviewer is dispatched in 3 of 3 runs with the plugin and 0 of 3 without). Debugging fires 0 of 3.
+- R7: TDD fires 3 of 3 with reply 3 of 3 against 0 of 3; verification fires 3 of 3 with reply 2 of 3 against 1 of 3. Review fires 3 of 3 with a mean grader score of 83% against 50% (the reviewer is dispatched in 3 of 3 runs with the plugin and 0 of 3 without). Debugging fires 0 of 3.
 - R8: all 16 stays-quiet cases at 0 fires in both arms.
 - R9: `node tests/route-lexical.mjs --min-rank1 70` passes at 78.5% rank-1, no collision at 0.75.
 - R10: `node tests/behavioral.mjs verification-before-completion --baseline` scored 4 of 4 with the skill and 1 of 4 without.
