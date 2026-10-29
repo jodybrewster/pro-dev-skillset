@@ -188,7 +188,8 @@ function inside(opts) {
       transcripts.push(r.transcript);
     }
     const all = transcripts.join("\n");
-    check(`/${name} offers the Goldfish review`, opts.egm ? offersReview(all) : offersGoldfish(all));
+    // Only the first turn: the goldfish command's own text, loaded after the yes, quotes the install line.
+    check(`/${name} offers the Goldfish review`, opts.egm ? offersReview(transcripts[0]) : offersGoldfish(all));
     if (opts.egm) {
       check(`Goldfish review ran on the ${name}`, ranGoldfish(all));
       const rep = join(repo, "goldfish_review_report.md");

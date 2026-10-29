@@ -150,10 +150,18 @@ export ANTHROPIC_API_KEY=...   # GH_TOKEN too, else it asks gh for one: the mark
 node tests/loop.mjs
 ```
 
-It checks that `/spec` and `/plan` offer the Goldfish review and commit their file, that `/execute` builds on its own branch and worktree without touching main, pushes, changes `src/` and `test/`, adds tests that pass and fills in the plan's Done section.
-Google's `egm@egm` is not installed, so the offer is the "needs egm@egm" line and the review itself is not run.
-Transcripts and `checks.json` land in `tests/loop-results/`, which git ignores.
-The first run on 2026-10-29 passed 17 of 17 checks for $1.35 on Sonnet: `/execute` built due dates in four test-first commits and the suite went from 3 tests to 16.
+It runs `/pro-egm:install` first, which installs Google's `egm@egm` through pro-core after checking it against the pinned surface, and answers yes the way a person would.
+At `/spec` and `/plan` it says yes to the Goldfish review, then asks for the recommended fixes and the commit.
+It checks that egm@egm installed, that each stage offered the review, that the review resolved its reviewers, ran and wrote `goldfish_review_report.md`, and that the file was committed.
+For `/execute` it checks the build ran on its own branch and worktree without touching main, pushed, changed `src/` and `test/`, added tests that pass and filled in the plan's Done section.
+`--no-egm` skips egm@egm and checks only that the review is offered.
+Transcripts, each Goldfish report and `checks.json` land in `tests/loop-results/`, which git ignores.
+
+First runs on 2026-10-29, Sonnet:
+
+- Without egm@egm: 17 of 17 checks for $1.35; `/execute` built due dates in four test-first commits and the suite went from 3 tests to 16.
+- With egm@egm: 21 of 23 checks live for $3.52. The two misses were the offer check reading the goldfish command's own text, which quotes the install line; with the check reading only the stage's first turn, the same transcripts pass 23 of 23.
+  Four Goldfish reviewers (zoom_out, design_critic, policy, scope) reviewed the spec and raised five distinct major findings, mostly escalations to the intent's author; the suite ended at 18 tests.
 
 ## Measured changes
 
