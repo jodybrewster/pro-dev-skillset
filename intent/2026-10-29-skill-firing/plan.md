@@ -16,7 +16,16 @@ Branch: `feat/skill-firing`, rebased onto the PR quality gate fix before the fir
 
 ## Order of work
 
-1. Record the before numbers: the 3-run baseline on the current cases (taken on 2026-10-29 while this plan was drafted).
+1. Record the before numbers: the 3-run baseline on the current cases, taken on 2026-10-29 while this plan was drafted (Sonnet, Claude Code 2.1.312, $1.61):
+
+   | Case | Fired | Reply score with | Reply score without |
+   |---|---|---|---|
+   | `test-driven-development-fires` | 0 of 3 | 0 | 0 |
+   | `systematic-debugging-fires` | 0 of 3 | 1 | 1 |
+   | `verification-before-completion-fires` | 0 of 3 | 1 | 1 |
+   | `requesting-code-review-fires` | 0 of 3 | 0.83 | 0.67 |
+
+   All four stays-quiet cases stayed quiet in 3 of 3 runs.
 2. Sharpen the four fires cases and add the four stays-quiet cases (a Sonnet subagent writes them; Opus reviews each trap).
 3. Run the sharpened cases with the old descriptions; rework any reply grader the without arm passes 2 of 3 times (R3).
 4. Rewrite the four descriptions and the verification first rule (Opus drafts, since the wording is the whole change).
