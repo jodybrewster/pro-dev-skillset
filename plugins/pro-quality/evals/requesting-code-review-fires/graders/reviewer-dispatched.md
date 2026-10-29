@@ -1,5 +1,5 @@
 ---
 type: tool_used
-tool: Task
+tool: Agent
 min: 1
 ---

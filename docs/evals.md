@@ -113,7 +113,7 @@ Reply is the share of runs whose reply graders passed, with the plugin and witho
 |---|---|---|---|---|
 | `test-driven-development` | 0 of 3 | 3 of 3 | 3 of 3 | 0 of 3 |
 | `verification-before-completion` | 0 of 3 | 3 of 3 | 2 of 3 | 1 of 3 |
-| `requesting-code-review` | 1 of 3 | 3 of 3 | not separated | not separated |
+| `requesting-code-review` | 1 of 3 | 3 of 3 | 2.5 of 3 | 1.5 of 3 |
 | `systematic-debugging` | 0 of 3 | 0 of 3 | 3 of 3 | 3 of 3 |
 
 All 16 stays-quiet cases in pro-execution and pro-quality stayed at 0 fires in both arms.
@@ -125,7 +125,8 @@ What the runs taught:
 - Naming the requests and saying the skill applies to pasted code made three of the four fire, as agent-skills found.
   For verification the trigger had to come first in the description ("Use when asked to confirm that work is done...").
 - `systematic-debugging` did not fire after two rounds of wording; the model treats a pasted failing test with a clear clue as something to fix directly.
-- `requesting-code-review` fires but the agent reviews inline and never dispatches the reviewer subagent the skill calls for, so the case cannot yet show what the skill adds.
+- `requesting-code-review` dispatches its reviewer subagent in 3 of 3 runs with the plugin and 0 of 3 without.
+  The subagent tool is named `Agent` in run traces even where the tool list says `Task`, so a grader must match `Agent`; the first version matched `Task` and wrongly read 0.
 - An `llm` grader reads only the final message unless it sets `focus: trace`; the TDD agent did write and fail the test first, but its final message showed the code first.
   `regex` graders do not take `focus`.
 - A case that asks for real work needs the tools for it: the TDD case passes only with Write, Edit and Bash allowed (`--allow-tools Bash Write Edit`).
