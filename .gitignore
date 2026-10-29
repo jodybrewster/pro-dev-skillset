@@ -19,3 +19,4 @@ coverage/
 # Eval run output (behavioral and plugin tiers)
 evals/results/
 plugins/*/evals/results/
+tests/loop-results/
