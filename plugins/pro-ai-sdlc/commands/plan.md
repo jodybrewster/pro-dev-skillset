@@ -11,7 +11,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Working tree: !`git status --short --branch`
 - Author: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
-- Specs without a plan: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/spec.md" ] && [ ! -f "$d/plan.md" ] && echo "$d"; done`
+- Specs without a plan: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/spec.md" ] && [ ! -f "$d/plan.md" ] && echo "$d"; done; true`
 
 Requested spec: $ARGUMENTS
 

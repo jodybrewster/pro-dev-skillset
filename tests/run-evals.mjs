@@ -9,6 +9,10 @@
 //
 // On macOS a case tagged `needs:git` is skipped unless --include-git is passed: the
 // eval sandbox cannot run the xcrun git shim, so git inside the run fails there.
+// `--docker` runs the whole thing in a Linux container (tests/docker/Dockerfile), where
+// every case runs; it needs Docker and ANTHROPIC_API_KEY.
+//
+//   node tests/run-evals.mjs --sdlc --docker
 import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -21,10 +25,11 @@ const PLUGINS_DIR = join(ROOT, "plugins");
 const GATED = ["Bash", "Write", "Edit"];
 
 export function parseArgs(argv) {
-  const o = { plugins: [], sdlc: false, runs: 3, model: "sonnet", maxCostUsd: 10, dryRun: false, jobs: 4, includeGit: false };
+  const o = { plugins: [], sdlc: false, runs: 3, model: "sonnet", maxCostUsd: 10, dryRun: false, jobs: 4, includeGit: false, docker: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--sdlc") o.sdlc = true;
+    else if (a === "--docker") o.docker = true;
     else if (a === "--dry-run") o.dryRun = true;
     else if (a === "--include-git") o.includeGit = true;
     else if (a === "--runs") o.runs = Number(argv[++i]);
@@ -184,8 +189,27 @@ export function selectPlugins(opts) {
   return names;
 }
 
+// The docker build and run argument lists for `--docker`; the runner inside gets the same
+// arguments minus `--docker`.
+export function dockerArgs(argv, root = ROOT) {
+  return {
+    build: ["build", "-q", "-t", "pro-dev-evals", join(root, "tests", "docker")],
+    run: ["run", "--rm", "--privileged", "-e", "ANTHROPIC_API_KEY", "-v", `${root}:/repo`, "pro-dev-evals",
+      "node", "tests/run-evals.mjs", ...argv.filter((a) => a !== "--docker")],
+  };
+}
+
+function runInDocker(argv) {
+  if (!process.env.ANTHROPIC_API_KEY) { console.error("--docker needs ANTHROPIC_API_KEY set"); return 1; }
+  const { build, run } = dockerArgs(argv);
+  const b = spawnSync("docker", build, { stdio: ["ignore", "ignore", "inherit"] });
+  if (b.status !== 0) { console.error(`docker build failed (exit ${b.status}); is Docker running?`); return 1; }
+  return spawnSync("docker", run, { stdio: "inherit" }).status ?? 1;
+}
+
 export function main(argv) {
   const opts = parseArgs(argv);
+  if (opts.docker && !opts.dryRun) return runInDocker(argv);
   const names = selectPlugins(opts);
   if (!names.length) { console.error("no plugins: name one or pass --sdlc"); return 1; }
   let total = 0, failed = 0;
@@ -203,7 +227,7 @@ export function main(argv) {
     const remaining = opts.maxCostUsd - total;
     const args = buildArgs(dir, cases, { model: opts.model, runs: opts.runs, remaining: Math.max(remaining, 0), jsonPath, jobs: opts.jobs, tags: sel.tags });
     console.log(`\n== ${name} ==`);
-    if (sel.skipped.length) console.log(`skipped on macOS (needs:git, pass --include-git to try): ${sel.skipped.join(", ")}`);
+    if (sel.skipped.length) console.log(`skipped on macOS (needs:git, pass --docker to run them): ${sel.skipped.join(", ")}`);
     if (sel.unreachable.length) console.log(`not run (shares every tag with a skipped case): ${sel.unreachable.join(", ")}`);
     if (opts.dryRun) {
       console.log(`claude ${args.join(" ")}`);

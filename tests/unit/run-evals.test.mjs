@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { parseArgs, chooseFlags, buildArgs, summarize, formatTable } from "../run-evals.mjs";
 
 test("parseArgs applies defaults and reads flags and plugin names", () => {
-  assert.deepEqual(parseArgs([]), { plugins: [], sdlc: false, runs: 3, model: "sonnet", maxCostUsd: 10, dryRun: false, jobs: 4, includeGit: false });
+  assert.deepEqual(parseArgs([]), { plugins: [], sdlc: false, runs: 3, model: "sonnet", maxCostUsd: 10, dryRun: false, jobs: 4, includeGit: false, docker: false });
   const o = parseArgs(["pro-ai-sdlc", "--runs", "1", "--model", "haiku", "--max-cost-usd", "2.5", "--dry-run", "--sdlc"]);
   assert.equal(o.runs, 1);
   assert.equal(o.model, "haiku");
@@ -11,6 +11,7 @@ test("parseArgs applies defaults and reads flags and plugin names", () => {
   assert.equal(o.dryRun, true);
   assert.equal(o.sdlc, true);
   assert.deepEqual(o.plugins, ["pro-ai-sdlc"]);
+  assert.equal(parseArgs(["--docker"]).docker, true);
   assert.throws(() => parseArgs(["--nope"]));
 });
 
@@ -75,4 +76,13 @@ test("selectRunnable skips needs:git cases on macOS and picks tags only kept cas
   assert.deepEqual(mac.unreachable, ["both"]);
   assert.equal(selectRunnable(cases, { platform: "linux" }).tags, null);
   assert.equal(selectRunnable(cases, { platform: "darwin", includeGit: true }).skipped.length, 0);
+});
+
+test("dockerArgs builds the image and reruns the runner inside without --docker", async () => {
+  const { dockerArgs } = await import("../run-evals.mjs");
+  const { build, run } = dockerArgs(["--sdlc", "--docker", "--runs", "1"], "/r");
+  assert.deepEqual(build, ["build", "-q", "-t", "pro-dev-evals", "/r/tests/docker"]);
+  assert.ok(run.includes("--privileged"));
+  assert.deepEqual(run.slice(run.indexOf("-v"), run.indexOf("-v") + 2), ["-v", "/r:/repo"]);
+  assert.deepEqual(run.slice(-5), ["node", "tests/run-evals.mjs", "--sdlc", "--runs", "1"]);
 });

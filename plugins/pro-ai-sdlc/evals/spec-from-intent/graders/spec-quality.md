@@ -9,8 +9,10 @@ The file is a spec written from an intent that asks for four things: an optional
 
 PASS only if all of these hold:
 - The requirements are numbered statements (R1, R2 and so on) that a command, a grep, a test or a file check can verify, not vague goals.
-- Each requirement traces to something the intent says.
+- Each requirement traces to something the intent says or to a repo rule the spec names (CLAUDE.md, REVIEW.md).
 - Nothing the intent asks for is dropped: the due date field, the rejection of a malformed date, the overdue query with the due-today rule and the listing change are all covered.
 - It does not add requirements the intent rules out (recurring tasks, reminders, time zones).
+  Fixing one calendar, such as comparing UTC dates, so that no time zone handling is needed is not adding time zones; flagging that choice as an open question is fine.
+  Open questions, flagged concerns and policy notes are not extra requirements.
 
 FAIL if the file is missing or empty, if requirements are untestable prose, if any of the four asks is missing, or if it builds in something the intent put out of scope.

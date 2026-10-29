@@ -126,7 +126,16 @@ After each plugin it prints a table of component, case, passes with the plugin, 
 A firing case shows `fired x/n` and has no without column.
 Each run also writes its report under the plugin's `evals/results/`, which git ignores; the runner reads the full JSON from a temp file.
 Expect about a dollar or two per plugin on Sonnet at three runs and more for the scaffolded workflow cases; pro-ai-sdlc and pro-egm together cost $6.22 on 2026-10-29.
-On macOS the runner skips cases tagged `needs:git`, because the eval sandbox cannot run git there; `--include-git` runs them anyway.
+On macOS the runner skips cases tagged `needs:git`, because the eval sandbox cannot run git there.
+`--docker` runs everything in a Linux container built from `tests/docker/Dockerfile`, where those cases run too:
+
+```bash
+export ANTHROPIC_API_KEY=...   # the container uses an API key, not a Claude login
+node tests/run-evals.mjs --sdlc --docker
+```
+
+The container runs with `--privileged` because the eval sandbox uses bubblewrap, which needs to create namespaces, and it points `TMPDIR` at the home folder because the sandbox mounts `/tmp` read-only.
+`--include-git` still tries the git cases on macOS without Docker; they fail there.
 Pin the model and note the Claude Code version whenever you quote numbers.
 
 ## Measured changes
@@ -184,12 +193,34 @@ Findings:
 
 - All three pro-ai-sdlc hooks load and fire in a real session; the hook tests only prove the scripts behave when called.
   In warn mode they announce and allow, so the cases grade that the hook fired, not that it blocked.
-- `/review` with its reviewer agent found both the planted off-by-one and the `console.log` rule breach as blocking in 1 of 3 runs; plain Sonnet did in 2 of 3.
+- `/review` with its reviewer agent found both the planted off-by-one and the `console.log` rule breach as blocking in 1 of 3 runs; plain Sonnet did in 2 of 3. The Linux run below shows this was the sandbox breaking its git lines.
 - The main session answered the wide "walk me through every file" question inline in 3 of 3 runs and never used `researcher`.
 - On macOS the eval sandbox cannot run `/usr/bin/git` (the xcrun shim cannot write its cache), so `spec-from-intent`, `plan-from-spec` and `execute-refuses-draft-plan` are tagged `needs:git` and the runner skips them there.
-  They need a Linux run; the coverage check still counts them.
+  They run under `--docker`; see the Linux run below.
 - The subagent tool is named `Agent` in traces; a command fires as `Skill` with `{"skill":"<plugin>:<command>"}`.
 - A `prompt.md` description containing `: ` must be quoted or the frontmatter fails to parse.
+
+### 2026-10-29: the git cases on Linux
+
+`node tests/run-evals.mjs pro-ai-sdlc --docker --runs 3`, Sonnet, Claude Code 2.1.312, Linux container, $3.89, then the spec case again at $0.55 after its grader fix.
+
+| Component | Case | With | Without |
+|---|---|---|---|
+| `command:spec` | `spec-from-intent` | 3 of 3 | 0 of 3 |
+| `command:plan` | `plan-from-spec` | 3 of 3 | 3 of 3 |
+| `command:execute` | `execute-refuses-draft-plan` | 3 of 3 | 1 of 3 |
+| `command:review`, `agent:reviewer` | `review-finds-planted-bug` | 3 of 3 | 3 of 3 |
+
+The other pro-ai-sdlc rows matched the macOS baseline.
+
+Findings:
+
+- `/spec` loaded only after its context lines ended in `; true`: an `ls` of policy files the repo lacks exits non-zero and aborts the whole command, so before this fix `/spec` failed to load in any repo without all of `DESIGN.md`, `AGENTS.md`, `SECURITY.md` and the ADR folders. `/plan`, `/review` and `/adr` had the same pattern.
+- The fixture repos had no git author, so `git config user.name` aborted the commands the same way; a real repo has one, so the scaffolds now set it.
+- Both arms write a good spec; the plugin's difference is the template and the commit, so `spec-from-intent` also grades `git commit`.
+- The spec judge (Haiku) failed sound specs that fixed UTC to avoid time zones or cited a `REVIEW.md` rule; the grader now says both are fine.
+- The plan judge asked every step to cite R numbers, which `/plan` never asks for; it now checks that every requirement is cited somewhere and tied to a test.
+- `/review` found both planted problems in 3 of 3 runs on Linux. The 1 of 3 on macOS came from its git context lines failing in the sandbox, not from the review.
 
 ## Credit
 

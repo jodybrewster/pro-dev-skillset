@@ -9,7 +9,7 @@ allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git
 - Repo root: !`git rev-parse --show-toplevel 2>&1`
 - Current branch: !`git branch --show-current`
 - Working tree: !`git status --short --branch`
-- Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null`
+- Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null; true`
 - Intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -10`
 - Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage review; true`
 
