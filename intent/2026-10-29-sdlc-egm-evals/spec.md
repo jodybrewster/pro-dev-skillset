@@ -56,7 +56,7 @@ Added 2026-10-29 at Jody's request: "can we have it so we run each sdlc plugin t
 - R22. A `component-coverage` check in `tests/check.mjs` lists every skill, command, agent and hook (by script name) in the workflow plugins (pro-ai-sdlc, pro-egm, pro-spdd, pro-speckit and pro-pdd) and fails when one has no case tagged for it, unless it is listed in `tests/cases/components-uncovered.json` with a reason; a listed entry that is now covered or gone also fails.
   The list starts with every component of pro-spdd, pro-speckit and pro-pdd, plus `command:install` and `command:pr-babysit` with their reasons.
 - R23. `tests/run-evals.mjs [plugin...] [--sdlc] [--runs n] [--model m] [--max-cost-usd n] [--dry-run]` runs `claude plugin eval` on each named plugin, or each workflow plugin with `--sdlc`. It adds `--scaffold` and `--allow-tools Bash Write Edit` only when a plugin has a case with a `scaffold_script` or a tool-using case. It stops before a plugin when the running total passes the cap.
-  It prints one table per plugin: component, case, fired or passed out of runs with the plugin, the same without it, and Δ.
+  It prints one table per plugin: component, case, fired or passed out of runs with the plugin, the same without it and Δ.
   `--dry-run` prints the plan and the uncovered components and spends nothing.
 - R24. `docs/evals.md` documents the runner and the coverage check; `tests/unit/` covers the tag parsing, the coverage diff and the runner's flag choice.
 
