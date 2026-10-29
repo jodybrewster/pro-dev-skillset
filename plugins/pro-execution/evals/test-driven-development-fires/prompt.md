@@ -1,11 +1,11 @@
 ---
-description: A feature request with an existing function pasted inline. The skill should fire and the reply should write a failing test before any implementation.
-expected_outcome: The reply lays out a failing test for the new behavior first, shows or states that it fails. Only then does it give the minimal implementation.
+description: A feature request with the current file pasted inline and no mention of tests. The skill should fire and the reply should put a failing test, run and shown failing, ahead of any implementation.
+expected_outcome: The reply writes the slugify tests first, runs them or shows the expected failure (slugify is not defined or not a function). Only then does it give the implementation.
 max_turns: 12
-allowed_tools: [Read, Glob, Grep, Skill]
+allowed_tools: [Read, Glob, Grep, Write, Edit, Bash, Skill]
 ---
 
-I need a new feature in our utils module. Add a `slugify(title)` function next to `truncate` that lowercases the title, replaces runs of non-alphanumeric characters with a single hyphen and trims hyphens from both ends. Here is the file today:
+Our utils module needs a `slugify(title)` function next to `truncate`. It should lowercase the title, replace runs of non-alphanumeric characters with a single hyphen and trim hyphens from both ends. Here is the file today:
 
 ```js
 // src/utils.js
@@ -15,4 +15,4 @@ function truncate(str, max) {
 module.exports = { truncate };
 ```
 
-We use jest and the tests live in tests/utils.test.js. Show me the change.
+Show me the change.

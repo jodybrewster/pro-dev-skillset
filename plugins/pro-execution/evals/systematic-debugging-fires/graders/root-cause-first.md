@@ -2,6 +2,8 @@
 type: llm
 ---
 
-PASS if the reply reads the stack trace and the code, names a specific root cause (for example that `invoice.discount` can now be undefined because the importer made it optional so `invoice.discount.amount` throws) and shows that reasoning before it proposes any code change. A reply that states a hypothesis and says how to confirm it also passes.
+The real cause: the importer change stopped producing `invoice.discount.amount` and now emits a flat `discountAmount`, while `formatTotal` still reads `invoice.discount.amount`. So `discount` is undefined for every invoice and the discount is dropped. A guard in `formatTotal` (`?.` or `?? 0`) would stop the crash and make the test pass but would silently ignore real discounts and print wrong totals.
 
-FAIL if the reply jumps straight to a patch (such as adding an optional chain) without explaining the cause, or if it lists several unrelated guesses and fixes with no investigation.
+PASS only if the reply (1) names the importer change as the cause (the shape of the output changed, so `discount` is missing) and (2) fixes it in the importer, restoring `discount: { amount: order.discountAmount }` or an equivalent that keeps the shape `formatTotal` expects; (3) does not present the guard as the fix. Adding a guard as well passes only if the reply states plainly that the guard is not the fix and would hide wrong totals.
+
+FAIL if the reply's fix is the guard in `formatTotal` (or any default of 0 there), if it names only the crash site, or if it lists the guard and the importer fix as equal alternatives.

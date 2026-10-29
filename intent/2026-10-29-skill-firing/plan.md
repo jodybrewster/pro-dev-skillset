@@ -1,7 +1,7 @@
 # Plan: make four discipline skills fire and prove it
 
 Built from `spec.md` and `intent.md` in this folder.
-Status: draft.
+Status: built on 2026-10-29.
 Approver: Jody Brewster.
 Dated: 2026-10-29.
 Branch: `feat/skill-firing`, rebased onto the PR quality gate fix before the first plugin edit.
@@ -47,6 +47,27 @@ Branch: `feat/skill-firing`, rebased onto the PR quality gate fix before the fir
 
 ## Proof of done
 
+- R1, R2: four sharpened fires cases and four `-stays-quiet-2` cases; `node tests/check.mjs evals` passes.
+- R3: with the old descriptions the TDD, verification and debugging reply graders passed without the plugin in 0, 0 and 1 of 3 runs.
+- R4, R5, R6: four descriptions and the verification first rule changed; no other description or routing case changed.
+- R7: TDD fires 3 of 3 with reply 3 of 3 against 0 of 3; verification fires 3 of 3 with reply 2 of 3 against 1 of 3. Review fires 3 of 3 but its reply is not separated (see Done). Debugging fires 0 of 3.
+- R8: all 16 stays-quiet cases at 0 fires in both arms.
+- R9: `node tests/route-lexical.mjs --min-rank1 70` passes at 78.5% rank-1, no collision at 0.75.
+- R10: `node tests/behavioral.mjs verification-before-completion --baseline` scored 4 of 4 with the skill and 1 of 4 without.
+- R11: debugging stopped after two wording rounds; the round-2 wording ships.
+- R12: `claude plugin eval` spend was $13.29 by `costUsd` across the baseline, smoke runs, step 3, rounds 1 and 2 and probes. The one behavioral run billed to the API key is not in that figure.
+- R13: `docs/evals.md` "Measured changes".
+- R14: pro-execution 0.6.0, pro-quality 0.12.0, marketplace 1.58.0 with release rows.
+
 ## Done
 
+Built on 2026-10-29.
+Findings for later changes:
+- `systematic-debugging` does not fire on a pasted failing test even with the request phrasings named.
+- `requesting-code-review` fires but the agent reviews inline instead of dispatching the reviewer subagent, so the case grades the dispatch (`reviewer-dispatched`, 0 in both arms) and the review content (passes in both arms).
+
 ## Departures from plan
+
+- The TDD reply grader reads the whole run (`focus: trace`) and the case allows Write, Edit and Bash; the first version graded only the final message, which showed the code first even when the agent had written and failed the test first.
+- The review case's verdict-line regex was replaced by a `tool_used` grader on `Task`, because `regex` graders cannot read the trace and the main reply paraphrases the reviewer's verdict.
+- Debugging and verification got a second wording round; TDD and review met the firing target in round 1.

@@ -4,7 +4,7 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.57.1.
+Marketplace `metadata.version`: 1.58.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
@@ -15,12 +15,12 @@ Marketplace `metadata.version`: 1.57.1.
 | pro-design | 0.12.0 | 2026-10-28 | `/pro-design:install` sets up its engines (needs pro-core installed). Also carries 0.11.0 (PR 68) | PR 70 | pro-design--v0.3.0 |
 | pro-dev-starter | 3.0.0 | 2026-10-28 | Drops `pro-ai-sdlc` from the default stack: it is now opt-in beside `pro-nextjs` and `pro-astro`; `pro-pdd` stays | PR 73 | none |
 | pro-egm | 0.2.0 | 2026-10-28 | `/pro-egm:install` sets up its engines (needs pro-core installed). Also carries 0.1.1 (PR 67) | PR 70 | none |
-| pro-execution | 0.5.0 | 2026-10-29 | `claude plugin eval` cases for `test-driven-development` and `systematic-debugging`, a fires and a stays-quiet case each, wired through `experimental.evals` | this PR | none |
+| pro-execution | 0.6.0 | 2026-10-29 | `test-driven-development` and `systematic-debugging` descriptions name the requests they cover and apply to pasted code; sharpened eval cases and two more stays-quiet cases. Also carries 0.5.0 (plugin eval cases) | this PR | none |
 | pro-legal | 0.1.2 | 2026-10-17 | Agent `software-counsel` declares `model: opus` | this PR | none |
 | pro-motion | 0.1.0 | 2026-06-23 | First release: gsap, hyperframes and remotion skills | c4460d3 | none |
 | pro-nextjs | 0.12.0 | 2026-10-28 | `/pro-nextjs:install` sets up its engines (needs pro-core installed). Also carries 0.11.0 (PR 68) | PR 70 | pro-nextjs--v0.5.0 |
 | pro-pdd | 0.7.0 | 2026-10-29 | `claude plugin eval` cases for `writing-plans`, a fires and a stays-quiet case, wired through `experimental.evals`. Also carries 0.6.0 (PR 70) | this PR | none |
-| pro-quality | 0.11.1 | 2026-10-29 | The PR quality gate also fires after a successful `gh pr create` run through Bash (it only matched the MCP tool, so it never ran); a body from stdin or `--fill` skips the description check. Also carries 0.11.0: `claude plugin eval` cases for `verification-before-completion` and `requesting-code-review`, a fires and a stays-quiet case each, wired through `experimental.evals`. Also carries 0.10.0 | this PR | pro-quality--v0.9.1 |
+| pro-quality | 0.12.0 | 2026-10-29 | `verification-before-completion` and `requesting-code-review` descriptions name the requests they cover; verification opens with a run-the-suite-first rule; sharpened eval cases (a scaffolded repo for verification) and two more stays-quiet cases. Also carries 0.11.1 (PR quality gate on `gh pr create`) and 0.11.0 | this PR | pro-quality--v0.9.1 |
 | pro-research | 0.3.3 | 2026-10-17 | The four research agents declare `model: haiku` | this PR | none |
 | pro-security | 0.2.0 | 2026-10-28 | One push gate replaces the commit, plan-mode, plan-document and ideation hooks; `security-architect` diff mode reviews the diff and its direct callers only | this PR | none |
 | pro-ship | 0.2.0 | 2026-10-28 | `/pro-ship:install` sets up its engines (needs pro-core installed). Also carries 0.1.0 (PR 68) | PR 70 | none |

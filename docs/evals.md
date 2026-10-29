@@ -101,6 +101,36 @@ Reports land in `plugins/<plugin>/evals/results/`, which git ignores.
 
 Covered on 2026-10-29: `test-driven-development` and `systematic-debugging` (pro-execution), `verification-before-completion` and `requesting-code-review` (pro-quality) and `writing-plans` (pro-pdd).
 
+## Measured changes
+
+### 2026-10-29: four discipline skills ([intent](../intent/2026-10-29-skill-firing/))
+
+Sonnet pinned, Claude Code 2.1.312, 3 runs per case and arm.
+"Before" is the old description on the sharpened case; "after" is the shipped description.
+Reply is the share of runs whose reply graders passed, with the plugin and without it.
+
+| Skill | Fired before | Fired after | Reply after, with | Reply after, without |
+|---|---|---|---|---|
+| `test-driven-development` | 0 of 3 | 3 of 3 | 3 of 3 | 0 of 3 |
+| `verification-before-completion` | 0 of 3 | 3 of 3 | 2 of 3 | 1 of 3 |
+| `requesting-code-review` | 1 of 3 | 3 of 3 | not separated | not separated |
+| `systematic-debugging` | 0 of 3 | 0 of 3 | 3 of 3 | 3 of 3 |
+
+All 16 stays-quiet cases in pro-execution and pro-quality stayed at 0 fires in both arms.
+The behavioral case for `verification-before-completion` went to 4 of 4 expectations with the skill against 1 of 4 without; before the new first rule it was 1 of 4 in both arms.
+Keyless routing rank-1 rose from 75.9% to 78.5%.
+
+What the runs taught:
+
+- Naming the requests and saying the skill applies to pasted code made three of the four fire, as agent-skills found.
+  For verification the trigger had to come first in the description ("Use when asked to confirm that work is done...").
+- `systematic-debugging` did not fire after two rounds of wording; the model treats a pasted failing test with a clear clue as something to fix directly.
+- `requesting-code-review` fires but the agent reviews inline and never dispatches the reviewer subagent the skill calls for, so the case cannot yet show what the skill adds.
+- An `llm` grader reads only the final message unless it sets `focus: trace`; the TDD agent did write and fail the test first, but its final message showed the code first.
+  `regex` graders do not take `focus`.
+- A case that asks for real work needs the tools for it: the TDD case passes only with Write, Edit and Bash allowed (`--allow-tools Bash Write Edit`).
+  The verification case also needs `--scaffold`.
+
 ## Credit
 
 The tiers follow Addy Osmani's [agent-skills](https://github.com/addyosmani/agent-skills) (MIT): its deterministic trigger evals, its behavioral runner with pressure cases and its `claude plugin eval` pairs.
