@@ -14,3 +14,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0006](./0006-engine-registry-and-pro-dev.md) | Every bridge engine is a row in pro-core's one registry, installed and updated through /pro-dev or its owning plugin's /<plugin>:install (proposed, amended 2026-10-28) | 2026-10-28 |
 | [0007](./0007-spec-method-plugins.md) | Spec methods are opt-in plugins whose stage hand-offs pro-ai-sdlc offers and never runs on its own (proposed) | 2026-10-28 |
 | [0008](./0008-spec-kit-uv-tool.md) | spec-kit installs through a `uv-tool` row pinned by commit and date and `check` verifies it from registry hashes without running it (proposed) | 2026-10-28 |
+| [0009](./0009-three-eval-tiers.md) | Three eval tiers: keyless routing gates CI, behavioral and plugin evals run on demand (proposed) | 2026-10-29 |

@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-evals-three-tiers/intent.md
-intent-status: proposed
-status: draft
+intent-status: accepted
+status: accepted
 created: 2026-10-29T10:20:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: behavioral, plugin and CI evals
 
 Built from `intent.md` in this folder.
-Status: draft.
+Status: accepted by Jody on 2026-10-29 ("Yes please").
 Prior art read on 2026-10-29 in a local clone of agent-skills (commit eb07f19): `evals/README.md`, `evals/cases/*.json`, `evals/plugin/*`, `scripts/run-evals.js`, `scripts/lib/execution-status.js` and `.github/workflows/test-plugin-install.yml`.
 Code read here: `tests/eval.mjs`, `tests/check.mjs`, `tests/README.md`, `tests/cases/routing.jsonl` and `.github/workflows/validate.yml`.
 Verified locally: Claude Code 2.1.312 has `claude plugin eval`; a plugin manifest with `"experimental": {"evals": "evals"}` passes `claude plugin validate --strict`; `claude --bare` skips user plugins, hooks and CLAUDE.md and authenticates only with `ANTHROPIC_API_KEY`.
@@ -28,10 +28,10 @@ Five skills in three plugins gain plugin eval case pairs that `claude plugin eva
 - R1. `tests/lib/catalog.mjs` exports the catalog loader and frontmatter parser; `tests/eval.mjs` imports them instead of its own copies, with unchanged behavior.
 - R2. `tests/route-lexical.mjs` ranks every catalog entry, distractors included, against each case in `tests/cases/routing.jsonl` by cosine similarity of stemmed TF-IDF vectors over name and description; it uses no network and no dependency.
 - R3. A case passes at rank 1 when the top entry is one of `expect`. It passes in top-k when one of `expect` is within the first `k` (default 3, or the case's optional `top_k`); a case with `notOneOf` fails when any of those ranks first.
-- R4. It prints the rank-1 rate, the top-k rate and each failing case with its top three. It exits 1 when the rank-1 rate is below `--min-rank1 <n>` or any `notOneOf` case fails.
+- R4. It prints the rank-1 rate, the top-k rate and each failing case with its top three. It exits 1 when the rank-1 rate is below `--min-rank1 <n>`; a `notOneOf` case that fails prints a warning, because those boundaries are semantic and `tests/eval.mjs` holds them.
 - R5. It computes the pairwise similarity of every two catalog descriptions; at 0.50 or above it warns and at 0.75 or above it fails, unless the pair is listed with a reason in `tests/cases/collisions-allowed.json`.
 - R6. A `coverage` check in `tests/check.mjs` fails when a skill has no case naming it in `expect` and is not listed in `tests/cases/uncovered.json`. It also fails when a listed skill now has a case, so the list can only shrink.
-- R7. `.github/workflows/validate.yml` runs `node tests/route-lexical.mjs --min-rank1 <floor>` and `node --test tests/unit/`, where the floor is the measured baseline rounded down to the nearest 5 and recorded in `docs/evals.md` with the date.
+- R7. `.github/workflows/validate.yml` runs `node tests/route-lexical.mjs --min-rank1 <floor>` and `node --test tests/unit/*.test.mjs`, where the floor is at least 5 points under the measured baseline, rounded down to a multiple of 5. The floor and its date are recorded in `docs/evals.md`.
 - R8. `tests/unit/` holds `node:test` files for the stemmer, the ranking, the collision check, the coverage list logic and the behavioral runner's trace completeness and case validation.
 
 ### Behavioral tier

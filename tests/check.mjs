@@ -24,6 +24,7 @@ import { runDocHookCases } from "./doc-hooks.mjs";
 import { runProDevCases } from "./pro-dev.mjs";
 import { runGoldfishCases } from "./goldfish.mjs";
 import { spawnSync } from "node:child_process";
+import { coverageProblems } from "./lib/coverage.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -705,10 +706,11 @@ checks.agents = (m) => {
   return { failures, warnings };
 };
 
-// eval coverage: a shipped skill or subagent with no routing case is untested
-// routing. Twice now, a feature landed with a green board because nothing
-// asserted it was reachable. Warning-level — not every skill earns a case —
-// but the gap should be visible rather than silent.
+// eval coverage: a shipped skill with no routing case is untested routing. Twice
+// now, a feature landed with a green board because nothing asserted it was
+// reachable. Skills fail unless listed in tests/cases/uncovered.json, a ratchet
+// that can only shrink (a listed skill that gained a case, or vanished, is stale).
+// Subagents stay warnings.
 checks["eval-coverage"] = (m) => {
   const failures = [], warnings = [];
   const casesPath = join(ROOT, "tests", "cases", "routing.jsonl");
@@ -725,12 +727,18 @@ checks["eval-coverage"] = (m) => {
     catch { failures.push(`routing.jsonl: unparseable case — ${t.slice(0, 70)}`); continue; }
     for (const s of [].concat(c.expect ?? [])) covered.add(s);
   }
-  for (const p of m.plugins) {
-    for (const s of p.skills)
-      if (!covered.has(s.slug)) warnings.push(`no routing eval case expects skill ${p.name}/${s.slug}`);
+  const listPath = join(ROOT, "tests", "cases", "uncovered.json");
+  let listed = [];
+  if (!existsSync(listPath)) failures.push("tests/cases/uncovered.json missing");
+  else {
+    try { listed = JSON.parse(readFileSync(listPath, "utf8")); }
+    catch (e) { failures.push(`tests/cases/uncovered.json: ${e.message}`); }
+  }
+  const skills = m.plugins.flatMap((p) => p.skills.map((s) => `${p.name}/${s.slug}`));
+  failures.push(...coverageProblems(skills, covered, listed));
+  for (const p of m.plugins)
     for (const a of p.agents ?? [])
       if (!covered.has(a.slug)) warnings.push(`no routing eval case expects subagent ${p.name}/${a.slug}`);
-  }
   return { failures, warnings };
 };
 
@@ -985,6 +993,51 @@ checks.goldfish = () => {
     return { failures, warnings };
   }
   for (const r of results) if (!r.ok) failures.push(`goldfish ${r.id}: ${r.detail}`);
+  return { failures, warnings };
+};
+
+// Plugin evals (plugins/<p>/evals): the cases `claude plugin eval` runs. Static shape only;
+// running them spends tokens and is left to the eval workflow.
+checks["evals"] = (m) => {
+  const failures = [], warnings = [];
+  const unq = (v) => String(v).trim().replace(/^(["'])(.*)\1$/, "$2");
+  for (const p of m.plugins) {
+    const declared = p.manifest && p.manifest.experimental && p.manifest.experimental.evals;
+    const defaultDir = join(p.dir, "evals");
+    if (!declared) {
+      const cases = isDir(defaultDir) ? listDirs(defaultDir).filter((c) => c !== "results") : [];
+      if (cases.length) failures.push(`${p.name}: has evals/ cases but no experimental.evals in .claude-plugin/plugin.json`);
+      continue;
+    }
+    const evalsDir = join(p.dir, String(declared));
+    if (!isDir(evalsDir)) { failures.push(`${p.name}: experimental.evals "${declared}" is not a directory`); continue; }
+    const cases = listDirs(evalsDir).filter((c) => c !== "results");
+    if (!cases.length) warnings.push(`${p.name}: evals directory has no cases`);
+    for (const c of cases) {
+      const tag = `${p.name}/evals/${c}`;
+      const promptPath = join(evalsDir, c, "prompt.md");
+      if (!existsSync(promptPath)) { failures.push(`${tag}: missing prompt.md`); continue; }
+      const text = readFileSync(promptPath, "utf8");
+      const { keys, body } = parseFrontmatter(text);
+      if (!keys.length) failures.push(`${tag}: prompt.md has no frontmatter`);
+      if (!body.trim()) failures.push(`${tag}: prompt.md has no body`);
+      const gdir = join(evalsDir, c, "graders");
+      const graders = isDir(gdir) ? readdirSync(gdir).filter((f) => f.endsWith(".md")) : [];
+      if (!graders.length) failures.push(`${tag}: no graders/*.md`);
+      for (const g of graders) {
+        const { data } = parseFrontmatter(readFileSync(join(gdir, g), "utf8"));
+        const gt = `${tag}/graders/${g}`;
+        const type = data.type && unq(data.type);
+        if (!["tool_used", "regex", "llm"].includes(type)) { failures.push(`${gt}: type "${type}" is not tool_used, regex or llm`); continue; }
+        const pat = type === "regex" ? data.pattern : type === "tool_used" ? data.input_match : undefined;
+        if (type === "regex" && !pat) failures.push(`${gt}: regex grader has no pattern`);
+        if (pat) {
+          try { new RegExp(unq(pat)); } catch (e) { failures.push(`${gt}: ${type === "regex" ? "pattern" : "input_match"} does not compile (${e.message})`); }
+        }
+        if (type === "tool_used" && !data.tool) failures.push(`${gt}: tool_used grader has no tool`);
+      }
+    }
+  }
   return { failures, warnings };
 };
 

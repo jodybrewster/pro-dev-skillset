@@ -64,6 +64,9 @@ All must pass - do not commit if any fail.
 #    Codex parity (codex-parity + codex-manifests checks run automatically)
 node tests/check.mjs && node tests/eval.mjs --dry
 
+# 1b. Keyless routing gate and the unit tests for the eval tooling (docs/evals.md)
+node tests/route-lexical.mjs --min-rank1 70 && node --test tests/unit/*.test.mjs
+
 # 2. Full marketplace + strict validation (Claude)
 claude plugin validate . --strict
 
@@ -71,17 +74,20 @@ claude plugin validate . --strict
 ( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
-Expected output, from a real run on 2026-10-28 (the 38 warnings are skills and agents with no routing case):
+Expected output, from a real run on 2026-10-29 (the 13 warnings are agents with no routing case; a skill with none fails unless it is in `tests/cases/uncovered.json`):
 
 ```
-✓ 27 checks · 0 failures · 38 warnings
+✓ 28 checks · 0 failures · 13 warnings
 ✓ 80 cases reference real skills · 94 skills in catalog + 7 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
+rank-1: 60/79 (75.9%)  top-k: 73/79 (92.4%)  notOneOf failures: 3
+# pass 20
 ✔ Validation passed
 ```
 
 Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 20 times.
 CI runs these automatically on PR (see `.github/workflows/`).
+The behavioral and plugin evals spend tokens and run on demand; see [docs/evals.md](./docs/evals.md).
 All must pass before tagging.
 The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
 

@@ -1,7 +1,7 @@
 ---
 source: research
 kind: change
-status: proposed
+status: accepted
 risk: low
 created: 2026-10-29T10:00:00-0400
 author: Jody Brewster
@@ -12,7 +12,7 @@ author: Jody Brewster
 Author: Jody Brewster (pro-dev-skillset).
 Source: a side-by-side read of Addy Osmani's [agent-skills](https://github.com/addyosmani/agent-skills) (MIT, v0.6.14, commit eb07f19) on 2026-10-29.
 Jody: "lets add in the evals they have that we don't. Behavioral, plugin, CI".
-Status: proposed.
+Status: accepted on 2026-10-29.
 Created: 2026-10-29.
 
 ## Problem

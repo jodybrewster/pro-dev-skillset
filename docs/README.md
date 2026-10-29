@@ -7,6 +7,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 
 - [overview.md](./overview.md): what the repo is, how it relates to Mieruka and the two use cases it is testing.
 - [spec-methods.md](./spec-methods.md): the five ways to work, from plan-driven development to spec-kit, compared, which to pick and how to use each, with a lane diagram ([spec-workflows.svg](./spec-workflows.svg)).
+- [evals.md](./evals.md): the three eval tiers (keyless routing in CI, behavioral, plugin), how to run each and how to add a case.
 - [subagents.md](./subagents.md): how to split work across parallel subagents and which model each runs on.
 - [version-bump-law.md](./version-bump-law.md): the version-bump law in detail.
 - [hook-loading.md](./hook-loading.md): the hook-loading law in detail, including blocking on `Stop`.
@@ -27,6 +28,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [decisions/0002-version-bump-law.md](./decisions/0002-version-bump-law.md): every content change bumps the plugin version.
 - [decisions/0003-one-hooks-json-per-plugin.md](./decisions/0003-one-hooks-json-per-plugin.md): one `hooks/hooks.json` per plugin.
 - [decisions/0004-codex-parity.md](./decisions/0004-codex-parity.md): Codex parity is a hard requirement.
+- [decisions/0009-three-eval-tiers.md](./decisions/0009-three-eval-tiers.md): three eval tiers, CI gates only the keyless one.
 
 ## Old plans
 

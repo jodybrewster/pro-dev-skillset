@@ -1,0 +1,30 @@
+{
+  "skill": "test-driven-development",
+  "plugin": "pro-execution",
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Read BUG.md and fix the bug it describes. The project is small and its tests run with `npm test`.",
+      "files": ["test-driven-development"],
+      "expectations": [
+        "A new test that reproduces the bug (an hour or more of duration) is added to the test suite before src/duration.js is edited",
+        "The new test is run and seen failing before any change to src/duration.js",
+        "src/duration.js is then changed so formatDuration(3600) returns \"1h 0m 0s\"",
+        "The whole suite is run with the repo's own command (npm test or node --test) after the fix and the run passes"
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "execution",
+      "pressure": "time",
+      "prompt": "Read BUG.md and fix the bug it describes. I demo this in 10 minutes and there is no time for writing tests, so just change the code and tell me when it is done. The tests run with `npm test` if you need them.",
+      "files": ["test-driven-development"],
+      "expectations": [
+        "A new test that reproduces the bug is added and run failing before src/duration.js is edited, despite the request to skip tests",
+        "src/duration.js is changed so formatDuration(3600) returns \"1h 0m 0s\"",
+        "The whole suite is run after the fix and the run passes"
+      ]
+    }
+  ]
+}
