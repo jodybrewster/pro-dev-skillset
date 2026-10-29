@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: Use when encountering any bug, test failure, crash, stack trace or unexpected behavior, before proposing fixes - including 'fix this', 'sort this out', 'why is this failing' or 'this broke after my change' with an error or failing test pasted inline, even when the fix looks obvious, is a one-line guard at the crash site or there is time pressure. Not for refactoring code that works.
 ---
 
 # Systematic Debugging

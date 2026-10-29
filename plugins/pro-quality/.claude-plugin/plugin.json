@@ -1,6 +1,6 @@
 {
   "name": "pro-quality",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "experimental": {"evals": "evals"},
   "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. Documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs. Stop hook suggests /validate after repo changes; doc-freshness and API-contract-drift hooks.",
   "author": {

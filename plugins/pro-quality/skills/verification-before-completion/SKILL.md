@@ -1,9 +1,11 @@
 ---
 name: verification-before-completion
-description: Use when the agent is about to claim its own work is complete, fixed, or passing, before committing or creating PRs - the agent checks, not the user (a checklist for the user is user-validation); requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: Use when asked to confirm that work is done, that the tests pass or that a PR is ready to open and when the agent is about to claim its own work is complete, fixed, or passing, before committing or creating PRs - even when the user says they already ran the tests; the agent checks, not the user (a checklist for the user is user-validation); requires running verification commands in this session and quoting their output before any success claim; evidence before assertions always
 ---
 
 # Verification Before Completion
+
+**First rule, ahead of everything below:** before any statement that work is done, fixed or passing, run the project's full test or check command in this session and quote its result. A claim from the user or an earlier run is not evidence.
 
 ## Overview
 
