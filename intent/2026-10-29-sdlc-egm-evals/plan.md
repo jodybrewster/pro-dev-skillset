@@ -31,7 +31,7 @@ Branch: `feat/sdlc-egm-evals`, stacked on `feat/skill-firing` (PR 77).
 
 - Commands that write and commit need Bash, Write and Edit in the run; `--allow-tools` grants them inside the eval's sandboxed temp repo only.
 - A slash command named in the prompt has no meaningful no-plugin arm; those cases run single arm and are read as pass rates.
-- `/execute` must never make a real worktree outside the temp repo; the case uses a draft plan so the gate stops it before step 2, and the scaffold has no remote.
+- `/execute` must never make a real worktree outside the temp repo; the case uses a draft plan so the gate stops it before step 2. The scaffold has no remote.
 
 ## Proof of done
 
