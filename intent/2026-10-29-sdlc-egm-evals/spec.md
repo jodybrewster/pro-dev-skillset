@@ -45,7 +45,20 @@ Stacked on PR 77, since all of them move the marketplace version.
 - R16. `node tests/check.mjs evals` passes for both plugins and `claude plugin validate --strict` passes for both.
 - R17. A first baseline at 3 runs per case and arm (Sonnet pinned), recorded in a "Measured changes" entry in `docs/evals.md`; gate cases (R6, R13, R14) are expected at 3 of 3 and every stays-quiet case at 0 fires. Any miss is reported as a finding, not tuned away in this change.
 - R18. pro-ai-sdlc and pro-egm bump per the version-bump law with their `docs/releases.md` rows.
-- R19. Eval spend for this change stays under $12 by `costUsd`.
+- R19. Eval spend for this change stays under $15 by `costUsd`.
+
+### Component coverage and the runner
+
+Added 2026-10-29 at Jody's request: "can we have it so we run each sdlc plugin to make sure that agents, skills, commands, hooks, etc are all firing appropriately?" and "and have a runner to run through each sdlc?".
+
+- R20. Every plugin eval case declares what it covers in `prompt.md` frontmatter as `tags`, each `<kind>:<name>` with kind `skill`, `command`, `agent` or `hook`; a stays-quiet case prefixes `quiet:`.
+- R21. pro-ai-sdlc gains `hook-production-gate`, `hook-protect-tests` and `hook-plan-sync`, each triggering its hook in the scaffold repo and grading the effect.
+- R22. A `component-coverage` check in `tests/check.mjs` lists every skill, command, agent and hook (by script name) in the workflow plugins (pro-ai-sdlc, pro-egm, pro-spdd, pro-speckit and pro-pdd) and fails when one has no case tagged for it, unless it is listed in `tests/cases/components-uncovered.json` with a reason; a listed entry that is now covered or gone also fails.
+  The list starts with every component of pro-spdd, pro-speckit and pro-pdd, plus `command:install` and `command:pr-babysit` with their reasons.
+- R23. `tests/run-evals.mjs [plugin...] [--sdlc] [--runs n] [--model m] [--max-cost-usd n] [--dry-run]` runs `claude plugin eval` on each named plugin, or each workflow plugin with `--sdlc`. It adds `--scaffold` and `--allow-tools Bash Write Edit` only when a plugin has a case with a `scaffold_script` or a tool-using case. It stops before a plugin when the running total passes the cap.
+  It prints one table per plugin: component, case, fired or passed out of runs with the plugin, the same without it, and Δ.
+  `--dry-run` prints the plan and the uncovered components and spends nothing.
+- R24. `docs/evals.md` documents the runner and the coverage check; `tests/unit/` covers the tag parsing, the coverage diff and the runner's flag choice.
 
 ## Out of scope
 
