@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-skill-firing/intent.md
-intent-status: proposed
-status: draft
+intent-status: accepted
+status: accepted
 created: 2026-10-29T14:20:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: make four discipline skills fire and prove it
 
 Built from `intent.md` in this folder.
-Status: draft.
+Status: accepted by Jody on 2026-10-29 ("Go").
 Read: the four `SKILL.md` files, their plugin eval cases under `plugins/pro-execution/evals/` and `plugins/pro-quality/evals/`, `evals/cases/verification-before-completion.json`, `docs/evals.md`, the "Plugin evals" section of agent-skills' `evals/README.md` (commit eb07f19) and `claude plugin eval --help` (Claude Code 2.1.312), which documents an opt-in `scaffold_script` per case.
 Stacked on PR 75 (the eval tiers) and the PR quality gate fix, because all three bump pro-quality.
 

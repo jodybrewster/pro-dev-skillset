@@ -1,7 +1,7 @@
 ---
 source: eval
 kind: change
-status: proposed
+status: accepted
 risk: low
 created: 2026-10-29T14:00:00-0400
 author: Jody Brewster
@@ -12,7 +12,7 @@ author: Jody Brewster
 Author: Jody Brewster (pro-dev-skillset).
 Source: the first `claude plugin eval` and behavioral runs from [intent/2026-10-29-evals-three-tiers](../2026-10-29-evals-three-tiers/plan.md) (PR 75).
 Jody: "Yes let's do 1 and 2", where 2 was rewriting the descriptions that did not fire and sharpening the graders.
-Status: proposed.
+Status: accepted on 2026-10-29.
 Created: 2026-10-29.
 
 ## Problem
