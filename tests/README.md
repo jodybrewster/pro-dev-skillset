@@ -19,6 +19,8 @@ node tests/security-hooks.mjs # the pro-security push-gate cases, standalone
 node tests/doc-hooks.mjs      # the pro-quality doc-hook cases (push freshness, write location), standalone
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
+node tests/route-lexical.mjs  # keyless lexical routing + description collisions (--min-rank1 <pct>)
+node --test tests/unit/*.test.mjs  # unit tests (stemmer, ranking, collisions, coverage list)
 ```
 
 `check.mjs` exits non-zero on any failure (warnings are allowed). It's the same
@@ -41,12 +43,12 @@ gate CI runs (`.github/workflows/validate.yml`).
 | `security-hooks` | runs the real pro-security `push-gate.py` and `security_surface.py` once per case (PreToolUse payload on stdin, throwaway git repos with a bare `origin`) and asserts deny or pass | a push or `gh pr create` that touches security surface slipping through, a `git commit`, dry run or docs-only push being held, or a retry being denied; no `python3` or `git` = warning-level skip |
 | `memory-hooks` | runs the real `memory-recall.py` and `daily-log.py` once per case (hook JSON payload on stdin, sandboxed `HOME`) and asserts recall/ledger/timer-gate behaviour | a wrong recall or ledger decision, or `dream-timer.has_memory_content()` counting the daily ledger as memory content; no `python3` = warning-level skip |
 | `agents` | every `agents/*.md` has `name`+`description`, name matches filename, and has a `.codex-plugin/agents/<n>.toml` counterpart | agent frontmatter drift, malformed Codex `.toml` (missing counterpart = warning) |
-| `eval-coverage` | every shipped skill and subagent is named by at least one `expect` in `routing.jsonl` | never fails; warns so untested routing stays visible |
+| `eval-coverage` | every shipped skill is named by at least one `expect` in `routing.jsonl` or listed in `cases/uncovered.json`; the list can only shrink | an unlisted uncovered skill, a stale list entry; uncovered subagents only warn |
 
 ### Coverage reality
 
-`eval-coverage` currently warns on ~32 skills and subagents with no routing case
-against 32 cases covering the rest. Routing coverage is partial by design at the
+`eval-coverage` currently lists 25 skills in `cases/uncovered.json` (and warns on the uncovered
+subagents) against 80 cases covering the rest. Routing coverage is partial by design at the
 edges (SPDD leads route as a pipeline, `pro-motion`, `pro-nextjs` and `pro-astro` skills are
 picked by file context more than by prompt), but the warnings are the honest list
 of what no eval asserts.
@@ -129,6 +131,15 @@ compete for the same prompts in real sessions.
 They keep the eval honest: a marketplace description has to win against the
 neighbors it actually faces, not just against its siblings.
 Distractor slugs are valid in `expect`/`notOneOf`.
+
+### Lexical routing (`route-lexical.mjs`)
+
+A keyless stand-in for the router: stemmed TF-IDF cosine over each entry's name and description, scored against the same `routing.jsonl` cases.
+It reports the rank-1 and top-k rates (k is 3, or a case's `top_k`) and the failing cases with their top three.
+`--min-rank1 <pct>` exits 1 below the floor. A `notOneOf` case that ranks a forbidden entry first prints a warning, because word overlap cannot judge those boundaries; the model router in `eval.mjs` holds them.
+It also scores every pair of descriptions: 0.50 or above warns, 0.75 or above fails unless the pair is in [`cases/collisions-allowed.json`](cases/collisions-allowed.json) with a reason.
+CI runs it with the floor set in `validate.yml`, plus the `node:test` files in `tests/unit/`.
+Shared catalog loading lives in `lib/catalog.mjs`.
 
 ### Bridge install smoke test (`bridge-install-smoke.mjs`)
 

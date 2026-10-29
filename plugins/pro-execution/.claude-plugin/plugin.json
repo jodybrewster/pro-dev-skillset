@@ -1,6 +1,7 @@
 {
   "name": "pro-execution",
-  "version": "0.4.0",
+  "version": "0.5.0",
+  "experimental": {"evals": "evals"},
   "description": "Execution discipline skills: TDD, systematic debugging, git worktrees and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
   "author": {
     "name": "Jody Brewster",

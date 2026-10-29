@@ -15,3 +15,7 @@ coverage/
 
 # lead-research evidence runs (never commit gathered evidence)
 .research/
+
+# Eval run output (behavioral and plugin tiers)
+evals/results/
+plugins/*/evals/results/
