@@ -20,6 +20,7 @@ node tests/doc-hooks.mjs      # the pro-quality doc-hook cases (push freshness, 
 node tests/eval.mjs --dry     # validate eval cases reference real skills (no API)
 node tests/eval.mjs           # live routing eval  (needs ANTHROPIC_API_KEY)
 node tests/route-lexical.mjs  # keyless lexical routing + description collisions (--min-rank1 <pct>)
+node tests/run-evals.mjs --sdlc --dry-run  # plan the workflow-plugin evals, spend nothing (drop --dry-run to run them)
 node --test tests/unit/*.test.mjs  # unit tests (stemmer, ranking, collisions, coverage list)
 ```
 

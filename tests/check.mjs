@@ -25,6 +25,7 @@ import { runProDevCases } from "./pro-dev.mjs";
 import { runGoldfishCases } from "./goldfish.mjs";
 import { spawnSync } from "node:child_process";
 import { coverageProblems } from "./lib/coverage.mjs";
+import { WORKFLOW_PLUGINS, listComponents, listCaseTags, coverageDiff } from "./lib/components.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(ROOT, "plugins");
@@ -1037,6 +1038,46 @@ checks["evals"] = (m) => {
         if (type === "tool_used" && !data.tool) failures.push(`${gt}: tool_used grader has no tool`);
       }
     }
+  }
+  return { failures, warnings };
+};
+
+// Component coverage: every skill, command, agent and hook in the workflow plugins needs
+// an eval case tagged for it (prompt.md `tags: [<kind>:<name>]`), unless it is listed with
+// a reason in tests/cases/components-uncovered.json. A listed entry that is now covered or
+// gone fails, so the list only shrinks.
+checks["component-coverage"] = (m) => {
+  const failures = [], warnings = [];
+  const listPath = join(ROOT, "tests", "cases", "components-uncovered.json");
+  let listed = [];
+  if (!existsSync(listPath)) failures.push("tests/cases/components-uncovered.json missing");
+  else {
+    try { listed = JSON.parse(readFileSync(listPath, "utf8")); }
+    catch (e) { failures.push(`tests/cases/components-uncovered.json: ${e.message}`); }
+  }
+  for (const e of listed)
+    if (!e || typeof e.id !== "string" || !e.reason) failures.push(`components-uncovered.json: entry needs id and reason - ${JSON.stringify(e)}`);
+  const byPlugin = new Map();
+  for (const e of listed) {
+    const i = String(e && e.id).indexOf("/");
+    if (i < 0) { failures.push(`components-uncovered.json: id "${e && e.id}" is not <plugin>/<kind>:<name>`); continue; }
+    const pl = e.id.slice(0, i);
+    if (!byPlugin.has(pl)) byPlugin.set(pl, []);
+    byPlugin.get(pl).push(e.id.slice(i + 1));
+  }
+  for (const pl of byPlugin.keys())
+    if (!WORKFLOW_PLUGINS.includes(pl)) failures.push(`components-uncovered.json: ${pl} is not a workflow plugin`);
+  for (const name of WORKFLOW_PLUGINS) {
+    const p = m.plugins.find((x) => x.name === name);
+    if (!p) { failures.push(`workflow plugin ${name} not found`); continue; }
+    const declared = p.manifest && p.manifest.experimental && p.manifest.experimental.evals;
+    const { missing, stale } = coverageDiff(
+      listComponents(p.dir),
+      listCaseTags(p.dir, declared ? String(declared) : "evals"),
+      byPlugin.get(name) || []
+    );
+    for (const c of missing) failures.push(`${name}/${c} has no eval case tagged for it; add a case with tags: [${c}] or list it in tests/cases/components-uncovered.json`);
+    for (const c of stale) failures.push(`tests/cases/components-uncovered.json lists ${name}/${c} but it is now covered or no longer exists; remove the stale entry`);
   }
   return { failures, warnings };
 };
