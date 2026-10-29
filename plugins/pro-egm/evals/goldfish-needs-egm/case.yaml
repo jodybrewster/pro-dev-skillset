@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: goldfish-needs-egm
+context:
+  scaffold_script: scaffold.sh

@@ -1,6 +1,6 @@
 {
   "name": "pro-egm",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Glue for Google's Elephant-Goldfish Model (egm@egm): runs its review loop on a spec or plan with goldfish reviewers a repo keeps in .egm/, shows the resolved reviewers and reading list first and confines custom paths to the repo. Needs egm@egm, installed by /pro-dev install. Codex users use the bridge's install lines instead of /pro-egm:install.",
   "skills": "./skills/"
 }

@@ -101,6 +101,34 @@ Reports land in `plugins/<plugin>/evals/results/`, which git ignores.
 
 Covered on 2026-10-29: `test-driven-development` and `systematic-debugging` (pro-execution), `verification-before-completion` and `requesting-code-review` (pro-quality) and `writing-plans` (pro-pdd).
 
+## Coverage and the runner
+
+Every plugin eval case declares what it covers in the `prompt.md` frontmatter: `tags: [<kind>:<name>, ...]`, where kind is `skill`, `command`, `agent` or `hook`.
+A hook is named by its script stem, so `hook:plan-sync` is `scripts/plan-sync.py`.
+A stays-quiet case prefixes the tag with `quiet:`, for example `quiet:command:spec`.
+A quiet tag proves the component stays out of the way and does not count as coverage.
+
+The `component-coverage` check in `tests/check.mjs` lists every skill, command, agent and hook in pro-ai-sdlc, pro-egm, pro-spdd, pro-speckit and pro-pdd.
+It fails when a component has no case tagged for it, unless `tests/cases/components-uncovered.json` lists it as `<plugin>/<kind>:<name>` with a reason.
+A listed entry that is now covered or no longer exists also fails, so the list only shrinks.
+
+```bash
+node tests/run-evals.mjs --sdlc                  # every workflow plugin that declares evals
+node tests/run-evals.mjs pro-ai-sdlc --runs 1    # one plugin, one run per case
+node tests/run-evals.mjs --sdlc --dry-run        # print the plan and uncovered components, spend nothing
+node tests/check.mjs component-coverage          # the coverage check alone
+```
+
+The runner calls `claude plugin eval` once per plugin with `--no-publish --trust-plugin -j 4`, `--model sonnet` and `--runs 3` unless you pass others.
+It adds `--scaffold` and `--allow-tools Bash Write Edit` only when a plugin has a case with a `scaffold_script` or one that allows a gated tool.
+It stops before a plugin once the running total reaches `--max-cost-usd` (default 10) and gives each plugin the remaining budget as its own cap.
+After each plugin it prints a table of component, case, passes with the plugin, passes without it and the delta.
+A firing case shows `fired x/n` and has no without column.
+Each run also writes its report under the plugin's `evals/results/`, which git ignores; the runner reads the full JSON from a temp file.
+Expect about a dollar or two per plugin on Sonnet at three runs and more for the scaffolded workflow cases; pro-ai-sdlc and pro-egm together cost $6.22 on 2026-10-29.
+On macOS the runner skips cases tagged `needs:git`, because the eval sandbox cannot run git there; `--include-git` runs them anyway.
+Pin the model and note the Claude Code version whenever you quote numbers.
+
 ## Measured changes
 
 ### 2026-10-29: four discipline skills ([intent](../intent/2026-10-29-skill-firing/))
@@ -128,9 +156,40 @@ What the runs taught:
 - `requesting-code-review` dispatches its reviewer subagent in 3 of 3 runs with the plugin and 0 of 3 without.
   The subagent tool is named `Agent` in run traces even where the tool list says `Task`, so a grader must match `Agent`; the first version matched `Task` and wrongly read 0.
 - An `llm` grader reads only the final message unless it sets `focus: trace`; the TDD agent did write and fail the test first, but its final message showed the code first.
-  `regex` graders do not take `focus`.
+  `regex` graders do not take `focus`; they read the trace with `target: trace`.
 - A case that asks for real work needs the tools for it: the TDD case passes only with Write, Edit and Bash allowed (`--allow-tools Bash Write Edit`).
   The verification case also needs `--scaffold`.
+
+### 2026-10-29: first baseline for pro-ai-sdlc and pro-egm ([intent](../intent/2026-10-29-sdlc-egm-evals/))
+
+`node tests/run-evals.mjs pro-ai-sdlc pro-egm --runs 3`, Sonnet, Claude Code 2.1.312, macOS, $6.22.
+"With" and "without" count runs where every scored grader passed; a hook or agent case has no meaningful without arm, since nothing else blocks the push or dispatches the agent.
+
+| Component | Case | With | Without |
+|---|---|---|---|
+| `hook:production-gate` | `hook-production-gate` | 3 of 3 | 0 of 3 |
+| `hook:protect-tests` | `hook-protect-tests` | 3 of 3 | 0 of 3 |
+| `hook:plan-sync` | `hook-plan-sync` | 3 of 3 | 0 of 3 |
+| `agent:verifier` | `verifier-after-build` | 3 of 3 | 0 of 3 |
+| `agent:researcher` | `researcher-for-wide-question` | 0 of 3 | 0 of 3 |
+| `command:review`, `agent:reviewer` | `review-finds-planted-bug` | 1 of 3 | 2 of 3 |
+| `skill:egm-bridge` | `egm-bridge-fires` | 2 of 3 | 0 of 3 |
+| `command:goldfish` | `goldfish-init` | 3 of 3 | 0 of 3 |
+| `command:goldfish` | `goldfish-needs-egm` | 3 of 3 | 0 of 3 |
+| `agent:goldfish-reviewer` | `goldfish-reviewer-read-only` | 2 of 3 | 0 of 3 |
+
+Every stays-quiet case (`spec`, `review`, `intent`, `egm-bridge`) stayed quiet in 3 of 3 runs in both arms.
+
+Findings:
+
+- All three pro-ai-sdlc hooks load and fire in a real session; the hook tests only prove the scripts behave when called.
+  In warn mode they announce and allow, so the cases grade that the hook fired, not that it blocked.
+- `/review` with its reviewer agent found both the planted off-by-one and the `console.log` rule breach as blocking in 1 of 3 runs; plain Sonnet did in 2 of 3.
+- The main session answered the wide "walk me through every file" question inline in 3 of 3 runs and never used `researcher`.
+- On macOS the eval sandbox cannot run `/usr/bin/git` (the xcrun shim cannot write its cache), so `spec-from-intent`, `plan-from-spec` and `execute-refuses-draft-plan` are tagged `needs:git` and the runner skips them there.
+  They need a Linux run; the coverage check still counts them.
+- The subagent tool is named `Agent` in traces; a command fires as `Skill` with `{"skill":"<plugin>:<command>"}`.
+- A `prompt.md` description containing `: ` must be quoted or the frontmatter fails to parse.
 
 ## Credit
 

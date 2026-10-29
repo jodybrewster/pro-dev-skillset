@@ -1,0 +1,146 @@
+[
+  {
+    "id": "pro-spdd/skill:spdd-analysis-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-api-test-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-code-review-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-generate-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-prompt-update-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-reasons-canvas-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-reverse-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-story-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/skill:spdd-sync-lead",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-analysis",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-api-test",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-code-review",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-generate",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-install-to",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-prompt-update",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-reasons-canvas",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-reverse",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-story",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-spdd/command:spdd-sync",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-speckit/skill:spec-kit-bridge",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-speckit/command:install",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-speckit/command:remove",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:adhd",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:brainstorming",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:idea-refine",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:interview-me",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:lavish",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/skill:writing-plans",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/command:adhd",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/command:install",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-pdd/command:lavish",
+    "reason": "workflow plugin not yet covered; add cases as it is used"
+  },
+  {
+    "id": "pro-ai-sdlc/command:pr-babysit",
+    "reason": "needs a live PR"
+  },
+  {
+    "id": "pro-egm/command:install",
+    "reason": "installs from the network"
+  },
+  {
+    "id": "pro-ai-sdlc/command:intent",
+    "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
+  },
+  {
+    "id": "pro-ai-sdlc/command:adr",
+    "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
+  },
+  {
+    "id": "pro-ai-sdlc/agent:simplifier",
+    "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
+  }
+]
