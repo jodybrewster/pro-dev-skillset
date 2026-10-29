@@ -133,7 +133,7 @@ test('rejects an empty title', () => {
   assert.throws(() => addTask(createStore(), ''), TypeError);
 });
 JS
-git init -q -b main . && git add -A && git -c user.email=e@e -c user.name=e commit -qm "tiny-tasks baseline"
+git init -q -b main . && git config user.name "Sam Rivera" && git config user.email sam@example.com && git add -A && git -c user.email=e@e -c user.name=e commit -qm "tiny-tasks baseline"
 git init -q --bare .remote.git
 echo ".remote.git/" >> .git/info/exclude
 git remote add origin ./.remote.git

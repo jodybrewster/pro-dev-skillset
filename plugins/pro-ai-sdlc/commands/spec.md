@@ -11,8 +11,8 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Working tree: !`git status --short --branch`
 - Author: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
-- Intents without a spec: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/intent.md" ] && [ ! -f "$d/spec.md" ] && echo "$d"; done`
-- Policy files present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 DESIGN.md REVIEW.md CLAUDE.md AGENTS.md SECURITY.md docs/adr docs/decisions .claude/skills 2>/dev/null`
+- Intents without a spec: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/intent.md" ] && [ ! -f "$d/spec.md" ] && echo "$d"; done; true`
+- Policy files present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 DESIGN.md REVIEW.md CLAUDE.md AGENTS.md SECURITY.md docs/adr docs/decisions .claude/skills 2>/dev/null; true`
 
 Requested intent: $ARGUMENTS
 
