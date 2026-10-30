@@ -6,6 +6,8 @@ Date: 2026-10-30
 
 accepted (2026-10-30) (2026-10-30)
 
+Amended 2026-10-30 by intent/2026-10-30-p0-hardening/: the merge gate reads the PR head through `gh pr view` and may fetch it, which replaces the rejected alternative of checking the head over the network.
+
 Decided by: Jody Brewster.
 Source: intent/2026-10-29-risk-tiers/.
 
@@ -49,7 +51,7 @@ Revisit the decision when the calibration run shows the thresholds or floors mis
 - A required dependency on pro-security and pro-legal: breaks the rule that plugins stand alone.
 - Approval recorded in the stamp or a PR comment: an agent can write either and cannot answer the prompt.
 - Approval by an environment variable: an agent can set it.
-- Checking the PR head sha over the network in the hook: breaks the no-network rule and `--match-head-commit` makes GitHub check it.
+- Checking the PR head sha over the network in the hook: breaks the no-network rule and `--match-head-commit` makes GitHub check it. (since adopted, see the amendment)
 
 ## Where it is enforced
 
