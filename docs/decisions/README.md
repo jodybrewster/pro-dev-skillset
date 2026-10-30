@@ -16,3 +16,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0008](./0008-spec-kit-uv-tool.md) | spec-kit installs through a `uv-tool` row pinned by commit and date and `check` verifies it from registry hashes without running it (proposed) | 2026-10-28 |
 | [0009](./0009-three-eval-tiers.md) | Three eval tiers: keyless routing gates CI, behavioral and plugin evals run on demand (proposed) | 2026-10-29 |
 | [0010](./0010-constraint-floor.md) | Every repo gets the same constraint floor; `CONSTRAINTS.md` holds a repo's quality bar and every gate and reviewer reads it | 2026-10-29 |
+| [0011](./0011-review-convergence.md) | Review rounds converge: later rounds read only new commits, a finding is raised once, old bugs never block and /pr-babysit stops after three rounds (proposed) | 2026-10-30 |
