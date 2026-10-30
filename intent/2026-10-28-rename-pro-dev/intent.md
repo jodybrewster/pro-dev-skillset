@@ -58,3 +58,4 @@ A session that types an old command name gets a one-line pointer to the new one 
 - Mieruka's paths: does it read by plugin name? If so, does it need a release in step?
 - Ordering with intents C, D and E, which add and bump plugins under the current names; this should land after them.
 - Likely needs an ADR: it sets the naming rule for every future plugin.
+- 2026-10-30: [ADR-0013](../../docs/decisions/0013-plugin-layering.md) decides the layering and asks that this rename land in the same release as the consolidation it implies, with names `pro-core`, `pro-dev-*` and `pro-gtm-*` (a domain prefix per plugin) rather than `pro-dev-*` for everything.
