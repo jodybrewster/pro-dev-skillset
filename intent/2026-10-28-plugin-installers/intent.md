@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: proposed
+status: done
 risk: medium
 created: 2026-10-28T15:30:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, raised while settling intent E (pro-speckit) Flagged concern 2.
-Status: proposed.
+Status: done; shipped in PR #70 (adb3f95).
 Created: 2026-10-28.
 
 ## Problem
