@@ -51,8 +51,15 @@ RANK = {"low": 0, "medium": 1, "high": 2}
 NAMES = ["low", "medium", "high"]
 EXIT = {"low": 0, "medium": 3, "high": 4}
 
-# Size and area thresholds: placeholders, unmeasured, until the AC9 calibration run over
-# merged PRs fixes them. REVIEW.md can override each one (R16).
+# Size and area thresholds, each inside the range that changed no tier over the 30 merged PRs
+# #60 to #89 (intent/2026-10-30-p0-hardening/calibration.md, from calibrate.py). REVIEW.md can
+# override each one (R16).
+#   FILES_MEDIUM 10: measured on PRs #60 to #89, no tier changes for 6 and up; 5 moves #63.
+#   FILES_HIGH 30: no tier changes for 24 and up; 23 moves #70.
+#   LINES_MEDIUM 300: no tier changes for 191 and up; 190 moves #63.
+#   LINES_HIGH 1000: no tier changes for 968 and up; 967 moves #71.
+#   AREAS_MEDIUM 3: the one value the table pins; 2 moves #63, 4 moves #67 and #73.
+#   NO_TEST_LINES 50: no tier changes for 0 to 56 source lines added; 57 moves #77.
 FILES_MEDIUM, FILES_HIGH = 10, 30
 LINES_MEDIUM, LINES_HIGH = 300, 1000
 AREAS_MEDIUM = 3

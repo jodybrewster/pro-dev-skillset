@@ -299,12 +299,11 @@ test("size and areas are weak", () => withFixture("size-files-high", (repo) => {
   assert.deepEqual(j.tie, ["medium", "high"]);
 }));
 
-test("the size thresholds are named placeholder constants", () => {
+test("the size thresholds are named constants", () => {
   const src = readFileSync(SCRIPT, "utf8");
   for (const n of ["FILES_MEDIUM", "FILES_HIGH", "LINES_MEDIUM", "LINES_HIGH", "AREAS_MEDIUM", "NO_TEST_LINES"]) {
     assert.match(src, new RegExp(`^.*\\b${n}\\b.*=`, "m"));
   }
-  assert.match(src, /placeholders, unmeasured/);
 });
 
 // Step 6: surface signals and the module lookup (R10, R11, AC7)
@@ -701,4 +700,14 @@ test("template block left commented: policy is defaults", () => {
 test("template risk-tiers block has no em dash and no comma-and", () => {
   const block = TEMPLATE.slice(TEMPLATE.indexOf("<!-- Risk tiers"), TEMPLATE.indexOf("## Output format"));
   assert.doesNotMatch(block, /—|, and/);
+});
+
+test("the six thresholds hold their calibrated values and the comment names the calibration", () => {
+  const src = readFileSync(SCRIPT, "utf8");
+  assert.doesNotMatch(src, /placeholder|unmeasured/i);
+  assert.match(src, /calibration\.md/);
+  assert.match(src, /^FILES_MEDIUM, FILES_HIGH = 10, 30$/m);
+  assert.match(src, /^LINES_MEDIUM, LINES_HIGH = 300, 1000$/m);
+  assert.match(src, /^AREAS_MEDIUM = 3$/m);
+  assert.match(src, /^NO_TEST_LINES = 50$/m);
 });
