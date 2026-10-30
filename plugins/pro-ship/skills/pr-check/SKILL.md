@@ -117,6 +117,43 @@ The four fields are:
 Send that text and nothing else.
 Never add a summary of the work, the session's reasoning, your own opinion of the diff or earlier findings.
 
+### Codex second review
+
+After the handoff is filled, ask whether a second review from Codex applies:
+
+```bash
+python3 "$CHECK" codex-trigger --tier <tier>
+```
+
+It prints `{run, setting, reason}`.
+The setting comes from a `codex-review: always | high | never` line in `REVIEW.md`; the default is `high`.
+When `run` is false, record `reviewers.codex` as `skipped` with that reason and go on.
+
+When `run` is true:
+
+1. Write the filled handoff, the same four fields the Claude reviewer gets and nothing else, to `.pro-dev/ship/handoff.md`.
+   The handoff text is never put into a command line.
+2. Find the instructions and the runner:
+
+   ```bash
+   CODEXRUN="${CLAUDE_PLUGIN_ROOT}/scripts/codex-run.py"
+   TWIN=$(python3 "$CHECK" find pro-quality .codex-plugin/agents/code-reviewer.toml)
+   ```
+
+   When `$TWIN` is `not-installed` or `$CODEXRUN` does not exist, record `not-installed` with the reason `runner or instructions missing`.
+3. Run it, with stdout to a file, and keep the exit code:
+
+   ```bash
+   python3 "$CODEXRUN" --instructions "$TWIN" --prompt .pro-dev/ship/handoff.md > .pro-dev/ship/review-codex.md
+   ```
+
+   Start it in the same turn as the subagent dispatches below, as a background shell command when the host offers one, and give it the host's longest command timeout.
+   The runner stops by itself after 540 seconds.
+
+The runner checks consent, the `codex` binary and the login itself.
+It never sends anything unless the repo answered yes for `codex` through `/pro-dev install`.
+A Codex finding never blocks the merge and never makes `result` `incomplete`.
+
 ### Dispatch
 
 Dispatch both reviewers in one turn so they run in parallel.
@@ -124,6 +161,8 @@ Choose from the agents the host offers:
 
 - Code review: `pro-quality:code-reviewer` (plus every other reviewer in `demands.reviewers`), else `pro-ai-sdlc:reviewer`, else record `not-installed` (not `could-not-run`) in `--reviewers`.
 - Security review, only on surface: `pro-security:security-architect` in diff mode.
+
+Save the code reviewer's report verbatim to `.pro-dev/ship/review-code.md`.
 
 When the host cannot dispatch subagents, say so.
 Apply each reviewer's own skill in this session instead, record the reviewer as `inline` and note that the context was not fresh.
@@ -139,15 +178,28 @@ A missing line or a mismatch records `could-not-run` for that reviewer.
 - Security reviewer, last line: `blocking: <n>  should-fix: <n>  notes: <n>`.
   `blocking` takes `blocking` and `important` takes `should-fix`.
 
-Build the `--reviewers` JSON with keys `code` and `security`.
-Each holds `agent`, `status`, `blocking`, `important` and `range`.
+Codex report: when the Codex run was started, read its first line with the same code reviewer pattern, then map the run to `reviewers.codex`:
+
+- Trigger false: `skipped`, with the trigger's reason.
+- `$TWIN` is `not-installed` or the runner file is missing: `not-installed`, reason `runner or instructions missing`.
+- Runner exit 3: `not-installed`, reason the runner's word (`not-opted-in`, `not-installed` or `not-logged-in`).
+  For `not-opted-in` say to run `/pro-dev install`.
+- Runner exit 0 with the tally line first: `done`, `important` from the tally.
+- Runner exit 0 without that line, exit 2, exit 4 or any other exit: `could-not-run`, reason the runner's word (`timeout`, `exit-<n>`, `empty-output`, `usage`) or `no tally line`.
+
+When Codex is `done`, run `python3 "$CHECK" agree --code .pro-dev/ship/review-code.md --codex .pro-dev/ship/review-codex.md` and take `agreed` and `disputed` from its `counts`.
+The `codex` record holds `agent` (`codex:code-reviewer` or null), `status`, `reason`, `blocking` (always 0), `important`, `agreed`, `disputed` and `range`.
+A Codex run that never started has `important`, `agreed` and `disputed` at 0.
+
+Build the `--reviewers` JSON with keys `code` and `security`, plus `codex` when the trigger was asked.
+Each of `code` and `security` holds `agent`, `status`, `blocking`, `important` and `range`.
 `docs/pr-check-stamp.md` lists the allowed values.
 
 ### Convergence
 
 Read the last stamp's `head`.
 When it is an ancestor of HEAD (`git merge-base --is-ancestor`), this is a later round.
-Put `since <sha>` in `range` for the reviewer so it reviews only the new commits.
+Put `since <sha>` in `range` for the reviewers, the Codex run included, so they review only the new commits.
 Drop findings the person has already seen or fixed.
 Stop after the third round and ask the person to rethink the approach (ADR-0011).
 Every round counts, including rounds that only fixed failing checks.
@@ -168,12 +220,15 @@ pr-check on 3f9c2ab (base 81d04e7)
   floor       pass   floor-guard.py --check
   mutation    killed src/gate.ts
   code review done   reviewer: 0 blocking, 2 important
+  codex       done   codex: 3 important, 1 agreed, 1 disputed
   security    skipped-no-surface
 result: pass
 stamp: .pro-dev/ship/pr-check.json
 PR body draft: .pro-dev/ship/pr-body.md
 ```
 
+The `codex` line is `codex       done   codex: <n> important, <a> agreed, <d> disputed` or `codex       <status> (<reason>)`.
+It changes nothing in `result`.
 Print the draft body.
 Never run `gh pr create`.
 When the person opens the PR with `gh pr create` at high tier, apply the label right after it succeeds:
@@ -195,4 +250,5 @@ When the script is missing (Codex ships only skills, or the plugin path is not s
 2. Run each command once from the repo root and report its result and output tail.
 3. Review inline as above and record it as not fresh.
 4. Draft the PR body.
-5. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.
+5. The Codex review is skipped: no script.
+6. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.

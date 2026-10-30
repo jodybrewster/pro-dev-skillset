@@ -1,6 +1,6 @@
 # PR body draft
 
-Write `.pro-dev/ship/pr-body.md` with these three sections from the stamp and the diff.
+Write `.pro-dev/ship/pr-body.md` with these four sections from the stamp and the diff.
 Print it.
 Never run `gh pr create`.
 Write "confirm" beside any claim you could not check.
@@ -9,6 +9,22 @@ Write "confirm" beside any claim you could not check.
 
 One line per check: the command and its result.
 Then say what was `not-found`, `timeout` or `could-not-run` plus what the floor and mutation check recorded.
+
+## Reviews
+
+When the Codex second review ran (`reviewers.codex.status` is `done`), list the findings in four groups from `pr-check.py agree`.
+Tag each finding with its source: `[Claude, <severity>]` or `[Codex, <severity>]`, and `[Claude, Codex]` for an agreed one.
+
+- Raised by both (agreed): one line per pair.
+- Raised by both, rated differently: each reviewer's line as written, one under the other.
+- Claude only.
+- Codex only.
+
+A group with no findings reads "none".
+Never say which side of a dispute is right.
+The person weighs a Codex finding; it never blocks the merge.
+
+When Codex did not run, write one line: `Codex review: <status> (<reason>)`, taken from `reviewers.codex`.
 
 ## Risk
 
