@@ -40,6 +40,9 @@ Size every step XS, S, M or L: XS is one file and under 30 minutes, S is one or 
 Aim for XS to S.
 Split a step that is over two hours, carries more than three acceptance criteria, has "and" in its title or touches two or more subsystems.
 These are prompts, not hard rules; a step left at L states its reason in the plan.
+Mark a step `irreversible` (in its parentheses beside the size, with a few words on what cannot be undone) when it changes a data migration, a public API, an auth rule or a deploy or infrastructure config, or deletes a file other code depends on.
+Name each marked step under Risks.
+`/execute` doubts marked steps with a fresh-context reviewer before going on.
 Put a `Checkpoint:` line after every two or three steps with the commands to run and what to confirm.
 Order the riskiest steps early, after any failing test they need.
 Leave the `- Definition of done:` line in `## Done` for the build to fill.

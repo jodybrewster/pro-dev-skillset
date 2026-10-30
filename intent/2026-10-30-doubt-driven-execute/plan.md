@@ -259,3 +259,10 @@ It also moves ADR-0019 from `proposed` to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Jody's decisions of 2026-10-30 changed the spec, plan and ADR-0019 before the build: an unattended run with open findings after three rounds finishes and opens a draft PR with the findings under "Potential concerns"; the trigger is the plan marker plus a high-tier classifier result with no medium-tier signal trigger; the skill's `handoff.md` is its own copy held by the `doubt` check (commit bbb469f).
+- Step 2: the check compares the doubt `handoff.md` with pro-quality's by the four field names in order and the closing "Nothing else goes in any field" line, not byte for byte, because the `range`, `brief` and `risk` wording differs by design.
+- Step 7: the stop list sits in its own `## Stop list` section followed by `## Scope discipline`, so `## Doubt` is placed after `## Scope discipline` and before `## Your task`.
+- Step 7: the stop list section does not find `risk-classify.py` itself; step 5 of `/execute` uses pro-ship's `risk-tiers` skill, so `## Doubt` classifies through that skill with `--base`, `--head` and `--json` instead of a script path.
+- Step 8: sizes sit inside the step's parentheses as "(size XS or S; R1, AC1)", so the marker is `irreversible: <what cannot be undone>` in the same parentheses; the `Doubt:` line goes after the `Definition of done:` line.
+- Step 6: the runner's usage on main is `--instructions FILE --prompt FILE [--consent-ref REF]` and it also needs the repo's `codex` consent in `.claude/pro-dev.json`; the skill calls it with those flags, reads consent from the work tree (no `--consent-ref`) and tells the person to run `/pro-dev install` on `not-opted-in`.
