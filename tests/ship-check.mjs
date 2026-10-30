@@ -141,6 +141,10 @@ export function runShipCheckCases() {
     repo = mkrepo({ "CLAUDE.md": "## Verify\n\n```bash\ntrue\n```\n\npr-check timeout: 900\n" });
     r = pc(repo, ["discover"]);
     add("d10 the pr-check timeout line is reported", "timeout 900", r.json?.timeout === 900, r.stdout);
+    repo = mkrepo({ "CLAUDE.md": "## Verify\n\n```bash\necho one \\\n  two \\\n  three\necho four\n```\n" });
+    r = pc(repo, ["discover"]);
+    add("d11 a backslash continuation joins into one step", "two steps, the first holds one two three",
+      (r.json?.steps || []).length === 2 && /^echo one\s+two\s+three$/.test(r.json.steps[0].command) && r.json.steps[1].command === "echo four", r.stdout + r.stderr);
     repo = mkrepo({});
     r = pc(repo, ["discover"]);
     add("d10b the default timeout is 300", "timeout 300", r.json?.timeout === 300, r.stdout);
@@ -195,6 +199,16 @@ export function runShipCheckCases() {
     const all = JSON.stringify(runJson(repo));
     add("r5 ghp_, sk-ant- and AKIA tokens in output become [redacted]", "no token survives and [redacted] appears",
       tokens.every((t) => !all.includes(t)) && (all.match(/\[redacted\]/g) || []).length >= 3, all);
+
+    // Tokens are built at run time so no literal credential sits in this file.
+    const rep = (a, n) => a.repeat(n);
+    const tokens2 = ["sk-proj-" + rep("Ab1_", 10), "npm_" + rep("aB3", 12), "sk_live_" + rep("Z9y", 10), "sk_test_" + rep("Q8w", 10),
+      "xoxb-" + rep("1234-", 4) + "abcd", "glpat-" + rep("x1", 12), "ghs_" + rep("a1B2", 9), "github_pat_" + rep("Aa1_", 12)];
+    repo = mkrepo(verify(tokens2.map((t) => `echo token=${t}`)));
+    for (let i = 1; i <= tokens2.length; i++) pc(repo, ["run", "--step", `verify:${i}`]);
+    const all2 = JSON.stringify(runJson(repo));
+    add("r5b sk-proj-, npm_, sk_live_, sk_test_, xoxb-, glpat-, ghs_ and github_pat_ tokens are redacted", "no token survives",
+      tokens2.every((t) => !all2.includes(t.slice(0, 14))) && (all2.match(/\[redacted\]/g) || []).length >= tokens2.length, all2);
 
     repo = mkrepo(verify(["echo hi"]));
     writeFileSync(join(repo, ".gitkeep"), "changed\n");
@@ -366,6 +380,53 @@ export function runShipCheckCases() {
     s = scenario({ "lib.py": LIB0, "test_lib.py": TEST_ASSERT }, { "lib.py": LIB1, "CLAUDE.md": SLOW2 });
     spawnSync("sh", ["-c", `python3 "$0" run --step mutation --base ${s.baseSha} >/dev/null 2>&1 & p=$!; sleep 2; kill -TERM $p; wait $p`, PRCHECK], { cwd: s.repo, env, timeout: 30000 });
     add("m9 the script killed with SIGTERM mid-run leaves the tree clean", "clean and identical", intact(s, "lib.py"), git(s.repo, "status", "--short").stdout);
+
+    // JSX and generics: only operators with a space on both sides are flipped.
+    s = scenario({ "lib.tsx": "export const f = (a, b) => 0;\n", "test_lib.py": "import sys\nsrc = open('lib.tsx').read()\nsys.exit(0 if 'return <Spinner />' in src else 1)\n" },
+      { "lib.tsx": "export const f = (a, b) => {\n  return <Spinner />;\n  if (a < b) { return 1; }\n};\n" });
+    r = mutate(s);
+    add("m13 a JSX line is never mutated, the spaced comparison is", "survived (a mutated JSX line would break the test and read killed)", mut(r)?.status === "survived" && mut(r).file === "lib.tsx", r.stdout + r.stderr);
+    s = scenario({ "lib.tsx": "export const f = (a, b) => 0;\n", "test_lib.py": "print('ok')\n" },
+      { "lib.tsx": "export const f = (a: Array<string>) => {\n  return <Spinner />;\n};\n" });
+    r = mutate(s);
+    add("m13b a diff whose only angle brackets touch a letter is skipped", "skipped, no condition found", mut(r)?.status === "skipped" && mut(r).reason === "no condition found", r.stdout + r.stderr);
+
+    {
+      const v = mkrepo({ "CLAUDE.md": "## Verify\n\n```bash\necho a\necho b\n```\n" });
+      let x = pc(v, ["run", "--step", "verify:1"]);
+      x = pc(v, ["run", "--step", "verify:2"]);
+      add("m15 run prints only the step just run", "one check, verify:2, and the head", x.json?.checks?.length === 1 && x.json.checks[0].step === "verify:2" && typeof x.json.head === "string", x.stdout + x.stderr);
+    }
+
+    // Line numbers come from git (newlines only); a form feed must not shift the mutated line.
+    s = scenario({ "lib.py": "X = 1\x0c\ndef f(x):\n    return 0\n", "test_lib.py": TEST_NOASSERT }, { "lib.py": "X = 1\x0c\ndef f(x):\n    if x > 5:\n        return 1\n    return 0\n" });
+    r = mutate(s);
+    add("m10 a form feed before the changed line does not shift the mutation", "survived (a wrong line would break the file and read killed)", mut(r)?.status === "survived", r.stdout + r.stderr);
+    add("m10b the bytes are restored exactly", "clean and identical", intact(s, "lib.py"), git(s.repo, "status", "--short").stdout);
+
+    // A signal mid-run restores the file and kills the test child. SIGKILL cannot be caught, so a
+    // restore marker is left and the next run recovers from it before the dirty-tree refusal.
+    for (const sig of ["HUP", "INT"]) {
+      const pidf = join(sandbox, `m11-${sig}.pid`);
+      const SLOWP = `## Verify\n\n\`\`\`bash\nsh -c 'sleep 30 & echo $! > ${pidf}; wait; python3 test_lib.py'\n\`\`\`\n`;
+      s = scenario({ "lib.py": LIB0, "test_lib.py": TEST_ASSERT }, { "lib.py": LIB1, "CLAUDE.md": SLOWP });
+      spawnSync("sh", ["-c", `python3 "$0" run --step mutation --base ${s.baseSha} >/dev/null 2>&1 & p=$!; sleep 2; kill -${sig} $p; wait $p`, PRCHECK], { cwd: s.repo, env, timeout: 30000 });
+      add(`m11 SIG${sig} mid-run leaves the tree clean`, "clean and identical", intact(s, "lib.py"), git(s.repo, "status", "--short").stdout);
+      let alive = true;
+      try { process.kill(Number(readFileSync(pidf, "utf8").trim()), 0); } catch { alive = false; }
+      add(`m11b SIG${sig} mid-run kills the test child`, "the sleeper is gone", !alive, `pid ${readFileSync(pidf, "utf8")}`);
+      add(`m11c SIG${sig} leaves no restore marker`, "no marker", !existsSync(join(s.repo, ".pro-dev", "ship", "restore.json")), "");
+    }
+    {
+      const SLOWK = "## Verify\n\n```bash\nsh -c 'sleep 4; python3 test_lib.py'\n```\n";
+      s = scenario({ "lib.py": LIB0, "test_lib.py": TEST_ASSERT }, { "lib.py": LIB1, "CLAUDE.md": SLOWK });
+      spawnSync("sh", ["-c", `python3 "$0" run --step mutation --base ${s.baseSha} >/dev/null 2>&1 & p=$!; sleep 1.5; kill -KILL $p; wait $p`, PRCHECK], { cwd: s.repo, env, timeout: 30000 });
+      add("m12 after SIGKILL the file is left mutated with a restore marker", "dirty and a marker", git(s.repo, "status", "--short").stdout.includes("lib.py") && existsSync(join(s.repo, ".pro-dev", "ship", "restore.json")), git(s.repo, "status", "--short").stdout);
+      spawnSync("sleep", ["4"]);
+      r = pc(s.repo, ["run", "--step", "verify:1"]);
+      add("m12b the next run restores the file, removes the marker and proceeds", "exit 0, clean and identical, no marker",
+        r.status === 0 && intact(s, "lib.py") && !existsSync(join(s.repo, ".pro-dev", "ship", "restore.json")), r.stdout + r.stderr + git(s.repo, "status", "--short").stdout);
+    }
   }
   // -------------------------------------------------------------------------
   // Step 6: stamp (R11 to R15, AC8, AC9, AC16). The contract is docs/pr-check-stamp.md.
@@ -432,6 +493,43 @@ export function runShipCheckCases() {
       result(withRun({ floor: "not-installed" }, { code: rv("inline", { agent: "pro-ai-sdlc:reviewer" }), security: rv("inline", { agent: "pro-security:security-architect" }) })) === "pass", "");
     add("s5b an empty repo of not-found checks passes this line", "pass",
       result(withRun({ checks: ["build", "lint", "typecheck", "test"].map((s) => ({ step: s, command: null, status: "not-found", exit_code: null, output_tail: [] })) })) === "pass", "");
+
+    // --base REF resolves to the merge base, not the tip of REF.
+    {
+      const q = prep();
+      git(q.repo, "checkout", "-q", "main");
+      git(q.repo, "commit", "-q", "--allow-empty", "-m", "main moved");
+      git(q.repo, "checkout", "-q", "feat");
+      const x = pc(q.repo, ["stamp", "--base", "main", "--reviewers", JSON.stringify(GOOD_REV)]);
+      add("m14 stamp --base main records the merge base when main moved ahead", "base equals the branch point", x.json?.base === q.baseSha, x.stdout + x.stderr);
+    }
+    // A stamp needs a record for every discovered step, a floor and a mutation record.
+    {
+      const q = prep({ checks: [] });
+      const x = stamp(q);
+      add("s9 a run that skipped every discovered step is incomplete and names them", "incomplete, stderr names build and test",
+        result(x) === "incomplete" && /build/.test(x.stderr) && /test/.test(x.stderr), x.stdout + x.stderr);
+      const q2 = prep({ checks: ["build", "lint", "typecheck"].map(passCheck) });
+      const x2 = stamp(q2);
+      add("s9b one missing step makes it incomplete", "incomplete naming test", result(x2) === "incomplete" && /test/.test(x2.stderr), x2.stdout + x2.stderr);
+      const q3 = prep();
+      const rj = JSON.parse(readFileSync(join(q3.repo, ".pro-dev", "ship", "run.json"), "utf8"));
+      delete rj.floor; delete rj.mutation;
+      writeFileSync(join(q3.repo, ".pro-dev", "ship", "run.json"), JSON.stringify(rj));
+      const x3 = stamp(q3);
+      add("s9c a missing floor and mutation record is incomplete and named", "incomplete naming floor and mutation",
+        result(x3) === "incomplete" && /floor/.test(x3.stderr) && /mutation/.test(x3.stderr), x3.stdout + x3.stderr);
+    }
+    // stamp recovers a left-over restore marker too.
+    {
+      const q = prep();
+      const blob = git(q.repo, "rev-parse", "HEAD:a.txt").stdout.trim();
+      writeFileSync(join(q.repo, ".pro-dev", "ship", "restore.json"), JSON.stringify({ path: "a.txt", blob }));
+      writeFileSync(join(q.repo, "a.txt"), "mutated\n");
+      const x = stamp(q);
+      add("s10 stamp restores a marked file before the dirty-tree refusal", "pass, file restored, marker gone",
+        x.status === 0 && readFileSync(join(q.repo, "a.txt"), "utf8") === "2\n" && !existsSync(join(q.repo, ".pro-dev", "ship", "restore.json")), x.stdout + x.stderr);
+    }
 
     p = prep();
     commit(p.repo, { "a.txt": "3\n" }, "later");

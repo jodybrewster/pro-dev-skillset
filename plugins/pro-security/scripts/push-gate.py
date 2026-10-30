@@ -151,7 +151,11 @@ def main() -> int:
     if not files:
         return 0
     ok, head = ss.run_git(["rev-parse", "HEAD"], root)
-    if ok and head.strip() and ss.security_review_done(ss.read_stamp(root, head.strip())):
+    stamp = ss.read_stamp(root, head.strip()) if ok and head.strip() else None
+    # This push touches security surface by this gate's own classifier, so a stamp that says
+    # skipped-no-surface does not count; only a review that ran (status done) does.
+    sec = ((stamp or {}).get("reviewers") or {}).get("security")
+    if ss.security_review_done(stamp) and isinstance(sec, dict) and sec.get("status") == "done":
         return 0
     cats = sorted(files)
     h = hashlib.sha256(diff.encode("utf-8", "replace")).hexdigest()

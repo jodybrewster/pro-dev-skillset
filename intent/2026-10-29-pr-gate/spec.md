@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-pr-gate/intent.md
 intent-status: draft
-status: draft
+status: accepted
 created: 2026-10-29T19:30:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: the PR gate
 
 Built from `intent.md` in this folder (not yet committed).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0002, 0003, 0004 and 0006 bear on this change), `docs/hook-loading.md`, `plugins/pro-quality/scripts/pr-quality-gate.py` and its `hooks/hooks.json`, `plugins/pro-security/scripts/push-gate.py` and `security_surface.py`, `plugins/pro-security/agents/security-architect.md`, `plugins/pro-ai-sdlc/scripts/production-gate.py` and `guard.py`, `plugins/pro-ai-sdlc/agents/verifier.md` and `reviewer.md`, `plugins/pro-ship/`, `tests/quality-hooks.mjs`, `tests/security-hooks.mjs`, `intent/2026-10-28-pro-ship-scope/brainstorm.md` and `intent/2026-10-29-constraint-floor/spec.md`.
 The sibling intents `code-reviewer`, `risk-tiers` and `review-policy` were drafted at the same time; R7 was aligned with code-reviewer's handoff afterwards and concerns 6 and 7 still need a re-check once those specs are accepted.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.

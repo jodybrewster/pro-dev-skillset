@@ -35,8 +35,13 @@ REDACT = [
     re.compile(r"(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(r"sk-ant-[A-Za-z0-9_\-]+"),
+    re.compile(r"\bsk-(?:proj|svcacct|admin)-[A-Za-z0-9_\-]+"),
+    re.compile(r"\bsk-[A-Za-z0-9]{32,}"),
+    re.compile(r"\b[sr]k_(?:live|test)_[A-Za-z0-9]{10,}"),
+    re.compile(r"\bnpm_[A-Za-z0-9]{20,}"),
+    re.compile(r"\bglpat-[A-Za-z0-9_\-]{16,}"),
     re.compile(r"\b(?:AKIA|ASIA)[A-Z0-9]{12,}"),
-    re.compile(r"\bxox[bpa]-[A-Za-z0-9\-]+"),
+    re.compile(r"\bxox[a-z]-[A-Za-z0-9\-]+"),
     re.compile(r"\bxapp-[A-Za-z0-9\-]+"),
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 ]
@@ -87,6 +92,16 @@ def require_clean(root: str) -> None:
     if files:
         shown = ", ".join(files[:5]) + (" and more" if len(files) > 5 else "")
         raise Refuse(f"pr-check: tracked files have uncommitted changes ({shown}). Commit or discard them first, because the result is bound to a commit.")
+
+
+def merge_base(root: str, ref: str) -> str | None:
+    """The merge base of REF and HEAD, so a base given as origin/main matches the reviewer range."""
+    tip = rev(root, ref)
+    if not tip:
+        return None
+    r = sh(["git", "merge-base", tip, "HEAD"], root)
+    mb = r.stdout.strip()
+    return mb if r.returncode == 0 and mb else tip
 
 
 def default_base(root: str) -> str | None:
@@ -170,7 +185,17 @@ def verify_block(root: str) -> list[str] | None:
                 while i < len(lines) and not lines[i].startswith("```"):
                     body.append(lines[i])
                     i += 1
-                cmds = [b.strip() for b in body if b.strip() and not b.strip().startswith("#")]
+                joined, cur = [], ""
+                for b in body:
+                    t = b.rstrip()
+                    if t.endswith("\\") and (len(t) - len(t.rstrip("\\"))) % 2 == 1:
+                        cur += t[:-1].strip() + " "
+                        continue
+                    joined.append((cur + b.strip()).strip() if cur else b)
+                    cur = ""
+                if cur.strip():
+                    joined.append(cur.strip())
+                cmds = [b.strip() for b in joined if b.strip() and not b.strip().startswith("#")]
                 if cmds:
                     return cmds
             i += 1
@@ -351,6 +376,7 @@ def flag(args: list[str], name: str) -> str | None:
 
 
 def cmd_run(root: str, args: list[str]) -> dict:
+    recover(root)
     require_clean(root)
     head = rev(root, "HEAD")
     if not head:
@@ -380,7 +406,17 @@ def cmd_run(root: str, args: list[str]) -> dict:
             checks = [c for c in data["checks"] if c["step"] != n] + [rec]
             data["checks"] = sorted(checks, key=lambda c: order.index(c["step"]) if c["step"] in order else 99)
         save_run(root, data)
-    return data
+    # Print only what this call ran; run.json holds the cumulative record.
+    shown: dict = {"head": head}
+    ran = [n for n in names if n not in ("floor", "mutation")]
+    if ran:
+        shown["checks"] = [c for c in data["checks"] if c["step"] in ran]
+    if "floor" in names:
+        shown["floor"] = data["floor"]
+        shown["sources"] = data.get("sources", {})
+    if "mutation" in names:
+        shown["mutation"] = data["mutation"]
+    return shown
 
 
 # ---------------------------------------------------------------------------
@@ -482,7 +518,9 @@ def run_floor(root: str, base: str | None, timeout: int) -> tuple[str, str]:
 
 CODE_EXT = {".py", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".go", ".rs", ".java", ".rb", ".c", ".cc",
             ".cpp", ".h", ".hpp", ".cs", ".kt", ".swift", ".php", ".sh"}
-OPS = re.compile(r"===|!==|==|!=|<=|>=|&&|\|\||\band\b|\bor\b|(?<![=\-<>])<(?![<>\-])|(?<![=\-<>])>(?![<>=])")
+# Comparisons count only with whitespace on both sides, so JSX (`return <Spinner />`), generics
+# (`Array<string>`) and arrows never get flipped into code that does not parse.
+OPS = re.compile(r"(?<=\s)(?:===|!==|==|!=|<=|>=|<|>)(?=\s)|&&|\|\||\band\b|\bor\b")
 FLIP = {"===": "!==", "!==": "===", "==": "!=", "!=": "==", "<": ">=", ">=": "<", ">": "<=", "<=": ">",
         "&&": "||", "||": "&&", "and": "or", "or": "and"}
 COMPARE = {"<", ">", "<=", ">="}
@@ -521,9 +559,13 @@ def mutate_line(line: str) -> str | None:
 
 
 def added_lines(root: str, base_sha: str) -> list[tuple[str, int, str]]:
-    r = sh(["git", "diff", "-U0", "--no-color", "--no-ext-diff", "--no-renames", base_sha, "HEAD"], root, 60)
+    # Bytes, split on newline only: git counts lines that way, and str.splitlines would also split
+    # on form feed, \x1c-\x1e, \x85, U+2028 and lone CR and shift every line number after them.
+    r = subprocess.run(["git", "diff", "-U0", "--no-color", "--no-ext-diff", "--no-renames", base_sha, "HEAD"],
+                       cwd=root, capture_output=True, timeout=60)
     out, path, lineno = [], None, 0
-    for ln in r.stdout.splitlines():
+    for raw in r.stdout.split(b"\n"):
+        ln = raw.decode("utf-8", errors="surrogateescape")
         if ln.startswith("+++ "):
             path = None if ln == "+++ /dev/null" else ln[6:] if ln.startswith("+++ b/") else ln[4:]
         elif ln.startswith("@@"):
@@ -537,7 +579,7 @@ def added_lines(root: str, base_sha: str) -> list[tuple[str, int, str]]:
 
 def changed_files(root: str, base_sha: str) -> list[str]:
     r = sh(["git", "diff", "--name-only", "--no-renames", base_sha, "HEAD"], root, 60)
-    return [p for p in r.stdout.splitlines() if p]
+    return [p for p in r.stdout.split("\n") if p]
 
 
 def mutation_result(status, reason=None, file=None) -> dict:
@@ -554,10 +596,62 @@ def test_command(disc: dict) -> str | None:
     return None
 
 
+SIGNALS = {signal.SIGTERM, signal.SIGHUP, signal.SIGINT}
+
+
+def marker_path(root: str) -> str:
+    return os.path.join(root, ".pro-dev", "ship", "restore.json")
+
+
+def write_marker(root: str, path: str, blob: str) -> str:
+    """Record what to put back before a tracked file is mutated, so a SIGKILL or a crash that no
+    handler can catch is still recoverable by the next run or stamp."""
+    ship_dir(root)
+    mp = marker_path(root)
+    tmp = mp + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"path": path, "blob": blob}, f)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, mp)
+    return mp
+
+
+def remove_marker(mp: str) -> None:
+    try:
+        os.remove(mp)
+    except OSError:
+        pass
+
+
+def recover(root: str) -> None:
+    """Restore a file a killed mutation step left mutated, then drop the marker. Runs before the
+    dirty-tree refusal. The marker names a path and a git blob: HEAD's content for that path."""
+    mp = marker_path(root)
+    if not os.path.exists(mp):
+        return
+    try:
+        rec = json.loads(read(mp))
+        path, blob = rec["path"], rec["blob"]
+        full = os.path.realpath(os.path.join(root, path))
+        if not (isinstance(path, str) and isinstance(blob, str) and re.fullmatch(r"[0-9a-f]{40,64}", blob)
+                and not os.path.isabs(path) and is_under(full, os.path.realpath(root))):
+            raise ValueError("bad marker")
+        data = subprocess.run(["git", "cat-file", "blob", blob], cwd=root, capture_output=True, timeout=30)
+        if data.returncode != 0:
+            raise ValueError("blob not found")
+        with open(full, "wb") as f:
+            f.write(data.stdout)
+        print(f"pr-check: restored {path} left mutated by an interrupted run", file=sys.stderr)
+    except (ValueError, KeyError, TypeError, OSError, subprocess.SubprocessError):
+        pass
+    remove_marker(mp)
+
+
 def run_mutation(root: str, base: str | None, tier: str, disc: dict, timeout: int) -> dict:
     if tier == "low":
         return mutation_result("skipped", "low tier")
-    base_sha = rev(root, base) if base else default_base(root)
+    base_sha = merge_base(root, base) if base else default_base(root)
     if not base_sha:
         return mutation_result("could-not-run", "no merge base")
     files = changed_files(root, base_sha)
@@ -569,11 +663,11 @@ def run_mutation(root: str, base: str | None, tier: str, disc: dict, timeout: in
         if path in code and os.path.isfile(os.path.join(root, path)):
             new = mutate_line(text)
             if new is not None:
-                target = (path, lineno, new)
+                target = (path, lineno, new, text)
                 break
     if not target:
         return mutation_result("skipped", "no condition found")
-    path, lineno, new_line = target
+    path, lineno, new_line, old_line = target
     stem = os.path.splitext(os.path.basename(path))[0]
     tracked = sh(["git", "ls-files"], root, 60).stdout.splitlines()
     if not any(is_test_path(t) and stem in read(os.path.join(root, t)) for t in tracked):
@@ -584,19 +678,27 @@ def run_mutation(root: str, base: str | None, tier: str, disc: dict, timeout: in
     full = os.path.join(root, path)
     with open(full, "rb") as f:
         original = f.read()
-    text = original.decode("utf-8", errors="surrogateescape")
-    lines = text.splitlines(keepends=True)
-    ending = lines[lineno - 1][len(lines[lineno - 1].rstrip("\r\n")):]
-    lines[lineno - 1] = new_line + ending
-    mutated = "".join(lines)
+    lines = original.split(b"\n")
+    if lineno < 1 or lineno > len(lines) or lines[lineno - 1].decode("utf-8", errors="surrogateescape") != old_line:
+        return mutation_result("could-not-run", "changed line not found in the file", path)
+    lines[lineno - 1] = new_line.encode("utf-8", errors="surrogateescape")
+    mutated = b"\n".join(lines)
+    blob = sh(["git", "rev-parse", f"HEAD:{path}"], root).stdout.strip()
+    marker = write_marker(root, path, blob)
     try:
         with open(full, "wb") as f:
-            f.write(mutated.encode("utf-8", errors="surrogateescape"))
+            f.write(mutated)
         status, _, _ = exec_cmd(cmd, root, timeout)
     finally:
-        with open(full, "wb") as f:
-            f.write(original)
-        sh(["git", "checkout", "--", path], root)
+        # A second signal must not cut the restore short.
+        old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, SIGNALS)
+        try:
+            with open(full, "wb") as f:
+                f.write(original)
+            sh(["git", "checkout", "--", path], root)
+            remove_marker(marker)
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
     if status == "timeout":
         return mutation_result("could-not-run", "test command timed out", path)
     return mutation_result("survived" if status == "pass" else "killed", None, path)
@@ -633,11 +735,13 @@ def reviewer_record(raw, which: str) -> dict:
             "important": count(raw.get("important", 0), "important"), "range": rng}
 
 
-def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict) -> str:
+def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None) -> str:
     """The result rule of docs/pr-check-stamp.md; the first match wins."""
     if (any(c.get("status") == "fail" for c in checks) or floor == "findings"
             or any(r["blocking"] > 0 for r in reviewers.values())):
         return "fail"
+    if missing:
+        return "incomplete"
     mutation_ok = mutation.get("status") in ("killed", "skipped") or (
         mutation.get("status") == "survived" and mutation.get("accepted") is True)
     if (all(c.get("status") in ("pass", "not-found") for c in checks)
@@ -650,12 +754,13 @@ def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict) ->
 
 
 def cmd_stamp(root: str, args: list[str]) -> dict:
+    recover(root)
     require_clean(root)
     head = rev(root, "HEAD")
     if not head:
         raise Refuse("pr-check: this repo has no commits")
     base_arg = flag(args, "--base")
-    base = rev(root, base_arg) if base_arg else default_base(root)
+    base = merge_base(root, base_arg) if base_arg else default_base(root)
     if not base:
         raise Refuse("pr-check: cannot find the base commit. Pass --base <ref>.")
     tier = flag(args, "--tier") or "unclassified"
@@ -676,6 +781,14 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     if run.get("head") != head:
         raise Refuse("pr-check: the run record is for another commit. Run the steps again on this HEAD.")
     checks = run.get("checks") if isinstance(run.get("checks"), list) else []
+    have = {c.get("step") for c in checks if isinstance(c, dict)}
+    missing = [s["step"] for s in discover(root)["steps"] if s["step"] not in have]
+    if not isinstance(run.get("floor"), str):
+        missing.append("floor")
+    if not isinstance(run.get("mutation"), dict):
+        missing.append("mutation")
+    if missing:
+        print(f"pr-check: incomplete, no record for: {', '.join(missing)}. Run those steps on this HEAD.", file=sys.stderr)
     floor = run.get("floor") if isinstance(run.get("floor"), str) else "could-not-run"
     mutation = dict(run["mutation"]) if isinstance(run.get("mutation"), dict) else mutation_result("could-not-run", "mutation step not run")
     mutation = {"status": mutation.get("status", "could-not-run"), "reason": mutation.get("reason"),
@@ -692,7 +805,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         "floor": floor,
         "mutation": mutation,
         "reviewers": reviewers,
-        "result": compute_result(checks, floor, mutation, reviewers),
+        "result": compute_result(checks, floor, mutation, reviewers, missing),
         "sources": run.get("sources") if isinstance(run.get("sources"), dict) else {"floor-guard": "not-installed"},
     }
     path = os.path.join(ship_dir(root), "pr-check.json")
@@ -713,7 +826,10 @@ def emit(obj) -> None:
 
 
 def main(argv: list[str]) -> int:
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))  # let finally blocks restore files
+    # SIGTERM, SIGHUP (terminal closed) and SIGINT all unwind through the finally blocks, which
+    # restore the mutated file and kill the test child's process group.
+    for sig in SIGNALS:
+        signal.signal(sig, lambda n, _f: sys.exit(128 + n))
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__)
         return 0 if argv else 2

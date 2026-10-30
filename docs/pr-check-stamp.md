@@ -130,6 +130,8 @@ The consequences of rule 3 are spelled out because the spec leaves them open:
 - `reviewers.code.status` of `not-installed` or `could-not-run` gives `incomplete` (AC9, AC11).
   A missing code reviewer is never a pass.
 - `reviewers.security.status` of `not-installed` or `could-not-run` gives `incomplete`.
+- A run record with no check for a step that `discover` returns for this HEAD, no `floor` or no `mutation` gives `incomplete` unless rule 1 matches.
+  `stamp` names the missing records on stderr, so a run that skipped every step never stamps `pass`.
 - `floor` of `not-installed` is the one sibling that may be absent and still pass, as R13 says.
 
 A failing check stops the review (R6), so the reviewers are not dispatched and both record `could-not-run`.
@@ -165,6 +167,8 @@ The push gate falls through to its existing behavior.
 - `reviewers.security.status` is `done` or `skipped-no-surface`;
 - `reviewers.security.blocking` is the integer 0.
 
+`skipped-no-surface` is accepted only by the stamp's own reading of the diff.
+When the push gate's classifier finds security surface in the push range, only `done` satisfies it and `skipped-no-surface` falls through.
 `inline` does not satisfy the push gate, because that review did not run with a fresh context.
 With no stamp or any other stamp the push gate behaves as it did before this contract: it denies once per diff and session when the diff touches security surface.
 The push gate never reads `checks`, `floor`, `mutation`, `tier` or `reviewers.code`.

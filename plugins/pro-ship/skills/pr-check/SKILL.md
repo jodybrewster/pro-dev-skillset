@@ -15,8 +15,8 @@ The push gate then reuses the security review in the stamp and does not ask for 
 
 ## Setup
 
-Set `CHECK` to the script path.
-Ask `pr-check.py find` first, then fall back to the plugin's own folder:
+Set `CHECK` to this plugin's own script.
+`pr-check.py find` is for sibling plugins' files, not for finding pr-check itself:
 
 ```bash
 CHECK="${CLAUDE_PLUGIN_ROOT}/scripts/pr-check.py"
@@ -44,7 +44,8 @@ Every subcommand prints JSON and is run from the repo root.
 3. Then `python3 "$CHECK" run --step floor`.
    The script finds pro-quality's floor guard and records `pass`, `findings`, `could-not-run` or `not-installed`.
 4. Stop on the first step with status `fail`.
-   Print the failed command and its output tail, write no stamp and dispatch no reviewer.
+   Print the failed command and its output tail and dispatch no reviewer.
+   Still run `stamp` so the stamp records `fail` for this HEAD and an older passing stamp cannot stand in for it.
    A step with status `timeout` does not stop the run; it makes the result `incomplete`.
 5. Mutation check: `python3 "$CHECK" run --step mutation`.
    It runs when the diff touches non-test code and the tier is not `low`.
@@ -80,7 +81,7 @@ The four fields are:
 - `range`: `<base>..<head>` as full shas.
 - `brief`: the intent, spec and plan paths for this work, when they exist.
 - `policy`: `REVIEW.md`, `CLAUDE.md` or `AGENTS.md` plus `CONSTRAINTS.md` when present.
-- `risk`: `unclassified` and the stamp path `.pro-dev/ship/pr-check.json`.
+- `risk`: `unclassified` and the path `.pro-dev/ship/run.json`, which holds this run's `mutation` record (the stamp is written only after the reviewers return).
 
 Send that text and nothing else.
 Never add a summary of the work, the session's reasoning, your own opinion of the diff or earlier findings.
@@ -90,7 +91,7 @@ Never add a summary of the work, the session's reasoning, your own opinion of th
 Dispatch both reviewers in one turn so they run in parallel.
 Choose from the agents the host offers:
 
-- Code review: `pro-quality:code-reviewer`, else `pro-ai-sdlc:reviewer`, else record `not-installed`.
+- Code review: `pro-quality:code-reviewer`, else `pro-ai-sdlc:reviewer`, else record `not-installed` (not `could-not-run`) in `--reviewers`.
 - Security review, only on surface: `pro-security:security-architect` in diff mode.
 
 When the host cannot dispatch subagents, say so.
@@ -103,7 +104,7 @@ Read one count line from each report and match it as a whole line.
 A missing line or a mismatch records `could-not-run` for that reviewer.
 
 - Code reviewer, first line: `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.
-  `blocking` and `important` both take the `important` count.
+  Set both `blocking` and `important` to the `important` number: for the code reviewer every Important finding blocks.
 - Security reviewer, last line: `blocking: <n>  should-fix: <n>  notes: <n>`.
   `blocking` takes `blocking` and `important` takes `should-fix`.
 

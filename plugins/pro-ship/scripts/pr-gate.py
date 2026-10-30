@@ -150,13 +150,21 @@ def _resolve(cur: str | None, path: str) -> str | None:
     return os.path.abspath(os.path.join(cur, os.path.expanduser(path)))
 
 
+KEYWORDS = {"{", "!", "then", "do", "else", "elif", "if", "while", "until", "time", "exec", "nohup", "builtin"}
+SUDO_VALUE = {"-u", "-g", "-p", "-C", "-D", "-R", "-T", "-U", "-h"}
+
+
 def skip_wrappers(toks: list[str]) -> int:
-    """Index of the real command after VAR=val, env, command and timeout N."""
+    """Index of the real command after VAR=val, env, command, time, nohup, sudo and the like."""
     i = 0
     while i < len(toks):
         t = toks[i]
         if "=" in t and not t.startswith(("-", "=")):
             i += 1
+        elif t in KEYWORDS:
+            i += 1
+            while t == "time" and i < len(toks) and toks[i].startswith("-"):
+                i += 1
         elif t == "env":
             i += 1
             while i < len(toks) and (toks[i].startswith("-") or "=" in toks[i]):
@@ -165,6 +173,14 @@ def skip_wrappers(toks: list[str]) -> int:
             i += 1
             while i < len(toks) and toks[i].startswith("-"):
                 i += 1
+        elif t == "sudo":
+            i += 1
+            while i < len(toks) and toks[i].startswith("-"):
+                i += 2 if toks[i] in SUDO_VALUE else 1
+        elif t == "nice":
+            i += 1
+            while i < len(toks) and toks[i].startswith("-"):
+                i += 2 if toks[i] == "-n" else 1
         elif t == "timeout":
             i += 1
             while i < len(toks) and toks[i].startswith("-"):
@@ -175,14 +191,98 @@ def skip_wrappers(toks: list[str]) -> int:
     return i
 
 
+def substitutions(command: str) -> tuple[str, list[str]]:
+    """Pull out $(...), <(...), >(...) and backtick bodies that the shell would run.
+
+    Returns the command with each one replaced by a placeholder and the list of bodies.
+    Single-quoted text is literal. Double-quoted text still runs a substitution.
+    """
+    out: list[str] = []
+    bodies: list[str] = []
+    quote = ""
+    i, n = 0, len(command)
+    while i < n:
+        ch = command[i]
+        if ch == "\\" and quote != "'" and i + 1 < n:
+            out.append(command[i : i + 2])
+            i += 2
+            continue
+        if quote == "'":
+            if ch == "'":
+                quote = ""
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "'" and quote == "":
+            quote = "'"
+            out.append(ch)
+            i += 1
+            continue
+        if ch == '"':
+            quote = "" if quote == '"' else '"'
+            out.append(ch)
+            i += 1
+            continue
+        if ch == "`":
+            j = i + 1
+            while j < n and command[j] != "`":
+                j += 2 if command[j] == "\\" else 1
+            bodies.append(command[i + 1 : j])
+            out.append("SUBST")
+            i = j + 1
+            continue
+        if ch == "(" and i > 0 and command[i - 1] in "$<>" and (command[i - 1] == "$" or quote == ""):
+            depth, j, q = 1, i + 1, ""
+            while j < n and depth:
+                c = command[j]
+                if c == "\\" and q != "'":
+                    j += 2
+                    continue
+                if q:
+                    q = "" if c == q else q
+                elif c in "'\"":
+                    q = c
+                elif c == "(":
+                    depth += 1
+                elif c == ")":
+                    depth -= 1
+                j += 1
+            bodies.append(command[i + 1 : j - 1 if depth == 0 else j])
+            out.pop()  # the $ < > before the paren
+            out.append("SUBST")
+            i = j
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out), bodies
+
+
+SHORT_VALUE = {f[1] for f in VALUE_FLAGS if len(f) == 2}
+
+
 def exempt(args: list[str]) -> bool:
     """True for a draft or a help request: those pass without a stamp."""
     i = 0
     while i < len(args):
         t = args[i]
-        if t in ("--help", "-h", "--draft", "-d", "--draft=true", "--draft=1"):
+        if t in ("--help", "--draft", "--draft=true", "--draft=1"):
             return True
-        i += 2 if t in VALUE_FLAGS else 1
+        if t in VALUE_FLAGS:
+            i += 2
+            continue
+        if re.fullmatch(r"-[A-Za-z]+", t):
+            # Combined short flags such as -dt: read left to right until one takes a value.
+            for k, ch in enumerate(t[1:]):
+                if ch in "dh":
+                    return True
+                if ch in SHORT_VALUE:
+                    # The rest of the token is its value, or the next arg when it ends the token.
+                    i += 2 if k == len(t) - 2 else 1
+                    break
+            else:
+                i += 1
+            continue
+        i += 1
     return False
 
 
@@ -194,7 +294,10 @@ def actions(command: str, base: str | None) -> list[str | None]:
     """
     cur = base
     found: list[str | None] = []
-    for segment in split_segments(strip_heredocs(command)):
+    command, bodies = substitutions(strip_heredocs(command))
+    for body in bodies:
+        found.extend(actions(body, cur))
+    for segment in split_segments(command):
         toks = _tokens(segment)
         if not toks:
             continue
@@ -219,7 +322,7 @@ def actions(command: str, base: str | None) -> list[str | None]:
         i += 1
         while i < len(toks) and toks[i].startswith("-"):
             i += 2 if toks[i] in ("-R", "--repo") else 1
-        if i + 1 < len(toks) and toks[i] == "pr" and toks[i + 1] == "create":
+        if i + 1 < len(toks) and toks[i] == "pr" and toks[i + 1] in ("create", "new"):
             if not exempt(toks[i + 2 :]):
                 found.append(cur)
     return found
@@ -262,7 +365,8 @@ def stamp_cause(root: str, head: str) -> str | None:
             data = json.load(fh)
     except Exception:
         return "unreadable"
-    if (not isinstance(data, dict) or data.get("schema") != 1 or isinstance(data.get("schema"), bool)
+    if (not isinstance(data, dict) or data.get("schema") != 1 or not isinstance(data.get("schema"), int)
+            or isinstance(data.get("schema"), bool)
             or not isinstance(data.get("head"), str) or not isinstance(data.get("result"), str)):
         return "unreadable"
     if data["head"] != head:

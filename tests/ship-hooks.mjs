@@ -131,6 +131,37 @@ export function runShipHookCases() {
     r = run(`git status && gh pr create --fill`, { cwd: repo, env: enforce() });
     add("m12d second segment is acted on", "deny", r, r.deny);
 
+    // Substitutions, groups and prefixes that still run the command (gh pr new is gh's alias).
+    for (const [id, cmd] of [
+      ["m21 gh pr new alias", "gh pr new --fill"],
+      ["m22 assignment from a command substitution", "PR_URL=$(gh pr create --fill)"],
+      ["m23 substitution inside double quotes", 'echo "$(gh pr create --fill)"'],
+      ["m24 brace group", "{ gh pr create --fill; }"],
+      ["m25 time prefix", "time gh pr create --fill"],
+      ["m26 backticks", "url=`gh pr create --fill`"],
+      ["m27 nohup and sudo -E prefixes", "sudo -E nohup gh pr create --fill"],
+      ["m28 command and env prefixes", "env FOO=1 command gh pr create --fill"],
+      ["m29 substitution after a separator", "echo hi; x=$(git status; gh pr create --fill)"],
+      ["m30 subshell group", "(gh pr create --fill)"],
+      ["m40 exec prefix", "exec gh pr create --fill"],
+      ["m41 nice prefix", "nice gh pr create --fill"],
+      ["m42 nice -n N prefix", "nice -n 5 gh pr create --fill"],
+      ["m43 nohup prefix", "nohup gh pr create --fill"],
+      ["m44 nohup nice exec chain with new", "nohup nice -n 10 exec gh pr new --fill"],
+      ["m31 if then", "if true; then gh pr create --fill; fi"],
+    ]) {
+      const rr = run(cmd, { cwd: repo, env: enforce() });
+      add(id, "deny", rr, rr.deny);
+    }
+    quietCase("m32 echo of the quoted words", 'echo "gh pr create"');
+    quietCase("m33 single-quoted substitution text", "echo '$(gh pr create --fill)'");
+    quietCase("m34 gh pr new draft", "gh pr new --draft");
+    quietCase("m35 combined short flags with d", 'gh pr create -dt "x"');
+    quietCase("m36 combined short flags d and f", "gh pr create -fd");
+    quietCase("m37 draft substitution", "x=$(gh pr create --draft --fill)");
+    r = run('gh pr create -td', { cwd: repo, env: enforce() });
+    add("m39 -td means title d, not draft", "deny", r, r.deny);
+
     // ---- could not run: allow with exit 0 ----------------------------------------
     const nogit = join(sandbox, "nogit");
     mkdirSync(nogit, { recursive: true });

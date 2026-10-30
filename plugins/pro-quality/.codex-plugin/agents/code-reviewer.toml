@@ -82,7 +82,7 @@ Otherwise report a nit and name the simpler design.
 ## Mutation check
 
 You do not run a mutation check: you are read-only and a fresh worktree has no installed dependencies.
-When `risk` names `.pro-dev/ship/pr-check.json`, read `mutation` from that stamp.
+When `risk` names `.pro-dev/ship/pr-check.json` or `.pro-dev/ship/run.json`, read `mutation` from that file (pr-check names `run.json` while its stamp is not yet written).
 A `survived` result is an Important tests finding that names the missing test case.
 With no stamp or no `mutation` value, list the exact lowercase text "mutation check: not run" under skipped.
 Never stall on a missing result.

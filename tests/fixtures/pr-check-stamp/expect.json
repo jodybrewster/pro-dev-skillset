@@ -11,7 +11,7 @@
       "valid": true,
       "cause": null
     },
-    "push_gate": "accept"
+    "push_gate": "fall-through"
   },
   "stale-head.json": {
     "pr_gate": {
@@ -49,6 +49,13 @@
     "push_gate": "fall-through"
   },
   "corrupt.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "unreadable"
+    },
+    "push_gate": "fall-through"
+  },
+  "schema-float.json": {
     "pr_gate": {
       "valid": false,
       "cause": "unreadable"

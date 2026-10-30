@@ -1,7 +1,7 @@
 # Plan: the PR gate
 
 Built from `spec.md` (commit df45b5a, open questions recorded on 2026-10-30) and `intent.md` in this folder.
-Status: approved.
+Status: implemented.
 Approver: Jody Brewster (2026-10-30: "keep going and finish P0 you have my approval on all").
 It ships a new hook on `gh pr create` to every repo that installs pro-ship, changes pro-security's push gate and removes a pro-quality hook, which is why an approver is named.
 No second approver is needed because Jody owns this marketplace and decided every open question and flagged concern below under that approval.
@@ -361,10 +361,12 @@ What counts as finished:
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1 to AC16: <pass or fail, with what was observed; AC13 pending after merge>
-- Sign-off: <the person's words and the date>
+- Build commit: the head of #89.
+- Checks run: `node tests/check.mjs` 33 checks, 0 failures, 11 warnings (the new warning is the router not naming `pr-check` yet, left for a pro-core change); `tests/ship-check.mjs` 108/108; `tests/ship-hooks.mjs` 82/82; `tests/security-hooks.mjs` 48 cases; the `stamp-contract` check failed when one `expect.json` verdict was flipped; eval dry; route-lexical rank-1 79.1%; unit tests; strict validate on the marketplace and all 20 plugins.
+- AC1 to AC12, AC14 to AC16: pass, by the cases above and the trial below.
+- AC10 and AC11: a trial of the skill on a clone of this branch ran the four verify steps, the floor guard and the mutation check, dispatched both reviewers and wrote a stamp that said `fail` (the reviewers found real problems, fixed below); pr-gate denied `gh pr create` on that HEAD with "does not say pass". With the siblings missing, `find` printed `not-installed` and the stamp said `incomplete`.
+- AC13: pending after merge.
+- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0013, Status `proposed` from this change, to `accepted`.
@@ -373,3 +375,10 @@ It also moves ADR-0013, Status `proposed` from this change, to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- The step 22 review and the step 21 trial found problems, each fixed with a failing case first: the mutation step split lines differently from `git diff` (a form feed made it mutate the wrong line and report `killed`); `stamp` passed when discovered steps had no record; SIGHUP or SIGINT could leave the mutant on disk (now a restore marker `.pro-dev/ship/restore.json` that `run` and `stamp` recover from first); pr-gate missed `gh pr new`, `$(gh pr create)`, brace groups and wrapper commands; a mutant that could not parse counted as `killed` (only spaced comparison operators are flipped now); `--base` set the stamp base to the main tip instead of the merge base.
+- The push gate accepts a stamp only when the security review ran (`done`, blocking 0) once its own classifier finds surface; `skipped-no-surface` falls through, so the `valid-security-skipped` fixture's push verdict changed to fall-through.
+- The skill stamps `fail` when a step fails, as spec R6 says, instead of writing no stamp, so an older passing stamp cannot stand in.
+- The reviewers read `mutation` from `.pro-dev/ship/run.json` during a run, because the stamp is written after they return; the code-reviewer agent and `handoff.md` name both paths (pro-quality is already bumped in this PR).
+- The hook timeout is 15 s, as R17 says, not the 10 s first written.
+- The security reviewer's count line is its last line, as the contract says, while the code reviewer's opens its report.

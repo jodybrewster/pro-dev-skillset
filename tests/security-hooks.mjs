@@ -238,6 +238,7 @@ export function runSecurityHookCases({ only = null } = {}) {
       add(`push-gate/stamp-${id}`, want, () => pg(`pgV-${id}`, stampRepo(JSON.stringify(o)), PUSH));
     };
     variant("security-inline-denied", (o) => { o.reviewers.security.status = "inline"; }, DENY);
+    variant("security-skipped-no-surface-denied-when-classifier-finds-surface", (o) => { o.reviewers.security.status = "skipped-no-surface"; }, DENY);
     variant("security-not-installed-denied", (o) => { o.reviewers.security.status = "not-installed"; }, DENY);
     variant("security-blocking-with-pass-denied", (o) => { o.reviewers.security.blocking = 1; }, DENY);
     variant("security-missing-denied", (o) => { delete o.reviewers.security; }, DENY);
