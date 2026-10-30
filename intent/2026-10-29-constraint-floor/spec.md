@@ -1,6 +1,6 @@
 ---
 intent: intent/2026-10-29-constraint-floor/intent.md
-intent-status: draft
+intent-status: accepted
 status: draft
 created: 2026-10-29T18:40:00-0400
 author: Jody Brewster
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: constraint floor and CONSTRAINTS.md
 
 Built from `intent.md` in this folder (commit 8b78aa3).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0003 and 0004 bear on this change), `docs/licenses.md`, `plugins/pro-quality/hooks/hooks.json`, `plugins/pro-quality/scripts/docs-before-push.py`, `plugins/pro-security/scripts/push-gate.py`, `plugins/pro-ai-sdlc/scripts/guard.py`, `plugins/pro-ai-sdlc/agents/reviewer.md`, `plugins/pro-ai-sdlc/commands/review.md` and upstream `skills/constraint-driven-development/` in agent-skills at `eb07f19`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 

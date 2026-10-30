@@ -24,7 +24,7 @@ Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-fl
   Jody approved on 2026-10-29 three spec changes found while planning: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
 - Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
 - Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
-- Next steps: Jody signs off and merges #81 before review-policy's #82, which stacks its versions on it.
+- Signed off by Jody on 2026-10-30 and merged in #81. AC9 (a week of warn-mode use in two repos) gates the later switch to enforce mode.
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
 
@@ -108,7 +108,7 @@ Within a tier, items are in the order to build them.
 
 ### P0: every edit and every PR
 
-- [ ] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): in progress as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
+- [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
 - [ ] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): specced as [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
 - [ ] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): specced as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
 - [ ] 4. Risk classifier and approval tiers (M, pro-ship): specced as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)

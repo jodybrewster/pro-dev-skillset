@@ -1,7 +1,7 @@
 # Plan: constraint floor and CONSTRAINTS.md
 
 Built from `spec.md` (commit b23f41c, amended 2026-10-29 before approval) and `intent.md` in this folder.
-Status: approved (Jody, 2026-10-30).
+Status: implemented.
 Approver: Jody Brewster.
 It adds a hook that runs on every Bash call in every repo that installs pro-quality, which is why an approver is named at all.
 No second approver is needed because Jody owns this marketplace and decided the spec, the four flagged concerns and ADR-0010 himself.
@@ -315,8 +315,8 @@ Filled in when the build is finished, before sign-off.
 - AC6: pass, f70 to f72 build tokens at run time and assert `[redacted]`.
 - AC7: pass, `/constraints` on a clone of this repo wrote four numbered rows (static checks, routing, marketplace and per-plugin validate), each exiting 0; `AGENTS.md` is a symlink and the line went in once; the guard stayed clean on the new file. Nothing was committed here.
 - AC8: pass, the Addy Osmani line in `plugins/pro-quality/LICENSE`, the `docs/licenses.md` row and the skill footer.
-- AC9: <pending until a week of use after merge>
-- Sign-off: <the person's words and the date>
+- AC9: pending until a week of use after merge; it gates the switch to enforce mode, not this PR.
+- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0010, Status `proposed` from this change, to `accepted`.

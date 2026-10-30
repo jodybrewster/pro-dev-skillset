@@ -4,7 +4,7 @@ Date: 2026-10-29
 
 ## Status
 
-proposed
+accepted (2026-10-30)
 
 Decided by: Jody Brewster.
 Source: intent/2026-10-29-constraint-floor/.
@@ -51,5 +51,7 @@ Revisit the decision if the floor's findings turn out mostly to be ones that get
 
 ## Where it is enforced
 
-Not enforced yet.
-Once intent/2026-10-29-constraint-floor/ ships: `plugins/pro-quality/scripts/floor-guard.py` registered in `plugins/pro-quality/hooks/hooks.json`, its cases in `tests/quality-hooks.mjs` and pro-ai-sdlc's reviewer and `/review`, which read `CONSTRAINTS.md`.
+- `plugins/pro-quality/scripts/floor-guard.py`, registered under the `Bash` matcher of `PreToolUse` in `plugins/pro-quality/hooks/hooks.json`; it runs on `git push` and `gh pr create` and as `--check` from a shell.
+- Its cases in `tests/quality-hooks.mjs`, run by the `quality-hooks` check in `tests/check.mjs`.
+- `plugins/pro-quality/templates/CONSTRAINTS.md`, the `constraints` skill and `/constraints`.
+- pro-ai-sdlc's `reviewer` agent and `/review`, which read `CONSTRAINTS.md` beside `REVIEW.md`.
