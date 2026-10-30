@@ -1,6 +1,6 @@
 # ADR-<NNNN>: <short decision title>
 
-Status: proposed | accepted | superseded by <NNNN>
+Status: proposed | accepted | deprecated | superseded by <NNNN>
 Date: <YYYY-MM-DD>
 Decided by: <name or names>
 Source: <intent folder, commit or conversation this came from>
