@@ -24,10 +24,10 @@ Run it in plan mode when you can: read, do not change code.
 ### 1. Pick the spec
 
 Use the path in the arguments if given.
-A path to `spec-<module-id>.md` writes `plan-<module-id>.md` beside it.
-When the target plan file already exists, never overwrite it: stop, name the file and suggest editing it or recording a departure.
 Otherwise take the first entry under "Specs without a plan" (the newest).
 If there is none, stop and suggest `/spec`.
+A path to `spec-<module-id>.md` writes `plan-<module-id>.md` beside it.
+When the target plan file already exists, never overwrite it: stop, name the file and suggest editing it or recording a departure.
 Read the spec, the intent beside it, the repo's agent file (`CLAUDE.md` or `AGENTS.md`), the template at `${CLAUDE_PLUGIN_ROOT}/templates/plan.md` and the standing definition of done at `${CLAUDE_PLUGIN_ROOT}/references/definition-of-done.md`.
 Look through the code the spec points at.
 Use a read-only subagent for breadth when the spec touches many files.

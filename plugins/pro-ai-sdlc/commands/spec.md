@@ -96,7 +96,8 @@ The review writes `goldfish_review_report.md` in the working directory; leave it
 
 ### 7. Commit
 
-- `git add <intent dir>/spec.md` (or `capability-map.md` and each `spec-<module-id>.md`), and when step 5 wrote an ADR, that file and the index too, so they land in the same commit.
+- `git add <intent dir>/spec.md` (or `capability-map.md` and each `spec-<module-id>.md`).
+  When step 5 wrote an ADR, add that file and the index too so they land in the same commit.
 - `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date prefix.
 
 Never stage other files, never pass `--no-verify` and do not push.

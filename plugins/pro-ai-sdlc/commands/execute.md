@@ -16,7 +16,7 @@ allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash
 Requested plan: $ARGUMENTS
 
 This is the build stage of the SDLC loop, between `/plan` and `/pr-babysit`.
-The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails.
+The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails or the stop list fires.
 You are the builder: build the plan in this session and dispatch subagents only when a step benefits from one.
 Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, checkpoint, proof of done, verifier, PR opened).
 Name any stage that was skipped and why.
@@ -31,7 +31,8 @@ Only their relative paths may appear in output, a commit message, a log line or 
 If a failure looks like a missing or wrong env value, say which variable name the error mentions and stop; do not inspect the file to find out.
 Command output can echo a value from an env file, such as a connection string in a database error.
 Record each check in plan.md, a commit or the PR body as the command, pass or fail and its counts, never as pasted output.
-Copy this section into the prompt of every subagent you dispatch.
+Copy this section, `## Stop list` and `## Scope discipline` into the prompt of every subagent you dispatch.
+A subagent that hits a stop-list signal stops without committing and reports back, so the main session pauses.
 `python3` and `node` are not pre-approved, so a one-off interpreter call asks the person first.
 
 ## Stop list
@@ -43,10 +44,12 @@ payments: a directory or file stem named `payments`, `payment`, `billing` or `st
 deploys: a `Dockerfile`, a `docker-compose` file, a `.tf` file, a path under `k8s/`, `kubernetes/`, `helm/`, `terraform/`, `pulumi/` or `cdk/`, or a path under `.github/workflows/`.
 secrets: an env file other than `.example`, `.sample`, `.template` or `.dist`, a `config.`, `settings.` or `env.` file at the root or under `config/`, or a step that adds an environment variable, key or credential.
 A step whose text says it changes one of these (for example "add a migration" or "deploy") also fires.
-Test files and fixtures never fire.
+Test files, fixtures and Markdown files never fire.
 The check reads path names and plan text only and never opens an env file.
 When it fires, stop before building or committing that step, print `stop list: step <N> touches <category> (<path or phrase>). Build it? (yes to continue)` and wait for an explicit yes.
-Anything else is a stop: print the stage, the reason and what the person can do next, and keep the worktree.
+Anything else is a stop: print the stage, the reason and what the person can do next.
+Keep the worktree.
+An explicit yes given during the run covers that category for the rest of the run and is listed under "Potential concerns" in the PR body.
 A step is already consented when the plan's `## Risks` names its category and the header's `Approver:` names a person, not an angle-bracket placeholder.
 Then print `stop list: <category> on step <N>, consented in Risks` and go on.
 Anything the plan did not name pauses.
@@ -97,6 +100,7 @@ Before the first step, run the `## Stop list` over `## Files that change` and th
 Before each step's commit, run it over `git diff --cached --name-only`.
 At each checkpoint the plan names, when pro-ship's `risk-tiers` skill is available, follow it to classify `origin/<default_branch>..HEAD`.
 A signal with id `auth`, `payments`, `migrations`, `iac`, `workflows` or `env-config` that no consent covers pauses before the next step as the stop list does.
+The classifier ids `iac` and `workflows` count as deploys and `env-config` counts as secrets.
 Without the skill, say the classifier was skipped.
 For each step write or extend the test first, see it fail, then write the code until it passes.
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.

@@ -38,7 +38,7 @@ A risky step gets a person's attention before it is built, not only before merge
 A plan that names its risky steps under an approver runs unattended as before.
 Changing the definition of done changes the bar for every later plan, so it moves only through a pro-ai-sdlc release.
 The stop list can miss a risky change whose paths use other names; the classifier and the merge gate stay as the later checks.
-Reverse this if the pauses fire so often on routine work that people approve them by habit, or if a hook-based gate replaces the prose list.
+Reverse this if the pauses fire so often on routine work that people approve them by habit or if a hook-based gate replaces the prose list.
 
 ## Alternatives considered
 
