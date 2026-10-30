@@ -35,3 +35,8 @@ Its default mode only prints a `systemMessage` and never blocks.
 
 `pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
 It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.
+
+## Registered by pro-ship
+
+`pro-ship` registers a `PreToolUse` hook on `Bash` that runs `scripts/pr-gate.py` with a 15 second timeout.
+It acts only on `gh pr create` and reads the stamp described in [pr-check-stamp.md](./pr-check-stamp.md).

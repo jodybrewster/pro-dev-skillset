@@ -1,7 +1,7 @@
 {
   "name": "pro-dev-starter",
-  "version": "3.0.0",
-  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + design + motion + testing + data + research + security. Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in.",
+  "version": "3.1.0",
+  "description": "Installs Jody's default pro dev stack: core + pdd + execution + quality + design + motion + testing + data + research + security + ship. Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"
@@ -45,6 +45,10 @@
     },
     {
       "name": "pro-security",
+      "version": "*"
+    },
+    {
+      "name": "pro-ship",
       "version": "*"
     }
   ]

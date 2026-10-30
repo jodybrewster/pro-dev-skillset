@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-pr-gate/intent.md
 intent-status: draft
-status: draft
+status: accepted
 created: 2026-10-29T19:30:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: the PR gate
 
 Built from `intent.md` in this folder (not yet committed).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0002, 0003, 0004 and 0006 bear on this change), `docs/hook-loading.md`, `plugins/pro-quality/scripts/pr-quality-gate.py` and its `hooks/hooks.json`, `plugins/pro-security/scripts/push-gate.py` and `security_surface.py`, `plugins/pro-security/agents/security-architect.md`, `plugins/pro-ai-sdlc/scripts/production-gate.py` and `guard.py`, `plugins/pro-ai-sdlc/agents/verifier.md` and `reviewer.md`, `plugins/pro-ship/`, `tests/quality-hooks.mjs`, `tests/security-hooks.mjs`, `intent/2026-10-28-pro-ship-scope/brainstorm.md` and `intent/2026-10-29-constraint-floor/spec.md`.
 The sibling intents `code-reviewer`, `risk-tiers` and `review-policy` were drafted at the same time; R7 was aligned with code-reviewer's handoff afterwards and concerns 6 and 7 still need a re-check once those specs are accepted.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
@@ -195,14 +195,16 @@ ADR needed: yes, a stamp under `.pro-dev/ship/` that three gates read (pr-gate, 
 
 1. Fixed handoff to a subagent versus `claude -p`: answered, a subagent with the fixed handoff (R7); `claude -p` stays a later option for CI.
 2. Where the hook lives: answered, pro-ship (R17), with the starter question in Flagged concern 2.
-3. Whether pro-ship joins `pro-dev-starter`: still open, owner Jody (Flagged concern 2).
-4. How pr-check finds a sibling script: answered as a draft in Design, System; still open until Jody agrees (Flagged concern 8).
-5. The per-command timeout: answered as 300 seconds with a repo override (N5); owner Jody for the number.
+3. Whether pro-ship joins `pro-dev-starter`: decided on 2026-10-30 under Jody's approval, yes, in the same release (Flagged concern 2).
+4. How pr-check finds a sibling script: decided on 2026-10-30 under Jody's approval, by the documented install record (`installed_plugins.json`) after the in-place layout, as verified in `plan.md` ("Sibling lookup"); the `${CLAUDE_PLUGIN_ROOT}/../<plugin>/` path in Design, System only works for plugins loaded in place (Flagged concern 8).
+5. The per-command timeout: decided on 2026-10-30 under Jody's approval, 300 seconds with a repo override (N5).
 6. The default mode: answered, warn (R23); a later change moves it to enforce after clean logs, not this PR.
-7. Whether a draft PR needs the stamp: still open, owner Jody; the spec as written gates every `gh pr create`, drafts included (recommendation: let drafts through).
+7. Whether a draft PR needs the stamp: decided on 2026-10-30 under Jody's approval, no; `gh pr create --draft` or `-d` passes with no output.
 8. The tier before the classifier exists: answered, the fixed value `unclassified` (R12).
 9. How the security review decides it is needed: answered, only on security surface (R8).
 10. Likely needs an ADR: answered, yes (Flagged concerns, `ADR needed`).
+
+The flagged concerns above are decided in `plan.md` ("Decisions taken under the approval") on 2026-10-30 under Jody's approval.
 
 Changed on 2026-10-29 after planning (Jody): the mutation check moves from the code-reviewer agent into pr-check (R29) and the stamp gains a `mutation` field.
 

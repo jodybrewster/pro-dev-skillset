@@ -32,7 +32,7 @@ It then tells you to run `/pro-dev install` in a Claude Code session.
 ### Set up a site
 
 1. Install `pro-dev-starter` and any stack or method plugins you want, such as `claude plugin install pro-nextjs@pro-dev-skillset`.
-   `pro-nextjs`, `pro-astro` and `pro-ship` are opt-in.
+   `pro-nextjs` and `pro-astro` are opt-in.
 2. Run `/pro-dev install` in a Claude Code session.
 3. After each `claude plugin update`, run `/pro-dev update`.
 4. Run `/pro-dev check` any time to see what is installed and what is stale.
@@ -224,7 +224,7 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 | **Review** | `requesting-code-review`, `receiving-code-review`, `constraints` + `/constraints` (writes a repo's `CONSTRAINTS.md`, which the floor guard reads), `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
 | **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; held once at push by a hook), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
 | **Legal** | `software-counsel` + `/legal-review` (issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by hooks) | `pro-legal` *(opt-in)* |
-| **Ship** | `vercel-deploy-bridge`◆ (deploy to Vercel with token and `.env` checks, via `/pro-dev install`) | `pro-ship` *(opt-in)* |
+| **Ship** | `pr-check` (build, lint, typecheck and tests, then the reviewers, then a stamp for HEAD that the gate hook on `gh pr create` reads) and `vercel-deploy-bridge`◆ (deploy to Vercel with token and `.env` checks, via `/pro-dev install`) | `pro-ship` |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | `pro-ship` *(planned)* |
 | **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
 
@@ -283,7 +283,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-dev-starter` yet.
 - **`pro-egm`** - opt-in glue for Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Apache-2.0, bridged, not vendored): `/pro-egm:goldfish` runs the goldfish review of a spec or plan with fresh-context reviewers a repo keeps in `.egm/`, and the `egm-bridge` skill points to `/pro-dev install`, which installs `egm@egm`. Once installed, `/spec` and `/plan` offer the review. EGM's skills cannot be started by a model, so `/pro-egm:goldfish` reads EGM's `egm-review-loop` skill file and follows it, with custom goldfish run through a read-only reviewer agent. Not included in `pro-dev-starter`.
 - **`pro-speckit`** - opt-in glue for GitHub's [spec-kit](https://github.com/github/spec-kit) (MIT, bridged, not vendored): the `spec-kit-bridge` skill points to `/pro-dev install` or `/pro-speckit:install`, which install the `specify` CLI at a pinned commit and then set spec-kit up in the repo with model invocation off and its event hooks off. `/pro-speckit:remove` takes spec-kit out of the repo and never touches `specs/`. `/pro-dev check` hashes the files spec-kit wrote against the registry pin without running `specify`. Not included in `pro-dev-starter`.
-- **`pro-ship`** - opt-in shipping plugin, not included in `pro-dev-starter`. Today it holds `vercel-deploy-bridge`, which deploys through Vercel's `deploy-to-vercel` skill with its own checks: the token comes only from the environment and no `.env` file is uploaded or committed. Every stage, commit, push, link, global install and production deploy waits for a yes. `/pro-dev install` asks once and installs the upstream skill pinned, with its folder kept out of commits. The other Ship skills are still planned.
+- **`pro-ship`** - the shipping plugin, included in `pro-dev-starter`. It holds `/pro-ship:pr-check`, which runs the repo's build, lint, typecheck and tests, then the reviewers, then writes a stamp for HEAD. It also holds a `PreToolUse` gate hook on `gh pr create` that denies once when the stamp is missing (it starts in warn mode and fails open). Then there is `vercel-deploy-bridge`, which deploys through Vercel's `deploy-to-vercel` skill with its own checks: the token comes only from the environment and no `.env` file is uploaded or committed. Every stage, commit, push, link, global install and production deploy waits for a yes. `/pro-dev install` asks once and installs the upstream skill pinned, with its folder kept out of commits. The other Ship skills are still planned.
 - **`pro-pdd`** — Define + Plan skills included in `pro-dev-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`addyosmani/agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/pro-dev install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Framework plugins (skills trigger from file context in projects that use the framework):**
@@ -293,7 +293,7 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Meta:**
 
-- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-spdd`, `pro-egm`, `pro-speckit` and `pro-ship` are opt-in and installed by hand.
+- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-ship`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-spdd`, `pro-egm` and `pro-speckit` are opt-in and installed by hand.
   Version 3.0.0 dropped `pro-ai-sdlc` from the stack; removing a dependency does not uninstall it, so a site that already has it keeps it until you run `claude plugin uninstall pro-ai-sdlc@pro-dev-skillset`.
 - **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
 
@@ -321,7 +321,7 @@ plugins/
   pro-spdd/                          # opt-in OpenSPDD workflow commands + skills
   pro-egm/                           # opt-in goldfish review glue for egm@egm
   pro-speckit/                       # opt-in GitHub spec-kit bridge, pinned CLI and install/remove commands
-  pro-ship/                          # opt-in Vercel deploy bridge
+  pro-ship/                          # pr-check, the PR gate hook and the Vercel deploy bridge
   pro-pdd/                           # default define + plan-driven development skills
 templates/
   project-settings.json              # drop-in for any new project's .claude/

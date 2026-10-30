@@ -12,6 +12,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [subagents.md](./subagents.md): how to split work across parallel subagents and which model each runs on.
 - [version-bump-law.md](./version-bump-law.md): the version-bump law in detail.
 - [hook-loading.md](./hook-loading.md): the hook-loading law in detail, including blocking on `Stop`.
+- [pr-check-stamp.md](./pr-check-stamp.md): the stamp contract that `/pro-ship:pr-check` writes and pr-gate and the push gate read.
 - [codex-parity.md](./codex-parity.md): Codex parity for skills and agents in detail.
 - [install-test.md](./install-test.md): the full install test with the demo app, `pro-dev-starter` and Codex.
 - [troubleshooting.md](./troubleshooting.md): symptoms and fixes when a skill, hook or dependency misbehaves.
@@ -30,6 +31,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [decisions/0003-one-hooks-json-per-plugin.md](./decisions/0003-one-hooks-json-per-plugin.md): one `hooks/hooks.json` per plugin.
 - [decisions/0004-codex-parity.md](./decisions/0004-codex-parity.md): Codex parity is a hard requirement.
 - [decisions/0009-three-eval-tiers.md](./decisions/0009-three-eval-tiers.md): three eval tiers, CI gates only the keyless one.
+- [decisions/0014-gate-stamp.md](./decisions/0014-gate-stamp.md): one stamp bound to HEAD, one writer and many readers (proposed).
 
 ## Old plans
 

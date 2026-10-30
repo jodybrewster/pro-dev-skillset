@@ -1,0 +1,68 @@
+{
+  "schema": 1.0,
+  "head": "HEAD",
+  "base": "2222222222222222222222222222222222222222",
+  "created": "2026-10-30T09:15:00-04:00",
+  "tier": "unclassified",
+  "checks": [
+    {
+      "step": "build",
+      "command": "pnpm run build",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": [
+        "built in 2.1s"
+      ]
+    },
+    {
+      "step": "lint",
+      "command": "pnpm run lint",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": []
+    },
+    {
+      "step": "typecheck",
+      "command": "pnpm run typecheck",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": []
+    },
+    {
+      "step": "test",
+      "command": "pnpm run test",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": [
+        "12 passed"
+      ]
+    }
+  ],
+  "floor": "pass",
+  "mutation": {
+    "status": "killed",
+    "reason": null,
+    "file": "src/index.ts",
+    "accepted": false
+  },
+  "reviewers": {
+    "code": {
+      "agent": "pro-quality:code-reviewer",
+      "status": "done",
+      "blocking": 0,
+      "important": 0,
+      "range": "2222222222222222222222222222222222222222..HEAD"
+    },
+    "security": {
+      "agent": "pro-security:security-architect",
+      "status": "done",
+      "blocking": 0,
+      "important": 1,
+      "range": "2222222222222222222222222222222222222222..HEAD"
+    }
+  },
+  "result": "pass",
+  "sources": {
+    "floor-guard": "plugins/pro-quality/scripts/floor-guard.py"
+  }
+}

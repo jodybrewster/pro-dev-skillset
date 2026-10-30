@@ -19,7 +19,7 @@
 // and push cases get a bare repo as `origin`. Zero dependencies, no network.
 // Skips cleanly when python3 or git is not on PATH.
 
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -212,6 +212,39 @@ export function runSecurityHookCases({ only = null } = {}) {
   add("push-gate/git-log-with-push-word-passes", NONE, () => pg("pg9", r3, 'git log --grep="push"'));
   add("push-gate/malformed-stdin-passes", NONE, () => run("push-gate.py", "{", env));
   add("push-gate/empty-command-passes", NONE, () => pg("pg10", r3, ""));
+
+  // pr-check stamp (docs/pr-check-stamp.md): a valid stamp whose security reviewer ran is accepted
+  const FIX = join(ROOT, "tests", "fixtures", "pr-check-stamp");
+  const sha = (repo) => sh("git", ["rev-parse", "HEAD"], repo).trim();
+  const stampRepo = (text) => {
+    const r = makeRepoWithOrigin(tmp);
+    branch(r);
+    write(r, "src/app/api/login/route.ts", JWT_CODE);
+    commitAll(r, "login");
+    if (text !== null) write(r, ".pro-dev/ship/pr-check.json", text.split("HEAD").join(sha(r)));
+    return r;
+  };
+  add("push-gate/stamp-missing-denied", DENY, () => pg("pgS0", stampRepo(null), PUSH));
+  const expectFile = join(FIX, "expect.json");
+  if (existsSync(expectFile)) {
+    const expected = JSON.parse(readFileSync(expectFile, "utf8"));
+    for (const name of Object.keys(expected).sort()) {
+      const want = expected[name].push_gate === "accept" ? NONE : DENY;
+      add(`push-gate/stamp-fixture-${name.replace(/\.json$/, "")}`, want, () => pg(`pgF-${name}`, stampRepo(readFileSync(join(FIX, name), "utf8")), PUSH));
+    }
+    const variant = (id, edit, want) => {
+      const o = JSON.parse(readFileSync(join(FIX, "valid-pass.json"), "utf8"));
+      edit(o);
+      add(`push-gate/stamp-${id}`, want, () => pg(`pgV-${id}`, stampRepo(JSON.stringify(o)), PUSH));
+    };
+    variant("security-inline-denied", (o) => { o.reviewers.security.status = "inline"; }, DENY);
+    variant("security-skipped-no-surface-denied-when-classifier-finds-surface", (o) => { o.reviewers.security.status = "skipped-no-surface"; }, DENY);
+    variant("security-not-installed-denied", (o) => { o.reviewers.security.status = "not-installed"; }, DENY);
+    variant("security-blocking-with-pass-denied", (o) => { o.reviewers.security.blocking = 1; }, DENY);
+    variant("security-missing-denied", (o) => { delete o.reviewers.security; }, DENY);
+    variant("security-blocking-string-denied", (o) => { o.reviewers.security.blocking = "0"; }, DENY);
+    variant("unknown-field-accepted", (o) => { o.extra = { a: 1 }; }, NONE);
+  }
 
   const selected = only ? cases.filter((c) => c.id.includes(only)) : cases;
   out.selected = selected;

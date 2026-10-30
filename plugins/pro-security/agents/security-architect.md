@@ -56,7 +56,7 @@ Omit empty headings.
 3. Check the changed lines for missing input validation at trust boundaries, authentication and authorization bypass, injection beyond SQL, crypto misuse, secrets exposure, XSS escape hatches, unsafe deserialization, SSRF and open redirects, races on one-time or quota checks, and risky dependency or CI changes.
 4. Filter. Report confidence 8 and above. List 5 to 7 under "worth a second look". Quote the line that motivates each finding; if you cannot quote it, it is unverified and capped at 5. Check whether a control already exists upstream before claiming it is missing.
 5. Each finding: severity, confidence N/10, `file:line`, quoted lines, numbered exploit scenario, fix.
-6. End with a verdict: safe to push, or fix before push with the findings in priority order.
+6. End with a verdict: safe to push, or fix before push with the findings in priority order. Last line: `blocking: <n>  should-fix: <n>  notes: <n>`, the count of findings at each severity, with two spaces between the pairs.
 
 ## Rules
 

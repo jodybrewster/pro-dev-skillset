@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.62.0"
+    "version": "1.63.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -41,7 +41,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook suggests /validate after repo changes; /validate writes a validation handoff (what changed, what was verified, what needs your eyes) to .pro-dev/validation/latest.md. Ships three documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs, adapted from VoltAgent/awesome-codex-subagents. Enforces doc freshness before git push (the block routes into /document), nudges api-documenter when an OpenAPI/GraphQL/proto contract changes, and blocks plan saves outside the project directory. A floor guard warns on git push and gh pr create when a diff lowers the bar; /constraints writes a repo's CONSTRAINTS.md. A code-reviewer agent (Opus, read-only) reviews with fresh context from a four-field handoff.",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "category": "development",
       "strict": true
     },
@@ -112,8 +112,8 @@
     {
       "name": "pro-ship",
       "source": "./plugins/pro-ship",
-      "description": "Opt-in deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
-      "version": "0.2.0",
+      "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. In pro-dev-starter. Deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -145,7 +145,7 @@
       "name": "pro-security",
       "source": "./plugins/pro-security",
       "description": "The Security phase. security-architect challenges a specific idea, plan, spec or diff before it ships: trust boundaries, unstated assumptions and the attack that breaks each, returned as a ## Security challenge section (/threat-model, plus a read-only security-architect subagent). security-audit is a read-only whole-repository audit covering secrets in git history, dependency supply chain, CI/CD, containers and IaC, webhooks, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE, with confidence-scored findings and the security-auditor subagent judging each one independently (/security-audit). One push gate hook holds a git push or gh pr create whose diff against its upstream touches security surface, once per distinct diff, so the architect reviews that diff and nothing else. Adapted from the cso skill in garrytan/gstack.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "development",
       "strict": true
     },
@@ -168,8 +168,8 @@
     {
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research and security). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in and installed by hand.",
-      "version": "3.0.0",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research, security and ship). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in and installed by hand.",
+      "version": "3.1.0",
       "category": "development",
       "strict": true
     }

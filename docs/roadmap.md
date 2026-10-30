@@ -39,18 +39,17 @@ They replace the dropped [pro-ship-scope intent](../intent/2026-10-28-pro-ship-s
 |---|---|---|---|---|
 | [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
 | [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | shipped in #87 |
-| [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | 28 R, 5 N, 13 AC, 8 concerns |
+| [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | shipped in #89 |
 | [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | 30 R, 6 N, 12 AC, 12 concerns |
 
 Questions waiting on Jody, with the drafts' recommendations:
 
 - code-reviewer: effort high or medium for the reviewer (recommended high, set by the dispatcher); the mutation check needs to edit and run tests, so it runs only in a throwaway worktree at medium or high risk (recommended); subagent versus `claude -p` (recommended subagent).
-- pr-gate: should pro-ship join pro-dev-starter (recommended yes, in the same release; risk-tiers raises the same question); do draft PRs need the stamp (recommended no); the 300-second per-command timeout; how sibling plugin scripts are found in the plugin cache.
 - risk-tiers: which plugin owns the classifier (recommended pro-ship); can a tier be overridden down (recommended Jody only, recorded in the stamp, later); the size thresholds (recommended placeholder constants until a calibration run over merged PRs); does `ask` still prompt when permission checks are bypassed (verify live; deny medium and high if not).
 
 Facts the drafts found that change earlier notes:
 
-- pro-quality's `pr-quality-gate.py` does fire since 0.11.1 (PR 76), as a `PostToolUse` hook after `gh pr create` succeeds; it runs `npm run lint` and `npm test` and checks the body length; pr-gate replaces it.
+- pro-quality's `pr-quality-gate.py` fired since 0.11.1 (PR 76), as a `PostToolUse` hook after `gh pr create` succeeded; it ran `npm run lint` and `npm test` and checked the body length; pr-gate replaces it and the script is deleted.
 - `/merge-pr` is a user-level command in `~/.claude/commands/merge-pr.md`, not in this repo; risk-tiers adds a merge-gate hook on `gh pr merge` instead of editing it.
 
 Cross-cutting decisions for Jody:
@@ -64,8 +63,9 @@ Cross-cutting decisions for Jody:
 
 review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
-Plans: pr-gate (#89) and risk-tiers (#88) are approved; pr-gate builds next.
-Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; three callers of the old reviewer template are added (pro-quality `/review`, `pr-quality-gate.py`, pro-execution's quality-reviewer prompt).
+pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
+Plans: risk-tiers (#88) is approved and builds next.
+Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 
 ## Parked intents
 
@@ -109,7 +109,7 @@ Within a tier, items are in the order to build them.
 ### P0: every edit and every PR
 
 - [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
-- [ ] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): specced as [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
+- [x] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): shipped in #89 from the plan of [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
 - [x] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): shipped in #87 as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
 - [ ] 4. Risk classifier and approval tiers (M, pro-ship): specced as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
 - [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
@@ -198,7 +198,7 @@ Moved to [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-fl
 
 What: `/pro-ship:pr-check` runs build, lint, typecheck and unit tests, then the reviewers, then writes a stamp for HEAD.
 A `PreToolUse` hook on `gh pr create` only checks the stamp and denies once when it is missing.
-It replaces pro-quality's `pr-quality-gate.py`, which is wired to an MCP tool that is never used and so has never fired.
+It replaces pro-quality's old `PostToolUse` gate on `gh pr create`, which ran after the PR existed and is deleted.
 pro-security's push gate accepts the same stamp, so one security review runs per PR.
 Why it is P0: today no check runs before a PR in any repo.
 Source: pro-ship features 1, 2 and 6, "The pre-PR gate".

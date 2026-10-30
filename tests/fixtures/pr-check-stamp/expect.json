@@ -1,0 +1,65 @@
+{
+  "valid-pass.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "accept"
+  },
+  "valid-security-skipped.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "fall-through"
+  },
+  "stale-head.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "stale"
+    },
+    "push_gate": "fall-through"
+  },
+  "result-fail.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "not-passing"
+    },
+    "push_gate": "fall-through"
+  },
+  "result-incomplete.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "not-passing"
+    },
+    "push_gate": "fall-through"
+  },
+  "security-blocking.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "not-passing"
+    },
+    "push_gate": "fall-through"
+  },
+  "wrong-schema.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "unreadable"
+    },
+    "push_gate": "fall-through"
+  },
+  "corrupt.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "unreadable"
+    },
+    "push_gate": "fall-through"
+  },
+  "schema-float.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "unreadable"
+    },
+    "push_gate": "fall-through"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "head": "HEAD",
+  "base": "2222222222222222222222222222222222222222",
+  "created": "2026-10-30T09:15:00-04:00",
+  "tier": "unclassified",
+  "checks": [
+    {
+      "step": "build",
+      "command": "pnpm run build",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": [
+        "built in 2.1s"
+      ]
+    },
+    {
+      "step": "lint",
+      "command": "pnpm run lint",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": []
+    },
+    {
+      "step": "typecheck",
+      "command": "pnpm run typecheck",
+      "status": "pass",
+      "exit_code": 0,
+      "output_tail": []
+    },
+    {
+      "step": "test",
+      "command": "pnpm run test",
+      "status": "fail",
+      "exit_code": 1,
+      "output_tail": [
+        "1 failed"
+      ]
+    }
+  ],
+  "floor": "pass",
+  "mutation": {
+    "status": "skipped",
+    "reason": "no runnable test command",
+    "file": null,
+    "accepted": false
+  },
+  "reviewers": {
+    "code": {
+      "agent": null,
+      "status": "could-not-run",
+      "blocking": 0,
+      "important": 0,
+      "range": null
+    },
+    "security": {
+      "agent": null,
+      "status": "could-not-run",
+      "blocking": 0,
+      "important": 0,
+      "range": null
+    }
+  },
+  "result": "fail",
+  "sources": {
+    "floor-guard": "plugins/pro-quality/scripts/floor-guard.py"
+  }
+}
