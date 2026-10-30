@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "pyproject.toml": "[project]\nname = \"a\"\ndependencies = [\n  \"flask>=2\",\n]\n"
+  },
+  "head": {
+    "pyproject.toml": "[project]\nname = \"a\"\ndependencies = [\n  \"flask>=2\",\n  \"newlib>=1\",\n]\n"
+  }
+}

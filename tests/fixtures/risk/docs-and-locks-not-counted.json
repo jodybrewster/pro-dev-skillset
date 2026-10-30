@@ -1,0 +1,15 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "a/docs-0.md": "t\n",
+    "b/docs-1.md": "t\n",
+    "c/docs-2.md": "t\n",
+    "d/docs-3.md": "t\n",
+    "e/docs-4.md": "t\n",
+    "f/docs-5.md": "t\n",
+    "x/package-lock.json": "{}\n",
+    "y/yarn.lock": "x\n"
+  }
+}

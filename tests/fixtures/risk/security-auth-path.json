@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/auth/session.js": "export const a = 1\n"
+  }
+}

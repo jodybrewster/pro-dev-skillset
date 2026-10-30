@@ -1,0 +1,9 @@
+{
+  "base": {
+    "package.json": "{\n  \"name\": \"app\",\n  \"dependencies\": {\n    \"left-pad\": \"^1.0.0\"\n  }\n}\n",
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.high: [package.json]\nweird.key: 1\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "package.json": "{\n  \"name\": \"app\",\n  \"dependencies\": {\n    \"left-pad\": \"^1.0.0\",\n    \"right-pad\": \"^2.0.0\"\n  }\n}\n"
+  }
+}

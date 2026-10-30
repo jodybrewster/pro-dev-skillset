@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/author.js": "x = 1\n"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\n# smaller thresholds\nthresholds.files_medium: 2\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "src/f0.js": "x\n",
+    "src/f1.js": "x\n",
+    "src/f2.js": "x\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/big.js": "const v0 = 0;\nconst v1 = 1;\nconst v2 = 2;\nconst v3 = 3;\nconst v4 = 4;\nconst v5 = 5;\nconst v6 = 6;\nconst v7 = 7;\nconst v8 = 8;\nconst v9 = 9;\nconst v10 = 10;\nconst v11 = 11;\nconst v12 = 12;\nconst v13 = 13;\nconst v14 = 14;\nconst v15 = 15;\nconst v16 = 16;\nconst v17 = 17;\nconst v18 = 18;\nconst v19 = 19;\nconst v20 = 20;\nconst v21 = 21;\nconst v22 = 22;\nconst v23 = 23;\nconst v24 = 24;\nconst v25 = 25;\nconst v26 = 26;\nconst v27 = 27;\nconst v28 = 28;\nconst v29 = 29;\nconst v30 = 30;\nconst v31 = 31;\nconst v32 = 32;\nconst v33 = 33;\nconst v34 = 34;\nconst v35 = 35;\nconst v36 = 36;\nconst v37 = 37;\nconst v38 = 38;\nconst v39 = 39;\nconst v40 = 40;\nconst v41 = 41;\nconst v42 = 42;\nconst v43 = 43;\nconst v44 = 44;\nconst v45 = 45;\nconst v46 = 46;\nconst v47 = 47;\nconst v48 = 48;\nconst v49 = 49;\nconst v50 = 50;\nconst v51 = 51;\nconst v52 = 52;\nconst v53 = 53;\nconst v54 = 54;\nconst v55 = 55;\nconst v56 = 56;\nconst v57 = 57;\nconst v58 = 58;\nconst v59 = 59;\n",
+    "tests/big.test.js": "expect(1)\n"
+  }
+}

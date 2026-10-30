@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "lib/test_a.py": "x\n"
+  },
+  "head": {
+    "lib/test_a.py": null
+  }
+}

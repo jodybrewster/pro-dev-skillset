@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.medium:\n  - src/legacy/*.js\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "src/legacy/deep/old.js": "x\n"
+  }
+}

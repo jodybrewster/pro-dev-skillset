@@ -1,0 +1,11 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    ".env.example": "OTHER=1\n"
+  },
+  "head": {
+    "src/app.py": "import os\nx = os.getenv(\"NEW_FLAG\")\n",
+    "src/app.js": "const y = process.env.NEW_FLAG2\n",
+    "src/cfg.py": "import os\nz = os.environ[\"NEW_FLAG3\"]\n"
+  }
+}

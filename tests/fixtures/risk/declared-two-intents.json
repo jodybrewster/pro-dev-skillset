@@ -1,0 +1,10 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "intent/2026-10-30-x/intent.md": "---\nstatus: draft\nrisk: low\n---\n\n# Intent\n",
+    "intent/2026-10-30-y/intent.md": "---\nstatus: draft\nrisk: medium\n---\n\n# Intent\n",
+    ".github/workflows/ci.yml": "on: push\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "test/data.json": "x\n"
+  },
+  "head": {
+    "test/data.json": null
+  }
+}

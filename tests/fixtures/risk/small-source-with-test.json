@@ -1,0 +1,11 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "src/a.js": "a\n",
+    "tests/a.test.js": "expect(1)\n"
+  },
+  "head": {
+    "src/a.js": "a\nb\nc\n",
+    "tests/a.test.js": "expect(1)\nexpect(2)\n"
+  }
+}

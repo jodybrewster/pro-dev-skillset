@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\nthresholds.lines_medium: 5\nthresholds.no_test_lines: 1000\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "src/a.js": "v0\nv1\nv2\nv3\nv4\nv5\nv6\nv7\n"
+  }
+}

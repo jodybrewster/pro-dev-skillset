@@ -1,0 +1,18 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/f0.js": "v0\n",
+    "src/f1.js": "v1\n",
+    "src/f2.js": "v2\n",
+    "src/f3.js": "v3\n",
+    "src/f4.js": "v4\n",
+    "src/f5.js": "v5\n",
+    "src/f6.js": "v6\n",
+    "src/f7.js": "v7\n",
+    "src/f8.js": "v8\n",
+    "src/f9.js": "v9\n",
+    "src/f10.js": "v10\n"
+  }
+}

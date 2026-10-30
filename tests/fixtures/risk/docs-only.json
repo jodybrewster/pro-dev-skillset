@@ -1,0 +1,10 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "README.md": "# y\n",
+    "docs/guide.md": "guide\n",
+    "package-lock.json": "{}\n"
+  }
+}

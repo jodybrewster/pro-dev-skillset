@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "db/migrations/001.sql": "select 1;\n"
+  }
+}

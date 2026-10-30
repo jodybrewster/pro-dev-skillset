@@ -1,0 +1,39 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "a/f0.js": "v0\n",
+    "a/f1.js": "v1\n",
+    "a/f2.js": "v2\n",
+    "a/f3.js": "v3\n",
+    "a/f4.js": "v4\n",
+    "a/f5.js": "v5\n",
+    "a/f6.js": "v6\n",
+    "a/f7.js": "v7\n",
+    "b/f0.js": "v0\n",
+    "b/f1.js": "v1\n",
+    "b/f2.js": "v2\n",
+    "b/f3.js": "v3\n",
+    "b/f4.js": "v4\n",
+    "b/f5.js": "v5\n",
+    "b/f6.js": "v6\n",
+    "b/f7.js": "v7\n",
+    "c/f0.js": "v0\n",
+    "c/f1.js": "v1\n",
+    "c/f2.js": "v2\n",
+    "c/f3.js": "v3\n",
+    "c/f4.js": "v4\n",
+    "c/f5.js": "v5\n",
+    "c/f6.js": "v6\n",
+    "c/f7.js": "v7\n",
+    "d/f0.js": "v0\n",
+    "d/f1.js": "v1\n",
+    "d/f2.js": "v2\n",
+    "d/f3.js": "v3\n",
+    "d/f4.js": "v4\n",
+    "d/f5.js": "v5\n",
+    "d/f6.js": "v6\n",
+    "d/f7.js": "v7\n"
+  }
+}

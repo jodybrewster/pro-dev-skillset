@@ -80,6 +80,32 @@ Escalate to Important only when the change makes structure worse.
 - A silent fallback that hides an unclear invariant.
 -->
 
+<!-- Risk tiers: uncomment this block to tune how pro-ship's risk classifier sorts a change into low, medium or high.
+Every key is optional and shown at its default.
+The approval and local decision columns are fixed and cannot be set here.
+paths.low excuses globs from path signals but cannot lower workflows or hook-scripts.
+
+## Risk tiers
+
+```yaml
+paths.high: []
+paths.medium: []
+paths.low: []
+thresholds.files_medium: 10
+thresholds.files_high: 30
+thresholds.lines_medium: 300
+thresholds.lines_high: 1000
+thresholds.areas_medium: 3
+thresholds.no_test_lines: 50
+tiers.low.checks: [build, lint, typecheck, tests]
+tiers.low.reviewers: []
+tiers.medium.checks: [all]
+tiers.medium.reviewers: [code-reviewer]
+tiers.high.checks: [all]
+tiers.high.reviewers: [code-reviewer, security-architect]
+```
+-->
+
 ## Output format
 
 Open the report with this summary line:

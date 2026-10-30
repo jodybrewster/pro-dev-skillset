@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    ".claude/hooks/README.md": "notes\n"
+  }
+}

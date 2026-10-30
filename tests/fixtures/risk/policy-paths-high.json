@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.high:\n  - \"internal/**\"\n  - \"ops/*.sh\"\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "internal/deep/x.js": "x\n"
+  }
+}

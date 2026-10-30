@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/api/users.js": "export function get() { return 1 }\n",
+    "tests/users.test.js": "expect(1)\n"
+  }
+}

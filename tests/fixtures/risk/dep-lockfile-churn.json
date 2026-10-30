@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "package-lock.json": "{\"a\": 1}\n"
+  },
+  "head": {
+    "package-lock.json": "{\"a\": 2}\n"
+  }
+}

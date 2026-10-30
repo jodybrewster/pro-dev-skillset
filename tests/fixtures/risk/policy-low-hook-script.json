@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.low:\n  - \"plugin/hooks/run.sh\"\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "plugin/hooks/run.sh": "x\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "src/a.spec.ts": "x\n"
+  },
+  "head": {
+    "src/a.spec.ts": null
+  }
+}

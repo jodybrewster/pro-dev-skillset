@@ -8,6 +8,11 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pr-gate.py\"",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/merge-gate.py\"",
+            "timeout": 30
           }
         ]
       }

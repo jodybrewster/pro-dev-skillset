@@ -1,0 +1,10 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    ".env.example": "OTHER=1\n"
+  },
+  "head": {
+    "src/app.py": "import os\nx = os.getenv(\"NEW_FLAG\")\n",
+    ".env.example": "OTHER=1\nNEW_FLAG=\n"
+  }
+}
