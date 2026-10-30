@@ -32,6 +32,7 @@ When the intent spans more than one module or would need more than about fifteen
 On yes, write `<intent dir>/capability-map.md` with a table (id, module, purpose, depends on, build order) using short stable ids such as `m1`, then one `spec-<module-id>.md` per module from the template, committed together.
 Say that modules are planned and built one at a time in build order because they share the intent's branch name.
 On no, write one `spec.md` as before.
+With no one to answer, write one `spec.md` and name the capability-map option in the report.
 
 ### 2. Load the policy sources
 

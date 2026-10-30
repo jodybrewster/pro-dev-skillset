@@ -293,7 +293,9 @@ Dated: 2026-01-05.
 
 Date comparison on strings relies on the YYYY-MM-DD form.
 
-Migrations: step 2 adds a database migration; Sam Rivera approves it by signing this plan.
+Stop-list categories: migrations (step 2)
+
+Sam Rivera approves it by signing this plan.
 
 ## Options not taken
 

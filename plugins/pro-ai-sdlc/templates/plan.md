@@ -23,6 +23,8 @@ Dated: <YYYY-MM-DD>.
 
 The step most likely to go wrong, what it could break, how far the damage would reach, and anything irreversible such as a migration.
 
+Stop-list categories: <none, or each category with the steps that touch it>
+
 ## Options not taken
 
 - <alternative>: <why it lost>

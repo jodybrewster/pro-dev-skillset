@@ -2,7 +2,7 @@
 description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /execute <path to plan.md>"
 argument-hint: "<path to plan.md>"
 model: opus
-allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
+allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
 ---
 
 ## Context
@@ -50,7 +50,8 @@ When it fires, stop before building or committing that step, print `stop list: s
 Anything else is a stop: print the stage, the reason and what the person can do next.
 Keep the worktree.
 An explicit yes given during the run covers that category for the rest of the run and is listed under "Potential concerns" in the PR body.
-A step is already consented when the plan's `## Risks` names its category and the header's `Approver:` names a person, not an angle-bracket placeholder.
+A step is already consented only when the plan's `## Risks` has a `Stop-list categories:` line that lists the category for that step and the header's `Approver:` names a person, not an angle-bracket placeholder.
+A mention of the category anywhere else in Risks, such as "no migration", is not consent.
 Then print `stop list: <category> on step <N>, consented in Risks` and go on.
 Anything the plan did not name pauses.
 
@@ -60,7 +61,8 @@ A problem noticed outside the current step is never fixed in that step.
 Write one line (the file, what was seen and why it was left) under `## Noticed but not touched` in plan.md, in the step's commit.
 Stage the step's files by path and never use `git add -A`, `git add .` or `git commit -a`.
 Before each commit compare `git diff --cached --name-only` with the step's files.
-A staged file the step did not name is unstaged, or kept with a line under `## Departures from plan` saying why.
+The plan file itself is always allowed in a step's commit.
+A staged file the step did not name is unstaged with `git restore --staged <path>`, or kept with a line under `## Departures from plan` saying why.
 
 ## Your task
 

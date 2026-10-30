@@ -35,7 +35,7 @@ Use a read-only subagent for breadth when the spec touches many files.
 ### 2. Draft the plan
 
 Write `<intent dir>/plan.md` from the template, sections in its order, one sentence per line.
-Cover the files touched (new, modified or deleted, with a reason), the sequence of work in separately checkable steps, the test or visual check behind each step, the risks, the alternatives you rejected, the exact commands that show it is done and an empty departures section.
+Cover the files touched (new, modified or deleted, with a reason), the sequence of work in separately checkable steps, the test or visual check behind each step, the risks (with the template's `Stop-list categories:` line filled in), the alternatives you rejected, the exact commands that show it is done and an empty departures section.
 Size every step XS, S, M or L: XS is one file and under 30 minutes, S is one or two files and under an hour, M is up to two hours and L is more.
 Aim for XS to S.
 Split a step that is over two hours, carries more than three acceptance criteria, has "and" in its title or touches two or more subsystems.

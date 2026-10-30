@@ -225,6 +225,7 @@ The doubt-driven-execute intent also edits `commands/execute.md`; this plan keep
 The verifier's new `fail` rule could fail a sound build if it misreads a test as unable to fail; the rule names the three concrete shapes to keep it narrow.
 Capability maps share the intent's branch name and `plan-sync` counts only `plan.md`; this batch documents that limit rather than fixing the scripts.
 
+Stop-list categories: none
 Categories this plan touches on the stop list: none.
 The batch edits prose in a plugin; no auth, migration, payment, deploy or secrets path changes.
 Nothing here is irreversible: no migration, no data and no deploy.
@@ -308,6 +309,8 @@ An empty section tells the reviewer the diff follows the plan.
   The verifier's revert rule covers only tests that claim new behavior.
   Added anchors for the pause line, the env file rule, the verifier verdict text and the simplifier history heading, each proved by deletion, plus the eval case `execute-runs-consented-migration`.
   Wording fixes in `/execute`, `/plan`, `/spec`, the README, ADR-0017 and `docs/licenses.md`.
+- Review round 2 fixes: consent now needs a `Stop-list categories:` line in Risks plus an approver, and the line is a `sdlc-contract` anchor.
+  The plan file is always allowed in a step's commit, `git restore --staged` is allowed and named, and `/spec` has an unattended fallback for the capability-map question.
 
 ## Noticed but not touched
 

@@ -26,7 +26,8 @@ A repo's `CONSTRAINTS.md` or `REVIEW.md` takes precedence where it says more.
 `/execute` keeps a stop list of five categories: auth, migrations, payments, deploys and secrets, named by path as in pro-ship's classifier.
 It checks the plan before the build and each step's staged files before the commit.
 A step that fires pauses for an explicit yes from a person.
-A category the plan's Risks section names, with an approver in the plan header, counts as consent and does not pause.
+A category listed on the `Stop-list categories:` line of the plan's Risks section, with an approver in the plan header, counts as consent and does not pause.
+A mention elsewhere in Risks is not consent.
 The stop list is prose in the command, not a hook.
 It never blocks without saying why.
 When pro-ship's `risk-tiers` skill is installed, `/execute` also runs it at checkpoints and pauses on a signal no consent covers.

@@ -1240,7 +1240,7 @@ checks["sdlc-contract"] = () => {
     if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
       failures.push("pro-ai-sdlc: /execute lost its never-merge line");
     // loop guardrails (ADR-0017): the stop list, the scope rules and the definition-of-done pointer.
-    for (const a of ["## Stop list", "## Scope discipline", "## Noticed but not touched", "git add -A", "Things I didn't touch", "Potential concerns", "consented in Risks", "references/definition-of-done.md", "Build it? (yes to continue)", "never opens an env file"])
+    for (const a of ["## Stop list", "## Scope discipline", "## Noticed but not touched", "git add -A", "Things I didn't touch", "Potential concerns", "consented in Risks", "Stop-list categories:", "references/definition-of-done.md", "Build it? (yes to continue)", "never opens an env file"])
       if (!execC.includes(a)) failures.push(`pro-ai-sdlc: /execute lacks the anchor "${a}"`);
     // the two section headings must stand alone on a line; other text also names them.
     for (const h of ["## Stop list", "## Scope discipline"])
