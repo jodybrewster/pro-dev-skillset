@@ -293,20 +293,17 @@ def main():
     else:
         blocking_text = ""
 
-    description_for_reviewer = title or "PR changes"
-    plan_for_reviewer = (body[:500] + "…") if len(body) > 500 else body or "See PR description."
-
     context = (
         f"PR quality gate — \"{title}\"\n\n"
         f"Quality checks:\n{check_summary}\n\n"
         f"{blocking_text}"
-        f"Now dispatch the code reviewer subagent using the requesting-code-review skill "
-        f"(template: requesting-code-review/code-reviewer.md) with:\n"
-        f"  DESCRIPTION: {description_for_reviewer}\n"
-        f"  PLAN_OR_REQUIREMENTS: {plan_for_reviewer}\n"
-        f"  BASE_SHA: {base_sha}\n"
-        f"  HEAD_SHA: {head_sha}\n\n"
-        f"Act on Critical and Important findings before marking the PR ready for review."
+        f"Now dispatch the pro-quality:code-reviewer agent using the requesting-code-review skill "
+        f"(template: requesting-code-review/handoff.md) with these four fields and no other text:\n"
+        f"  range: {base_sha}..{head_sha}\n"
+        f"  brief: paths to the intent, spec, plan or issue for this PR\n"
+        f"  policy: REVIEW.md, the agent file and CONSTRAINTS.md when present\n"
+        f"  risk: the tier or \"unclassified\", plus .pro-dev/ship/pr-check.json when it exists\n\n"
+        f"Act on Important findings before marking the PR ready for review."
     )
 
     output = {

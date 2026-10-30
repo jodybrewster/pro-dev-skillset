@@ -1206,6 +1206,34 @@ checks["sdlc-contract"] = () => {
   return { failures, warnings };
 };
 
+// Review handoff contract (R21, R22): the one template the reviewer is dispatched with
+// carries exactly four fields; no field is a place for an author description,
+// a summary or earlier findings. The reviewer agent must name the same four fields.
+checks["handoff"] = () => {
+  const failures = [], warnings = [];
+  const want = ["range", "brief", "policy", "risk"];
+  const main = "plugins/pro-quality/skills/requesting-code-review/handoff.md";
+  if (!existsSync(join(ROOT, main))) failures.push(`${main} missing`);
+  const files = new Set(walkFiles(PLUGINS_DIR, (f) => f.endsWith("/handoff.md")).map((f) => relative(ROOT, f)));
+  for (const f of files) {
+    const text = readFileSync(join(ROOT, f), "utf8");
+    const block = text.split(/^## Fields\s*$/m)[1]?.split(/^## /m)[0];
+    if (block === undefined) { failures.push(`${f}: no "## Fields" section`); continue; }
+    const names = [...block.matchAll(/^- `([^`]+)`:/gm)].map((m) => m[1]);
+    if (names.join(",") !== want.join(","))
+      failures.push(`${f}: fields are [${names.join(", ")}], expected exactly [${want.join(", ")}]`);
+    for (const m of text.matchAll(/\{\s*([A-Za-z_ -]+?)\s*\}/g))
+      if (/^(description|summary|findings)$/i.test(m[1])) failures.push(`${f}: placeholder {${m[1]}} is barred`);
+  }
+  const agent = "plugins/pro-quality/agents/code-reviewer.md";
+  if (!existsSync(join(ROOT, agent))) failures.push(`${agent} missing`);
+  else {
+    const body = readFileSync(join(ROOT, agent), "utf8");
+    for (const w of want) if (!body.includes(w)) failures.push(`${agent} does not name the field "${w}"`);
+  }
+  return { failures, warnings };
+};
+
 // ── runner ──────────────────────────────────────────────────────────────────
 const only = process.argv[2];
 const model = loadModel();

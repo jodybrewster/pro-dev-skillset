@@ -234,3 +234,7 @@ It also moves any ADR with Status `proposed` from this change to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- AC8's grep `grep -rn "code-reviewer.md" plugins docs README.md` also matches the new agent's own path (`agents/code-reviewer.md`), the license notice and ADR-0012's history, so the stray-pointer check is `grep -rn "requesting-code-review/code-reviewer.md" plugins README.md`, which prints nothing.
+- The lexical routing gate shows 3 notOneOf warnings instead of 2: the README-onboarding case (line 31) now ranks `systematic-debugging` 0.12 over `documentation-engineer` 0.11 because the new agent shifts term weights.
+  It is a warning the gate leaves to the model router; rank-1 rose to 80.0%.
