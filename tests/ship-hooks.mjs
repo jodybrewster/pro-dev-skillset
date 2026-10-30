@@ -20,7 +20,7 @@
 //   could not run     none                       e1-e5
 //   timing            none                       t1, t2
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, cpSync, symlinkSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -294,12 +294,12 @@ export function runShipHookCases() {
         `printf '{"number":42,"headRefOid":"%s","baseRefName":"main","headRepository":{"name":"r"}}\\n' "$(git rev-parse HEAD)"`,
         "",
       ].join("\n"), { mode: 0o755 });
-      const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {}, gate = MERGE_GATE } = {}) => {
+      const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {}, gate = MERGE_GATE, py = "python3" } = {}) => {
         const body = { tool_name: "Bash", session_id: "ms", cwd, tool_input: { command } };
         if (pm) body.permission_mode = pm;
         const input = raw !== null ? raw : JSON.stringify(body);
         const t0 = Date.now();
-        const r = spawnSync("python3", [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, PATH: `${stubBin}:${env0.PATH}`, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
+        const r = spawnSync(py, [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, PATH: `${stubBin}:${env0.PATH}`, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
         let json = null;
         try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* not json */ }
         let log = "";
@@ -606,6 +606,66 @@ export function runShipHookCases() {
       add("mg240 a pin of the local main sha denies and names the PR head", "deny", r, denies(r) && r.text.includes(`--match-head-commit ${prH}`));
       r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
       add("mg241 a pin of the PR head asks", "ask", r, asks(r));
+
+      // ---- the PR head is fetched when it is not local, and every failure is could-not-run ----
+      // A work repo with a bare origin: the PR head is pushed as refs/pull/42/head only, then the
+      // local branch, reflog and loose objects are removed so the commit is gone from the clone.
+      const originRepo = ({ pushRef }) => {
+        const bare = join(sandbox, `origin${++n}.git`);
+        sh(sandbox, "init", "-q", "--bare", "-b", "main", bare);
+        const work = newRepo();
+        sh(work, "remote", "add", "origin", bare);
+        sh(work, "push", "-q", "-u", "origin", "main");
+        sh(work, "checkout", "-q", "-b", "feat");
+        mkdirSync(join(work, ".github", "workflows"), { recursive: true });
+        writeFileSync(join(work, ".github", "workflows", "ci.yml"), "name: ci\non: push\n");
+        sh(work, "add", "-A");
+        sh(work, "commit", "-q", "-m", "ci");
+        const head = sha(work);
+        if (pushRef) sh(work, "push", "-q", "origin", "feat:refs/pull/42/head");
+        sh(work, "checkout", "-q", "main");
+        sh(work, "branch", "-q", "-D", "feat");
+        sh(work, "reflog", "expire", "--expire=now", "--all");
+        sh(work, "gc", "-q", "--prune=now");
+        return { work, head, gone: sh(work, "cat-file", "-e", `${head}^{commit}`).status !== 0 };
+      };
+      {
+        const o = originRepo({ pushRef: true });
+        const out = fileOf(prJson(o.head));
+        const before = sh(o.work, "rev-parse", "--abbrev-ref", "HEAD").stdout + sh(o.work, "status", "--porcelain").stdout;
+        r = mrun(MERGE, { cwd: o.work, env: MWARN(), extraEnv: stub(out) });
+        const after = sh(o.work, "rev-parse", "--abbrev-ref", "HEAD").stdout + sh(o.work, "status", "--porcelain").stdout;
+        add("mg220 a head missing locally is fetched from origin and classified, the tree untouched", "message high, no could-not-run", r,
+          o.gone && allowsMsg(r) && /high/.test(r.text) && r.text.includes(o.head) && !/could-not-run/.test(r.log) && before === after);
+        const o2 = originRepo({ pushRef: false });
+        r = mrun(MERGE, { cwd: o2.work, env: MWARN(), extraEnv: stub(fileOf(prJson(o2.head))) });
+        add("mg221 no refs/pull/42/head on origin is could-not-run", "message unknown", r,
+          o2.gone && allowsMsg(r) && /unknown/.test(r.text) && /could-not-run/.test(r.log) && /fetch failed/.test(r.log));
+      }
+
+      {
+        const gitOnly = join(sandbox, `gitonly${++n}`);
+        mkdirSync(gitOnly, { recursive: true });
+        const gitPath = spawnSync("which", ["git"], { encoding: "utf8", env: env0 }).stdout.trim();
+        symlinkSync(gitPath, join(gitOnly, "git"));
+        const py = spawnSync("which", ["python3"], { encoding: "utf8", env: env0 }).stdout.trim();
+        const noJson = fileOf("not json");
+        const noOid = fileOf(JSON.stringify({ number: 42, baseRefName: "main" }));
+        const badBase = fileOf(prJson(prH, { baseRefName: "no-such-branch" }));
+        for (const [id, why, opts] of [
+          ["mg230 gh missing", /gh not found/, { py, extraEnv: { PATH: gitOnly } }],
+          ["mg231 gh exits 1", /gh exited 1/, { extraEnv: stub(prOut, { GH_STUB_EXIT: "1" }) }],
+          ["mg232 gh prints text that is not JSON", /gh output not JSON/, { extraEnv: stub(noJson) }],
+          ["mg233 gh sleeps past the timeout", /gh timed out/, { extraEnv: stub(prOut, { GH_STUB_SLEEP: "8" }) }],
+          ["mg234 JSON with no headRefOid", /PR head missing/, { extraEnv: stub(noOid) }],
+          ["mg235 a base that resolves nowhere", /base no-such-branch not found/, { extraEnv: stub(badBase) }],
+        ]) {
+          r = mrun(MERGE, { cwd: prR, env: MENF(), ...opts });
+          add(`${id} asks in enforce`, "ask, could-not-run logged", r, asks(r) && why.test(r.log) && /could-not-run/.test(r.log) && r.ms < 20_000);
+          r = mrun(MERGE, { cwd: prR, env: MWARN(), ...opts });
+          add(`${id} says unknown in warn`, "message unknown", r, allowsMsg(r) && /unknown/.test(r.text) && /could-not-run/.test(r.log));
+        }
+      }
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

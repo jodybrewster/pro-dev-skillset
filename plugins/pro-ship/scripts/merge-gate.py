@@ -435,7 +435,15 @@ def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, in
     head = head.lower()
     try:
         if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
-            raise CouldNotRun("head not found")
+            # the one write this gate makes: objects and FETCH_HEAD, never the tree or the branch
+            try:
+                f = run_git(root, "fetch", "--no-tags", "origin", f"pull/{number}/head", timeout=8)
+            except subprocess.TimeoutExpired:
+                raise CouldNotRun("fetch failed")
+            if f.returncode != 0:
+                raise CouldNotRun("fetch failed")
+            if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
+                raise CouldNotRun("head not found after fetch")
         for cand in (f"origin/{base_name}", base_name):
             if run_git(root, "rev-parse", "--verify", "-q", f"{cand}^{{commit}}").returncode == 0:
                 return cand, head, number
