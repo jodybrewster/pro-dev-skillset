@@ -289,7 +289,7 @@ Filled in when the build is finished, before sign-off.
   - AC8 pass (`agent-twins` passes; changing one word in the `.toml` failed it at body line 3 and the revert restored the pass; both files hold the location sentence).
   - AC9 pending, run by the orchestrator after the PR opens (a real high-tier PR with Codex opted in).
   - AC10 pending, run by the orchestrator after the PR opens (the same run with `codex` off PATH).
-  - AC11 pass (`versions` and `codex-manifests` checks; pro-ship 0.5.0, pro-core 0.21.0, pro-quality 0.15.1, `metadata.version` 1.65.0, rows in `docs/releases.md`).
+  - AC11 pass (`versions` and `codex-manifests` checks; pro-ship 0.5.0, pro-core 0.21.0, pro-quality 0.15.1, `metadata.version` 1.67.0 after rebasing onto #97 and #98, rows in `docs/releases.md`).
   - AC12 pass (ADR-0018 is proposed with its README row, ADR-0006 carries the amended line, `docs/pr-check-stamp.md` documents `reviewers.codex`).
   - AC13 pass with one note: the `codex` row shows `kind` `manual-cli` and the `manual` list, with `state` `not-applicable` here because pro-core is not installed for this repo; `pro-dev.md` names both `check` and `install` forms.
 - Sign-off: pending, Jody's words and the date.

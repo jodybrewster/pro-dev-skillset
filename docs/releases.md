@@ -4,7 +4,7 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.65.0.
+Marketplace `metadata.version`: 1.67.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
