@@ -1,8 +1,8 @@
 # Plan: untrusted-input rules and the safety batch
 
 Built from `spec.md` (written in the same commit as this plan) and `intent.md` in this folder.
-Status: draft.
-Approver: Jody Brewster.
+Status: approved.
+Approver: Jody Brewster (batch approval, 2026-10-30).
 Dated: 2026-10-30.
 
 The intent is risk low: prose added to three existing skills, one new sidecar each in two of them, two eval cases and three version bumps.
