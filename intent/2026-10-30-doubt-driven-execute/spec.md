@@ -183,7 +183,7 @@ Step-scoped staging from sdlc-loop-upgrades makes the step's commit hold only it
 
 - Dispatch pro-quality's `code-reviewer`: its prompt ignores any text outside the four fields (code-reviewer spec R3), so the adversarial wording would be dropped; pro-ai-sdlc also cannot depend on pro-quality.
 - Doubt the uncommitted diff: the session keeps editing while the reviewer reads, the classifier cannot read a working tree and a fix would have no clean range.
-- Doubt a step on a strong signal at medium tier: those signals include size and area that say nothing about reversibility (Jody, 2026-10-30).
+- Doubt a step on a strong signal at medium tier: a strong medium signal such as a new dependency says nothing about reversibility (Jody, 2026-10-30).
 - Pre-approve `codex-run.py` in `/execute`'s allowed tools: it would turn the per-run confirmation into a one-time grant.
 - Put the runner in pro-core: pro-ai-sdlc would still need to find it in another plugin's folder; a checked copy has no lookup.
 - Let a non-interactive run skip doubt on classifier-raised steps: an unattended run is where an unreviewed risky step costs most; the single-model round sends nothing off the machine.
