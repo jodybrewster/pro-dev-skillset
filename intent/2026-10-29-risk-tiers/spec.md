@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-risk-tiers/intent.md
 intent-status: draft
-status: draft
+status: accepted
 created: 2026-10-29T19:30:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: risk classifier and approval tiers
 
 Built from `intent.md` in this folder (not yet committed).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0003 and 0004 bear on this change), `docs/roadmap.md` item 4, the pro-ship brainstorm sections on the risk gate, approval at one-person scale, "Built to scale up" and the twelve-factor signals, `plugins/pro-security/scripts/security_surface.py`, `plugins/pro-legal/scripts/legal_surface.py`, `plugins/pro-ai-sdlc/templates/intent.md` (its `risk:` line), `plugins/pro-ai-sdlc/scripts/guard.py` and `production-gate.py` (mode handling), `plugins/pro-ai-sdlc/commands/intent.md` and `spec.md`, `plugins/pro-ship/` as it stands and the user-level `merge-pr.md` command.
 `/merge-pr` lives in the user-level commands folder (`~/.claude/commands/merge-pr.md`), outside this repo.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.

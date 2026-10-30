@@ -20,7 +20,7 @@
 //   could not run     none                       e1-e5
 //   timing            none                       t1, t2
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, cpSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -123,6 +123,17 @@ export function runShipHookCases() {
     add("m10 cd and env prefix are acted on", "deny", r, r.deny);
     r = run("gh pr create -R owner/repo --fill", { cwd: repo, env: enforce() });
     add("m11 -R is acted on", "deny", r, r.deny);
+    for (const [id, cmd] of [["m30 a single & before gh pr create", "git status & gh pr create --fill"],
+      ["m31 |& before gh pr create", "echo x |& gh pr create --fill"],
+      ["m32 eval of gh pr create", `eval "gh pr create --fill"`],
+      ["m33 eval with bare words", "eval gh pr create --fill"],
+      ["m34 xargs gh pr create", "echo x | xargs -n1 gh pr create --fill"]]) {
+      r = run(cmd, { cwd: repo, env: enforce() });
+      add(id, "deny", r, r.deny);
+    }
+    quietCase("m35 2>&1 is not a separator", "git status 2>&1 && gh pr create --draft");
+    quietCase("m36 &> is not a separator", "git status &>/dev/null; echo gh pr create");
+    quietCase("m37 >&2 is not a separator", "echo x >&2; gh pr create --draft");
     r = run(`${PR}`, { cwd: repo, env: enforce() });
     add("m12 plain create is acted on", "deny", r, r.deny);
     r = run("gh pr create --draft=false", { cwd: repo, env: enforce() });
@@ -269,12 +280,12 @@ export function runShipHookCases() {
     // that can block has one case that blocks and one that allows.
     // ======================================================================================
     {
-      const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {} } = {}) => {
+      const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {}, gate = MERGE_GATE } = {}) => {
         const body = { tool_name: "Bash", session_id: "ms", cwd, tool_input: { command } };
         if (pm) body.permission_mode = pm;
         const input = raw !== null ? raw : JSON.stringify(body);
         const t0 = Date.now();
-        const r = spawnSync("python3", [MERGE_GATE], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
+        const r = spawnSync("python3", [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
         let json = null;
         try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* not json */ }
         let log = "";
@@ -450,6 +461,65 @@ export function runShipHookCases() {
       add("mg83 bypass in warn allows with a message", "message", r, allowsMsg(r));
       r = mrun(MERGE, { cwd: mainRepo, env: MENF(), pm: "bypassPermissions" });
       add("mg84 could not run under bypass denies as high", "deny", r, denies(r));
+
+      // ---- review fixes: separators, eval, xargs, the pin, the deadline, the base --------
+      for (const [id, cmd] of [["mg100 a single & before the merge", `git status & ${MERGE}`],
+        ["mg101 |& before the merge", `echo x |& ${MERGE}`],
+        ["mg102 eval of the merge", `eval "${MERGE}"`],
+        ["mg103 eval with bare words", `eval ${MERGE}`],
+        ["mg104 xargs with options", `echo 42 | xargs -n1 gh pr merge --squash`]]) {
+        r = mrun(cmd, { cwd: highR, env: MENF() });
+        add(id, "deny", r, denies(r));
+      }
+      for (const [id, cmd] of [["mg105 2>&1 is not a separator", "git status 2>&1; echo gh pr merge"],
+        ["mg106 &> is not a separator", "git status &>/dev/null; echo gh pr merge"],
+        ["mg107 xargs of something else", "echo x | xargs echo gh pr merge"]]) {
+        r = mrun(cmd, { cwd: highR, env: MENF() });
+        add(id, "silent", r, allowsQuiet(r));
+      }
+      r = mrun(`${MERGE} --match-head-commit ${lowH} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg110 two different pins deny with a reason", "deny", r, denies(r) && /more than one|several|different/i.test(r.text));
+      r = mrun(`${MERGE} --match-head-commit ${highH} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg111 two identical pins that match HEAD ask", "ask", r, asks(r));
+      r = mrun(`${MERGE} --match-head-commit ${highH} --match-head-commit=${lowH}`, { cwd: highR, env: MENF() });
+      add("mg112 a last pin that is not HEAD denies", "deny", r, denies(r));
+
+      {
+        // a slow surface module under a short deadline is could-not-run, never a quiet allow
+        const box = realpathSync(mkdtempSync(join(tmpdir(), "mg-slow-")));
+        try {
+          mkdirSync(join(box, "pro-ship"), { recursive: true });
+          cpSync(join(ROOT, "plugins", "pro-ship", "scripts"), join(box, "pro-ship", "scripts"), { recursive: true });
+          mkdirSync(join(box, "surf"));
+          writeFileSync(join(box, "surf", "security_surface.py"), "import time\ndef diff_files(patch, repo=None):\n    time.sleep(8)\n    return {}\n");
+          mkdirSync(join(box, "home"));
+          const slow = { HOME: join(box, "home"), PRO_SHIP_SURFACE_DIR: join(box, "surf"), PRO_SHIP_MERGE_GATE_DEADLINE: "1" };
+          r = mrun(MERGE, { cwd: lowR, env: MENF(), gate: join(box, "pro-ship", "scripts", "merge-gate.py"), extraEnv: slow });
+          add("mg120 a deadline during classification asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log) && r.ms < 6000);
+        } finally { rmSync(box, { recursive: true, force: true }); }
+      }
+
+      {
+        // a pushed feature branch: the base is the target branch, never the branch's own remote copy
+        const remote = join(sandbox, `remote${++n}.git`);
+        sh(sandbox, "init", "-q", "--bare", "-b", "main", remote);
+        const pushed = newRepo();
+        sh(pushed, "remote", "add", "origin", remote);
+        sh(pushed, "push", "-q", "-u", "origin", "main");
+        sh(pushed, "checkout", "-q", "-b", "feat");
+        mkdirSync(join(pushed, ".github", "workflows"), { recursive: true });
+        writeFileSync(join(pushed, ".github", "workflows", "ci.yml"), "name: ci\n");
+        sh(pushed, "add", "-A");
+        sh(pushed, "commit", "-q", "-m", "ci");
+        sh(pushed, "push", "-q", "-u", "origin", "feat");
+        r = mrun(MERGE, { cwd: pushed, env: MENF() });
+        add("mg130 a fully pushed branch is classified, not could-not-run", "deny high workflows", r, denies(r) && /workflows/.test(r.text) && !/could-not-run/.test(r.log));
+        writeFileSync(join(pushed, "README.md"), "docs\n");
+        sh(pushed, "add", "-A");
+        sh(pushed, "commit", "-q", "-m", "readme");
+        r = mrun(MERGE, { cwd: pushed, env: MENF() });
+        add("mg131 an unpushed docs commit on top of a pushed workflow change is still high", "deny high workflows", r, denies(r) && /workflows/.test(r.text));
+      }
 
       // ---- a merge run from another branch --------------------------------------------
       sh(highR, "checkout", "-q", "main");

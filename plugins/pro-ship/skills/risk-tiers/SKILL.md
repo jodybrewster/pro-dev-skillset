@@ -17,6 +17,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/risk-classify.py" [--base <ref>] [--head 
 
 If `${CLAUDE_PLUGIN_ROOT}` is empty or the file is missing, say so and treat the tier as unknown, which counts as high.
 The diff runs from the merge base to the head (default `HEAD`).
+The default base is the merge base with the target branch: `origin/HEAD`, `origin/main`, `origin/master`, `main` or `master`, never the branch's own upstream.
 
 ## The tiers
 
@@ -34,12 +35,13 @@ A diff with no signal at medium or above is low.
 Each signal has a floor and a strength, strong or weak.
 Documentation (`.md`, `.mdx`, `.txt`, `.rst`, anything under `docs/`) and lockfiles never raise a tier through path, dependency or size signals.
 A `.md` file under `.github/workflows/`, `hooks/` or `.claude/` is not excused.
+Path signals other than `workflows` and `hook-scripts`, the security and legal surface signals and `env-var-read` skip test files, `tests/` and fixtures directories and Markdown.
 
 High, by path:
 
 - `workflows`: `.github/workflows/`.
 - `iac`: Terraform, Dockerfiles, compose files, `k8s/`, `helm/` and the like.
-- `hook-scripts`: any `hooks/` directory, `hooks.json`, `.husky/`, `.claude/settings*.json` and any script a tracked `hooks.json` runs.
+- `hook-scripts`: a `hooks/` directory that holds a `hooks.json` (or is `.claude/hooks/`), `hooks.json`, `.husky/`, `.githooks/`, lefthook config, `.claude/settings*.json` and any script a tracked `hooks.json` runs, read from the base tree too so a deleted or renamed script still counts. A React `src/hooks/` folder is not a hook directory.
 - `auth`: path segments such as `auth`, `login`, `oauth`, `session`, `permissions`, `rbac`, `middleware`.
 - `payments`: `payments`, `billing`, `stripe`.
 - `migrations`: `migrations/`, `prisma/schema.prisma`, `schema.sql`, `drizzle/`.
@@ -52,7 +54,7 @@ Medium:
 - `test-deleted` (strong): a test file was deleted.
 - `assertion-removed` (strong): a surviving test file lost more `expect`, `assert` or `should` lines than it gained.
 - `no-test-change` (weak): source changed past the line threshold with no test file touched.
-- `size` (weak, medium or high): files and lines changed past the thresholds.
+- `size` (weak, medium or high): non-test, non-doc files and lines changed past the thresholds.
 - `areas` (weak): the diff spans more areas than the threshold.
 - Surface hits from the security and legal classifiers, when pro-security or pro-legal is installed.
   Security categories such as `auth`, `payments`, `crypto`, `secrets`, `webhooks`, `uploads` and `ci-infra` are high.
@@ -73,6 +75,7 @@ When the computed tier is higher than the declared one the output lists a `risk-
 Show the finding to the person.
 It does not fail anything.
 A missing or unrecognised `risk:` prints `declared: none` and is not a finding.
+A `risk:` read from a diff that holds only Markdown and docs raises nothing and adds a `declared-risk-ignored` note.
 
 ## Settling a tie
 

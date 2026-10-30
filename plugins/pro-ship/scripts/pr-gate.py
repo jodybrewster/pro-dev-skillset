@@ -125,6 +125,11 @@ def split_segments(command: str) -> list[str]:
             buf = []
             i += 2
             continue
+        if ch == "&" and not (i + 1 < n and command[i + 1] == ">") and not (i > 0 and command[i - 1] in "<>"):
+            segments.append("".join(buf))  # a single & backgrounds the left side and starts a new command
+            buf = []
+            i += 1
+            continue
         if ch in ";|\n":
             segments.append("".join(buf))
             buf = []
@@ -151,6 +156,7 @@ def _resolve(cur: str | None, path: str) -> str | None:
 
 
 KEYWORDS = {"{", "!", "then", "do", "else", "elif", "if", "while", "until", "time", "exec", "nohup", "builtin"}
+XARGS_VALUE = {"-a", "-d", "-E", "-I", "-L", "-n", "-P", "-s", "--arg-file", "--delimiter", "--max-args", "--max-procs"}
 SUDO_VALUE = {"-u", "-g", "-p", "-C", "-D", "-R", "-T", "-U", "-h"}
 
 
@@ -316,6 +322,16 @@ def actions(command: str, base: str | None) -> list[str | None]:
                 if SHELL_C_RE.match(toks[j]):
                     found.extend(actions(toks[j + 1], cur))
                     break
+            continue
+        if name == "eval":
+            found.extend(actions(" ".join(toks[i + 1 :]), cur))
+            continue
+        if name == "xargs":
+            j = i + 1
+            while j < len(toks) and toks[j].startswith("-"):
+                j += 2 if toks[j] in XARGS_VALUE else 1
+            if j < len(toks):
+                found.extend(actions(shlex.join(toks[j:]), cur))
             continue
         if name != "gh":
             continue

@@ -4,7 +4,7 @@ Date: 2026-10-30
 
 ## Status
 
-proposed (2026-10-30)
+accepted (2026-10-30) (2026-10-30)
 
 Decided by: Jody Brewster.
 Source: intent/2026-10-29-risk-tiers/.
@@ -20,7 +20,7 @@ The security and legal surface classifiers live in other plugins, which pro-ship
 ## Decision
 
 The tier is the highest floor among deterministic signals, computed by `risk-classify.py` with no model call.
-The author's declared `risk:` only raises the tier and a lower declaration becomes a `risk-underdeclared` finding.
+The author's declared `risk:` only raises the tier (not on a docs-only diff) and a lower declaration becomes a `risk-underdeclared` finding.
 A run that could not happen is high, never low.
 A model may settle a tie between weak signals, choosing between the two tiers the classifier named, and that changes reviewer depth only.
 Only the person answering a permission prompt approves a medium or high merge, and an agent's statement of approval never counts.

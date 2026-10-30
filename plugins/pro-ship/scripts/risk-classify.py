@@ -100,8 +100,11 @@ def resolve(repo, ref):
 
 
 def find_base(repo, head_sha, base):
-    """First of --base, the upstream, origin/HEAD, origin/main, main that resolves, as a merge base."""
-    candidates = [base] if base else ["@{upstream}", "origin/HEAD", "origin/main", "main"]
+    """The merge base with --base, else with the first target branch that resolves.
+
+    The target is origin/HEAD, origin/main, origin/master, main or master. Never the branch's own
+    upstream: on a pushed feature branch that is its own remote copy and hides the pushed commits."""
+    candidates = [base] if base else ["origin/HEAD", "origin/main", "origin/master", "main", "master"]
     for cand in candidates:
         tip = resolve(repo, cand)
         if not tip:
@@ -207,6 +210,15 @@ def is_test(path):
     return any(seg in ("tests", "test", "__tests__") for seg in segments(low)[:-1])
 
 
+FIXTURE_DIRS = {"fixtures", "fixture", "__fixtures__", "testdata", "__snapshots__"}
+
+
+def is_test_or_fixture(path):
+    """A test file, a file under a tests or fixtures directory, or Markdown: path and surface signals skip these."""
+    low = path.lower()
+    return is_test(path) or low.endswith(DOC_EXT) or any(seg in FIXTURE_DIRS for seg in segments(low)[:-1])
+
+
 def area(path):
     segs = segments(path)
     if len(segs) == 1:
@@ -259,8 +271,8 @@ def named(path, names):
     return any(s in names for s in segs[:-1]) or segs[-1].split(".")[0] in names
 
 
-def hook_script_paths(repo, head_sha, tree):
-    """Scripts that a tracked hooks.json in the head tree runs, from its command strings."""
+def hook_script_paths(repo, sha, tree):
+    """Scripts that a tracked hooks.json in the tree at sha runs, from its command strings."""
     scripts = set()
 
     def commands(node):
@@ -275,7 +287,7 @@ def hook_script_paths(repo, head_sha, tree):
                 yield from commands(v)
 
     for hj in sorted(p for p in tree if p.rsplit("/", 1)[-1] == "hooks.json"):
-        text = show(repo, head_sha, hj)
+        text = show(repo, sha, hj)
         try:
             data = json.loads(text or "")
         except ValueError:
@@ -290,7 +302,18 @@ def hook_script_paths(repo, head_sha, tree):
     return scripts
 
 
-def path_signals(files, hook_scripts=frozenset(), policy=None):
+def in_hook_dir(path, dirs, hook_dirs):
+    """A hooks directory counts when it holds a hooks.json (or is .claude/hooks); src/hooks of a React app does not."""
+    for k, seg in enumerate(dirs):
+        if seg != "hooks":
+            continue
+        if "/".join(path.split("/")[:k + 1]) in hook_dirs or (k > 0 and dirs[k - 1] == ".claude"):
+            return True
+    return False
+
+
+def path_signals(files, hook_scripts=frozenset(), policy=None, hook_dirs=frozenset()):
+    """hook_scripts: scripts hooks.json runs (head and base trees); hook_dirs: directories that hold a hooks.json."""
     policy = policy or {}
     low_globs = policy.get("paths.low", [])
     out, hit = [], {}
@@ -307,11 +330,14 @@ def path_signals(files, hook_scripts=frozenset(), policy=None):
             continue
         if low.startswith(".github/workflows/"):
             add("workflows", path)
-        if (path in hook_scripts or "hooks" in dirs or base == "hooks.json" or ".husky" in dirs
+        if (path in hook_scripts or in_hook_dir(path, dirs, hook_dirs) or base == "hooks.json" or ".husky" in dirs
+                or ".githooks" in dirs or re.fullmatch(r"\.?lefthook(?:-local)?\.ya?ml", base)
                 or (".claude" in dirs and dirs.index(".claude") == len(dirs) - 1 and re.fullmatch(r"settings.*\.json", base))):
             add("hook-scripts", path)
         if glob_any(low_globs, path):
             continue  # paths.low excuses everything below, never workflows or hook-scripts
+        if is_test_or_fixture(path):
+            continue  # tests, fixtures and Markdown are not the thing they exercise
         if base.startswith(("dockerfile", "docker-compose")) or base.endswith(".tf") or IAC_DIRS & set(dirs):
             add("iac", path)
         if named(path, AUTH_NAMES):
@@ -436,7 +462,7 @@ def test_signals(files, no_test_lines):
 
 
 def size_signals(files, th):
-    counted = {p: f for p, f in files.items() if not excused(p)}
+    counted = {p: f for p, f in files.items() if not excused(p) and not is_test(p)}
     n_files = len(counted)
     n_lines = sum(len(f["added"]) + len(f["removed"]) for f in counted.values())
     out = []
@@ -543,6 +569,9 @@ def surface_signals(repo, patch):
             notes.append(f"surface-unavailable: {module}")
             continue
         for cat, paths in hits.items():
+            paths = [p for p in paths if not is_test_or_fixture(p)]
+            if not paths:
+                continue
             if module == "legal_surface":
                 floor, label = "medium", "legal"
             else:
@@ -565,7 +594,7 @@ def env_var_signals(repo, head_sha, files):
     known = {m.group(1) for m in re.finditer(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=", example, re.M)}
     hit_files, names = [], set()
     for path, f in files.items():
-        if excused(path):
+        if excused(path) or is_test_or_fixture(path):
             continue
         found = {m.group(1) for line in f["added"] for rx in ENV_READ_RES for m in rx.finditer(line)} - known
         if found:
@@ -742,7 +771,10 @@ def classify(repo, base=None, head="HEAD", intent=None):
     th.update({k[len("thresholds."):]: v for k, v in policy.items() if k in INT_KEYS})
     files, patch = read_diff(repo, base_sha, head_sha)
     tree = tree_paths(repo, head_sha)
-    signals = (path_signals(files, hook_script_paths(repo, head_sha, tree), policy) + dependency_signals(files)
+    base_tree = tree_paths(repo, base_sha)
+    hooks = hook_script_paths(repo, head_sha, tree) | hook_script_paths(repo, base_sha, base_tree)
+    hook_dirs = {posixpath.dirname(p) for p in tree | base_tree if p.rsplit("/", 1)[-1] == "hooks.json"}
+    signals = (path_signals(files, hooks, policy, hook_dirs) + dependency_signals(files)
                + policy_signals(files, policy)
                + test_signals(files, th["no_test_lines"]) + size_signals(files, th))
     found, notes = surface_signals(repo, patch)
@@ -752,7 +784,10 @@ def classify(repo, base=None, head="HEAD", intent=None):
     computed = tier_of(signals)
     declared, intent_paths = declared_risk(repo, head_sha, files, intent)
     findings = []
-    if declared != "none":
+    docs_only = not intent and all(excused(p) for p in files)  # an explicit --intent is always honored
+    if declared != "none" and docs_only:
+        notes.append("declared-risk-ignored: the diff holds only Markdown and docs")
+    elif declared != "none":
         signals.append(signal("declared-risk", declared, "strong", intent_paths, f"intent declares risk: {declared}"))
         if RANK[computed] > RANK[declared]:
             top = sorted({x["id"] for x in signals if x["floor"] == computed and x["id"] != "declared-risk"})

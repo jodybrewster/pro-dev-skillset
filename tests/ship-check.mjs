@@ -474,7 +474,8 @@ export function runShipCheckCases() {
     const withRisk = (content, extra = []) => {
       const q = prep();
       const f = join(q.repo, ".pro-dev", "ship", "risk.json");
-      if (content !== null) writeFileSync(f, typeof content === "string" ? content : JSON.stringify(content));
+      const body = content && typeof content === "object" && !Array.isArray(content) && !("head" in content) ? { ...content, head: q.head } : content;
+      if (content !== null) writeFileSync(f, typeof body === "string" ? body : JSON.stringify(body));
       const x = stamp(q, GOOD_REV, ["--risk", f, ...extra]);
       return { q, x, st: written(q) };
     };
@@ -496,6 +497,12 @@ export function runShipCheckCases() {
     add("s11e an unknown tier in the risk file gives tier high", "high", ro.st?.tier === "high" && ro.st.risk?.could_not_run === true, JSON.stringify(ro.st));
     ro = withRisk([1, 2]);
     add("s11f a risk file that is not an object gives tier high", "high", ro.st?.tier === "high", JSON.stringify(ro.st));
+    ro = withRisk({ ...CLS, tier: "low", head: "0".repeat(40) });
+    add("s11j a risk file for another HEAD gives tier high with a reason", "high, could_not_run, reason names head",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true && /head/i.test(ro.st.risk.reason || ""), JSON.stringify(ro.st));
+    ro = withRisk({ ...CLS, tier: "low", head: undefined });
+    add("s11k a risk file with no head gives tier high", "high, could_not_run",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true, JSON.stringify(ro.st));
     ro = withRisk({ ...CLS, tier: "low" }, ["--tier", "high"]);
     add("s11g --risk wins over --tier", "low", ro.st?.tier === "low", JSON.stringify(ro.st));
     ro = (() => { const q = prep(); const x = stamp(q, GOOD_REV, ["--tier", "medium"]); return { x, st: written(q) }; })();

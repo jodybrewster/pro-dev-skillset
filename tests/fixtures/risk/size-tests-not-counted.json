@@ -1,0 +1,21 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/a.js": "export const a = 1;\n",
+    "tests/t0.test.js": "import test from 'node:test';\ntest('x0', () => {});\n",
+    "tests/t1.test.js": "import test from 'node:test';\ntest('x1', () => {});\n",
+    "tests/t2.test.js": "import test from 'node:test';\ntest('x2', () => {});\n",
+    "tests/t3.test.js": "import test from 'node:test';\ntest('x3', () => {});\n",
+    "tests/t4.test.js": "import test from 'node:test';\ntest('x4', () => {});\n",
+    "tests/t5.test.js": "import test from 'node:test';\ntest('x5', () => {});\n",
+    "tests/t6.test.js": "import test from 'node:test';\ntest('x6', () => {});\n",
+    "tests/t7.test.js": "import test from 'node:test';\ntest('x7', () => {});\n",
+    "tests/t8.test.js": "import test from 'node:test';\ntest('x8', () => {});\n",
+    "tests/t9.test.js": "import test from 'node:test';\ntest('x9', () => {});\n",
+    "tests/t10.test.js": "import test from 'node:test';\ntest('x10', () => {});\n",
+    "tests/t11.test.js": "import test from 'node:test';\ntest('x11', () => {});\n",
+    "tests/t12.test.js": "import test from 'node:test';\ntest('x12', () => {});\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "tests/fixtures/payments/charge.json": "{}\n",
+    "tests/fixtures/billing.json": "{}\n"
+  }
+}

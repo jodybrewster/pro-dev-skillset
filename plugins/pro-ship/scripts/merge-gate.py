@@ -34,6 +34,10 @@ HOOK = "merge-gate"
 # Code docs on 2026-10-30: the docs do not say, so these deny (step 15 may relax this).
 NO_PROMPT_MODES = {"bypassPermissions", "dontAsk", "auto"}
 DEADLINE = 20
+try:  # test hook: a shorter deadline for the slow-module case
+    DEADLINE = float(os.environ.get("PRO_SHIP_MERGE_GATE_DEADLINE") or DEADLINE)
+except ValueError:
+    pass
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---------------------------------------------------------------------------
@@ -122,6 +126,11 @@ def split_segments(command: str) -> list[str]:
             buf = []
             i += 2
             continue
+        if ch == "&" and not (i + 1 < n and command[i + 1] == ">") and not (i > 0 and command[i - 1] in "<>"):
+            segments.append("".join(buf))  # a single & backgrounds the left side and starts a new command
+            buf = []
+            i += 1
+            continue
         if ch in ";|\n":
             segments.append("".join(buf))
             buf = []
@@ -147,6 +156,7 @@ def _resolve(cur: str | None, path: str) -> str | None:
 
 
 KEYWORDS = {"{", "!", "then", "do", "else", "elif", "if", "while", "until", "time", "exec", "nohup", "builtin"}
+XARGS_VALUE = {"-a", "-d", "-E", "-I", "-L", "-n", "-P", "-s", "--arg-file", "--delimiter", "--max-args", "--max-procs"}
 SUDO_VALUE = {"-u", "-g", "-p", "-C", "-D", "-R", "-T", "-U", "-h"}
 
 
@@ -278,6 +288,16 @@ def actions(command: str, base: str | None) -> list[tuple[str | None, list[str]]
                     found.extend(actions(toks[j + 1], cur))
                     break
             continue
+        if name == "eval":
+            found.extend(actions(" ".join(toks[i + 1 :]), cur))
+            continue
+        if name == "xargs":
+            j = i + 1
+            while j < len(toks) and toks[j].startswith("-"):
+                j += 2 if toks[j] in XARGS_VALUE else 1
+            if j < len(toks):
+                found.extend(actions(shlex.join(toks[j:]), cur))
+            continue
         if name != "gh":
             continue
         i += 1
@@ -290,14 +310,15 @@ def actions(command: str, base: str | None) -> list[tuple[str | None, list[str]]
     return found
 
 
-def pinned_sha(args: list[str]) -> str | None:
-    """The value of --match-head-commit, or None when absent or empty."""
+def pinned_shas(args: list[str]) -> list[str]:
+    """Every value given to --match-head-commit, in order (empty string when the value is missing)."""
+    found: list[str] = []
     for k, a in enumerate(args):
         if a == "--match-head-commit":
-            return args[k + 1] if k + 1 < len(args) else ""
-        if a.startswith("--match-head-commit="):
-            return a.split("=", 1)[1]
-    return None
+            found.append(args[k + 1] if k + 1 < len(args) else "")
+        elif a.startswith("--match-head-commit="):
+            found.append(a.split("=", 1)[1])
+    return found
 
 
 # ---------------------------------------------------------------------------
@@ -309,8 +330,8 @@ class CouldNotRun(Exception):
     pass
 
 
-class Deadline(Exception):
-    pass
+class Deadline(BaseException):
+    """BaseException so no `except Exception` on the way (surface loader, classifier) swallows it."""
 
 
 def load_classifier():
@@ -378,7 +399,16 @@ def decide(directory: str | None, args: list[str], enforcing: bool, permission_m
     else:
         tier = res["tier"]
         head = res["head"]
-        sha = pinned_sha(args)
+        pins = pinned_shas(args)
+        if len({p.lower() for p in pins}) > 1:
+            msg = (f"[{HOOK}] {tier} risk merge has several different --match-head-commit values ({', '.join(pins)}); "
+                   f"gh uses the last one. Give one, --match-head-commit {head}. {summary(res)}")
+            if enforcing:
+                log(HOOK, "deny", f"{tier} several pins", cwd)
+                return 3, msg
+            log(HOOK, "warn", f"{tier} several pins", cwd)
+            return 1, msg + " (warn mode: allowed)"
+        sha = pins[-1] if pins else None
         valid = (sha is not None and re.fullmatch(r"[0-9a-fA-F]{7,64}", sha) is not None
                  and head.startswith(sha.lower()))
         flag = f"--match-head-commit {head}"
@@ -450,7 +480,7 @@ def main_hook() -> int:
         raise Deadline()
 
     signal.signal(signal.SIGALRM, on_alarm)
-    signal.alarm(DEADLINE)
+    signal.setitimer(signal.ITIMER_REAL, DEADLINE)
     best = (0, "")
     try:
         for directory, args in hits:
@@ -466,7 +496,7 @@ def main_hook() -> int:
         else:
             best = (2, text) if enforcing else (1, text + " (warn mode: allowed)")
     finally:
-        signal.alarm(0)
+        signal.setitimer(signal.ITIMER_REAL, 0)
     emit(*best)
     return 0
 

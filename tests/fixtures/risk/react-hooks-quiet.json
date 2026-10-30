@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/hooks/useDebounce.ts": "export function useDebounce() { return 1; }\n"
+  }
+}

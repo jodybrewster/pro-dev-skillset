@@ -1,7 +1,7 @@
 # Plan: risk classifier and approval tiers
 
 Built from `spec.md` (commit 6926f78, with its open questions and flagged concerns resolved on 2026-10-30) and `intent.md` in this folder.
-Status: approved.
+Status: implemented.
 Approver: Jody Brewster (2026-10-30: "keep going and finish P0 you have my approval on all").
 It adds a merge gate on `gh pr merge` in every repo that installs pro-ship and sets a tier model every gate and reviewer here will follow, which is why an approver is named.
 No second approver is needed because Jody owns this marketplace and decided the open questions and ADR-0015 under that approval.
@@ -353,11 +353,14 @@ What counts as finished:
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- Step 15 (`ask` under each `permission_mode`): <the result per mode and the Claude Code version, or "not verified">
-- AC1: <pass or fail, with what was observed>
-- Sign-off: <the person's words and the date>
+- Build commit: the head of #88.
+- Checks run: `node tests/check.mjs` 33 checks, 0 failures, 12 warnings (the new one is the router not naming `risk-tiers` yet, with `pr-check`, left for a pro-core change); unit tests 124 classifier cases; `tests/ship-hooks.mjs` 182/182; `tests/ship-check.mjs` 124/124; eval dry; route-lexical rank-1 80.5%; strict validate on the marketplace and all 20 plugins.
+- Step 15 (`ask` under each `permission_mode`): not verified live. The hooks docs do not say whether a hook `ask` prompts under `bypassPermissions`, so the gate denies medium and high under `bypassPermissions`, `dontAsk` and `auto` and asks under `default`, `plan`, `acceptEdits` or no mode.
+- AC10: pass, this branch classifies high with a `hook-scripts` signal.
+- AC9: calibration over the last 30 merged PRs (#59 to #89) after the fixes: 11 low, 9 medium, 10 high; every hook and workflow PR is high and no docs-only or test-only PR is above low. The size thresholds stay placeholders until Jody sets them from that table.
+- AC7: pass, a copy of pro-ship run alone printed both `surface-unavailable` notes.
+- AC1 to AC8, AC11: pass, by the cases above; AC12 pending after merge.
+- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0015, Status `proposed` from this change, to `accepted`.
@@ -366,3 +369,9 @@ It also moves ADR-0015, Status `proposed` from this change, to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- The ADR is ADR-0015: #86 took 0013 (plugin layering) and pr-gate took 0014 (the gate stamp).
+- The default base is the merge base with the target branch (`origin/HEAD`, `origin/main`, `origin/master`, `main`, `master`), never the branch's own upstream as R2 first said: on a pushed branch the upstream is the branch's own remote copy, which read every pushed branch as could-not-run and let a pushed workflow change read low behind an unpushed docs commit.
+- The step 22 review found more, each fixed with a failing case first: `&`, `|&`, `eval` and `xargs` hid `gh pr merge` (and `gh pr create` from pr-gate); a deleted or renamed hook script read low; the gate's deadline was swallowed into a quiet allow; the first `--match-head-commit` was used where gh uses the last; a stale `risk.json` could be stamped onto a new commit.
+- The calibration run found over-firing, fixed: a `risk:` field in a docs-only diff no longer raises the tier; path, surface and env-var signals skip tests, fixtures and Markdown; size counts only code; a `hooks` folder counts only with a `hooks.json`, `.claude/hooks`, `.githooks`, husky or lefthook.
+- Known limit, a follow-up before enforce mode: the merge gate classifies the checked-out branch, not the PR number it is given, so `/merge-pr` run from `main` reads could-not-run and is treated as high (a message in warn mode). The gate should resolve the PR's head with `gh pr view` first.

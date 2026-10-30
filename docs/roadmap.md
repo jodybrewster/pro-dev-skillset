@@ -40,12 +40,8 @@ They replace the dropped [pro-ship-scope intent](../intent/2026-10-28-pro-ship-s
 | [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
 | [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | shipped in #87 |
 | [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | shipped in #89 |
-| [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | 30 R, 6 N, 12 AC, 12 concerns |
+| [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | shipped in #88 |
 
-Questions waiting on Jody, with the drafts' recommendations:
-
-- code-reviewer: effort high or medium for the reviewer (recommended high, set by the dispatcher); the mutation check needs to edit and run tests, so it runs only in a throwaway worktree at medium or high risk (recommended); subagent versus `claude -p` (recommended subagent).
-- risk-tiers: which plugin owns the classifier (recommended pro-ship); can a tier be overridden down (recommended Jody only, recorded in the stamp, later); the size thresholds (recommended placeholder constants until a calibration run over merged PRs); does `ask` still prompt when permission checks are bypassed (verify live; deny medium and high if not).
 
 Facts the drafts found that change earlier notes:
 
@@ -64,7 +60,8 @@ Cross-cutting decisions for Jody:
 review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
 pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
-Plans: risk-tiers (#88) is approved and builds next.
+risk-tiers shipped in #88 on 2026-10-30 with ADR-0015. All of P0 (ranked items 1 to 6) shipped on 2026-10-30.
+Follow-ups before any gate goes to enforce mode: AC9 of constraint-floor (a week of warn-mode use), the size thresholds from the risk-tiers calibration table, the merge gate resolving a PR number to its head, and naming `pr-check` and `risk-tiers` in the pro-core router.
 Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 
 ## Parked intents
@@ -111,7 +108,7 @@ Within a tier, items are in the order to build them.
 - [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
 - [x] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): shipped in #89 from the plan of [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
 - [x] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): shipped in #87 as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
-- [ ] 4. Risk classifier and approval tiers (M, pro-ship): specced as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
+- [x] 4. Risk classifier and approval tiers (M, pro-ship): shipped in #88 as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
 - [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 

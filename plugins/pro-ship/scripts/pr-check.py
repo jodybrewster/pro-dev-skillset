@@ -755,8 +755,10 @@ def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, mi
     return "incomplete"
 
 
-def risk_from_file(path: str) -> tuple[str, dict]:
-    """Return (tier, risk) from the classifier's JSON. Anything unusable is high, never low."""
+def risk_from_file(path: str, head: str | None = None) -> tuple[str, dict]:
+    """Return (tier, risk) from the classifier's JSON. Anything unusable is high, never low.
+
+    A risk file written for another commit than the current HEAD is stale and counts as could not run."""
     def failed(reason: str) -> tuple[str, dict]:
         return "high", {"tier": "high", "could_not_run": True, "reason": reason}
     try:
@@ -774,6 +776,8 @@ def risk_from_file(path: str) -> tuple[str, dict]:
         return "high", risk
     if data.get("tier") not in ("low", "medium", "high"):
         return failed("risk file has no valid tier")
+    if head and data.get("head") != head:
+        return failed("risk file head does not match the current HEAD (stale risk file)")
     return data["tier"], data
 
 
@@ -791,7 +795,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     risk_path = flag(args, "--risk")
     risk = None
     if risk_path:
-        tier, risk = risk_from_file(risk_path)
+        tier, risk = risk_from_file(risk_path, head)
     raw = flag(args, "--reviewers")
     try:
         revs = json.loads(raw) if raw else {}

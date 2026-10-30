@@ -186,7 +186,53 @@ table("path signals", [
   ["md-under-workflows", "high", ["workflows"]],
   ["md-under-hooks", "high", ["hook-scripts"]],
   ["md-under-claude-hooks", "high", ["hook-scripts"]],
+  ["hook-script-deleted", "high", ["hook-scripts"]],
+  ["hook-script-renamed", "high", ["hook-scripts"]],
+  ["path-hook-lefthook", "high", ["hook-scripts"]],
+  ["react-hooks-quiet", "low", [], ["hook-scripts"]],
+  ["tests-session-quiet", "low", [], ["auth", "security-auth"]],
+  ["tests-fixtures-payments-quiet", "low", [], ["payments", "security-payments"]],
+  ["tests-docker-quiet", "low", [], ["iac", "security-ci-infra", "security-secrets"]],
+  ["tests-env-secrets-quiet", "low", [], ["env-var-read", "security-secrets"]],
+  ["size-tests-not-counted", "low", [], ["size", "areas"]],
 ]);
+
+test("a deleted hook script names the script in the evidence", () => withFixture("hook-script-deleted", (repo) => {
+  const s = classify(repo, ["--json"]).json.signals.find((x) => x.id === "hook-scripts");
+  assert.deepEqual(s.evidence, ["plugin/scripts/gate.py"]);
+}));
+
+// A feature branch that is pushed has itself as its upstream. The base is the target branch.
+function pushedRepo(fn) {
+  const repo = buildRepo(loadFixture("readme-only"), { onFeat: false });
+  const remote = realpathSync(mkdtempSync(join(tmpdir(), "risk-remote-")));
+  try {
+    git(remote, "init", "-q", "--bare", "-b", "main");
+    git(repo, "remote", "add", "origin", remote);
+    git(repo, "push", "-q", "-u", "origin", "main");
+    git(repo, "checkout", "-q", "-b", "feat");
+    writeTree(repo, { ".github/workflows/ci.yml": "on: push\n" });
+    git(repo, "add", "-A");
+    git(repo, "commit", "-q", "-m", "ci");
+    git(repo, "push", "-q", "-u", "origin", "feat");
+    return fn(repo);
+  } finally { rmSync(repo, { recursive: true, force: true }); rmSync(remote, { recursive: true, force: true }); }
+}
+
+test("a fully pushed branch is classified against the target branch, not its own remote copy", () => pushedRepo((repo) => {
+  const r = classify(repo, ["--json"]);
+  assert.equal(r.status, 4, r.stdout);
+  assert.ok(ids(r.json).includes("workflows"));
+}));
+
+test("an unpushed README commit over a pushed workflow change is still high", () => pushedRepo((repo) => {
+  writeTree(repo, { "README.md": "changed\n" });
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "readme");
+  const r = classify(repo, ["--json"]);
+  assert.equal(r.json.tier, "high");
+  assert.ok(ids(r.json).includes("workflows"));
+}));
 
 test("the hook-scripts evidence names the script a tracked hooks.json runs", () => withFixture("path-hook-tracked-script", (repo) => {
   const s = classify(repo, ["--json"]).json.signals.find((x) => x.id === "hook-scripts");
@@ -391,12 +437,19 @@ test("declared medium with a workflow change is also underdeclared", () => {
   assert.match(j.findings[0], /declared medium, computed high/);
 });
 
-test("declared high on a docs-only diff is high with no finding", () => {
+test("declared high on a docs-only diff stays low: docs raise no tier", () => {
   const j = run("declared-high-docs");
-  assert.equal(j.tier, "high");
+  assert.equal(j.tier, "low");
   assert.equal(j.declared, "high");
+  assert.ok(!ids(j).includes("declared-risk"));
   assert.deepEqual(j.findings, []);
   assert.equal(j.tie, null);
+});
+
+test("declared high with a code change is still high", () => {
+  const j = run("declared-high-code");
+  assert.equal(j.tier, "high");
+  assert.ok(ids(j).includes("declared-risk"));
 });
 
 test("declared low on a docs change stays low", () => {
