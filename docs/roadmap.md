@@ -28,6 +28,12 @@ Each P1 group has an intent in draft, one PR per intent, for Jody to read before
 Recommended order once read: sdlc-loop-upgrades and untrusted-input-safety in parallel, with p0-hardening beside them; then codex-second-reviewer, doubt-driven-execute (they may share one Codex runner) and required-documents.
 Each intent ends with open questions that carry a recommendation.
 
+### pro-electron (drafted 2026-10-30)
+
+A new opt-in stack plugin for Electron apps, from Jody's Electron skills survey of 2026-10-30.
+Folder: [intent/2026-10-30-pro-electron/](../intent/2026-10-30-pro-electron/intent.md), status draft, waiting for Jody to read before a spec.
+Bridges to jwynia `electron-best-practices` and laststance `electron-release` plus an Electron MCP server come first; `electron-upgrade` and `electron-security-audit` are the original skills.
+
 ### constraint-floor (ranked item 1)
 
 Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-floor/).
