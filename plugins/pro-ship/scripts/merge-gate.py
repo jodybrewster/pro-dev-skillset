@@ -257,17 +257,47 @@ def substitutions(command: str) -> tuple[str, list[str]]:
     return "".join(out), bodies
 
 
-def actions(command: str, base: str | None) -> list[tuple[str | None, list[str]]]:
-    """(directory, args after `merge`) for each `gh pr merge` in the command.
+MERGE_VALUE_FLAGS = {"-b", "--body", "-F", "--body-file", "-t", "--subject", "-A", "--author-email",
+                     "--match-head-commit", "-R", "--repo"}
 
-    A directory that cannot be resolved statically (a variable, pushd) is None.
-    A help request is skipped.
+
+def repo_flag(args: list[str]) -> str | None:
+    """The value of -R or --repo (space or = form) anywhere in args, the last one winning."""
+    found = None
+    for k, a in enumerate(args):
+        if a in ("-R", "--repo") and k + 1 < len(args):
+            found = args[k + 1]
+        elif a.startswith("--repo="):
+            found = a.split("=", 1)[1]
+    return found
+
+
+def merge_selector(args: list[str]) -> str:
+    """The first positional argument of `gh pr merge`, skipping flag values ("" when there is none)."""
+    k = 0
+    while k < len(args):
+        a = args[k]
+        if a in MERGE_VALUE_FLAGS:
+            k += 2
+        elif a.startswith("-"):
+            k += 1
+        else:
+            return a
+    return ""
+
+
+def actions(command: str, base: str | None, env_repo: str | None = None) -> list[dict]:
+    """One dict per merge in the command: dir, args, repo, selector and kind.
+
+    kind is pr-merge (`gh pr merge`), api-merge (`gh api .../pulls/<n>/merge`, not an explicit GET)
+    or graphql-merge (`gh api graphql` with a merge mutation). dir is None when the directory cannot
+    be resolved statically (a variable, pushd). A help request is skipped.
     """
     cur = base
-    found: list[tuple[str | None, list[str]]] = []
+    found: list[dict] = []
     command, bodies = substitutions(strip_heredocs(command))
     for body in bodies:
-        found.extend(actions(body, cur))
+        found.extend(actions(body, cur, env_repo))
     for segment in split_segments(command):
         toks = _tokens(segment)
         if not toks:
@@ -281,32 +311,42 @@ def actions(command: str, base: str | None) -> list[tuple[str | None, list[str]]
         i = skip_wrappers(toks)
         if i >= len(toks):
             continue
+        seg_repo = env_repo
+        for t in toks[:i]:
+            if t.startswith("GH_REPO="):
+                seg_repo = t.split("=", 1)[1] or env_repo
         name = os.path.basename(toks[i])
         if name in SHELLS:
             for j in range(i + 1, len(toks) - 1):
                 if SHELL_C_RE.match(toks[j]):
-                    found.extend(actions(toks[j + 1], cur))
+                    found.extend(actions(toks[j + 1], cur, seg_repo))
                     break
             continue
         if name == "eval":
-            found.extend(actions(" ".join(toks[i + 1 :]), cur))
+            found.extend(actions(" ".join(toks[i + 1 :]), cur, seg_repo))
             continue
         if name == "xargs":
             j = i + 1
             while j < len(toks) and toks[j].startswith("-"):
                 j += 2 if toks[j] in XARGS_VALUE else 1
             if j < len(toks):
-                found.extend(actions(shlex.join(toks[j:]), cur))
+                found.extend(actions(shlex.join(toks[j:]), cur, seg_repo))
             continue
         if name != "gh":
             continue
         i += 1
+        pre_repo = None
         while i < len(toks) and toks[i].startswith("-"):
+            if toks[i] in ("-R", "--repo") and i + 1 < len(toks):
+                pre_repo = toks[i + 1]
+            elif toks[i].startswith("--repo="):
+                pre_repo = toks[i].split("=", 1)[1]
             i += 2 if toks[i] in ("-R", "--repo") else 1
         if i + 1 < len(toks) and toks[i] == "pr" and toks[i + 1] == "merge":
             args = toks[i + 2 :]
             if not any(a in ("--help", "-h") for a in args):
-                found.append((cur, args))
+                found.append({"dir": cur, "args": args, "kind": "pr-merge", "selector": merge_selector(args),
+                              "repo": repo_flag(args) or pre_repo or seg_repo})
     return found
 
 
@@ -345,14 +385,18 @@ def load_classifier():
         raise CouldNotRun(f"classifier not loadable: {type(e).__name__}")
 
 
-def classify_dir(directory: str | None) -> dict:
+def run_git(root: str, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", root, *args], capture_output=True, text=True, timeout=timeout,
+                          errors="replace", env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"})
+
+
+def repo_root(directory: str | None) -> str:
     if directory is None:
         raise CouldNotRun("the directory of gh pr merge could not be resolved")
     if not os.path.isdir(directory):
         raise CouldNotRun("the target directory does not exist")
     try:
-        r = subprocess.run(["git", "-C", directory, "rev-parse", "--show-toplevel"], capture_output=True,
-                           text=True, timeout=5, errors="replace", env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"})
+        r = run_git(directory, "rev-parse", "--show-toplevel")
     except subprocess.TimeoutExpired:
         raise CouldNotRun("git timed out")
     except Exception:
@@ -360,11 +404,56 @@ def classify_dir(directory: str | None) -> dict:
     root = r.stdout.strip()
     if r.returncode != 0 or not root:
         raise CouldNotRun("not a git repository")
+    return root
+
+
+def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, int]:
+    """(base, head, number) of the PR the merge names, read through `gh pr view`."""
+    cmd = ["gh", "pr", "view"] + ([selector] if selector else []) + [
+        "--json", "number,headRefOid,baseRefName,headRepository"] + (["-R", repo] if repo else [])
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=5, errors="replace", cwd=root,
+                           env={**os.environ, "GH_PROMPT_DISABLED": "1"})
+    except subprocess.TimeoutExpired:
+        raise CouldNotRun("gh timed out")
+    except OSError:
+        raise CouldNotRun("gh not found")
+    if r.returncode != 0:
+        raise CouldNotRun(f"gh exited {r.returncode}")
+    import json
+    try:
+        data = json.loads(r.stdout)
+    except ValueError:
+        raise CouldNotRun("gh output not JSON")
+    head = data.get("headRefOid") if isinstance(data, dict) else None
+    number = data.get("number") if isinstance(data, dict) else None
+    base_name = data.get("baseRefName") if isinstance(data, dict) else None
+    if (not isinstance(head, str) or not re.fullmatch(r"[0-9a-fA-F]{40,64}", head)
+            or isinstance(number, bool) or not isinstance(number, int)
+            or not isinstance(base_name, str) or not base_name):
+        raise CouldNotRun("PR head missing")
+    head = head.lower()
+    try:
+        if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
+            raise CouldNotRun("head not found")
+        for cand in (f"origin/{base_name}", base_name):
+            if run_git(root, "rev-parse", "--verify", "-q", f"{cand}^{{commit}}").returncode == 0:
+                return cand, head, number
+    except subprocess.TimeoutExpired:
+        raise CouldNotRun("git timed out")
+    raise CouldNotRun(f"base {base_name} not found")
+
+
+def classify_dir(directory: str | None, selector: str = "", repo: str | None = None) -> dict:
+    root = repo_root(directory)
+    base, head, number = resolve_pr(root, selector, repo)
     mod = load_classifier()
     try:
-        return mod.classify(root, None, "HEAD")
+        res = mod.classify(root, base, head)
     except getattr(mod, "CouldNotRun") as e:
         raise CouldNotRun(str(e) or "classifier could not run")
+    res["pr"] = number
+    return res
 
 
 def summary(res: dict) -> str:
@@ -380,11 +469,12 @@ def summary(res: dict) -> str:
 
 
 # rank: 0 allow quiet, 1 message (warn), 2 ask, 3 deny
-def decide(directory: str | None, args: list[str], enforcing: bool, permission_mode: str, cwd: str) -> tuple[int, str]:
+def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[int, str]:
+    args = hit["args"]
     unknown = None
     res = None
     try:
-        res = classify_dir(directory)
+        res = classify_dir(hit["dir"], hit["selector"], hit["repo"])
     except CouldNotRun as e:
         unknown = str(e)
     if res is not None and res.get("tier") == "low":
@@ -401,7 +491,7 @@ def decide(directory: str | None, args: list[str], enforcing: bool, permission_m
         head = res["head"]
         pins = pinned_shas(args)
         if len({p.lower() for p in pins}) > 1:
-            msg = (f"[{HOOK}] {tier} risk merge has several different --match-head-commit values ({', '.join(pins)}); "
+            msg = (f"[{HOOK}] {tier} risk merge of PR {res['pr']} has several different --match-head-commit values ({', '.join(pins)}); "
                    f"gh uses the last one. Give one, --match-head-commit {head}. {summary(res)}")
             if enforcing:
                 log(HOOK, "deny", f"{tier} several pins", cwd)
@@ -413,14 +503,14 @@ def decide(directory: str | None, args: list[str], enforcing: bool, permission_m
                  and head.startswith(sha.lower()))
         flag = f"--match-head-commit {head}"
         if not valid:
-            why = "has no --match-head-commit" if sha is None else f"has --match-head-commit {sha!r}, which is not HEAD {head[:8]}"
-            msg = f"[{HOOK}] {tier} risk merge {why}. Add {flag} so GitHub refuses the merge if the PR has moved. {summary(res)}"
+            why = "has no --match-head-commit" if sha is None else f"has --match-head-commit {sha!r}, which is not the head of PR {res['pr']} ({head[:8]})"
+            msg = f"[{HOOK}] {tier} risk merge of PR {res['pr']} {why}. Add {flag} so GitHub refuses the merge if the PR has moved. {summary(res)}"
             if enforcing:
-                log(HOOK, "deny", f"{tier} pin {head[:8]}", cwd)
+                log(HOOK, "deny", f"{tier} PR {res['pr']} pin {head[:8]}", cwd)
                 return 3, msg
-            log(HOOK, "warn", f"{tier} pin missing {head[:8]}", cwd)
+            log(HOOK, "warn", f"{tier} PR {res['pr']} pin missing {head[:8]}", cwd)
             return 1, msg + " (warn mode: allowed)"
-        head_note = f" HEAD {head}."
+        head_note = f" PR {res['pr']} head {head}."
         body = summary(res)
 
     text = f"[{HOOK}] {body}{head_note} This approval covers this commit only."
@@ -469,7 +559,7 @@ def main_hook() -> int:
     if not isinstance(command, str) or "gh" not in command or "merge" not in command:
         return 0
     cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) and payload.get("cwd") else os.getcwd()
-    hits = actions(command, cwd)
+    hits = actions(command, cwd, os.environ.get("GH_REPO") or None)
     if not hits:
         return 0
     pm = payload.get("permission_mode")
@@ -483,8 +573,8 @@ def main_hook() -> int:
     signal.setitimer(signal.ITIMER_REAL, DEADLINE)
     best = (0, "")
     try:
-        for directory, args in hits:
-            got = decide(directory, args, enforcing, pm, cwd)
+        for hit in hits:
+            got = decide(hit, enforcing, pm, cwd)
             if got[0] > best[0]:
                 best = got
     except Deadline:

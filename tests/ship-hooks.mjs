@@ -280,12 +280,26 @@ export function runShipHookCases() {
     // that can block has one case that blocks and one that allows.
     // ======================================================================================
     {
+      // A stub gh first on PATH so no case reaches the network or the real gh. It records its
+      // arguments in GH_STUB_ARGS, sleeps GH_STUB_SLEEP seconds, exits GH_STUB_EXIT with a line on
+      // stderr, prints the file GH_STUB_OUT, else answers for PR 42 with the HEAD of its directory.
+      const stubBin = join(sandbox, "stubbin");
+      mkdirSync(stubBin, { recursive: true });
+      writeFileSync(join(stubBin, "gh"), [
+        "#!/bin/sh",
+        'if [ -n "$GH_STUB_ARGS" ]; then echo "$*" >> "$GH_STUB_ARGS"; fi',
+        'if [ -n "$GH_STUB_SLEEP" ]; then sleep "$GH_STUB_SLEEP"; fi',
+        'if [ -n "$GH_STUB_EXIT" ]; then echo "stub gh failed" >&2; exit "$GH_STUB_EXIT"; fi',
+        'if [ -n "$GH_STUB_OUT" ]; then cat "$GH_STUB_OUT"; exit 0; fi',
+        `printf '{"number":42,"headRefOid":"%s","baseRefName":"main","headRepository":{"name":"r"}}\\n' "$(git rev-parse HEAD)"`,
+        "",
+      ].join("\n"), { mode: 0o755 });
       const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {}, gate = MERGE_GATE } = {}) => {
         const body = { tool_name: "Bash", session_id: "ms", cwd, tool_input: { command } };
         if (pm) body.permission_mode = pm;
         const input = raw !== null ? raw : JSON.stringify(body);
         const t0 = Date.now();
-        const r = spawnSync("python3", [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
+        const r = spawnSync("python3", [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, PATH: `${stubBin}:${env0.PATH}`, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
         let json = null;
         try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* not json */ }
         let log = "";
@@ -532,6 +546,66 @@ export function runShipHookCases() {
       r = mrun(`gh pr merge 42 --match-head-commit ${highH}`, { cwd: medR, env: MENF() });
       add("mg92 a pin for another PR's head is refused", "deny", r, denies(r));
       sh(medR, "checkout", "-q", "feat");
+
+      // ---- the gate classifies the PR it is given (p0-hardening steps 2 to 5) ---------
+      const prJson = (head, extra = {}) => JSON.stringify({ number: 42, headRefOid: head, baseRefName: "main", headRepository: { name: "r" }, ...extra });
+      const fileOf = (content) => {
+        const f = join(sandbox, `f${++n}`);
+        writeFileSync(f, content);
+        return f;
+      };
+      const readArgs = (f) => { try { return readFileSync(f, "utf8"); } catch { return ""; } };
+      // a high PR (workflow change) whose repo sits on main, so the local HEAD is not the PR head
+      const prR = featRepo({ ".github/workflows/ci.yml": "name: ci\non: push\n" });
+      const prH = sha(prR);
+      const prLowR = featRepo({ "README.md": "hi there\n" });
+      const prLowH = sha(prLowR);
+      sh(prR, "checkout", "-q", "main");
+      sh(prLowR, "checkout", "-q", "main");
+      const mainH = sha(prR);
+      const prOut = fileOf(prJson(prH));
+      const prLowOut = fileOf(prJson(prLowH));
+      const stub = (out, extra = {}) => ({ GH_STUB_OUT: out, ...extra });
+
+      r = mrun(MERGE, { cwd: prR, env: MWARN(), extraEnv: stub(prOut) });
+      add("mg200 a merge from main reports the PR's tier, number and head", "message", r,
+        allowsMsg(r) && /high/.test(r.text) && r.text.includes("42") && r.text.includes(prH) && !/could-not-run/.test(r.log));
+      r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg201 the same in enforce with the pin asks", "ask", r, asks(r) && r.text.includes(prH));
+      r = mrun(MERGE, { cwd: prLowR, env: MENF(), extraEnv: stub(prLowOut) });
+      add("mg202 a README-only PR head from main allows silently", "silent", r, allowsQuiet(r));
+
+      {
+        const af = join(sandbox, `args${++n}`);
+        for (const [id, cmd] of [["mg203a gh pr view is not a merge", "gh pr view 42"], ["mg203b git push is not a merge", "git push"], ["mg203c an echo of a merge", "echo gh pr merge 42"]]) {
+          r = mrun(cmd, { cwd: prR, env: MENF(), extraEnv: stub(prOut, { GH_STUB_ARGS: af }) });
+          add(id, "silent, gh never called", r, allowsQuiet(r) && readArgs(af) === "");
+        }
+      }
+
+      for (const [id, cmd, extraEnv, wantR, sel] of [
+        ["mg210 -R before pr", "gh -R o/r pr merge 42 --squash", {}, "-R o/r", "42"],
+        ["mg211 -R after merge", "gh pr merge 42 -R o/r --squash", {}, "-R o/r", "42"],
+        ["mg212 --repo= after merge", "gh pr merge 42 --repo=o/r --squash", {}, "-R o/r", "42"],
+        ["mg213 a PR URL needs no -R", "gh pr merge https://github.com/o/r/pull/42 --squash", {}, null, "https://github.com/o/r/pull/42"],
+        ["mg214 GH_REPO prefixing the command", "GH_REPO=o/r gh pr merge 42 --squash", {}, "-R o/r", "42"],
+        ["mg215 GH_REPO in the hook's environment", "gh pr merge 42 --squash", { GH_REPO: "o/r" }, "-R o/r", "42"],
+        ["mg216 a flag value is not the selector", "gh pr merge -t subject -b body --match-head-commit abc1234 7 --squash", {}, null, "7"],
+        ["mg217 no selector reads the current branch", "gh pr merge --squash", {}, null, ""],
+      ]) {
+        const af = join(sandbox, `args${++n}`);
+        r = mrun(cmd, { cwd: prR, env: MWARN(), extraEnv: stub(prOut, { GH_STUB_ARGS: af, ...extraEnv }) });
+        const got = readArgs(af).trim();
+        const okR = wantR ? got.includes(wantR) : !/ -R /.test(got);
+        const okSel = got.startsWith(`pr view ${sel}${sel ? " " : ""}--json`);
+        add(id, "stub got pr view with the selector and repo", r, allowsMsg(r) && okR && okSel);
+      }
+
+      // the pin is compared with the PR head, never the local HEAD
+      r = mrun(`${MERGE} --match-head-commit ${mainH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg240 a pin of the local main sha denies and names the PR head", "deny", r, denies(r) && r.text.includes(`--match-head-commit ${prH}`));
+      r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg241 a pin of the PR head asks", "ask", r, asks(r));
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
