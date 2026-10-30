@@ -2691,6 +2691,110 @@ CASES.push(
   },
 );
 
+// --- manual-cli rows (ADR-0018): detect-only, pro-dev never runs the CLI ----------
+
+const CODEX_ROW = {
+  id: "codex", owner: "pro-core", bridges: [], kind: "manual-cli", default: false, detect: { bin: "codex" },
+  manual: ["npm install -g @openai/codex", "codex login"], why: "test row", note: "test",
+};
+
+// A world with the one codex row, pro-core installed for the repo and, when asked, a stub `codex`
+// on PATH that logs its argv beside the call log. `bin` is the PATH key for s.run.
+function codexWorld(s, { stub }) {
+  s.useRows([CODEX_ROW]);
+  s.setPlugins([s.entry("pro-core", "project", s.repo)]);
+  if (stub) {
+    const dir = join(s.root, "bin-codex");
+    cpSync(s.bins.both, dir, { recursive: true });
+    writeFileSync(join(dir, "codex"), '#!/bin/sh\necho "$@" >> "$FAKE_LOG.codex"\nexit 0\n');
+    chmodSync(join(dir, "codex"), 0o755);
+    s.bins.codex = dir;
+  }
+  return { bin: stub ? "codex" : "both", ran: () => existsSync(`${s.logPath}.codex`) && read(`${s.logPath}.codex`).trim() !== "" };
+}
+
+CASES.push(
+  {
+    id: "manual/status-installed-with-binary-on-path",
+    run: (s) => {
+      const w = codexWorld(s, { stub: true });
+      const e = s.engine(s.status({ bin: w.bin }), "codex");
+      if (!e || e.state !== "installed" || e.kind !== "manual-cli" || !same(e.manual, CODEX_ROW.manual)) return bad(JSON.stringify(e));
+      return w.ran() ? bad("status started the CLI") : ok();
+    },
+  },
+  {
+    id: "manual/status-missing-without-binary-carries-manual-lines",
+    run: (s) => {
+      const w = codexWorld(s, { stub: false });
+      const e = s.engine(s.status({ bin: w.bin }), "codex");
+      if (!e || e.state !== "missing" || e.kind !== "manual-cli" || !same(e.manual, CODEX_ROW.manual)) return bad(JSON.stringify(e));
+      const t = s.run(["status"], { bin: w.bin }).out;
+      return t.includes("install by hand: npm install -g @openai/codex; then codex login") ? ok() : bad(`text status: ${t}`);
+    },
+  },
+  {
+    id: "manual/run-all-install-after-yes-prints-the-manual-lines-and-runs-nothing",
+    run: (s) => {
+      const w = codexWorld(s, { stub: false });
+      if (s.run(["answer", "codex", "yes"], { bin: w.bin }).code !== 0) return bad("answer failed");
+      const r = s.run(["run", "all", "install"], { bin: w.bin });
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      if (!/^codex: install it yourself: npm install -g @openai\/codex; then codex login$/m.test(r.out)) return bad(r.out);
+      if (/codex: installing/.test(r.out)) return bad(`printed installing: ${r.out}`);
+      return s.calls("claude").length === 0 && s.calls("npx").length === 0 && !w.ran() ? ok() : bad("something was started");
+    },
+  },
+  {
+    id: "manual/run-all-install-with-binary-says-already-installed",
+    run: (s) => {
+      const w = codexWorld(s, { stub: true });
+      const r = s.run(["run", "all", "install"], { bin: w.bin });
+      return r.code === 0 && /^codex: already installed$/m.test(r.out) && !w.ran() ? ok() : bad(`exit ${r.code}: ${r.out}`);
+    },
+  },
+  {
+    id: "manual/run-all-update-with-binary-says-update-it-yourself",
+    run: (s) => {
+      const w = codexWorld(s, { stub: true });
+      const r = s.run(["run", "all", "update"], { bin: w.bin });
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return /^codex: update it yourself: npm install -g @openai\/codex$/m.test(r.out) && !w.ran() ? ok() : bad(r.out);
+    },
+  },
+  {
+    id: "manual/run-codex-install-with-no-answer-prints-the-lines",
+    run: (s) => {
+      const w = codexWorld(s, { stub: false });
+      const r = s.run(["run", "codex", "install"], { bin: w.bin });
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      return /^codex: install it yourself: npm install -g @openai\/codex; then codex login$/m.test(r.out) && !w.ran() ? ok() : bad(r.out);
+    },
+  },
+  {
+    id: "manual/installed-binary-with-no-answer-still-asks-for-consent",
+    run: (s) => {
+      const w = codexWorld(s, { stub: true });
+      const e = s.engine(s.status({ bin: w.bin }), "codex");
+      if (!e || e.state !== "installed" || e.needsQuestion !== true || e.wantsInstall !== false) return bad(JSON.stringify(e));
+      s.run(["answer", "codex", "yes"], { bin: w.bin });
+      const y = s.engine(s.status({ bin: w.bin }), "codex");
+      return y.needsQuestion === false && y.answer === "yes" ? ok() : bad(JSON.stringify(y));
+    },
+  },
+  {
+    id: "manual/no-answer-asks-and-a-no-is-declined",
+    run: (s) => {
+      const w = codexWorld(s, { stub: false });
+      const e = s.engine(s.status({ bin: w.bin }), "codex");
+      if (!e || e.needsQuestion !== true || e.wantsInstall !== false) return bad(JSON.stringify(e));
+      s.run(["answer", "codex", "no"], { bin: w.bin });
+      const d = s.engine(s.status({ bin: w.bin }), "codex");
+      return d.state === "declined" ? ok() : bad(JSON.stringify(d));
+    },
+  },
+);
+
 export function runProDevCases({ pluginRoot = DEFAULT_PLUGIN_ROOT, only = null } = {}) {
   const selected = only ? CASES.filter((c) => c.id.includes(only)) : CASES;
   const out = { skipped: null, selected, results: [] };

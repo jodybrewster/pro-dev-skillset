@@ -8,6 +8,8 @@ proposed
 
 Amended 2026-10-28 in place by intent `2026-10-28-plugin-installers`: per-plugin installers alongside `/pro-dev`.
 
+Amended 2026-10-30 by ADR-0018: a detect-only `manual-cli` row has no install or update argv and a row owned by pro-core is installed through `/pro-dev`.
+
 ## Context
 
 Bridge skills route to engines that live outside this marketplace and install on demand.

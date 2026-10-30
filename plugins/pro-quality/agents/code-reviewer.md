@@ -105,6 +105,7 @@ The failure scenario names the input or state that makes the code fail.
 For a missing test, name the case.
 A finding with no failure scenario is dropped or listed as skipped.
 A finding that rests on a guess from a name is dropped or listed as skipped.
+Write each finding as one list item that starts with `- ` and names its location as `path:line` or `path:start-end`.
 Cite only lines you opened and read.
 When one rule identifies a class of bug, report it once with every file and line where it occurs.
 Never list the same claim under two lenses.

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "engines": [
     {
       "id": "lavish",
@@ -1248,6 +1248,22 @@
         ".specify/integrations/speckit.manifest.json",
         ".specify/workflows/workflow-registry.json"
       ]
+    },
+    {
+      "id": "codex",
+      "owner": "pro-core",
+      "bridges": [],
+      "kind": "manual-cli",
+      "default": false,
+      "detect": {
+        "bin": "codex"
+      },
+      "manual": [
+        "npm install -g @openai/codex",
+        "codex login"
+      ],
+      "why": "The Codex CLI runs a second code review on high-tier PRs; yes also agrees to send the diff to OpenAI when it runs.",
+      "note": "Detect-only (ADR-0018): pro-dev never installs, updates, logs in to or runs it. The review runner checks the login when it runs."
     }
   ]
 }

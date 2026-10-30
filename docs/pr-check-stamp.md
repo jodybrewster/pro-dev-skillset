@@ -40,7 +40,7 @@ Shas are 40 lowercase hex characters.
 | `checks` | array | zero or more check records, see below |
 | `floor` | string | `pass`, `findings`, `could-not-run`, `not-installed` or `not-found` |
 | `mutation` | object | `{status, reason, file, accepted}`, see below |
-| `reviewers` | object | exactly the keys `code` and `security`, see below |
+| `reviewers` | object | the keys `code` and `security`, plus an optional `codex`, see below |
 | `result` | string | `pass`, `fail` or `incomplete` |
 | `risk` | object | optional; `{tier, signals, declared, findings, tie}` from the classifier, plus `could_not_run: true` and `reason` when it could not run |
 | `sources` | object | optional; `{"floor-guard": <path or "not-installed">}`, the path `pr-check.py find` used |
@@ -106,6 +106,25 @@ Each element of `checks` is one command that `run` executed or could not find.
 `inline` means the host could not dispatch a subagent and the skill applied the reviewer's skill in the same session, with a context that was not fresh.
 A reviewer that was not dispatched has `blocking` 0 and `important` 0.
 
+### The codex reviewer
+
+`reviewers.codex` is optional.
+It records the Codex second review that `/pro-ship:pr-check` can run on a high-tier PR ([ADR-0018](./decisions/0018-codex-second-reviewer.md)).
+It is informational: the result rule, the pr-gate and the push gate ignore it.
+The `schema` stays 1.
+When no Codex review was considered the stamp has no `reviewers.codex` key.
+
+| Field | Type | Allowed values |
+|---|---|---|
+| `agent` | string or null | `codex:code-reviewer`; null when Codex did not run |
+| `status` | string | `done`, `skipped`, `not-installed` or `could-not-run` |
+| `reason` | string or null | why it was `skipped`, `not-installed` or `could-not-run` (`tier medium`, `not-opted-in`, `timeout`, `no tally line`); null for `done` |
+| `blocking` | integer | always 0; `stamp` refuses a nonzero value, because a Codex finding never blocks the merge. Any other malformed record is written as `could-not-run` with the reason `malformed codex record` |
+| `important` | integer | the `important` count of Codex's own tally line; 0 when it never started (the stamp does not check it against `status`) |
+| `agreed` | integer | findings both reviewers raised at the same severity, from `pr-check.py agree` |
+| `disputed` | integer | findings both reviewers raised at different severities, from `pr-check.py agree` |
+| `range` | string or null | `<base>..<head>` as handed to Codex; null when it was not dispatched |
+
 ## The two tally lines
 
 The skill reads a count from each reviewer's output and passes it to `stamp` through `--reviewers <json>`.
@@ -137,7 +156,7 @@ The first rule that matches wins.
 1. `fail` when any of these holds:
    - a check has `status` `fail`;
    - `floor` is `findings`;
-   - any reviewer has `blocking` above 0.
+   - `reviewers.code` or `reviewers.security` has `blocking` above 0 (`reviewers.codex` is never read).
 2. `pass` when all of these hold:
    - every check has `status` `pass` or `not-found` (a repo with no command found has only `not-found` checks and still passes this line);
    - `floor` is `pass`, `not-installed` or `not-found`;

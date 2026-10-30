@@ -61,5 +61,12 @@
       "cause": "unreadable"
     },
     "push_gate": "fall-through"
+  },
+  "valid-pass-codex.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "accept"
   }
 }
