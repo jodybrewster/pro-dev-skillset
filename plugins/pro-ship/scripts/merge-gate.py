@@ -3,12 +3,14 @@
 
 Before `gh pr merge` it classifies the PR the command names with risk-classify.py (a sibling
 script) and decides by tier. It never reads a tier from a stamp or a label. It also gates
-`gh api .../pulls/<n>/merge` (unless the method is GET) and treats `gh api graphql` with
-mergePullRequest or enablePullRequestAutoMerge as could not run, since a node id names no PR.
+`gh api .../pulls/<n>/merge` (only when the method is an explicit PUT) and treats `gh api graphql`
+with mergePullRequest or enablePullRequestAutoMerge, or with a query it cannot read (an @file field
+value or --input), as could not run, since a node id names no PR.
 The PR is read with `gh pr view [selector] --json number,headRefOid,baseRefName,headRepository`
 (5 second timeout, -R from -R, --repo, GH_REPO= or GH_REPO) so the tier is the PR's even from
-main. When the head is not in the local clone it runs `git fetch --no-tags origin
-pull/<n>/head` (8 second timeout), the one write the gate makes, objects and FETCH_HEAD only.
+main. It then runs one `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>`
+(8 second timeout), the one write the gate makes: objects and FETCH_HEAD only, no ref moves. The base
+sha is read from FETCH_HEAD and the PR is classified against it, never a stale local base.
   low          allows with no output (a low merge is not pinned).
   medium/high  needs `--match-head-commit <sha>` (full sha or a prefix of 7 or more hex
                characters) that matches the PR head; a gh api merge needs `-f sha=<sha>`.
@@ -340,7 +342,7 @@ def api_parts(args: list[str]) -> tuple[str, list[str], str | None]:
 def actions(command: str, base: str | None, env_repo: str | None = None) -> list[dict]:
     """One dict per merge in the command: dir, args, repo, selector and kind.
 
-    kind is pr-merge (`gh pr merge`), api-merge (`gh api .../pulls/<n>/merge`, not an explicit GET)
+    kind is pr-merge (`gh pr merge`), api-merge (`gh api .../pulls/<n>/merge` with an explicit PUT)
     or graphql-merge (`gh api graphql` with a merge mutation). dir is None when the directory cannot
     be resolved statically (a variable, pushd). A help request is skipped.
     """
@@ -407,11 +409,15 @@ def actions(command: str, base: str | None, env_repo: str | None = None) -> list
             args = toks[i + 1 :]
             path, rest, method = api_parts(args)
             if path == "graphql":
-                if any(m in a for a in rest for m in GRAPHQL_MERGES):
+                opaque = any(a == "--input" or a.startswith("--input=") for a in rest) or any(
+                    k > 0 and rest[k - 1] in ("-f", "-F", "--field", "--raw-field") and "=@" in a
+                    or a.startswith(("--field=", "--raw-field=")) and "=@" in a.split("=", 1)[1]
+                    for k, a in enumerate(rest))
+                if opaque or any(m in a for a in rest for m in GRAPHQL_MERGES):
                     found.append({"dir": cur, "args": args, "kind": "graphql-merge", "selector": "", "repo": None})
                 continue
             m = API_MERGE_RE.search(path)
-            if m and method != "GET":
+            if m and method == "PUT":
                 owner, name_, number = m.groups()
                 repo = None if (owner, name_) == ("{owner}", "{repo}") else f"{owner}/{name_}"
                 found.append({"dir": cur, "args": rest, "kind": "api-merge", "selector": number,
@@ -489,7 +495,7 @@ def repo_root(directory: str | None) -> str:
 def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, int]:
     """(base, head, number) of the PR the merge names, read through `gh pr view`."""
     cmd = ["gh", "pr", "view"] + ([selector] if selector else []) + [
-        "--json", "number,headRefOid,baseRefName,baseRefOid,headRepository"] + (["-R", repo] if repo else [])
+        "--json", "number,headRefOid,baseRefName,headRepository"] + (["-R", repo] if repo else [])
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=5, errors="replace", cwd=root,
                            env={**os.environ, "GH_PROMPT_DISABLED": "1"})
@@ -513,34 +519,35 @@ def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, in
         raise CouldNotRun("PR head missing")
     head = head.lower()
     try:
+        # One fetch for the PR head and the base tip. The empty --refmap keeps it from moving
+        # refs/remotes/origin/<base>: the one write this gate makes is objects and FETCH_HEAD.
+        try:
+            f = run_git(root, "fetch", "--no-tags", "--refmap=", "origin", f"pull/{number}/head",
+                        f"refs/heads/{base_name}", timeout=8)
+        except subprocess.TimeoutExpired:
+            raise CouldNotRun("fetch failed")
+        if f.returncode != 0:
+            raise CouldNotRun("fetch failed")
         if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
-            # the one write this gate makes: objects and FETCH_HEAD, never the tree or the branch
-            try:
-                f = run_git(root, "fetch", "--no-tags", "origin", f"pull/{number}/head", timeout=8)
-            except subprocess.TimeoutExpired:
-                raise CouldNotRun("fetch failed")
-            if f.returncode != 0:
-                raise CouldNotRun("fetch failed")
-            if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
-                raise CouldNotRun("head not found after fetch")
-        base_oid = data.get("baseRefOid")
-        if isinstance(base_oid, str) and re.fullmatch(r"[0-9a-fA-F]{40,64}", base_oid):
-            # classify against the base tip GitHub reports, never a stale local copy of the base
-            base_oid = base_oid.lower()
-            if run_git(root, "cat-file", "-e", f"{base_oid}^{{commit}}").returncode != 0:
-                try:
-                    f = run_git(root, "fetch", "--no-tags", "origin", f"refs/heads/{base_name}", timeout=8)
-                except subprocess.TimeoutExpired:
-                    raise CouldNotRun("base fetch failed")
-                if f.returncode != 0 or run_git(root, "cat-file", "-e", f"{base_oid}^{{commit}}").returncode != 0:
-                    raise CouldNotRun("base fetch failed")
-            return base_oid, head, number
-        for cand in (f"origin/{base_name}", base_name):
-            if run_git(root, "rev-parse", "--verify", "-q", f"{cand}^{{commit}}").returncode == 0:
-                return cand, head, number
+            raise CouldNotRun("head not found after fetch")
+        gp = run_git(root, "rev-parse", "--git-path", "FETCH_HEAD").stdout.strip()
+        base_oid = None
+        try:
+            with open(os.path.join(root, gp), errors="replace") as fh:
+                for line in fh:
+                    cols = line.rstrip("\n").split("\t", 2)
+                    if len(cols) == 3 and cols[2].startswith(f"branch '{base_name}' of "):
+                        base_oid = cols[0]
+        except OSError:
+            pass
+        if not base_oid or not re.fullmatch(r"[0-9a-fA-F]{40,64}", base_oid):
+            raise CouldNotRun("base fetch failed")
+        base_oid = base_oid.lower()
+        if run_git(root, "cat-file", "-e", f"{base_oid}^{{commit}}").returncode != 0:
+            raise CouldNotRun("base fetch failed")
+        return base_oid, head, number
     except subprocess.TimeoutExpired:
         raise CouldNotRun("git timed out")
-    raise CouldNotRun(f"base {base_name} not found")
 
 
 def classify_dir(directory: str | None, selector: str = "", repo: str | None = None, kind: str = "pr-merge") -> dict:
@@ -661,7 +668,8 @@ def main_hook() -> int:
         return 0
     inp = payload.get("tool_input")
     command = inp.get("command") if isinstance(inp, dict) else None
-    if not isinstance(command, str) or "gh" not in command or "merge" not in command.lower():
+    if not isinstance(command, str) or "gh" not in command or not any(
+            w in command.lower() for w in ("merge", "graphql")):
         return 0
     cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) and payload.get("cwd") else os.getcwd()
     hits = actions(command, cwd, os.environ.get("GH_REPO") or None)

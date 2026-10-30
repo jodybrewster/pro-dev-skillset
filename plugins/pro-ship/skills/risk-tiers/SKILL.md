@@ -110,11 +110,11 @@ With `--json` it prints `{"could_not_run": true, "reason": ..., "tier": "high"}`
 
 ## Merging a PR
 
-The merge gate resolves the PR itself: it reads the PR with `gh pr view`, fetches its head when the head is not in the local clone and classifies that head against the PR's base.
+The merge gate resolves the PR itself: it reads the PR with `gh pr view`, fetches the PR head and the base tip in one `git fetch` and classifies that head against that base tip.
 The tier is the PR's even when the session sits on `main`.
 When `/merge-pr` runs on a PR, use the classifier this way:
 
-1. Read the head with `gh pr view <number> --json headRefOid` and run the classifier on that sha.
+1. Read the head with `gh pr view <number> --json headRefOid,baseRefName`, run `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>` and classify with `--head <headRefOid>` against the base tip that fetch wrote to `FETCH_HEAD`, the same way the gate does.
 2. Show Jody the tier, every signal with its evidence, any finding, the PR number and the `headRefOid` sha.
 3. Low needs no question.
    Medium and high wait for his answer.

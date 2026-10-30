@@ -298,6 +298,14 @@ export function runShipHookCases() {
         "#!/bin/sh",
         'if [ -n "$GH_STUB_ARGS" ]; then echo "$*" >> "$GH_STUB_ARGS"; fi',
         'if [ -n "$GH_STUB_SLEEP" ]; then sleep "$GH_STUB_SLEEP"; fi',
+        // gh 2.21.2 knows only these fields for `pr view --json` and rejects any other
+        'if [ "$1 $2" = "pr view" ]; then',
+        '  while [ $# -gt 0 ]; do if [ "$1" = "--json" ]; then fields="$2"; fi; shift; done',
+        '  for fld in $(echo "$fields" | tr , " "); do',
+        '    case "$fld" in number|headRefOid|baseRefName|headRepository) ;; *) echo "Unknown JSON field: \\"$fld\\"" >&2; exit 1 ;; esac',
+        "  done",
+        "  set -- pr view",
+        "fi",
         'if [ -n "$GH_STUB_EXIT" ]; then echo "stub gh failed" >&2; exit "$GH_STUB_EXIT"; fi',
         'if [ -n "$GH_STUB_OUT" ]; then cat "$GH_STUB_OUT"; exit 0; fi',
         `printf '{"number":42,"headRefOid":"%s","baseRefName":"main","headRepository":{"name":"r"}}\\n' "$(git rev-parse HEAD)"`,
@@ -339,6 +347,11 @@ export function runShipHookCases() {
         }
         sh(repo, "add", "-A");
         sh(repo, "commit", "-q", "-m", "change");
+        // a bare origin holding main and the PR head, because the gate fetches both
+        const bare = join(sandbox, `fo${++n}.git`);
+        sh(sandbox, "init", "-q", "--bare", "-b", "main", bare);
+        sh(repo, "remote", "add", "origin", bare);
+        sh(repo, "push", "-q", "origin", "main:refs/heads/main", "HEAD:refs/pull/42/head");
         return repo;
       };
       const lowR = featRepo({ "README.md": "hi there\n" });
@@ -533,7 +546,7 @@ export function runShipHookCases() {
         writeFileSync(join(pushed, ".github", "workflows", "ci.yml"), "name: ci\n");
         sh(pushed, "add", "-A");
         sh(pushed, "commit", "-q", "-m", "ci");
-        sh(pushed, "push", "-q", "-u", "origin", "feat");
+        sh(pushed, "push", "-q", "-u", "origin", "feat", "feat:refs/pull/42/head");
         r = mrun(MERGE, { cwd: pushed, env: MENF() });
         add("mg130 a fully pushed branch is classified, not could-not-run", "deny high workflows", r, denies(r) && /workflows/.test(r.text) && !/could-not-run/.test(r.log));
         writeFileSync(join(pushed, "README.md"), "docs\n");
@@ -645,12 +658,31 @@ export function runShipHookCases() {
         const af2 = join(sandbox, `args${++n}`);
         r = mrun("gh api -X GET repos/o/r/pulls/42/merge", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
         add("mg253 an explicit GET is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
+        for (const [id, cmd] of [
+          ["mg253b no method is silent", "gh api repos/o/r/pulls/42/merge"],
+          ["mg253c POST is silent", "gh api -X POST repos/o/r/pulls/42/merge"],
+          ["mg253d HEAD is silent", "gh api --method=HEAD repos/o/r/pulls/42/merge"],
+        ]) {
+          r = mrun(cmd, { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
+          add(id, "silent", r, allowsQuiet(r) && readArgs(af2) === "");
+        }
+        r = mrun("gh api -XPUT repos/o/r/pulls/42/merge", { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg253e -XPUT is gated", "deny (no pin)", r, denies(r));
+        r = mrun("gh api --method put repos/o/r/pulls/42/merge", { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg253f --method put in lower case is gated", "deny (no pin)", r, denies(r));
         r = mrun("gh api repos/o/r/pulls/42", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
         add("mg254 another api path is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
         r = mrun("gh api graphql -f query='mutation { mergePullRequest(input: {}) { clientMutationId } }'", { cwd: prR, env: MENF(), extraEnv: hi() });
         add("mg255 a graphql merge asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log));
         r = mrun("gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {}) { clientMutationId } }'", { cwd: prR, env: MENF(), extraEnv: hi() });
         add("mg256 a graphql auto-merge asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log));
+        for (const [id, cmd] of [
+          ["mg255b a graphql query read from a file asks as high", "gh api graphql -F query=@merge.graphql"],
+          ["mg255c a graphql --input asks as high", "gh api graphql --input body.json"],
+        ]) {
+          r = mrun(cmd, { cwd: prR, env: MENF(), extraEnv: hi() });
+          add(id, "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log));
+        }
         r = mrun("gh api graphql -f query='query { viewer { login } }'", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
         add("mg257 a graphql query is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
         r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${prLowH}`, { cwd: prLowR, env: MENF(), extraEnv: stub(prLowOut) });
@@ -741,13 +773,20 @@ export function runShipHookCases() {
         sh(work, "add", "-A");
         sh(work, "commit", "-q", "-m", "readme");
         const head = sha(work);
+        sh(work, "push", "-q", "origin", "main:refs/heads/main", "feat:refs/pull/42/head");
         sh(work, "update-ref", "refs/remotes/origin/main", old);
         sh(work, "branch", "-q", "-f", "main", old);
-        const withBase = fileOf(prJson(head, { baseRefOid: tip }));
-        r = mrun(MERGE, { cwd: work, env: MENF(), extraEnv: stub(withBase) });
-        add("mg223 the PR is classified against the base tip GitHub reports, not a stale local base", "silent (low)", r, allowsQuiet(r));
+        // the local base is stale (old) while origin holds the tip: the gate must fetch the tip itself
+        const tracking = () => sh(work, "rev-parse", "refs/remotes/origin/main").stdout.trim();
+        const trackBefore = tracking();
         r = mrun(MERGE, { cwd: work, env: MENF(), extraEnv: stub(fileOf(prJson(head))) });
-        add("mg224 without baseRefOid the stale local base still reads high (the gap the field closes)", "deny high", r, denies(r) && /workflows/.test(r.text));
+        add("mg223 the PR is classified against the base tip fetched from origin, not a stale local base", "silent (low)", r, allowsQuiet(r));
+        add("mg224 the fetch left refs/remotes/origin/main where it was", "unchanged", r, trackBefore === old && tracking() === trackBefore && trackBefore !== tip);
+        const o4 = originRepo({ pushRef: true });
+        const bareOf = sh(o4.work, "remote", "get-url", "origin").stdout.trim();
+        r = mrun(MERGE, { cwd: o4.work, env: MWARN(), extraEnv: stub(fileOf(prJson(o4.head, { baseRefName: "gone" }))) });
+        add("mg225 a base missing on origin is could-not-run", "message unknown", r,
+          bareOf !== "" && allowsMsg(r) && /unknown/.test(r.text) && /could-not-run/.test(r.log) && /fetch failed/.test(r.log));
       }
 
       {
@@ -765,7 +804,7 @@ export function runShipHookCases() {
           ["mg232 gh prints text that is not JSON", /gh output not JSON/, { extraEnv: stub(noJson) }],
           ["mg233 gh sleeps past the timeout", /gh timed out/, { extraEnv: stub(prOut, { GH_STUB_SLEEP: "8" }) }],
           ["mg234 JSON with no headRefOid", /PR head missing/, { extraEnv: stub(noOid) }],
-          ["mg235 a base that resolves nowhere", /base no-such-branch not found/, { extraEnv: stub(badBase) }],
+          ["mg235 a base that resolves nowhere", /fetch failed/, { extraEnv: stub(badBase) }],
         ]) {
           r = mrun(MERGE, { cwd: prR, env: MENF(), ...opts });
           add(`${id} asks in enforce`, "ask, could-not-run logged", r, asks(r) && why.test(r.log) && /could-not-run/.test(r.log) && r.ms < 20_000);

@@ -55,9 +55,10 @@ The merge gate (`plugins/pro-ship/scripts/merge-gate.py`):
   Messages and log lines name the PR number and the head sha.
 - R7. Each of these is could-not-run and counts as high, with a `could-not-run` log line that names the reason: `gh` missing, `gh` exiting non-zero (not found, not authenticated, no PR for the branch), a timeout, output that is not JSON, a missing or malformed field, a failed fetch, a head that still does not resolve after the fetch and a base that does not resolve.
   An unresolved PR is never low.
-- R8. `gh api` calls whose path matches `repos/<owner>/<repo>/pulls/<n>/merge` (with or without a leading slash, `{owner}/{repo}` placeholders allowed) are gated like `gh pr merge <n> -R <owner>/<repo>`, unless the method is set to `GET` explicitly.
+- R8. `gh api` calls whose path matches `repos/<owner>/<repo>/pulls/<n>/merge` (with or without a leading slash, `{owner}/{repo}` placeholders allowed) are gated like `gh pr merge <n> -R <owner>/<repo>`, only when the method is set to `PUT` explicitly (`-X PUT`, `-XPUT`, `--method PUT` or `--method=PUT`, any case).
+  A call with no method or with GET, HEAD or POST does not merge and passes silently.
   The pin for that call is the `sha` field given with `-f`, `-F`, `--field` or `--raw-field`.
-- R9. `gh api graphql` with `mergePullRequest` or `enablePullRequestAutoMerge` in its arguments is could-not-run (high), because the PR cannot be read from a node ID without another call.
+- R9. `gh api graphql` with `mergePullRequest` or `enablePullRequestAutoMerge` in its arguments, or with a query it cannot read (an `@file` field value or `--input`), is could-not-run (high), because the PR cannot be read from a node ID without another call.
 - R10. `gh pr merge --auto` at medium and high needs the same `--match-head-commit` as a direct merge and the message says GitHub then refuses the merge if a later push changes the head.
 - R11. A low-tier merge stays unpinned (the intent's recommendation); now that the gate classifies the PR itself, the remaining gap is a push to the PR between the gate and the merge, recorded as accepted in `docs/enforce-mode.md`.
 - R12. Every behavior the merge gate has today stays as it is unless a requirement above changes it: the mode lookup, the warn and enforce answers, `NO_PROMPT_MODES`, the 20 second deadline, the rule that no flag, file, label or variable turns an ask into an allow (risk-tiers R23) and the silent cases for commands that are not merges.
