@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-review-policy/intent.md
 intent-status: draft
-status: draft
+status: accepted
 created: 2026-10-29T19:30:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: review policy and convergence rules
 
 Built from `intent.md` in this folder (not yet committed).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0002 and 0004 bear on this change), `docs/roadmap.md`, the pro-ship brainstorm, `plugins/pro-ai-sdlc/templates/REVIEW.md`, `plugins/pro-ai-sdlc/agents/reviewer.md`, `plugins/pro-ai-sdlc/.codex-plugin/agents/reviewer.toml`, `plugins/pro-ai-sdlc/commands/review.md`, `plugins/pro-ai-sdlc/commands/pr-babysit.md`, the `sdlc-contract` check in `tests/check.mjs` and the sibling spec `intent/2026-10-29-constraint-floor/spec.md`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 

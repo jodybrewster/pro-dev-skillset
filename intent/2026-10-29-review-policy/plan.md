@@ -1,7 +1,7 @@
 # Plan: review policy and convergence rules
 
 Built from `spec.md` (commit 70b9e4d) and `intent.md` in this folder.
-Status: approved (Jody, 2026-10-30).
+Status: implemented.
 Approver: Jody Brewster.
 Dated: 2026-10-29.
 
@@ -172,7 +172,7 @@ Filled in when the build is finished, before sign-off.
 - AC7: pass, a `--since` run reviewed only the new commit and the command dropped one repeat and said so; a clean diff printed "Nothing to fix." after the summary line.
 - AC8 and AC10: pass, the licenses row, the template footer and no comma before "and" or em dash in the changed files.
 - AC9: pass, pro-ai-sdlc 0.8.0 and `metadata.version` 1.61.0, stacked on #81.
-- Sign-off:
+- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 ## Departures from plan
 
