@@ -1,6 +1,15 @@
+# Attribution notice: templates/REVIEW.md, the loop text in commands/execute.md,
+# commands/spec.md, commands/plan.md and commands/adr.md, the additions to
+# agents/verifier.md and agents/simplifier.md (and their Codex twins) and
+# references/definition-of-done.md adapt content from addyosmani/agent-skills
+# (https://github.com/addyosmani/agent-skills), also MIT licensed:
+#   addyosmani/agent-skills: Copyright (c) 2025 Addy Osmani
+# The text was rewritten for this marketplace.
+
 MIT License
 
 Copyright (c) 2026 Jody Brewster
+Copyright (c) 2025 Addy Osmani
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
