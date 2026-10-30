@@ -305,16 +305,16 @@ What counts as finished:
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1: <pass or fail, with what was observed>
-- AC2: <pass or fail, with what was observed>
-- AC3: <pass or fail, with what was observed>
-- AC4: <pass or fail, with what was observed>
-- AC5: <pass or fail, with what was observed>
-- AC6: <pass or fail, with what was observed>
-- AC7: <pass or fail, with what was observed>
-- AC8: <pass or fail, with what was observed>
+- Build commit: the head of #81.
+- Checks run: `node tests/check.mjs` 29 checks, 0 failures, 10 warnings; `node tests/eval.mjs --dry` 85 cases; route-lexical rank-1 79.8%; unit tests 41 pass; `node tests/quality-hooks.mjs` 152/152; strict validate on the marketplace and all 20 plugins.
+- AC1: pass, the commands above.
+- AC2: pass, `grep -c floor-guard.py plugins/pro-quality/hooks/hooks.json` prints 1 and the script is tracked.
+- AC3: pass, every rule fires and has a quiet twin; a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction and each breakage failed at least one case.
+- AC4: pass, the table at the top of the guard cases pairs each rule with its firing and quiet cases.
+- AC5: pass, cases f110 to f115 assert exits 0, 1 and 2.
+- AC6: pass, f70 to f72 build tokens at run time and assert `[redacted]`.
+- AC7: pass, `/constraints` on a clone of this repo wrote four numbered rows (static checks, routing, marketplace and per-plugin validate), each exiting 0; `AGENTS.md` is a symlink and the line went in once; the guard stayed clean on the new file. Nothing was committed here.
+- AC8: pass, the Addy Osmani line in `plugins/pro-quality/LICENSE`, the `docs/licenses.md` row and the skill footer.
 - AC9: <pending until a week of use after merge>
 - Sign-off: <the person's words and the date>
 
@@ -329,4 +329,8 @@ An empty section tells the reviewer the diff follows the plan.
 - Track A lost the test-first order inside steps 1 to 6: the first write of the cases failed silently and they were first run after the script existed.
   To make up for it, each rule, the mode lookup, `floor-allow:` parsing and redaction were broken in turn and every breakage failed at least one case (single-case coverage for `test-deleted`, `assertion-removed` and `new-exception`).
 - Only `CONSTRAINTS.md` at the repo root is read as the bar (case f95b), found in step 17 when the guard flagged the shipped template's example Exceptions row; the intent places the file at the root and the spec did not say so.
+- The step 18 review found six Important problems, each reproduced and fixed test first (cases f130 to f140b): a quadratic stub regex that stalled one minified file for 83 s (marker rules now scan at most 2000 characters of a line); a lowered minimum hidden when its old value appeared elsewhere; a second Enforced row with the same Dimension never checked; a test renamed to a non-test path escaping `test-deleted`; one commit dropping a `Test files:` glob and the tests it covered; and `git push <remote> <branch>` judging HEAD instead of the pushed branch.
+  The last one departs from R3, which said "to HEAD": a single explicit refspec is now judged by its source ref, and `--all`, `--mirror`, tags or several refspecs allow with "floor was not checked".
+  The base chain also tries `origin/master` and `master` after `main`.
+- The step 17 trial of `/constraints` showed it could not run `node` checks without a prompt and had no rule for a repo with no type checker or linter; the command now allows `node` and offers the documented verify commands.
 - The build was rebased onto main after #80, #83, #84 and #85 merged; versions were taken from main then and match the spec's 0.13.0, 0.7.0 and 1.60.0.

@@ -23,7 +23,8 @@ Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-fl
 - Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks plus a serial tail; approved by Jody on 2026-10-30.
   Jody approved on 2026-10-29 three spec changes found while planning: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
 - Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
-- Next steps: the `/constraints` trial on this repo (step 17), the review pass (step 18), then Jody signs off and merges #81 before review-policy's #82, which stacks its versions on it.
+- Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
+- Next steps: Jody signs off and merges #81 before review-policy's #82, which stacks its versions on it.
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
 

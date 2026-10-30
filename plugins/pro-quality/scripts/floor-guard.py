@@ -207,8 +207,36 @@ def skip_wrappers(toks: list[str]) -> int:
     return i
 
 
-def actions(command: str, base: str | None) -> list[tuple[str, str | None]]:
-    """(kind, directory) for each git push or gh pr create in the command.
+def push_spec(args: list[str]):
+    """What a `git push` sends: None (the current branch), ("ref", name) or ("skip", why)."""
+    pos: list[str] = []
+    i = 0
+    while i < len(args):
+        t = args[i]
+        if t in ("--all", "--branches", "--mirror", "--tags", "--prune", "--delete", "-d", "--follow-tags"):
+            return ("skip", f"git push {t} sends refs the guard cannot resolve")
+        if t in ("--repo", "--receive-pack", "--exec", "-o", "--push-option", "--signed"):
+            i += 2
+            continue
+        if t.startswith("-"):
+            i += 1
+            continue
+        pos.append(t)
+        i += 1
+    if len(pos) <= 1:
+        return None
+    if len(pos) > 2:
+        return ("skip", "git push names several refspecs")
+    src = pos[1].lstrip("+").split(":")[0]
+    if not src or src == "HEAD":
+        return None if src == "HEAD" else ("skip", "the push deletes a remote ref")
+    if src.startswith("refs/tags/") or "*" in src:
+        return ("skip", f"the pushed ref {src} cannot be resolved")
+    return ("ref", src)
+
+
+def actions(command: str, base: str | None) -> list[tuple[str, str | None, tuple | None]]:
+    """(kind, directory, push spec) for each git push or gh pr create in the command.
 
     kind is "push" or "pr". The directory follows `cd <path>`, `git -C <path>` and the
     wrappers env, command, timeout and bash/sh -c. A target that cannot be resolved (a
@@ -216,7 +244,7 @@ def actions(command: str, base: str | None) -> list[tuple[str, str | None]]:
     Dry runs are skipped. Text inside quotes, echo and heredoc bodies never matches.
     """
     cur = base
-    found: list[tuple[str, str | None]] = []
+    found: list[tuple[str, str | None, tuple | None]] = []
     for segment in split_segments(strip_heredocs(command)):
         toks = _tokens(segment)
         if not toks:
@@ -242,7 +270,7 @@ def actions(command: str, base: str | None) -> list[tuple[str, str | None]]:
             while i < len(toks) and toks[i].startswith("-"):
                 i += 2 if toks[i] in ("-R", "--repo") else 1
             if i + 1 < len(toks) and toks[i] == "pr" and toks[i + 1] == "create":
-                found.append(("pr", cur))
+                found.append(("pr", cur, None))
             continue
         if name != "git":
             continue
@@ -259,7 +287,7 @@ def actions(command: str, base: str | None) -> list[tuple[str, str | None]]:
         if i < len(toks) and toks[i] == "push":
             if any(t in ("--dry-run", "-n") for t in toks[i + 1 :]):
                 continue
-            found.append(("push", where))
+            found.append(("push", where, push_spec(toks[i + 1 :])))
     return found
 
 
@@ -272,24 +300,24 @@ def resolves(repo: str, ref: str) -> bool:
     return git(repo, "rev-parse", "--verify", "--quiet", ref + "^{commit}")[0]
 
 
-def merge_base(repo: str, kind: str, override: str | None) -> str:
+def merge_base(repo: str, kind: str, override: str | None, tip: str = "HEAD") -> str:
     """Merge base of HEAD with the comparison ref.
 
-    push: upstream, then origin/HEAD, origin/main, main.
-    pr (and --check): origin/HEAD, origin/main, main, never the upstream, so a branch
+    push: upstream, then origin/HEAD, origin/main, main, origin/master, master.
+    pr (and --check): origin/HEAD, origin/main, main, origin/master, master, never the upstream, so a branch
     that was already pushed still has its PR diff judged.
     """
     if override:
         candidates = [override]
     else:
-        candidates = ["@{u}"] if kind == "push" else []
-        candidates += ["origin/HEAD", "origin/main", "main"]
+        candidates = [tip + "@{u}" if tip != "HEAD" else "@{u}"] if kind == "push" else []
+        candidates += ["origin/HEAD", "origin/main", "main", "origin/master", "master"]
     for ref in candidates:
         if resolves(repo, ref):
-            ok, out = git(repo, "merge-base", "HEAD", ref)
+            ok, out = git(repo, "merge-base", tip, ref)
             if ok and out.strip():
                 return out.strip()
-            raise CouldNotRun(f"no merge base between HEAD and {ref}")
+            raise CouldNotRun(f"no merge base between {tip} and {ref}")
     raise CouldNotRun("no base branch found to compare against")
 
 
@@ -416,10 +444,11 @@ SKIP_RE = re.compile(
     r"\.skip\(|\.todo\(|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|\bpytest\.skip\(|\bt\.Skip\("
 )
 STUB_RE = re.compile(
-    r"throw new \w*Error\(.*not implemented|raise NotImplementedError|\btodo!\(\)|\bunimplemented!\(\)"
+    r"throw new \w*Error\([^)\n]*not implemented|raise NotImplementedError|\btodo!\(\)|\bunimplemented!\(\)"
     r"|\bcatch\s*(?:\(\s*\w*\s*\))?\s*\{\s*\}|\bexcept\s*:\s*pass\b",
     re.IGNORECASE,
 )
+MAX_SCAN = 2000
 ASSERT_RE = re.compile(r"\b(?:expect|assert|should)")
 TEST_DIRS = {"tests", "test", "__tests__"}
 TEST_NAMES = ("*.test.*", "*.spec.*", "*_test.*", "test_*.py")
@@ -554,19 +583,19 @@ def loosened(old_text: str, new_text: str) -> bool:
     """True when a threshold moved the loosening way or disappeared.
 
     A minimum loosens downward, a maximum upward. A number whose direction cannot be
-    read is reported on any change. Numbers pair within their direction, and one that
-    only gained or lost direction words (same value elsewhere in the new text) is not a
-    change.
+    read is reported on any change. Numbers pair by position within their direction.
+    A number with no partner left is only forgiven when the new text carries a number
+    of the same value that no pair used (it gained or lost direction words).
     """
     before, after = thresholds(old_text), thresholds(new_text)
-    after_values = [v for v, _ in after]
+    spare: list[float] = []
+    unmatched: list[float] = []
     for d in ("min", "max", None):
         was = [v for v, x in before if x == d]
         now = [v for v, x in after if x == d]
         for i, b in enumerate(was):
             if i >= len(now):
-                if b not in after_values:
-                    return True
+                unmatched.append(b)
                 continue
             n = now[i]
             if n == b:
@@ -575,10 +604,42 @@ def loosened(old_text: str, new_text: str) -> bool:
                 continue
             if d == "max" and n < b:
                 continue
-            if b in after_values:
-                continue
+            return True
+        spare += now[len(was) :]
+    for b in unmatched:
+        if b in spare:
+            spare.remove(b)
+        else:
             return True
     return False
+
+
+def _group(rows: list) -> dict:
+    out: dict = {}
+    for r in rows:
+        out.setdefault(r[1], []).append(r)
+    return out
+
+
+def _digitless(text: str) -> str:
+    return re.sub(r"\d+(?:\.\d+)?", "#", text.lower())
+
+
+def _pair(old_rows: list, new_rows: list) -> list[tuple]:
+    """Pair rows that share a key: same number-stripped text first, then in order."""
+    left = list(new_rows)
+    paired: list[tuple] = []
+    rest = []
+    for o in old_rows:
+        hit = next((n for n in left if _digitless(n[2]) == _digitless(o[2])), None)
+        if hit is not None:
+            left.remove(hit)
+            paired.append((o, hit))
+        else:
+            rest.append(o)
+    for o in rest:
+        paired.append((o, left.pop(0) if left else None))
+    return paired
 
 
 def constraints_findings(path: str, old: str, new: str) -> list[tuple]:
@@ -586,16 +647,17 @@ def constraints_findings(path: str, old: str, new: str) -> list[tuple]:
     found: list[tuple] = []
     o, n = parse_constraints(old), parse_constraints(new)
     for sec in ("floor", "enforced"):
-        new_by_key = {}
-        for ln, key, rule, row in n[sec]:
-            new_by_key.setdefault(key, (ln, rule, row))
-        for ln, key, rule, row in o[sec]:
-            if key not in new_by_key:
-                found.append(("rule-loosened", path, ln, f"removed: {row}"))
-                continue
-            nln, nrule, nrow = new_by_key[key]
-            if sec == "enforced" and loosened(rule, nrule):
-                found.append(("rule-loosened", path, nln, f"{row}  ->  {nrow}"))
+        new_groups = _group(n[sec])
+        for key, old_rows in _group(o[sec]).items():
+            for (ln, _, rule, row), hit in _pair(old_rows, new_groups.get(key, [])):
+                if hit is None:
+                    found.append(("rule-loosened", path, ln, f"removed: {row}"))
+                elif sec == "enforced" and loosened(rule, hit[2]):
+                    found.append(("rule-loosened", path, hit[0], f"{row}  ->  {hit[3]}"))
+    gone = [g for g in test_globs(old) if g not in test_globs(new)]
+    if gone:
+        at = next((i for i, t in enumerate(old.split("\n"), 1) if re.match(r"\s*Test files:", t)), 1)
+        found.append(("rule-loosened", path, at, f"removed from the Test files line: {', '.join(gone)}"))
     old_rows = {row.lower() for _, _, _, row in o["exceptions"]}
     for ln, key, rule, row in n["exceptions"]:
         if row.lower() not in old_rows:
@@ -616,9 +678,12 @@ def diff_findings(files: list[dict], is_test) -> list[tuple]:
             if is_test(f["old"]):
                 found.append(("test-deleted", f["old"], 0, "file deleted"))
             continue
+        if f["old"] != path and is_test(f["old"]) and not test:
+            found.append(("test-deleted", f["old"], 0, f"renamed to {path}, which is not a test path"))
         for ln, text in f["added"]:
             if md:
                 continue
+            text = text[:MAX_SCAN]  # a minified line is not worth scanning past its head
             if SILENCED_RE.search(text):
                 found.append(("silenced-checker", path, ln, text))
             if test and SKIP_RE.search(text):
@@ -641,14 +706,16 @@ def diff_findings(files: list[dict], is_test) -> list[tuple]:
 ALLOW_RE = re.compile(r"^[ \t]*floor-allow:[ \t]+([a-z][a-z-]*)[ \t]+(\S.*?)[ \t]*$", re.MULTILINE)
 
 
-def analyze(repo: str, kind: str, override: str | None = None, worktree: bool = False):
+def analyze(repo: str, kind: str, override: str | None = None, worktree: bool = False, tip: str = "HEAD"):
     """(findings, allowances). findings: (rule, file, line, text). Raises CouldNotRun."""
     ok, top = git(repo, "rev-parse", "--show-toplevel")
     if not ok or not top.strip():
         raise CouldNotRun("not inside a git repository")
     top = top.strip()
-    mb = merge_base(top, kind, override)
-    ok, diff = git(top, "diff", "-U0", "--no-color", mb if worktree else f"{mb}..HEAD", "--")
+    if tip != "HEAD" and not resolves(top, tip):
+        raise CouldNotRun(f"the pushed ref {tip} could not be resolved")
+    mb = merge_base(top, kind, override, tip)
+    ok, diff = git(top, "diff", "-U0", "--no-color", mb if worktree else f"{mb}..{tip}", "--")
     if not ok:
         raise CouldNotRun("could not read the diff")
     files = parse_diff(diff)
@@ -662,11 +729,14 @@ def analyze(repo: str, kind: str, override: str | None = None, worktree: bool = 
                     return fh.read()
             except OSError:
                 return ""
-        ok2, out = git(top, "show", f"HEAD:{path}")
+        ok2, out = git(top, "show", f"{tip}:{path}")
         return out if ok2 else ""
 
     cons = [f for f in files if is_constraints(f["path"]) or is_constraints(f["old"])]
     globs = test_globs(read_new("CONSTRAINTS.md")) if (cons or os.path.exists(os.path.join(top, "CONSTRAINTS.md"))) else []
+    ok2, old_c = git(top, "show", f"{mb}:CONSTRAINTS.md")
+    if ok2:  # the old globs count too, so one commit cannot drop a glob and delete its tests
+        globs += [g for g in test_globs(old_c) if g not in globs]
     is_test = make_is_test(globs)
     findings = diff_findings(files, is_test)
     for f in cons:
@@ -678,7 +748,7 @@ def analyze(repo: str, kind: str, override: str | None = None, worktree: bool = 
         findings.extend(constraints_findings(f["path"], old, new))
 
     allowances: dict[str, str] = {}
-    ok, msgs = git(top, "log", "--format=%B%x00", f"{mb}..HEAD")
+    ok, msgs = git(top, "log", "--format=%B%x00", f"{mb}..{tip}")
     if ok:
         for rule, reason in ALLOW_RE.findall(msgs):
             if rule in RULES and reason.strip():
@@ -737,12 +807,15 @@ def main_hook() -> int:
     findings: list = []
     allowances: list = []
     problems: list[str] = []
-    for kind, repo in targets:
+    for kind, repo, spec in targets:
         if repo is None:
             problems.append("the target repository could not be worked out from the command")
             continue
+        if spec and spec[0] == "skip":
+            problems.append(f"{spec[1]}, so the floor was not checked for it")
+            continue
         try:
-            f, a = analyze(repo, kind)
+            f, a = analyze(repo, kind, tip=spec[1] if spec else "HEAD")
         except CouldNotRun as e:
             problems.append(str(e))
             continue

@@ -343,6 +343,83 @@ function floorCases(sandbox, out) {
     add("f121b the unchanged shipped template is silent", "silent", r, quiet(push(scen({ base: { ...BASE, "CONSTRAINTS.md": tpl }, commits: [{ files: { "src/n.js": "export const n = 3;\n" }, msg: "n" }] }))));
   }
 
+  // ---- review fixes: f130-f143 ------------------------------------------------
+  {
+    // f130: a minified single-line file must not make the hook crawl
+    const minLine = Array.from({ length: 6500 }, (_, i) => `function f${i}(a){if(!a)throw new Error("bad input ${i}");return a}`).join("");
+    r = push(one({ "src/min.js": minLine + "\n" }, "minified"));
+    const lim = process.env.CI ? 9000 : 3000;
+    add(`f130 a 400 KB single-line file finishes under ${lim} ms`, `<${lim}ms`, r, r.status === 0 && quiet(r) && r.ms < lim);
+
+    // f131-f132: a lowered minimum is not hidden by its old value elsewhere in the row
+    const lh = (t) => `| Quality | ${t} | lighthouse | CI |`;
+    r = push(cscen({ extraRow: lh("Lighthouse performance >= 90, accessibility >= 90") }, { extraRow: lh("Lighthouse performance >= 80, accessibility >= 90") }));
+    add("f131 one of two equal minimums lowered fires", "fired", r, has(r, "rule-loosened", "CONSTRAINTS.md"));
+    r = push(cscen({ extraRow: lh("line >= 80, branch >= 70") }, { extraRow: lh("line >= 70, branch >= 80") }));
+    add("f132 swapped minimums (one lowered) fire", "fired", r, has(r, "rule-loosened", "CONSTRAINTS.md"));
+    add("f132b a swap where both stay put and one is raised is silent", "silent", r, silentC({ extraRow: lh("line >= 80, branch >= 70") }, { extraRow: lh("line >= 80, branch >= 75") }));
+    add("f132c a pair of tightened minimums is silent", "silent", r, silentC({ extraRow: lh("Lighthouse performance >= 80, accessibility >= 80") }, { extraRow: lh("Lighthouse performance >= 90, accessibility >= 85") }));
+
+    // f133-f134: rows with the same Dimension are each checked
+    const perf = (a, b) => [`| Performance | LCP <= ${a} s | lighthouse | CI |`, `| Performance | TBT <= ${b} ms | lighthouse | CI |`].join("\n");
+    r = push(cscen({ extraRow: perf(2, 200) }, { extraRow: perf(2, 400) }));
+    add("f133 the second of two Performance rows loosened fires", "fired", r, has(r, "rule-loosened", "CONSTRAINTS.md") && /TBT/.test(r.text));
+    add("f133b the same two rows unchanged are silent", "silent", r, silentC({ extraRow: perf(2, 200) }, { extraRow: perf(2, 200) }));
+    const sec = (a, b) => [`| Security | ${a} | audit | CI |`, `| Security | ${b} | scan | CI |`].join("\n");
+    r = push(cscen({ extraRow: sec("0 high vulns", "0 secrets") }, { extraRow: `| Security | 0 high vulns | audit | CI |` }));
+    add("f134 the second of two Security rows deleted fires", "fired", r, has(r, "rule-loosened", "CONSTRAINTS.md") && /secrets/.test(r.text));
+
+    // f135-f135b: renames
+    const tbody = "describe('a', () => {\n  it('works', () => {\n    expect(1).toEqual(1);\n    expect(2).toEqual(2);\n  });\n});\n";
+    repo = scen({ base: { ...BASE, "tests/a.test.js": tbody }, commits: [{ files: { "tests/a.test.js": null, "old/a.js": tbody }, msg: "rename out" }] });
+    r = push(repo);
+    add("f135 a test file renamed to a non-test path fires test-deleted on the old path", "fired", r, has(r, "test-deleted", "tests/a.test.js"));
+    repo = scen({ base: { ...BASE, "tests/a.test.js": tbody }, commits: [{ files: { "tests/a.test.js": null, "tests/b.test.js": tbody }, msg: "rename within" }] });
+    r = push(repo);
+    add("f135b a test-to-test rename is silent", "silent", r, quiet(r));
+
+    // f136-f137: dropping a Test files glob
+    const ebody = "x\n";
+    repo = scen({ base: { ...BASE, "CONSTRAINTS.md": CBASE({ testFiles: "e2e/**" }), "e2e/x.js": ebody }, commits: [{ files: { "CONSTRAINTS.md": CBASE({}), "e2e/x.js": null }, msg: "drop glob and test" }] });
+    r = push(repo);
+    add("f136 deleting a file covered only by a dropped glob is test-deleted", "fired", r, has(r, "test-deleted", "e2e/x.js"));
+    add("f137 removing a glob from the Test files line is rule-loosened", "fired", r, has(r, "rule-loosened", "CONSTRAINTS.md") && /e2e/.test(r.text));
+    r = push(cscen({ testFiles: "a/**, b/**" }, { testFiles: "a/**, b/**, c/**" }));
+    add("f137b adding a glob is silent", "silent", r, quiet(r));
+
+    // f138-f139: git push <remote> <branch> judges the pushed branch
+    const onMain = (files) => { const rp = one(files, "x"); sh(rp, "branch", "-m", "feat", "bad"); sh(rp, "checkout", "-q", "main"); return rp; };
+    repo = onMain({ "src/app.js": "export const a = 1;\n# noqa\n" });
+    r = run("git push origin bad", { cwd: repo });
+    add("f138 git push origin <branch> from main judges that branch (warn)", "fired", r, r.status === 0 && !r.deny && has(r, "silenced-checker", "src/app.js"));
+    r = run("git push origin bad", { cwd: repo, mode: "enforce" });
+    add("f138b the same in enforce mode denies", "denied", r, r.deny && has(r, "silenced-checker"));
+    r = run("git push -u origin bad:bad", { cwd: repo, mode: "enforce" });
+    add("f138c src:dst judges the source ref", "denied", r, r.deny && has(r, "silenced-checker"));
+    r = run("git push origin main", { cwd: repo, mode: "enforce" });
+    add("f138d pushing a clean branch while another is bad is silent", "silent", r, quiet(r));
+    for (const [id, cmd] of [["f139", "git push origin bad main"], ["f139b", "git push --all origin"], ["f139c", "git push --mirror origin"], ["f139d", "git push --tags origin"]]) {
+      r = run(cmd, { cwd: repo, mode: "enforce" });
+      add(`${id} ${cmd}: not resolvable, allowed with a not-checked note`, "allowed", r, r.status === 0 && !r.deny && /not checked/.test(r.text) && !/clean/i.test(r.text));
+    }
+
+    // f140: master as the default branch
+    {
+      const rp = join(sandbox, `fr${++n}`);
+      mkdirSync(rp, { recursive: true });
+      sh(rp, "init", "-q", "-b", "master");
+      sh(rp, "config", "user.name", "t");
+      sh(rp, "config", "user.email", "t@example.com");
+      commit(rp, BASE, "init");
+      sh(rp, "checkout", "-q", "-b", "feat");
+      commit(rp, BAD, "bad");
+      r = run("gh pr create --title x --body y", { cwd: rp });
+      add("f140 a repo whose default branch is master is checked on gh pr create", "fired", r, has(r, "silenced-checker"));
+      r = push(rp);
+      add("f140b and on git push", "fired", r, has(r, "silenced-checker"));
+    }
+  }
+
   // ---- step 5: --check -------------------------------------------------------
   const check = (cwd, ...args) => {
     const c = spawnSync("python3", [FLOOR, "--check", ...args], { cwd, encoding: "utf8", timeout: 30_000, env: env0 });
