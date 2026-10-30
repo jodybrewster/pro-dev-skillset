@@ -1,0 +1,21 @@
+{
+  "skill": "electron-upgrade",
+  "plugin": "pro-electron",
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Upgrade this app from Electron 43 to Electron 45. You cannot run npm install here, so work from the code and the Electron breaking-changes notes: tell me the plan and make the source edits the upgrade needs.",
+      "files": [
+        "electron-upgrade"
+      ],
+      "expectations": [
+        "The agent plans the upgrade as separate hops, 43 to 44 and then 44 to 45 and does not treat it as one jump straight to 45",
+        "The agent checks the breaking changes for each hop and finds that Electron 45 removed Buffer and setImmediate from sandboxed preload scripts, which src/preload.js uses",
+        "The agent edits src/preload.js to use Web APIs (for example TextEncoder or btoa for Buffer and setTimeout or queueMicrotask for setImmediate) and leaves Buffer in src/main.js alone, since the main process keeps full Node.js",
+        "The agent names a native module rebuild for better-sqlite3 with @electron/rebuild (or electron-rebuild) after each version bump",
+        "The agent says each hop would be verified (start the app or run tests) and committed before the next one and does not claim the upgrade was verified when nothing could be installed or run"
+      ]
+    }
+  ]
+}

@@ -74,6 +74,18 @@
       "category": "Development"
     },
     {
+      "name": "pro-electron",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-electron"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
       "name": "pro-design",
       "source": {
         "source": "local",

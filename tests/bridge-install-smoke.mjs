@@ -19,6 +19,8 @@
 //   vercel-labs/agent-skills  -> vercel-skills-bridge          (2 skills, pinned)
 //   vercel-labs/agent-skills  -> vercel-deploy-bridge          (1 skill, pinned, folder digest)
 //   vercel-labs/agent-skills  -> react-patterns-bridge         (2 skills, pinned)
+//   jwynia/agent-skills       -> electron-skills-bridge        (electron-best-practices, nested folder, pinned)
+//   laststance/skills         -> electron-skills-bridge        (electron-release, pinned)
 //
 // Opt-in. Needs network + npx. Not part of tests/check.mjs or the PR gate -
 // it runs on demand (workflow_dispatch) and on a weekly schedule via
@@ -156,6 +158,22 @@ const TARGETS = [
     repo: "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
     args: [],
     expected: ["vercel-composition-patterns", "vercel-react-view-transitions"],
+  },
+  {
+    bridge: "electron-skills-bridge",
+    engine: "electron-best-practices",
+    // Nested folder at a pinned commit; the tree URL names the skill folder.
+    repo: "https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32/skills/tech/development/tooling/electron-best-practices",
+    args: [],
+    expected: ["electron-best-practices"],
+    contents: { "electron-best-practices": ["SKILL.md", "references"] },
+  },
+  {
+    bridge: "electron-skills-bridge",
+    engine: "electron-release",
+    repo: "https://github.com/laststance/skills/tree/746d4db0d9cbd767f19b96a432a15c0e42beaa29/skills/electron-release",
+    args: [],
+    expected: ["electron-release"],
   },
 ];
 

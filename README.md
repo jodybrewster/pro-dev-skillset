@@ -32,7 +32,7 @@ It then tells you to run `/pro-dev install` in a Claude Code session.
 ### Set up a site
 
 1. Install `pro-dev-starter` and any stack or method plugins you want, such as `claude plugin install pro-nextjs@pro-dev-skillset`.
-   `pro-nextjs` and `pro-astro` are opt-in.
+   `pro-nextjs`, `pro-astro` and `pro-electron` are opt-in.
 2. Run `/pro-dev install` in a Claude Code session.
 3. After each `claude plugin update`, run `/pro-dev update`.
 4. Run `/pro-dev check` any time to see what is installed and what is stale.
@@ -164,6 +164,7 @@ codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
 codex plugin add pro-nextjs@pro-dev-skillset
 codex plugin add pro-astro@pro-dev-skillset
+codex plugin add pro-electron@pro-dev-skillset   # optional: Electron apps
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset
@@ -290,10 +291,11 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 - **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/pro-dev install`, `vercel-skills-bridge`, which routes to the React performance and Vercel cost skills in [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT per its README) the same way and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
 - **`pro-astro`** - Astro projects: `astro-best-practices` (auto-applied guardrails), `astro-upgrade` (Astro 5 to 6 to 7 and adapter majors), `astro-on-cloudflare` (`@astrojs/cloudflare` on Workers) and `astro-on-vercel` (`@astrojs/vercel`). The content is original, written from the official Astro, Cloudflare and Vercel docs. Pairs with the official Astro Docs MCP server and, on Cloudflare, the official `cloudflare/skills` plugin.
+- **`pro-electron`** - Electron apps: `electron-skills-bridge` (routes to jwynia's `electron-best-practices` and laststance's `electron-release`, pinned and installed with `/pro-dev install`), `electron-upgrade` (major-version upgrades) and `electron-security-audit` (a read-only audit against the official security checklist). Driving the running app through Playwright MCP over CDP is a manual setup the skills describe.
 
 **Meta:**
 
-- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-ship`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-spdd`, `pro-egm` and `pro-speckit` are opt-in and installed by hand.
+- **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-ship`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-electron`, `pro-spdd`, `pro-egm` and `pro-speckit` are opt-in and installed by hand.
   Version 3.0.0 dropped `pro-ai-sdlc` from the stack; removing a dependency does not uninstall it, so a site that already has it keeps it until you run `claude plugin uninstall pro-ai-sdlc@pro-dev-skillset`.
 - **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
 
@@ -309,6 +311,7 @@ plugins/
   pro-quality/                       # quality skills + review/verify commands
   pro-nextjs/                        # Next.js skills
   pro-astro/                         # Astro skills (core, upgrade, Cloudflare, Vercel)
+  pro-electron/                      # Electron skills (bridge, upgrade, security audit)
   pro-design/                        # design skills
   pro-testing/                       # testing skills
   pro-data/                          # data/auth skills + schema formatting hook
@@ -380,6 +383,7 @@ codex plugin add pro-execution@pro-dev-skillset
 codex plugin add pro-quality@pro-dev-skillset
 codex plugin add pro-nextjs@pro-dev-skillset
 codex plugin add pro-astro@pro-dev-skillset
+codex plugin add pro-electron@pro-dev-skillset   # optional: Electron apps
 codex plugin add pro-design@pro-dev-skillset
 codex plugin add pro-testing@pro-dev-skillset
 codex plugin add pro-data@pro-dev-skillset

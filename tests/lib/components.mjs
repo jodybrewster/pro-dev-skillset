@@ -5,7 +5,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-export const WORKFLOW_PLUGINS = ["pro-ai-sdlc", "pro-egm", "pro-spdd", "pro-speckit", "pro-pdd"];
+export const WORKFLOW_PLUGINS = ["pro-ai-sdlc", "pro-egm", "pro-spdd", "pro-speckit", "pro-pdd", "pro-electron"];
 
 const isDir = (p) => existsSync(p) && statSync(p).isDirectory();
 const sub = (p) => (isDir(p) ? readdirSync(p).sort() : []);

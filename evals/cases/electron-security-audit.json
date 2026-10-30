@@ -1,0 +1,19 @@
+{
+  "skill": "electron-security-audit",
+  "plugin": "pro-electron",
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Audit the security of this Electron app and give me a checklist of what is wrong, with the file and line for each finding.",
+      "files": ["electron-security-audit"],
+      "expectations": [
+        "The agent reports nodeIntegration: true in src/main.js with a line reference to that file (line 8)",
+        "The agent reports contextIsolation: false in src/main.js with a line reference (line 9)",
+        "The agent reports the unchecked shell.openExternal(url) call fed by the open-link IPC handler in src/main.js with a line reference (line 16)",
+        "The agent reports the missing setWindowOpenHandler and will-navigate handlers for the window created in src/main.js, the missing Content-Security-Policy in src/index.html and the Electron Fuses left at their defaults",
+        "The agent reports no finding against src/safe-window.js, which is the hardened control file, other than possibly noting it as the pattern to copy"
+      ]
+    }
+  ]
+}

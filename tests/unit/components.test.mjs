@@ -64,6 +64,6 @@ test("coverageDiff honours the allow list and flags stale entries", () => {
   assert.deepEqual(stale.sort(), ["command:a", "command:gone"]);
 });
 
-test("the workflow plugin list is the five named plugins", () => {
-  assert.deepEqual(WORKFLOW_PLUGINS, ["pro-ai-sdlc", "pro-egm", "pro-spdd", "pro-speckit", "pro-pdd"]);
+test("the workflow plugin list is the six named plugins", () => {
+  assert.deepEqual(WORKFLOW_PLUGINS, ["pro-ai-sdlc", "pro-egm", "pro-spdd", "pro-speckit", "pro-pdd", "pro-electron"]);
 });
