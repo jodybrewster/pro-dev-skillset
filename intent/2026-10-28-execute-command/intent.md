@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: proposed
+status: done
 risk: medium
 created: 2026-10-28T08:10:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, intent F of the [pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md), from planning intent A on 2026-10-28.
-Status: proposed.
+Status: done; shipped in PR #63 (684b90f).
 Created: 2026-10-28.
 
 ## Problem

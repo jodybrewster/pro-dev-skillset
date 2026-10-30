@@ -1,7 +1,7 @@
 ---
 source: research
 kind: change
-status: draft
+status: dropped
 risk: medium
 created: 2026-10-28T15:45:00-0400
 author: Jody Brewster
@@ -12,6 +12,9 @@ author: Jody Brewster
 Author: Jody Brewster (pro-dev-skillset).
 Source: research Jody brought on 2026-10-28 (kept in full in [research.md](research.md)), "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
 Status: draft; Jody is still brainstorming and evaluating the scope before `/spec`.
+The brainstorm so far, which widens this scope and proposes splitting it into three intents, is in [brainstorm.md](brainstorm.md).
+Dropped on 2026-10-29: the PR gate part (the brainstorm's Intent A) is replaced by four intents, [review-policy](../2026-10-29-review-policy/intent.md), [code-reviewer](../2026-10-29-code-reviewer/intent.md), [pr-gate](../2026-10-29-pr-gate/intent.md) and [risk-tiers](../2026-10-29-risk-tiers/intent.md).
+The brainstorm's Intents B (`ship`, `pipeline`, `repo-hygiene`) and C (docs and architecture review) get their own intents when [docs/roadmap.md](../../docs/roadmap.md) reaches them; `research.md` and `brainstorm.md` stay here as their source.
 Created: 2026-10-28.
 
 ## Problem

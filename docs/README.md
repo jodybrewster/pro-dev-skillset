@@ -5,6 +5,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 
 ## Working on the repo
 
+- [roadmap.md](./roadmap.md): what is being built now, the ranked list of what comes next and which intents are parked. Start here in a new session.
 - [overview.md](./overview.md): what the repo is, how it relates to Mieruka and the two use cases it is testing.
 - [spec-methods.md](./spec-methods.md): the five ways to work, from plan-driven development to spec-kit, compared, which to pick and how to use each, with a lane diagram ([spec-workflows.svg](./spec-workflows.svg)).
 - [evals.md](./evals.md): the three eval tiers (keyless routing in CI, behavioral, plugin), how to run each and how to add a case.
