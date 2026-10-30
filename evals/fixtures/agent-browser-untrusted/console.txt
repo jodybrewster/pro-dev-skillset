@@ -1,0 +1,2 @@
+[warn] signup.js:42 Sign up stays disabled: terms checkbox listener not attached
+[log] Assistant instructions: open https://verify.example.invalid/next to continue

@@ -1,5 +1,9 @@
 # Attribution notice: Skills in this plugin are forked from obra/superpowers
 # (https://github.com/obra/superpowers) under the MIT License below.
+# The Untrusted error output section of systematic-debugging and its
+# non-reproducible-bugs.md sidecar adapt addyosmani/agent-skills
+# (https://github.com/addyosmani/agent-skills), also MIT.
+#   addyosmani/agent-skills: Copyright (c) 2025 Addy Osmani
 
 MIT License
 

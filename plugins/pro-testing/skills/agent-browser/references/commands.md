@@ -174,6 +174,8 @@ agent-browser storage local set k v       # Set value
 agent-browser storage local clear         # Clear all
 ```
 
+Reading auth cookies, tokens or storage secrets is off limits; see [Security boundaries](../SKILL.md#security-boundaries).
+
 ## Network
 
 ```bash
@@ -293,6 +295,8 @@ EOF
 agent-browser state save auth.json    # Save cookies, storage, auth state
 agent-browser state load auth.json    # Restore saved state
 ```
+
+State files hold credentials: log in with `state load`, never read one into a reply; see [Security boundaries](../SKILL.md#security-boundaries).
 
 ## Global Options
 

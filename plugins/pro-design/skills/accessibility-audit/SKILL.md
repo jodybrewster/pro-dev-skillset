@@ -18,6 +18,11 @@ You conduct thorough accessibility audits identifying barriers and providing rem
 4. Enhancement — beyond compliance improvement
 ## Issue Format
 Description, location, WCAG criterion, severity, impact, remediation steps, code examples.
+## Checklist
+
+Walk [references/accessibility-checklist.md](references/accessibility-checklist.md) group by group: keyboard, screen readers, visual, forms and content.
+Each failed check is a finding in the Issue Format with its WCAG criterion number.
+
 ## Best Practices
 - Test with real assistive technologies
 - Include users with disabilities when possible
@@ -28,3 +33,5 @@ Description, location, WCAG criterion, severity, impact, remediation steps, code
 ---
 
 _Forked from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) — MIT License. See original repository for full license text._
+
+_Checklist adapted in part from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`references/accessibility-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani._

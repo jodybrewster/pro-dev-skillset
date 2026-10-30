@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.64.0"
+    "version": "1.65.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -33,7 +33,7 @@
       "name": "pro-execution",
       "source": "./plugins/pro-execution",
       "description": "Execution discipline skills: TDD, systematic debugging, git worktrees and subagent-driven development. Depends on pro-core for universal guardrails and repo safety.",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "category": "development",
       "strict": true
     },
@@ -65,7 +65,7 @@
       "name": "pro-design",
       "source": "./plugins/pro-design",
       "description": "Frontend design skills. Build: emil-design-eng (start here for components and screens), landing-page-design (single-CTA conversion landing page with a visual system), build-awwwards-quality-sites (immersive scroll-storytelling marketing sites), apple-design (Apple HIG principles). Motion: animate (add or refine animation on an already built site), animation-vocabulary (turn vague motion words into exact animation terms), motion (Framer Motion implementation + discipline), motion-system. Review and fix: screen-critique with the /critique-screen command (judge a rendered screen against seven critique lenses), interface-review (review UI changes in a PR, branch, or working tree with regression detection), better-interface (the holistic consolidation and verdict layer over the better-* family; uninstalled domains report as Not reviewed), better-layout (spacing, alignment, and grouping to the pixel), perception-laws (Gestalt laws, Von Restorff, visual hierarchy), accessibility-audit (WCAG 2.2 POUR). Systems: design tokens, typography scale, shadcn/ui composition, stitch-skill (create/update DESIGN.MD), taste-skill (targeted visual polish pass). Bridges (not vendored): impeccable-bridge for the full end-to-end UI/UX pass via /pro-dev install, taste-skills-bridge for the Leonxlnx anti-slop, visual-style, image-gen, and brand-kit library via /pro-dev install, plus web-design-engineer-bridge (reference-grounded HTML artifacts, style recipes, design scoring), tastemaker-bridge (extract tokens from a reference image's real pixels and lock the style across a project), and mengto-skills-bridge (scroll storytelling, WebGL and shader effects, video-to-superprompt) - all three installed with /pro-dev install. Install figma from claude-plugins-official via install-companions.sh. Bridges: react-patterns-bridge (Vercel composition and view-transition patterns). Lint: web-design-guidelines (file:line check of UI code against Vercel Web Interface Guidelines at a pinned commit). /pro-design:install sets up its engines when pro-core is installed.",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "category": "development",
       "strict": true
     },
@@ -73,7 +73,7 @@
       "name": "pro-testing",
       "source": "./plugins/pro-testing",
       "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed on demand via /pro-dev install (npx skills add): qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/pro-dev install), not as a hard plugin dependency. /pro-testing:install sets up its engines when pro-core is installed.",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "category": "development",
       "strict": true
     },
@@ -169,7 +169,7 @@
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research, security and ship). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in and installed by hand.",
-      "version": "3.1.0",
+      "version": "3.1.1",
       "category": "development",
       "strict": true
     }
