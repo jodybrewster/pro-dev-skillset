@@ -260,7 +260,7 @@ Filled in when the build is finished, before sign-off.
 - AC8: pass, the Codex manifest has `"skills": "./skills/"` and `codex-manifests` passes.
 - AC9: pass, the routing case is in `routing.jsonl` and `eval.mjs --dry` counts 89 cases.
 - AC10: pass, the `docs/licenses.md` row, the LICENSE notice and the footer on both skill files are in place.
-- AC11: pass, pro-ai-sdlc is 0.11.0 in both manifests and its marketplace entry and `metadata.version` is 1.68.0, bumped once.
+- AC11: pass, pro-ai-sdlc is 0.11.0 in both manifests and its marketplace entry and `metadata.version` is 1.69.0, bumped once (1.68.0 at build time; PR 101 took 1.68.0 first).
 - AC12: pass, ADR-0019 and its row exist (written at the spec stage and updated for Jody's decisions).
 - Sign-off: <the person's words and the date>
 
