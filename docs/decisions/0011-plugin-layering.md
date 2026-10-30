@@ -49,6 +49,19 @@ Two kinds of plugin sit beside the layers:
   A method holds only its method; a tool any method could use (today `adhd`, `lavish` and `interview-me` in `pro-pdd`) moves up to the domain.
 - A gate is a plugin kept separate only because its hooks need their own switch: `pro-security` and `pro-legal`.
 
+The plugins this leaves, and what each exists to do:
+
+| Plugin | Goal |
+|---|---|
+| `pro-core` | How a person works with AI in any domain: find the right skill, keep memory across sessions, research a question, dispatch work in parallel safely and install or update the rest of the stack. Nothing in it assumes a codebase. |
+| `pro-dev` | How a software engineer works with AI: build test-first, debug systematically, isolate work in worktrees, hand work to subagents, review and verify before claiming done, document what shipped and gate a PR by its risk. Stack-neutral and method-neutral. |
+| `pro-dev-web` | What every web project needs regardless of framework: design and motion craft, interface review, a test pyramid (unit, interaction, browser) and the data layer (ORMs, schemas). Assumes JS/TS and React until a non-JS web stack arrives. |
+| `pro-dev-nextjs`, `pro-dev-astro`, later rust and python | The conventions, upgrade paths, auth and deploy bridges of one framework or language, written from its docs. Installed only in repos on that stack. |
+| `pro-dev-ai-sdlc`, `pro-dev-pdd`, `pro-dev-spdd`, `pro-dev-speckit`, `pro-dev-egm` | One way of taking a change from idea to merged, each with its own stages, templates and records. Only one is usually on; switching is how a method is trialled. |
+| `pro-dev-security`, `pro-dev-legal` | A review a plan or diff must pass before it ships, enforced by hooks that need their own on-off switch: security audit, threat model and push gate; counsel on licensing, privacy, AI use and client IP with a release gate. |
+| `pro-gtm` (future) | How a go-to-market engineer works with AI: research leads and accounts, plan and produce content and campaigns, measure them. The first domain beside `pro-dev`; `lead-research` is its seed. |
+| `pro-dev-starter` | The meta-plugin that installs core, the dev domain, the web layer and the default method in one step. It owns nothing of its own. |
+
 Placement of a new skill: the narrowest layer whose every user would want it.
 A new plugin is only ever a domain, a method, a layer under a domain, a stack or a gate.
 When no realistic user installs one plugin and wants none of another at the same layer, the two merge.
