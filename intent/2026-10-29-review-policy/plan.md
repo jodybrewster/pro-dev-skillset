@@ -130,7 +130,7 @@ The plugin cache serves 0.7.0 once published.
 
 Assumed, confirm with Jody:
 
-- Assumed, confirm with Jody: the round cap is three and counts every `/pr-babysit` round, including rounds that fix failing checks and conflicts (spec open question 1, flagged concern 2).
+- Confirmed by Jody on 2026-10-30: the round cap is three and counts every `/pr-babysit` round, including rounds that fix failing checks and conflicts (spec open question 1, flagged concern 2).
 - Assumed, confirm with Jody: the finding count moves to the top of the report as one summary line (spec open question 2).
 - Assumed, confirm with Jody: `/pro-dev update` refreshing an older `REVIEW.md` is out of this change (spec open question 4, flagged concern 6).
 - Assumed, confirm with Jody: the ADR is a prerequisite and not a step in this PR.
