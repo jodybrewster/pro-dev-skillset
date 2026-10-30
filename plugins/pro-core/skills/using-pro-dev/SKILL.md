@@ -83,7 +83,7 @@ Task arrives
   │   └ can I use this library? / license question ─────────────→ software-counsel
   ├ SHIP:
   │   ├ checks and stamp before gh pr create ──→ pr-check (pro-ship)
-  │   ├ how risky is this branch or PR, before a merge → risk-tiers (pro-ship)
+  │   ├ how risky is this branch or PR, before a merge ─→ risk-tiers (pro-ship)
   │   └ deploy to Vercel ──────────────────────→ vercel-deploy-bridge (pro-ship, opt-in, bridge: /pro-dev install); ci-cd-and-automation, shipping-and-launch, docs, deprecation (still planned)
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```

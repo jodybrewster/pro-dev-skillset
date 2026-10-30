@@ -21,6 +21,7 @@ Hook scripts under `plugins/*/scripts/` run on every matching tool call in every
 - A blocking decision is a `deny` (PreToolUse) or `block` (Stop, UserPromptSubmit) with a `reason` the user and the model can act on, and it blocks what the hook was written to block.
 - A malformed, empty or unexpected payload must not crash the user's turn or wedge the session: the script catches its own errors, exits cleanly and never loops a Stop block (check `stop_hook_active`).
 - A hook does not run network calls, write outside the project or the plugin's own state or execute text taken from the payload.
+  The pro-ship merge gate's `gh pr view` and `git fetch` are the approved exception (ADR-0015 amendment, Jody 2026-10-30).
 
 Secrets and personal data:
 

@@ -263,7 +263,9 @@ Serial tail.
 The step most likely to go wrong is step 11.
 It depends on Claude Code behavior this repo cannot pin, on `--permission-prompts none` meaning what its help text says and on a nested `claude -p` run working inside a builder session.
 `-p` is also only a proxy for an interactive prompt: a mode could behave differently with a person at the terminal.
-The rule only drops a mode from the deny set when the probe shows the `ask` held so a wrong reading costs a denied merge, never a silent one and every gate stays in warn while Jody can repeat the check by hand.
+`NO_PROMPT_MODES` keeps `bypassPermissions`, `dontAsk` and `auto` and fails closed: a mode leaves the set only after an interactive ask check per mode (Jody).
+If the set were too small, a mode where an ask does not prompt would let a high merge through, so the headless probe is evidence and not a reason to shrink it.
+Every gate also stays in warn until that check is done.
 
 The next weakest is step 3.
 The fixture that removes the head from the local clone relies on `reflog expire` and `gc --prune=now`; if the object survives, mg220 passes without fetching.
@@ -390,3 +392,4 @@ Added in the same commit as the change that departs, or in this one where noted.
 - Step 9: the push gate command prints nothing when no state file is newer than `SINCE` on macOS xargs, which reads as zero.
 - Step 11: the probe found the ask held in every mode, so `NO_PROMPT_MODES` is empty and mg80's deny cases are gone; mg81 now asks under all seven mode values and mg84 asks. While the set is empty the deny branch of the gate has no case (`PROBED_NO_PROMPT` in the test file takes a mode if one is added). Three extra control runs (plain echo under the three modes that were in the old set) were added to show the ask caused the denial.
 - Orchestrator decisions applied: `/merge-pr` is already edited outside this repo, so it is listed as done and not as a blocker in `docs/enforce-mode.md`; the app repo reads "this repo plus one app repo (Jody to name: JJ or mieruka)" in the decision record.
+- Review round 1 fixes: the `gh api` merge path matches full URLs and query strings (mg250b to mg250e, mg251b to mg251e); `NO_PROMPT_MODES` is restored to `bypassPermissions`, `dontAsk` and `auto` (this reverses the step 11 departure above: mg81, mg84 and mg27x again cover the deny branch and mg120b covers it in the deadline path; the earlier risk statement that a wrong reading costs only a denied merge was wrong for a smaller set and is rewritten); the several-pins, ask and pinned-warn log lines name the PR and head sha (mg110, mg200, mg201); the gate classifies against `baseRefOid` when `gh pr view` gives it (mg223, mg224); `export GH_REPO=...` carries to later segments (mg218); more cases for a hanging fetch (mg222) and `--repo=` before `pr` (mg219).

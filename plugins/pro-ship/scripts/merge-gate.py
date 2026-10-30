@@ -40,15 +40,15 @@ import time
 
 HOOK = "merge-gate"
 # permission_mode values in which a hook "ask" is not known to prompt; in enforce these deny.
-# Probed headless on 2026-10-30, Claude Code 2.1.314: `claude -p` with --permission-prompts none
+# Fail closed: the set shrinks only after an interactive ask check per mode (Jody, 2026-10-30).
+# Evidence, probed headless on 2026-10-30, Claude Code 2.1.314: `claude -p` with --permission-prompts none
 # under each --permission-mode, a PreToolUse hook answering "ask" for one echo command. The ask
 # denied the command in every mode (the hook logged these permission_mode values): auto, default
 # (the flag value manual), acceptEdits, plan, dontAsk and bypassPermissions. A plain echo ran
 # under bypassPermissions, dontAsk and auto, so the denial came from the ask. plan is not
 # conclusive on its own (the mode may stop Bash itself) and was never in this set. The probe is a
-# proxy for a person at the terminal: repeat it interactively before any enforce switch, and add
-# a mode here if a live ask does not prompt.
-NO_PROMPT_MODES: set[str] = set()
+# proxy for a person at the terminal, so it does not shrink this set on its own.
+NO_PROMPT_MODES: set[str] = {"bypassPermissions", "dontAsk", "auto"}
 DEADLINE = 20
 try:  # test hook: a shorter deadline for the slow-module case
     DEADLINE = float(os.environ.get("PRO_SHIP_MERGE_GATE_DEADLINE") or DEADLINE)
@@ -304,7 +304,7 @@ def merge_selector(args: list[str]) -> str:
 
 API_VALUE_FLAGS = {"-X", "--method", "-f", "--raw-field", "-F", "--field", "-H", "--header", "-q", "--jq",
                    "-t", "--template", "--input", "--hostname", "--cache", "-p", "--preview"}
-API_MERGE_RE = re.compile(r"^/?repos/([^/]+)/([^/]+)/pulls/(\d+)/merge$")
+API_MERGE_RE = re.compile(r"(?:^|/)repos/([^/]+)/([^/]+)/pulls/(\d+)/merge(?:[/?]|$)")
 GRAPHQL_MERGES = ("mergePullRequest", "enablePullRequestAutoMerge")
 
 
@@ -359,6 +359,11 @@ def actions(command: str, base: str | None, env_repo: str | None = None) -> list
         if toks[0] in ("pushd", "popd"):
             cur = None
             continue
+        if toks[0] == "export":  # `export GH_REPO=o/r && gh pr merge 42` carries to the later segments
+            for t in toks[1:]:
+                if t.startswith("GH_REPO=") and t.split("=", 1)[1]:
+                    env_repo = t.split("=", 1)[1]
+            continue
         i = skip_wrappers(toks)
         if i >= len(toks):
             continue
@@ -405,7 +410,7 @@ def actions(command: str, base: str | None, env_repo: str | None = None) -> list
                 if any(m in a for a in rest for m in GRAPHQL_MERGES):
                     found.append({"dir": cur, "args": args, "kind": "graphql-merge", "selector": "", "repo": None})
                 continue
-            m = API_MERGE_RE.match(path)
+            m = API_MERGE_RE.search(path)
             if m and method != "GET":
                 owner, name_, number = m.groups()
                 repo = None if (owner, name_) == ("{owner}", "{repo}") else f"{owner}/{name_}"
@@ -484,7 +489,7 @@ def repo_root(directory: str | None) -> str:
 def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, int]:
     """(base, head, number) of the PR the merge names, read through `gh pr view`."""
     cmd = ["gh", "pr", "view"] + ([selector] if selector else []) + [
-        "--json", "number,headRefOid,baseRefName,headRepository"] + (["-R", repo] if repo else [])
+        "--json", "number,headRefOid,baseRefName,baseRefOid,headRepository"] + (["-R", repo] if repo else [])
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=5, errors="replace", cwd=root,
                            env={**os.environ, "GH_PROMPT_DISABLED": "1"})
@@ -518,6 +523,18 @@ def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, in
                 raise CouldNotRun("fetch failed")
             if run_git(root, "cat-file", "-e", f"{head}^{{commit}}").returncode != 0:
                 raise CouldNotRun("head not found after fetch")
+        base_oid = data.get("baseRefOid")
+        if isinstance(base_oid, str) and re.fullmatch(r"[0-9a-fA-F]{40,64}", base_oid):
+            # classify against the base tip GitHub reports, never a stale local copy of the base
+            base_oid = base_oid.lower()
+            if run_git(root, "cat-file", "-e", f"{base_oid}^{{commit}}").returncode != 0:
+                try:
+                    f = run_git(root, "fetch", "--no-tags", "origin", f"refs/heads/{base_name}", timeout=8)
+                except subprocess.TimeoutExpired:
+                    raise CouldNotRun("base fetch failed")
+                if f.returncode != 0 or run_git(root, "cat-file", "-e", f"{base_oid}^{{commit}}").returncode != 0:
+                    raise CouldNotRun("base fetch failed")
+            return base_oid, head, number
         for cand in (f"origin/{base_name}", base_name):
             if run_git(root, "rev-parse", "--verify", "-q", f"{cand}^{{commit}}").returncode == 0:
                 return cand, head, number
@@ -568,6 +585,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
     if unknown is not None:
         log(HOOK, "could-not-run", f"{unknown} (treated as high)", cwd)
         head_note = ""
+        ident = ""
         body = f"tier unknown, treated as high: the classifier could not run ({unknown})."
         tier = "high"
     else:
@@ -580,9 +598,9 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
             msg = (f"[{HOOK}] {tier} risk merge of PR {res['pr']} has several different pins ({', '.join(pins)}); "
                    f"the last one wins. Give one, {flag}. {summary(res)}")
             if enforcing:
-                log(HOOK, "deny", f"{tier} several pins", cwd)
+                log(HOOK, "deny", f"{tier} several pins PR {res['pr']} {head[:8]}", cwd)
                 return 3, msg
-            log(HOOK, "warn", f"{tier} several pins", cwd)
+            log(HOOK, "warn", f"{tier} several pins PR {res['pr']} {head[:8]}", cwd)
             return 1, msg + " (warn mode: allowed)"
         sha = pins[-1] if pins else None
         valid = (sha is not None and re.fullmatch(r"[0-9a-fA-F]{7,64}", sha) is not None
@@ -596,6 +614,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
                 return 3, msg
             log(HOOK, "warn", f"{tier} PR {res['pr']} pin missing {head[:8]}", cwd)
             return 1, msg + " (warn mode: allowed)"
+        ident = f" PR {res['pr']} {head[:8]}"
         head_note = f" PR {res['pr']} head {head}."
         body = summary(res)
 
@@ -604,12 +623,12 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
         text = f"[{HOOK}] {body} This approval covers whatever the PR head is when it merges."
     if enforcing:
         if no_prompt:
-            log(HOOK, "deny", f"{tier} {permission_mode}", cwd)
+            log(HOOK, "deny", f"{tier} {permission_mode}{ident}", cwd)
             return 3, (f"[{HOOK}] {tier} risk merge: approval needs a prompt and this session cannot show one "
                        f"(permission_mode {permission_mode}). Rerun in default mode or merge by hand after review. {text}")
-        log(HOOK, "ask", f"{tier}", cwd)
+        log(HOOK, "ask", f"{tier}{ident}", cwd)
         return 2, text
-    log(HOOK, "warn", f"{tier}" + (" unknown" if unknown else ""), cwd)
+    log(HOOK, "warn", f"{tier}" + (" unknown" if unknown else "") + ident, cwd)
     return 1, text + " (warn mode: allowed)"
 
 
