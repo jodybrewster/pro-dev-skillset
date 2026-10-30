@@ -25,6 +25,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-data | nextauth-patterns | [a5c-ai/babysitter](https://github.com/a5c-ai/babysitter) | MIT | Copyright (c) 2025 A5C AI | forked |
 | pro-data | prisma-schema-patterns | [IvanTorresEdge/molcajete.ai](https://github.com/IvanTorresEdge/molcajete.ai) | MIT | Copyright 2025 Ivan Torres | forked |
 | pro-design | accessibility-audit | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
+| pro-design | accessibility-audit (references/accessibility-checklist.md) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-design | design-token | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
 | pro-design | motion-system | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
 | pro-design | typography-scale | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
@@ -49,6 +50,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-design | taste-skills-bridge | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT | Copyright (c) 2026 Leonxlnx | bridged |
 | pro-execution | subagent-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | systematic-debugging | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
+| pro-execution | systematic-debugging (Untrusted error output and non-reproducible-bugs.md) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-execution | test-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | using-git-worktrees | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-nextjs | next-best-practices | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
@@ -80,6 +82,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-testing | vitest | [PaulRBerg/agent-skills](https://github.com/PaulRBerg/agent-skills) | MIT | Copyright (c) 2025 Paul Razvan Berg | forked |
 | pro-testing | storybook-interactions | [peterknezek/skills](https://github.com/peterknezek/skills) | MIT | Copyright (c) 2026 Peter Knezek | forked |
 | pro-testing | agent-browser | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | Apache-2.0; no NOTICE file upstream | Copyright 2025 Vercel Inc. | forked |
+| pro-testing | agent-browser (Security boundaries section) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-testing | qa-suite | [petrkindlmann/qa-skills](https://github.com/petrkindlmann/qa-skills) | MIT | Copyright (c) 2026 Petr Kindlmann | bridged |
 
 The pro-nextjs rows were closed on 2026-10-16.

@@ -8,6 +8,9 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
 - peterknezek/skills (https://github.com/peterknezek/skills) - used for: storybook-interactions
   Copyright (c) 2026 Peter Knezek
 
+- addyosmani/agent-skills (https://github.com/addyosmani/agent-skills) - adapted for: the Security boundaries section of agent-browser
+  Copyright (c) 2025 Addy Osmani
+
 It also BRIDGES to the following MIT-licensed library without vendoring any of its
 content. The `qa-suite` skill is an original pointer and `/pro-dev install` installs the library
 in place via `npx skills add`; install and license terms are governed by the upstream repo:
