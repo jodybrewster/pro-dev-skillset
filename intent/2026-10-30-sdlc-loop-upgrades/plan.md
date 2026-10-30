@@ -284,7 +284,7 @@ Filled in when the build is finished, before sign-off.
 - AC12: pass (anchors in `/adr` and `templates/adr.md`; `/spec` points to `/adr` step 2).
 - AC13: pass (anchors in both simplifier twins).
 - AC14: pass (footers present, `docs/licenses.md` row and the LICENSE line added).
-- AC15: pass (0.10.0 in both manifests and the marketplace entry, descriptions identical, `metadata.version` 1.65.0; main had not moved from 0.9.0 and 1.64.0).
+- AC15: pass (0.10.0 in both manifests and the marketplace entry, descriptions identical, `metadata.version` 1.66.0 after rebasing onto #97, which took 1.65.0).
 - AC16: pass (ADR-0017 is `proposed` with its index row).
 - Sign-off: <the person's words and the date>
 
