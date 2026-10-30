@@ -184,7 +184,21 @@ export function runRequiredDocsCases() {
       const noReview = mkrepo({ "README.md": "# r\n" });
       const first = git(noReview, "rev-parse", "HEAD").stdout.trim();
       const ok = run(noReview, ["--json", "--policy-ref", first]);
-      add("policy-ref-no-review", "a base with no REVIEW.md stays defaults", ok.json?.source === "defaults" && base !== "", ok.stdout + ok.stderr); }
+      add("policy-ref-no-review", "a base with no REVIEW.md stays defaults", ok.json?.source === "defaults" && base !== "", ok.stdout + ok.stderr);
+      const empty = run(repo, ["--json", "--policy-ref", ""]);
+      add("policy-ref-empty", "an empty ref is could-not-run, not defaults", empty.status === 2 && empty.json?.could_not_run === true, empty.stdout + empty.stderr); }
+    // 24b worktree empty folders, ./ prefix and indented list
+    { const repo = mkrepo({ "README.md": "# r\n", "CLAUDE.md": "# c\n", "AGENTS.md": "# a\n", "REVIEW.md": block("add: [docs/legal/]") });
+      mkdirSync(join(repo, "docs/decisions"), { recursive: true }); mkdirSync(join(repo, "docs/legal"), { recursive: true });
+      const e = run(repo, ["--json", "--worktree"]);
+      add("worktree-empty-folder", "--worktree: an empty folder is not present", has(e, "docs/decisions/", "docs/legal/"), e.stdout + e.stderr);
+      put(repo, { "docs/decisions/0001-x.md": "# x\n", "docs/legal/a.md": "# a\n" });
+      const f = run(repo, ["--json", "--worktree"]);
+      add("worktree-folder-file", "--worktree: a folder holding a file is present", hasNot(f, "docs/decisions/", "docs/legal/"), f.stdout + f.stderr); }
+    { const r = run(mkrepo({ ...ALWAYS, "SECURITY.md": "# s\n", "REVIEW.md": block("add: [./SECURITY.md]") }));
+      add("add-dot-slash", "an add entry with a leading ./ matches the tracked path", r.status === 0 && r.json?.source === "REVIEW.md", r.stdout + r.stderr);
+      const l = run(mkrepo({ ...ALWAYS, "REVIEW.md": block("add:\n  - SECURITY.md\n  - ./NOTICE.md") }));
+      add("add-indented-list", "the indented list form of add is read", l.json?.source === "REVIEW.md" && has(l, "SECURITY.md", "NOTICE.md"), l.stdout + l.stderr); }
     // 25 dot-prefixed workspace glob
     { const r = run(mkrepo({ ...ALWAYS, "package.json": pkg({ workspaces: ["./.config/*"] }), ".config/web/package.json": pkg({ dependencies: { react: "1" } }) }));
       add("ui-dot-glob", "a ./.config/* workspace glob keeps its leading dot", has(r, "DESIGN.md", "PRODUCT.md"), r.stdout + r.stderr); }

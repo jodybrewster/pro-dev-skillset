@@ -212,6 +212,8 @@ def parse_block(block):
     for doc in policy.get("add", []):
         if not doc or doc.startswith("/") or ".." in doc.split("/"):
             raise BlockError(f"add holds a path that is not repo-relative: {doc}")
+    if "add" in policy:
+        policy["add"] = [d.removeprefix("./") for d in policy["add"]]
     return policy
 
 
@@ -245,6 +247,11 @@ def is_present(doc, tracked):
     return doc in tracked
 
 
+def has_file(folder):
+    """git never tracks an empty folder, so --worktree needs a file somewhere under it."""
+    return any(files for _, _, files in os.walk(folder))
+
+
 def is_present_worktree(top, doc):
     """True when the path exists under top, resolving symlinks and refusing any that leave it."""
     root = os.path.realpath(top)
@@ -259,11 +266,13 @@ def is_present_worktree(top, doc):
         return real
 
     if doc == "docs/decisions/":
-        return any(inside(d) and os.path.isdir(inside(d)) for d in ("docs/decisions", "docs/adr"))
+        return any(inside(d) and os.path.isdir(inside(d)) and has_file(inside(d)) for d in ("docs/decisions", "docs/adr"))
     real = inside(doc.rstrip("/"))
     if not real:
         return False
-    return os.path.isdir(real) if doc.endswith("/") else os.path.isfile(real)
+    if doc.endswith("/"):
+        return os.path.isdir(real) and has_file(real)
+    return os.path.isfile(real)
 
 
 def agent_files_differ(repo, tracked):
@@ -302,7 +311,9 @@ def check(repo_arg, policy_ref, worktree=False):
         "architecture": {"holds": arch, "evidence": arch_ev},
     }
 
-    if policy_ref:
+    if policy_ref is not None:
+        if policy_ref == "":
+            raise NotRunnable("empty policy ref")
         if policy_ref.startswith("-"):
             raise NotRunnable("policy ref must not start with -")
         ok, _ = git(top, "cat-file", "-e", f"{policy_ref}^{{commit}}")

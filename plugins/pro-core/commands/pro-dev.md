@@ -253,7 +253,8 @@ Do this after the folders and the review policy, so a `REVIEW.md` written above 
    When the template file is missing, report "no template for <doc> in the installed pro-ai-sdlc; run /pro-dev update" and go on.
 
 5. Make the agent file pair.
-   When AGENTS.md is missing, make it a symlink with `ln -s CLAUDE.md AGENTS.md`, or a pointer file that says to read CLAUDE.md when the person chose a pointer or the symlink fails.
+   When AGENTS.md exists in any form (a file or a symlink, dangling ones included), do not write it and report it; check with `test -e AGENTS.md || test -L AGENTS.md`.
+   Only when no AGENTS.md path exists, make it a symlink with `ln -s CLAUDE.md AGENTS.md`, or a pointer file that says to read CLAUDE.md when the person chose a pointer or the symlink fails.
    When the repo's file is AGENTS.md and CLAUDE.md is missing, do the same the other way round with `ln -s AGENTS.md CLAUDE.md`.
    Never write a copy.
 
