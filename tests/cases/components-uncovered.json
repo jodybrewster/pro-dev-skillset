@@ -142,5 +142,9 @@
   {
     "id": "pro-ai-sdlc/agent:simplifier",
     "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
+  },
+  {
+    "id": "pro-ai-sdlc/skill:doubt-driven-development",
+    "reason": "a positive eval needs a live /execute build with a subagent dispatch; covered by the doubt check and the manual trial"
   }
 ]
