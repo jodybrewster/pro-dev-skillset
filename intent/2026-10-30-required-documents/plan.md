@@ -303,7 +303,7 @@ Filled in when the build is finished, before sign-off.
 - AC8: not run, needs Jody (a hand run of `/pro-dev install` on a copy of a small app, which needs a model).
 - AC9: pass; both reviewer files name `ARCHITECTURE.md` in the compliance lens and `handoff.md` is unchanged.
 - AC10: pass; the diff is empty.
-- AC11: pass; the version-bump check passes with 0.22.0, 0.11.0, 0.16.0 and 0.6.0 in both manifests and the marketplace, and `metadata.version` 1.68.0.
+- AC11: pass; the version-bump check passes with pro-core 0.23.0, pro-ai-sdlc 0.12.0, pro-quality 0.16.0 and pro-ship 0.7.0 in both manifests and the marketplace, and `metadata.version` 1.70.0 (re-taken after PR 101 and PR 102 merged first).
 - AC12: pass; ADR-0020 is proposed with its index row and `docs/licenses.md` has the impeccable row.
 - AC13: pass; ARCHITECTURE.md and PRODUCT.md exist at the root, each path they name was checked with `ls` (the relative names left over were plugin-relative or slash commands), and REVIEW.md holds `add: [PRODUCT.md]`.
   PRODUCT.md leaves out Positioning, Brand Commitments and Accessibility & Inclusion because the code cannot inform them.

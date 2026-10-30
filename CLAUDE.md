@@ -75,14 +75,14 @@ claude plugin validate . --strict
 ( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
 ```
 
-Expected output, from a real run on 2026-10-30 (the 12 warnings are agents with no routing case; a skill with none fails unless it is in `tests/cases/uncovered.json`):
+Expected output, from a real run on 2026-10-30 (the 10 warnings are agents with no routing case; a skill with none fails unless it is in `tests/cases/uncovered.json`):
 
 ```
-✓ 36 checks · 0 failures · 12 warnings
-✓ 88 cases reference real skills · 98 skills in catalog + 7 distractors
+✓ 37 checks · 0 failures · 10 warnings
+✓ 89 cases reference real skills · 99 skills in catalog + 7 distractors
 (skipped live routing: no ANTHROPIC_API_KEY. Set ANTHROPIC_API_KEY to run the model.)
-rank-1: 69/87 (79.3%)  top-k: 83/87 (95.4%)  notOneOf failures: 3
-# pass 166
+rank-1: 70/88 (79.5%)  top-k: 84/88 (95.5%)  notOneOf failures: 3
+# pass 167
 ✔ Validation passed
 ```
 
