@@ -22,7 +22,7 @@ Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-fl
 - Flagged concerns 1-4 resolved on 2026-10-29 with the recommendations: copy the mode lookup into pro-quality; accept pro-quality's mixed hook behavior for now; enforce mode denies every retry; the verifier reading `CONSTRAINTS.md` is a follow-up change.
 - Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks (guard and tests; template, skill and command; pro-ai-sdlc reviewer; licensing and docs) plus a serial tail; status draft.
   Jody approved on 2026-10-29 three spec changes found while planning: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
-- Next steps: Jody approves the plan, commit it as `plan: constraint-floor`, then `/execute intent/2026-10-29-constraint-floor/plan.md` (Opus builds, dispatching parallel subagents for the independent steps).
+- Next steps: Jody approves the plan, then the build runs on the intent's branch and lands in [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (Opus builds, dispatching parallel subagents for the independent steps).
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
 
@@ -58,6 +58,8 @@ Cross-cutting decisions for Jody:
   Recommended: fold review convergence and the handoff contract into one "review contract" ADR, making four.
 - Every spec names a version bump that collides with the others (pro-quality, pro-ai-sdlc, metadata.version); the recommendation in each is to take the next number over main at build time and stack the PRs.
 - Build order: constraint-floor and review-policy can run in parallel; then code-reviewer; then pr-gate; then risk-tiers.
+- One PR per intent (Jody, 2026-10-29): each intent's PR holds its intent, spec, plan and build, and stays a draft until the build lands.
+  constraint-floor [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81), review-policy [#82](https://github.com/jodybrewster/pro-dev-skillset/pull/82), code-reviewer [#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), pr-gate [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84) and risk-tiers [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85).
 
 Plans: review-policy and code-reviewer have draft plans.
 review-policy's plan assumes, not yet confirmed: round cap three for every round, the finding count first and no REVIEW.md refresh in `/pro-dev update`.
