@@ -1,8 +1,8 @@
 # Plan: P0 hardening before any gate moves to enforce mode
 
 Built from `spec.md` (commit on branch `feat/p0-hardening`, written 2026-10-30) and `intent.md` in this folder.
-Status: draft.
-Approver: Jody Brewster.
+Status: approved.
+Approver: Jody Brewster, approved 2026-10-30 as part of the batch.
 It changes a hook that every repo with pro-ship runs on `gh pr merge` and gives it network calls, which is why an approver is named.
 No second approver is needed: Jody owns this marketplace and decided the open questions on 2026-10-30.
 The blast radius is bounded: every gate stays in warn mode, a failed network call reads as high and never as low and the classifier itself stays network-free.
