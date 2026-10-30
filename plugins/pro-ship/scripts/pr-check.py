@@ -8,7 +8,15 @@ restores it before it returns):
                                    run one step (or all), merge the record into
                                    .pro-dev/ship/run.json keyed by HEAD. NAME is a discovered
                                    step, `floor` or `mutation`.
-  find PLUGIN FILE                 print the path of a sibling plugin's script, or not-installed
+  find PLUGIN FILE                 print the path of a sibling plugin's script, or not-installed.
+                                   FILE with a `/` is a path inside the plugin (for example
+                                   .codex-plugin/agents/code-reviewer.toml); an absolute path, a
+                                   `..` part or a backslash prints not-installed.
+  codex-trigger --tier TIER        print {run, setting, reason}: whether the Codex second review
+                                   runs, from the `codex-review:` line of REVIEW.md (ADR-0018)
+  agree --code FILE --codex FILE   pair the findings of two review reports by file and nearby
+                                   lines; prints each side's findings and the agreed, disputed,
+                                   code_only and codex_only lists. No model takes part.
   stamp [--base REF] [--tier TIER] [--risk FILE] [--reviewers JSON] [--accept-mutation]
                                    write .pro-dev/ship/pr-check.json from run.json and the
                                    reviewer records. The contract is docs/pr-check-stamp.md.
@@ -460,10 +468,13 @@ def is_under(path: str, ancestor: str) -> bool:
 
 
 def find_sibling(root: str, plugin: str, filename: str) -> str:
-    """Path of <plugin>/scripts/<filename>, or "not-installed". Order: in-place sibling, install
+    """Path of <plugin>/scripts/<filename> (or <plugin>/<filename> when it holds a `/`), or "not-installed". Order: in-place sibling, install
     record (project or local record for this repo or an ancestor, then user), the repo's own
     plugins/ folder when its marketplace lists the plugin."""
-    rel = os.path.join("scripts", filename)
+    parts = filename.replace("\\", "/").split("/")
+    if filename.startswith("/") or ".." in parts or "\\" in filename:
+        return "not-installed"
+    rel = filename if "/" in filename else os.path.join("scripts", filename)
     inplace = os.path.join(os.path.dirname(OWN_ROOT), plugin, rel)
     if os.path.isfile(inplace):
         return inplace
@@ -737,10 +748,106 @@ def reviewer_record(raw, which: str) -> dict:
             "important": count(raw.get("important", 0), "important"), "range": rng}
 
 
+# ---------------------------------------------------------------------------
+# Codex second review (ADR-0018): trigger, agreement and the stamp record
+# ---------------------------------------------------------------------------
+
+# Two findings in the same file match when their line ranges, each widened by NEAR lines on both
+# sides, overlap. Five catches one bug cited a few lines apart; tune it after the first high-tier
+# PRs (ADR-0018).
+NEAR = 5
+CODEX_STATUS = ("done", "skipped", "not-installed", "could-not-run")
+SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing)\b", re.I)
+ITEM_RE = re.compile(r"^\s*(?:-|\d+\.)\s")
+LOC_RE = re.compile(r"`?([A-Za-z0-9_./-]+):(\d+)(?:-(\d+))?`?")
+
+
+def cmd_codex_trigger(root: str, args: list[str]) -> dict:
+    tier = flag(args, "--tier") or "unclassified"
+    setting, note = "high", ""
+    for ln in read(os.path.join(root, "REVIEW.md")).splitlines():
+        m = re.match(r"^\s*codex-review:\s*(\S+)\s*$", ln, re.I)
+        if m:
+            value = m.group(1).lower()
+            if value in ("always", "high", "never"):
+                setting = value
+            else:
+                note = f"unknown codex-review value {m.group(1)!r} read as high; "
+            break
+    if setting == "never":
+        return {"run": False, "setting": setting, "reason": "codex-review: never"}
+    if setting == "always":
+        return {"run": True, "setting": setting, "reason": "codex-review: always"}
+    if tier == "high":
+        return {"run": True, "setting": setting, "reason": note + "tier high"}
+    return {"run": False, "setting": setting, "reason": note + f"tier {tier}"}
+
+
+def parse_findings(text: str) -> list[dict]:
+    """Findings of one review report: list items with a path:line location, tagged by the
+    nearest Important, Nits or Pre-existing heading above them."""
+    out, severity = [], "unknown"
+    for line in text.splitlines():
+        if ITEM_RE.match(line):
+            m = LOC_RE.search(line)
+            if m:
+                start = int(m.group(2))
+                end = int(m.group(3)) if m.group(3) else start
+                out.append({"severity": severity, "path": m.group(1), "start": start, "end": max(start, end), "text": line.strip()})
+            continue
+        h = SECTION_RE.match(line)
+        if h:
+            word = h.group(1).lower()
+            severity = "nit" if word.startswith("nit") else word
+    return out
+
+
+def near(a: dict, b: dict) -> bool:
+    return a["path"] == b["path"] and a["start"] - NEAR <= b["end"] + NEAR and b["start"] - NEAR <= a["end"] + NEAR
+
+
+def cmd_agree(args: list[str]) -> dict:
+    code_path, codex_path = flag(args, "--code"), flag(args, "--codex")
+    if not code_path or not codex_path:
+        raise Refuse("pr-check: usage: agree --code FILE --codex FILE")
+    code, codex = parse_findings(read(code_path)), parse_findings(read(codex_path))
+    taken: set[int] = set()
+    agreed, disputed = [], []
+    for i, c in enumerate(code):
+        for j, x in enumerate(codex):
+            if j not in taken and near(c, x):
+                taken.add(j)
+                (agreed if c["severity"] == x["severity"] else disputed).append([i, j])
+                break
+    paired_code = {i for i, _ in agreed + disputed}
+    return {"code": code, "codex": codex, "agreed": agreed, "disputed": disputed,
+            "code_only": [i for i in range(len(code)) if i not in paired_code],
+            "codex_only": [j for j in range(len(codex)) if j not in taken],
+            "counts": {"agreed": len(agreed), "disputed": len(disputed)}}
+
+
+def codex_record(raw) -> dict:
+    """reviewers.codex: informational, never blocking and never read by the result rule."""
+    if not isinstance(raw, dict):
+        raise Refuse("pr-check: reviewers.codex must be an object")
+    status = raw.get("status", "could-not-run")
+    if status not in CODEX_STATUS:
+        raise Refuse(f"pr-check: reviewers.codex.status must be one of {', '.join(CODEX_STATUS)}")
+    agent, reason, rng = raw.get("agent"), raw.get("reason"), raw.get("range")
+    if any(v is not None and not isinstance(v, str) for v in (agent, reason, rng)):
+        raise Refuse("pr-check: reviewers.codex agent, reason and range must be strings or null")
+    if count(raw.get("blocking", 0), "blocking") != 0:
+        raise Refuse("pr-check: reviewers.codex.blocking must be 0, a Codex finding never blocks")
+    return {"agent": agent, "status": status, "reason": reason, "blocking": 0,
+            "important": count(raw.get("important", 0), "important"),
+            "agreed": count(raw.get("agreed", 0), "agreed"),
+            "disputed": count(raw.get("disputed", 0), "disputed"), "range": rng}
+
+
 def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None) -> str:
     """The result rule of docs/pr-check-stamp.md; the first match wins."""
     if (any(c.get("status") == "fail" for c in checks) or floor == "findings"
-            or any(r["blocking"] > 0 for r in reviewers.values())):
+            or any(reviewers[k]["blocking"] > 0 for k in ("code", "security"))):
         return "fail"
     if missing:
         return "incomplete"
@@ -804,6 +911,8 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     if not isinstance(revs, dict):
         raise Refuse("pr-check: --reviewers must be a JSON object with code and security")
     reviewers = {k: reviewer_record(revs.get(k), k) for k in ("code", "security")}
+    if "codex" in revs:
+        reviewers["codex"] = codex_record(revs["codex"])
     try:
         run = json.loads(read(run_path(root)))
     except ValueError:
@@ -879,6 +988,12 @@ def main(argv: list[str]) -> int:
             if len(rest) != 2:
                 raise Refuse("pr-check: usage: find <plugin> <file>")
             print(find_sibling(repo_root(), rest[0], rest[1]))
+            return 0
+        if cmd == "codex-trigger":
+            emit(cmd_codex_trigger(repo_root(), rest))
+            return 0
+        if cmd == "agree":
+            emit(cmd_agree(rest))
             return 0
         if cmd == "run":
             emit(cmd_run(repo_root(), rest))

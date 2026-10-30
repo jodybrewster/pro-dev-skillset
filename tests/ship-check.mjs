@@ -75,10 +75,122 @@ export function runShipCheckCases() {
     findFloorCases();
     mutationCases();
     stampCases();
+    codexCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
   return out;
+
+  // -------------------------------------------------------------------------
+  // Codex second review (ADR-0018): find by relative path, codex-trigger, agree and the
+  // optional reviewers.codex stamp record.
+  // -------------------------------------------------------------------------
+  function codexCases() {
+    // find PLUGIN <plugin-relative path>, run from a copy of pr-check.py placed in a throwaway layout.
+    const TWIN = ".codex-plugin/agents/code-reviewer.toml";
+    const base = join(sandbox, "codexlay");
+    mkdirSync(join(base, "plugins", "pro-ship", "scripts"), { recursive: true });
+    copyFileSync(PRCHECK, join(base, "plugins", "pro-ship", "scripts", "pr-check.py"));
+    const script = join(base, "plugins", "pro-ship", "scripts", "pr-check.py");
+    rmSync(join(env.CLAUDE_CODE_PLUGIN_CACHE_DIR, "installed_plugins.json"), { force: true });
+    const fr = mkrepo({
+      ".claude-plugin/marketplace.json": JSON.stringify({ name: "m", plugins: [{ name: "pro-quality" }] }),
+      [`plugins/pro-quality/${TWIN}`]: "developer_instructions = \"\"\"x\"\"\"\n",
+    });
+    const find = (...a) => pc(fr, ["find", "pro-quality", ...a], { script }).stdout.trim();
+    add("k1 find with a plugin-relative path prints that path", "the repo copy", find(TWIN) === join(fr, "plugins", "pro-quality", TWIN), find(TWIN));
+    add("k1b find with a .. path prints not-installed", "not-installed", find("../x.toml") === "not-installed" && find(".codex-plugin/../../x") === "not-installed", find("../x.toml"));
+    add("k1c find with an absolute path prints not-installed", "not-installed", find("/etc/passwd") === "not-installed", find("/etc/passwd"));
+    add("k1d find with a backslash path prints not-installed", "not-installed", find("a\\b/c") === "not-installed", find("a\\b/c"));
+    add("k1e a relative path to a missing file prints not-installed", "not-installed", find(".codex-plugin/agents/none.toml") === "not-installed", find(".codex-plugin/agents/none.toml"));
+    const plain = mkrepo({ ".claude-plugin/marketplace.json": JSON.stringify({ name: "m", plugins: [{ name: "pro-quality" }] }), "plugins/pro-quality/scripts/floor-guard.py": "x\n" });
+    add("k1f the bare form still resolves under scripts/", "the scripts path", pc(plain, ["find", "pro-quality", "floor-guard.py"], { script }).stdout.trim() === join(plain, "plugins", "pro-quality", "scripts", "floor-guard.py"), "");
+
+    // codex-trigger: setting by tier.
+    const trig = (line, tier) => {
+      const t = mkrepo(line === null ? {} : { "REVIEW.md": `# Review\n\n${line}\n` });
+      return pc(t, ["codex-trigger", "--tier", tier]).json;
+    };
+    const table = [
+      [null, "high", { high: true, medium: false, low: false, unclassified: false }],
+      ["codex-review: always", "always", { high: true, medium: true, low: true, unclassified: true }],
+      ["codex-review: high", "high", { high: true, medium: false, low: false, unclassified: false }],
+      ["codex-review: never", "never", { high: false, medium: false, low: false, unclassified: false }],
+      ["CODEX-REVIEW: Never", "never", { high: false, medium: false, low: false, unclassified: false }],
+      ["codex-review: sometimes", "high", { high: true, medium: false, low: false, unclassified: false }],
+    ];
+    for (const [line, setting, byTier] of table) {
+      for (const [tier, want] of Object.entries(byTier)) {
+        const j = trig(line, tier);
+        add(`k2 codex-trigger ${line ?? "(no line)"} at ${tier}`, `run ${want}, setting ${setting}`,
+          j?.run === want && j.setting === setting && typeof j.reason === "string" && j.reason.length > 0, JSON.stringify(j));
+      }
+    }
+    add("k2b an unknown setting names the value in its reason", "reason holds sometimes", /sometimes/.test(trig("codex-review: sometimes", "high")?.reason || ""), JSON.stringify(trig("codex-review: sometimes", "high")));
+    add("k2c tier unclassified under high says why", "reason tier unclassified", trig(null, "unclassified")?.reason === "tier unclassified", JSON.stringify(trig(null, "unclassified")));
+
+    // agree: two report files, deterministic pairing.
+    const dir = join(sandbox, "agree");
+    mkdirSync(dir, { recursive: true });
+    const agree = (claude, codex) => {
+      writeFileSync(join(dir, "code.md"), claude);
+      writeFileSync(join(dir, "codex.md"), codex);
+      return pc(fr, ["agree", "--code", join(dir, "code.md"), "--codex", join(dir, "codex.md")]).json;
+    };
+    const DASH = "—";
+    const SPIKE = (loc, sev = "Important findings:") => `important: 1  nits: 0  pre-existing: 0  skipped: 0\nIgnored from the handoff: none.\n\n${sev}\n1. **Correctness · Pass 1 · Important** ${DASH} \`${loc}\` a failure scenario.\n\nNits: none.\nPre-existing: none.\n`;
+    const CLAUDE = (loc, head = "Important") => `important: 1  nits: 0  pre-existing: 0  skipped: 0\n\n${head}\n- [correctness] ${loc} - x\n`;
+    let g = agree(CLAUDE("src/a.py:10"), SPIKE("src/a.py:12"));
+    add("k3 a Claude bullet and a Codex numbered item at nearby lines are agreed", "one agreed, no dispute",
+      g?.counts?.agreed === 1 && g.counts.disputed === 0 && g.agreed?.length === 1 && g.code?.length === 1 && g.codex?.length === 1 && g.code[0].path === "src/a.py" && g.codex[0].start === 12, JSON.stringify(g));
+    g = agree(CLAUDE("src/a.py:10", "Nits"), SPIKE("src/a.py:12"));
+    add("k3b the same place rated nit and Important is disputed", "one disputed", g?.counts?.disputed === 1 && g.counts.agreed === 0 && g.disputed?.length === 1, JSON.stringify(g));
+    g = agree(CLAUDE("src/a.py:10"), SPIKE("src/a.py:30"));
+    add("k3c far apart lines give one code_only and one codex_only", "[0] and [0]", JSON.stringify(g?.code_only) === "[0]" && JSON.stringify(g?.codex_only) === "[0]" && g.counts.agreed === 0, JSON.stringify(g));
+    g = agree(CLAUDE("src/a.py:10-20"), SPIKE("src/a.py:24"));
+    add("k3d a range and a line within five agree", "agreed 1", g?.counts?.agreed === 1, JSON.stringify(g));
+    g = agree(CLAUDE("src/a.py:10"), SPIKE("src/b.py:10"));
+    add("k3e different paths never agree", "agreed 0", g?.counts?.agreed === 0 && g.code_only?.length === 1, JSON.stringify(g));
+    g = agree("Important\n- no location here at all\n", SPIKE("src/a.py:10"));
+    add("k3f a line with no location is not a finding", "no code findings", g?.code?.length === 0 && g.codex?.length === 1, JSON.stringify(g));
+    g = agree(`Important\n- [a] src/a.py:10 - one\n- [b] src/a.py:12 - two\n`, SPIKE("src/a.py:11"));
+    add("k3g one Codex finding pairs only once", "one agreed, one code_only", g?.counts?.agreed === 1 && g.code_only?.length === 1 && g.codex_only?.length === 0, JSON.stringify(g));
+    g = agree(`## Pre-existing\n- [a] src/a.py:10 - one\n`, `Pre-existing:\n1. \`src/a.py:10\` old\n`);
+    add("k3h Pre-existing sections are read and agree", "agreed 1", g?.counts?.agreed === 1 && g.code?.[0]?.severity === "pre-existing", JSON.stringify(g));
+
+    // stamp with reviewers.codex
+    const GOOD_RUN = { checks: ["build", "lint", "typecheck", "test"].map((step) => ({ step, command: `make ${step}`, status: "pass", exit_code: 0, output_tail: [] })), floor: "pass",
+      mutation: { status: "killed", reason: null, file: "src/index.ts", accepted: false }, sources: { "floor-guard": "/x/floor-guard.py" } };
+    const rv = (status, extra = {}) => ({ agent: status === "done" ? "pro-quality:code-reviewer" : null, status, blocking: 0, important: 0, range: null, ...extra });
+    const REV = { code: rv("done", { range: "BASE..HEAD" }), security: rv("skipped-no-surface") };
+    const CODEX = { agent: "codex:code-reviewer", status: "could-not-run", reason: "timeout", blocking: 0, important: 3, agreed: 0, disputed: 0, range: null };
+    const sp = (codex) => {
+      const repo = mkrepo({ "a.txt": "1\n" });
+      const baseSha = git(repo, "rev-parse", "HEAD").stdout.trim();
+      git(repo, "checkout", "-q", "-b", "feat");
+      const head = commit(repo, { "a.txt": "2\n" }, "feature");
+      mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+      writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...GOOD_RUN }));
+      const r = pc(repo, ["stamp", "--base", baseSha, "--reviewers", JSON.stringify(codex === undefined ? REV : { ...REV, codex })]);
+      let st = null;
+      try { st = JSON.parse(readFileSync(join(repo, ".pro-dev", "ship", "pr-check.json"), "utf8")); } catch { /* none */ }
+      return { r, st };
+    };
+    let x = sp(CODEX);
+    add("k4 a could-not-run codex record with important 3 leaves result pass and is written", "pass, eight keys",
+      x.r.status === 0 && x.st?.result === "pass" && Object.keys(x.st?.reviewers?.codex || {}).sort().join(",") === "agent,agreed,blocking,disputed,important,range,reason,status"
+      && x.st?.reviewers?.codex?.important === 3, x.r.stdout + x.r.stderr);
+    x = sp({ ...CODEX, blocking: 1 });
+    add("k4b codex.blocking above 0 is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
+    x = sp({ ...CODEX, status: "inline" });
+    add("k4c codex.status inline is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
+    x = sp({ ...CODEX, agreed: -1 });
+    add("k4d a negative codex count is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
+    x = sp(undefined);
+    add("k4e no codex key writes no reviewers.codex", "pass, no codex key", x.r.status === 0 && x.st?.result === "pass" && !("codex" in (x.st?.reviewers || {})), x.r.stdout + x.r.stderr);
+    x = sp({ ...CODEX, status: "done", important: 4, agreed: 1, disputed: 1, range: "A..B" });
+    add("k4f a done codex record with findings never changes result", "pass", x.st?.result === "pass" && x.st?.reviewers?.codex?.status === "done", x.r.stdout + x.r.stderr);
+  }
 
   // -------------------------------------------------------------------------
   // Step 2: discover (R3, AC3). Prints JSON and never writes.
