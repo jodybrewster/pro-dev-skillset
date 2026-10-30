@@ -1239,6 +1239,12 @@ checks["sdlc-contract"] = () => {
       if (!execC.includes(h)) failures.push(`pro-ai-sdlc: /execute does not name the plan's ${h} section`);
     if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
       failures.push("pro-ai-sdlc: /execute lost its never-merge line");
+    // loop guardrails (ADR-0017): the stop list, the scope rules and the definition-of-done pointer.
+    for (const a of ["## Stop list", "## Scope discipline", "## Noticed but not touched", "git add -A", "Things I didn't touch", "Potential concerns", "consented in Risks", "references/definition-of-done.md"])
+      if (!execC.includes(a)) failures.push(`pro-ai-sdlc: /execute lacks the anchor "${a}"`);
+    const stopBlock = execC.split(/^## Stop list\s*$/m)[1]?.split(/^## /m)[0] ?? "";
+    for (const w of ["auth", "migrations", "payments", "deploys", "secrets"])
+      if (!stopBlock.includes(w)) failures.push(`pro-ai-sdlc: /execute stop list does not name "${w}"`);
   }
   // review policy (R21): the template, the reviewer and its Codex twin, and /pr-babysit carry the convergence rules.
   const revT = read("templates/REVIEW.md") ?? "";
