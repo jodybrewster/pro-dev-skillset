@@ -9,9 +9,8 @@ Jody is named as approver because this change sets a rule every reviewer and gat
 The blast radius is one plugin and the test is mostly prose, so it does not suit auto mode.
 The wording of the rules is the product and the manual runs in steps 11 and 12 need a person to read the output.
 
-Prerequisite, not a step: the spec says the ADR for the convergence rules is "to be drafted" and does not list it among the files this change ships.
-So this plan treats the ADR as written and committed before the build starts (next free number is 0011, since ADR-0010 is the constraint-floor ADR).
-If Jody wants it to ship in this PR, add `docs/decisions/0011-review-convergence.md` and its row in `docs/decisions/README.md` as one more step before step 12.
+The ADR ships in this PR (Jody, 2026-10-30: one PR per intent, as ADR-0010 ships in the constraint-floor PR).
+`docs/decisions/0011-review-convergence.md` (proposed) and its row in `docs/decisions/README.md` are written in step 8; the sign-off moves the ADR to accepted.
 
 ## Files that change
 
@@ -21,6 +20,7 @@ If Jody wants it to ship in this PR, add `docs/decisions/0011-review-convergence
 - `plugins/pro-ai-sdlc/.codex-plugin/agents/reviewer.toml` (modified): the same instruction text as the agent file inside the TOML wrapper (R14).
 - `plugins/pro-ai-sdlc/commands/review.md` (modified): `--since <sha>`, the session's already-raised list, the dropped count, the Pre-existing group and the summary-first report (R15, R16).
 - `plugins/pro-ai-sdlc/commands/pr-babysit.md` (modified): the cap of three rounds in the heading, the Stop step and the Report step, Pre-existing threads skipped, a handled-threads list and one fix per class (R17 to R20).
+- `docs/decisions/0011-review-convergence.md` (new) and `docs/decisions/README.md` (modified): the ADR for the convergence rules, status proposed.
 - `docs/licenses.md` (modified): a pro-ai-sdlc row naming addyosmani/agent-skills as adapted for the optional lists.
   The existing "original" row is reworded so it no longer says no third-party text is included (AC8).
 - `plugins/pro-ai-sdlc/.claude-plugin/plugin.json` (modified): version 0.6.1 to 0.7.0.
@@ -68,6 +68,7 @@ Steps 8 and 9 come last so the version numbers are taken at merge time.
    - Fix every instance of one class in the same round and reply once per thread with the same commit.
 7. Run `node tests/check.mjs sdlc-contract` and expect it to pass. (R21, AC2, AC3, AC5)
 8. Add the `docs/licenses.md` row and reword the "original" row. (AC8)
+   Write ADR-0011, review convergence, status proposed, from the spec, and add its row to `docs/decisions/README.md`.
 9. Bump the versions at merge time. (AC9)
    - Read the version on main first.
    - If this lands first, set both manifests and the marketplace entry to 0.7.0 and `metadata.version` to 1.60.0.
@@ -128,18 +129,18 @@ None.
 Installed repos only receive the new template on a fresh install.
 The plugin cache serves 0.7.0 once published.
 
-Assumed, confirm with Jody:
+Decisions:
 
 - Confirmed by Jody on 2026-10-30: the round cap is three and counts every `/pr-babysit` round, including rounds that fix failing checks and conflicts (spec open question 1, flagged concern 2).
 - Confirmed by Jody on 2026-10-30: the finding count moves to the top of the report as one summary line (spec open question 2).
 - Confirmed by Jody on 2026-10-30: `/pro-dev update` refreshing an older `REVIEW.md` is out of this change (spec open question 4, flagged concern 6).
-- Assumed, confirm with Jody: the ADR is a prerequisite and not a step in this PR.
+- Decided on 2026-10-30: the ADR ships in this PR, written in step 8.
 
 If any of these change, steps 1, 3, 5 and 6 are the ones to adjust.
 
 ## Options not taken
 
-- Put the ADR in this PR: the spec lists it as to be drafted and not among the shipped files, so it stays a prerequisite until Jody says otherwise.
+- The ADR as a prerequisite PR: one PR per intent puts it here instead.
 - Add the assertions after the prose: the checks would then only confirm what was just written, so they come first and fail first.
 - One shared sidecar for the rules: plugin files cannot be included across an agent file, so the five copies are guarded by the contract assertions instead (spec flagged concern 5).
 - Edit the two `review-*` evals to match the new format: their grader reads findings and not the tally position, so changing them adds cost with no gain.
