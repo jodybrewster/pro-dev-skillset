@@ -1341,7 +1341,7 @@ checks["handoff"] = () => {
     if (names.join(",") !== want.join(","))
       failures.push(`${f}: fields are [${names.join(", ")}], expected exactly [${want.join(", ")}]`);
     for (const m of text.matchAll(/\{\s*([A-Za-z_ -]+?)\s*\}/g))
-      if (/^(description|summary|findings)$/i.test(m[1])) failures.push(`${f}: placeholder {${m[1]}} is barred`);
+      if (/^(description|summary|findings|claim|reasoning)$/i.test(m[1])) failures.push(`${f}: placeholder {${m[1]}} is barred`);
   }
   const agent = "plugins/pro-quality/agents/code-reviewer.md";
   if (!existsSync(join(ROOT, agent))) failures.push(`${agent} missing`);
@@ -1349,6 +1349,48 @@ checks["handoff"] = () => {
     const body = readFileSync(join(ROOT, agent), "utf8");
     for (const w of want) if (!body.includes(w)) failures.push(`${agent} does not name the field "${w}"`);
   }
+  return { failures, warnings };
+};
+
+// Doubt step (R24, R25): the reviewer's instruction text has no slot for the author's claim,
+// the skill keeps its own four-field handoff matching pro-quality's, /execute names the skill
+// and the two copies of the Codex runner are byte-identical.
+checks["doubt"] = () => {
+  const failures = [], warnings = [];
+  const dir = "plugins/pro-ai-sdlc/skills/doubt-driven-development";
+  const rd = (f) => (existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : null);
+  for (const f of ["SKILL.md", "doubt-instructions.md", "handoff.md"])
+    if (rd(`${dir}/${f}`) === null) failures.push(`${dir}/${f} missing`);
+  const instr = rd(`${dir}/doubt-instructions.md`);
+  if (instr !== null) {
+    if (/\{[^}\n]*\}/.test(instr) || /<[A-Za-z][^>\n]*>/.test(instr)) failures.push("doubt-instructions.md has a placeholder in braces or angle brackets");
+    if (!instr.includes("Do not validate")) failures.push('doubt-instructions.md lacks "Do not validate"');
+  }
+  const skill = rd(`${dir}/SKILL.md`);
+  if (skill !== null) {
+    if (!skill.includes("three rounds")) failures.push('SKILL.md does not say "three rounds"');
+    if (!skill.includes("never sent to the reviewer")) failures.push('SKILL.md does not say the claim is "never sent to the reviewer"');
+  }
+  const mine = rd(`${dir}/handoff.md`), theirs = rd("plugins/pro-quality/skills/requesting-code-review/handoff.md");
+  if (mine !== null && theirs !== null) {
+    const names = (t) => [...(t.split(/^## Fields\s*$/m)[1]?.split(/^## /m)[0] ?? "").matchAll(/^- `([^`]+)`:/gm)].map((m) => m[1]).join(",");
+    if (names(mine) !== names(theirs)) failures.push(`${dir}/handoff.md names fields [${names(mine)}] but pro-quality's names [${names(theirs)}]`);
+    if (!mine.includes("Nothing else goes in any field")) failures.push(`${dir}/handoff.md lacks the closing "Nothing else goes in any field" line`);
+  }
+  const exec = rd("plugins/pro-ai-sdlc/commands/execute.md");
+  if (exec === null) failures.push("plugins/pro-ai-sdlc/commands/execute.md missing");
+  else {
+    if (!/^## Doubt\s*$/m.test(exec)) failures.push("commands/execute.md has no `## Doubt` heading");
+    if (!exec.includes("doubt-driven-development")) failures.push("commands/execute.md does not name doubt-driven-development");
+    if (exec.split("adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable)").length < 3) failures.push("commands/execute.md lacks the shared --draft phrase");
+    if (!exec.includes("classifier could not run")) failures.push('commands/execute.md lacks the loud "classifier could not run" line');
+  }
+  const ship = "plugins/pro-ship/scripts/codex-run.py", copy = "plugins/pro-ai-sdlc/scripts/codex-run.py";
+  const a = existsSync(join(ROOT, ship)) ? readFileSync(join(ROOT, ship)) : null;
+  const b = existsSync(join(ROOT, copy)) ? readFileSync(join(ROOT, copy)) : null;
+  if (!a && !b) failures.push(`${ship} missing`);
+  else if (!a || !b) failures.push(`${!a ? ship : copy} missing while the other copy exists`);
+  else if (!a.equals(b)) failures.push(`${copy} differs from ${ship}; change both in one commit`);
   return { failures, warnings };
 };
 

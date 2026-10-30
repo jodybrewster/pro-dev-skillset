@@ -142,7 +142,7 @@ Within a tier, items are in the order to build them.
 - [ ] 9. Plan template additions and a definition of done (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
 - [ ] 10. A test-design lens for the verifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
 - [ ] 11. Untrusted-input rules for browser and error output (S, pro-testing, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91)
-- [ ] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93)
+- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/spec.md), intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93); the build PR link is added when it opens
 - [ ] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94)
 - [ ] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95)
 

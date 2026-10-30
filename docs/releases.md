@@ -4,11 +4,11 @@ The current version of every plugin, when it shipped and what it shipped.
 A release row is added or updated in the same PR as the version bump, and each version is tagged `<plugin>--v<version>` after the PR merges (see [RELEASING.md](../RELEASING.md)).
 Dates and commits come from `git log -- plugins/<name>`; the last tag column shows where tagging stood before this table existed.
 
-Marketplace `metadata.version`: 1.68.0.
+Marketplace `metadata.version`: 1.69.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
-| pro-ai-sdlc | 0.6.1 | 2026-10-29 | `/spec`, `/plan`, `/review` and `/adr` load in a repo missing some policy files: their context lines end in `; true`. Fixture repos get a git author; sharper spec and plan graders. Also carries 0.6.0 (PR 78) | this PR | none |
+| pro-ai-sdlc | 0.11.0 | 2026-10-30 | The `doubt-driven-development` skill: `/execute` doubts steps the plan marks `irreversible` and steps in a high-tier checkpoint range with a fresh-context reviewer, at most three rounds, an optional Codex second opinion through a copy of `codex-run.py` and a draft PR when findings stay open. Also carries 0.10.0 (the stop list, scope discipline, sized plans and the definition of done, PR 98) and earlier releases not listed here | intent/2026-10-30-doubt-driven-execute | |
 | pro-astro | 0.1.1 | 2026-10-16 | Standard original-skill footer on the four Astro skills | this PR | none |
 | pro-core | 0.22.0 | 2026-10-30 | The `using-pro-dev` router names `pr-check` and `risk-tiers` in the SHIP branch. Also carries 0.21.0 (the `manual-cli` kind and the `codex` row, PR 99) | intent/2026-10-30-p0-hardening | |
 | pro-data | 0.4.5 | 2026-07-26 | Hooks merged into one `hooks/hooks.json` | 8597453 (PR 34) | pro-data--v0.2.0 |

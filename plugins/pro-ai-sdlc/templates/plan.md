@@ -11,7 +11,7 @@ Dated: <YYYY-MM-DD>.
 
 ## Order of work
 
-1. <a step small enough to check by itself> (size XS or S; R1, AC1)
+1. <a step small enough to check by itself> (size XS or S; irreversible: <what cannot be undone>, only when it applies; R1, AC1)
    Checkpoint: <the commands to run and what to confirm>
 
 ## Tests that prove it
@@ -40,6 +40,7 @@ Filled in when the build is finished, before sign-off.
 - Build commit: <sha>
 - Checks run: <each command with its real result>
 - Definition of done: <met, or the items not met> (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+- Doubt: <one line per doubted step: step, trigger, rounds, Codex ran, skipped or could not run, how each finding was settled; "none" when no step was doubted>
 - AC1: <pass or fail, with what was observed>
 - Sign-off: <the person's words and the date>
 
