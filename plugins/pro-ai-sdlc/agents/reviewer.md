@@ -53,7 +53,8 @@ When one rule identifies a class of bug, report it once.
 Give the rule and every file and line where it occurs in the range, not one entry per instance.
 Never list the same claim under two passes; keep it under the pass where it is most severe.
 
-Tag a finding Pre-existing when the flagged line is not among the lines the range adds or changes.
-Compare the range's added lines with the base version from `git show <base>:<path>`.
-List Pre-existing findings last in their own group.
+Tag a finding Pre-existing when the flagged line is not among the lines the whole change adds or changes.
+The base is the merge base of the PR or branch with its target branch, never the `since` sha: a line an earlier commit of the same PR added is not Pre-existing.
+Compare the change's added lines with the base version from `git show <base>:<path>`.
+List Pre-existing findings in their own group after the Important and nit findings, then the skipped list last.
 They are not counted as important or nits.

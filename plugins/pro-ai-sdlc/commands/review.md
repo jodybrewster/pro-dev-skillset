@@ -43,7 +43,9 @@ Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names,
 Normally bugs, then security, then compliance.
 Compliance compares the diff with the spec and plan and flags a departure that plan.md does not record.
 For a large or risky diff, hand the passes to the `reviewer` subagent with the diff spec and the policy paths (`CONSTRAINTS.md` included when present) and nothing else, so its read is not anchored on yours.
-Keep in this session the list of findings already shown, each as pass, file and class or claim.
+Keep in this session the list of findings already shown for this PR or branch, each as pass, file and class or claim.
+A review of a different PR or branch starts with an empty list.
+A `--since` run in a new session has no list, so nothing is dropped.
 Never pass that list to the reviewer.
 
 ### 4. Offer spec methods
@@ -56,6 +58,8 @@ With nothing listed, skip this step.
 ### 5. Report
 
 Drop any new finding that matches an entry in the already-shown list and say how many you dropped, for example "2 findings dropped as already raised".
+A finding matches when it names the same file and the same class or claim; when in doubt keep it.
+Count the summary line after the drop.
 Open with the summary line, exactly in this form:
 
 ```
@@ -66,7 +70,8 @@ When important and nits are both zero, follow it with "Nothing to fix."
 Otherwise rank findings most severe first, under Important and then Nits.
 Each one names its pass, severity (Important or nit), file and line, a one-sentence claim and a concrete failure scenario.
 Group several instances of one class under a single "Class:" heading with every location.
-Put Pre-existing findings in their own group, headed "Pre-existing (not blocking)".
+Put Pre-existing findings in their own group, headed "Pre-existing (not blocking)", then the skipped list last.
+When the reviewer subagent wrote the passes, regroup its findings under these headings.
 Never count them as Important.
 Respect the policy's cap on nits and its "do not report" list.
 Do not post comments, approve, request changes or edit files.
