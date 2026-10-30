@@ -164,10 +164,18 @@ Then the manual runs from steps 11 and 12 are pasted into the PR and the grep ch
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit:
-- Checks run:
-- AC1:
+- Build commit: the head of #82.
+- Checks run: `node tests/check.mjs` 29 checks, 0 failures (the R21 assertions failed first, all 10, before the prose existed); eval dry; route-lexical; unit tests; strict validate.
+- AC1: pass, the commands above.
+- AC2 to AC5: pass, the `sdlc-contract` assertions and the greps in "Tests that prove it".
+- AC6: pass on a fixture repo with a fresh Opus reviewer following `reviewer.md`: the report opened with the summary line, the untouched-line bug was tagged Pre-existing and left out of the count and the bug repeated in three files was one entry with three locations.
+- AC7: pass, a `--since` run reviewed only the new commit and the command dropped one repeat and said so; a clean diff printed "Nothing to fix." after the summary line.
+- AC8 and AC10: pass, the licenses row, the template footer and no comma before "and" or em dash in the changed files.
+- AC9: pass, pro-ai-sdlc 0.8.0 and `metadata.version` 1.61.0, stacked on #81.
 - Sign-off:
 
 ## Departures from plan
 
+- The fixture run for AC7 found that with `--since` the reviewer measured Pre-existing against the since sha, so a bug an earlier commit of the same PR added read as not blocking.
+  The reviewer now measures against the PR's merge base, and `/review` keys its already-shown list to one PR or branch, counts after the drop and regroups the subagent's findings.
+- Versions are 0.8.0 and 1.61.0 because #81 takes 0.7.0 and 1.60.0 and merges first.
