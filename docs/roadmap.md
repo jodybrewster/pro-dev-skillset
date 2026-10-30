@@ -63,7 +63,7 @@ Cross-cutting decisions for Jody:
 
 review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
-pr-gate shipped in #89 on 2026-10-30 with ADR-0013; pro-ship joined `pro-dev-starter` in the same release.
+pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
 Plans: risk-tiers (#88) is approved and builds next.
 Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 

@@ -31,7 +31,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [decisions/0003-one-hooks-json-per-plugin.md](./decisions/0003-one-hooks-json-per-plugin.md): one `hooks/hooks.json` per plugin.
 - [decisions/0004-codex-parity.md](./decisions/0004-codex-parity.md): Codex parity is a hard requirement.
 - [decisions/0009-three-eval-tiers.md](./decisions/0009-three-eval-tiers.md): three eval tiers, CI gates only the keyless one.
-- [decisions/0013-gate-stamp.md](./decisions/0013-gate-stamp.md): one stamp bound to HEAD, one writer and many readers (proposed).
+- [decisions/0014-gate-stamp.md](./decisions/0014-gate-stamp.md): one stamp bound to HEAD, one writer and many readers (proposed).
 
 ## Old plans
 

@@ -23,7 +23,7 @@ The spec's "Open questions" section records the same answers.
 - Open question 7, draft PRs: decided on 2026-10-30 under Jody's approval, `gh pr create --draft` (or `-d`) does not need the stamp and passes with no output, since a draft is not yet asking for review.
 - Open question 8, the tier before the classifier: decided on 2026-10-30 under Jody's approval, the fixed value `unclassified`.
 - Open question 9, when the security review runs: decided on 2026-10-30 under Jody's approval, only when pro-security's classifier reports security surface for the diff.
-- Open question 10, the ADR: decided on 2026-10-30 under Jody's approval, it ships in this PR as `docs/decisions/0013-gate-stamp.md` with Status `proposed` (0012 is the review handoff ADR in #87).
+- Open question 10, the ADR: decided on 2026-10-30 under Jody's approval, it ships in this PR as `docs/decisions/0014-gate-stamp.md` with Status `proposed` (0012 is the review handoff ADR in #87).
 - Flagged concern 1, what the old gate did that goes away: decided on 2026-10-30 under Jody's approval, accept; the drafted PR body replaces the 50-character length check and the stamp hook names the missing check.
 - Flagged concern 3, three gates behave three ways: decided on 2026-10-30 under Jody's approval, keep deny once per HEAD; the local hook is a guardrail and CI is the enforcement; revisit when `pipeline` lands.
 - Flagged concern 4, two copies of the validity rule: decided on 2026-10-30 under Jody's approval, copy the rule into both plugins and hold them together with one fixture set and a `stamp-contract` check in `tests/check.mjs` (R27).
@@ -95,7 +95,7 @@ Modified in the starter:
 
 Modified and new at the root:
 
-- `docs/decisions/0013-gate-stamp.md` (new): the shared stamp ADR, Status `proposed`.
+- `docs/decisions/0014-gate-stamp.md` (new): the shared stamp ADR, Status `proposed`.
 - `docs/decisions/README.md` (modified): its row.
 - `docs/pr-check-stamp.md` (new): the stamp contract (fields, validity, who reads what, the two tally lines), written once (R27).
 - `docs/README.md` and `docs/hook-loading.md` (modified): link the contract page.
@@ -110,7 +110,7 @@ Modified and new at the root:
 
 At sign-off only:
 
-- `docs/decisions/0013-gate-stamp.md` (modified): Status to accepted.
+- `docs/decisions/0014-gate-stamp.md` (modified): Status to accepted.
 - `intent/2026-10-29-pr-gate/intent.md` and `spec.md` (modified): `status` to accepted.
 - This file (modified): Status to implemented and the Done block filled in.
 
@@ -137,7 +137,7 @@ Take the build off a worktree based on a fresh `origin/main`, because Jody merge
 1. The shared contract. Satisfies R11, R13, R20, R26, R27 in prose and the ADR.
    Write `docs/pr-check-stamp.md`: the stamp path, every field of R11 with its allowed values, `reviewers` as an object keyed `code` and `security` (each `agent`, `status`, `blocking`, `important`, `range`), `mutation` as `{status, reason, file, accepted}`, the `result` rule of R13 with AC9 and AC16 folded in, the validity rule of R20, the push-gate acceptance rule of R26 and the two tally lines that feed `blocking`.
    Spell out that `not-installed` for the code reviewer makes `result` `incomplete` (AC9, AC11), which R13's wording leaves open.
-   Write `docs/decisions/0013-gate-stamp.md` (context, decision: one writer, many readers, bound to HEAD, deny once, forgery accepted for a local guardrail; consequences; "Where it is enforced"), its row in `docs/decisions/README.md` and the links from `docs/README.md` and `docs/hook-loading.md`.
+   Write `docs/decisions/0014-gate-stamp.md` (context, decision: one writer, many readers, bound to HEAD, deny once, forgery accepted for a local guardrail; consequences; "Where it is enforced"), its row in `docs/decisions/README.md` and the links from `docs/README.md` and `docs/hook-loading.md`.
    Write `tests/fixtures/pr-check-stamp/`: `valid-pass.json`, `valid-security-skipped.json`, `stale-head.json`, `result-fail.json`, `result-incomplete.json`, `security-blocking.json`, `wrong-schema.json`, `corrupt.json` and `expect.json`; `head` is the placeholder `HEAD` that each runner swaps for the throwaway repo's sha.
    Check: every field named in the page appears in `valid-pass.json` and the page has no em dash.
 
@@ -369,7 +369,7 @@ Filled in when the build is finished, before sign-off.
 - Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
-It also moves ADR-0013, Status `proposed` from this change, to `accepted`.
+It also moves ADR-0014, Status `proposed` from this change, to `accepted`.
 
 ## Departures from plan
 
@@ -381,4 +381,6 @@ An empty section tells the reviewer the diff follows the plan.
 - The skill stamps `fail` when a step fails, as spec R6 says, instead of writing no stamp, so an older passing stamp cannot stand in.
 - The reviewers read `mutation` from `.pro-dev/ship/run.json` during a run, because the stamp is written after they return; the code-reviewer agent and `handoff.md` name both paths (pro-quality is already bumped in this PR).
 - The hook timeout is 15 s, as R17 says, not the 10 s first written.
+- The gate-stamp ADR is ADR-0014: #86 merged ADR-0013 (plugin layering, proposed) while this was in review.
+  That ADR places the PR gate in a future `pro-dev` domain plugin and waits for this change to replace `pr-quality-gate.py` before folding pro-quality, so pro-ship holds pr-check until that migration moves it.
 - The security reviewer's count line is its last line, as the contract says, while the code reviewer's opens its report.

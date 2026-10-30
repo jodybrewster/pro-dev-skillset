@@ -1,7 +1,7 @@
 # The pr-check stamp
 
 This page is the one contract for the stamp that `/pro-ship:pr-check` writes and that other hooks read.
-The decision behind it is [ADR-0013](./decisions/0013-gate-stamp.md).
+The decision behind it is [ADR-0014](./decisions/0014-gate-stamp.md).
 The spec is `intent/2026-10-29-pr-gate/spec.md` and the plan is `intent/2026-10-29-pr-gate/plan.md`.
 Fixtures that pin every rule below are in `tests/fixtures/pr-check-stamp/`.
 
@@ -186,7 +186,7 @@ An invalid stamp is handled by mode (`mode.pr-gate`, then `mode`, default warn):
 
 The stamp is a plain file in the working tree, so anyone with shell access can write one by hand.
 That is accepted for a local guardrail.
-The enforcement is the required CI check that comes with `pipeline` (ADR-0013).
+The enforcement is the required CI check that comes with `pipeline` (ADR-0014).
 
 ## Fixtures
 

@@ -1,4 +1,4 @@
-# ADR-0013: One stamp, one writer and many readers, bound to HEAD
+# ADR-0014: One stamp, one writer and many readers, bound to HEAD
 
 Date: 2026-10-30
 
