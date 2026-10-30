@@ -16,7 +16,6 @@ import { spawnSync } from "node:child_process";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = join(ROOT, "plugins", "pro-quality", "scripts", "user-validation.py");
-const GATE = join(ROOT, "plugins", "pro-quality", "scripts", "pr-quality-gate.py");
 
 function git(cwd, ...args) {
   return spawnSync("git", args, { cwd, encoding: "utf8", env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null" } });
@@ -619,50 +618,6 @@ export function runQualityHookCases() {
     r = run(null, { raw: "" });
     add("q17 an empty payload exits 0 with no output", "silent", r, silent(r));
 
-    // pr-quality-gate.py: PostToolUse after `gh pr create` (Bash) or the MCP tool.
-    // The cwd has no package.json, so lint and tests are SKIPPED and the case is fast.
-    const gateDir = join(sandbox, "gate");
-    mkdirSync(gateDir, { recursive: true });
-    const URL_OUT = "https://github.com/acme/widgets/pull/7\n";
-    const LONG = "This change moves the widget cache behind a flag and explains why the old path was slow.";
-    const gate = (payload) => {
-      const g = spawnSync("python3", [GATE], { input: JSON.stringify({ cwd: gateDir, ...payload }), encoding: "utf8", timeout: 30_000, env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null" } });
-      let json = null;
-      try { json = g.stdout.trim() ? JSON.parse(g.stdout) : null; } catch { /* not json */ }
-      return { status: g.status, json, stdout: g.stdout, stderr: g.stderr, ctx: json?.hookSpecificOutput?.additionalContext || "" };
-    };
-    const bash = (command, resp = { stdout: URL_OUT, stderr: "", interrupted: false }) => ({ tool_name: "Bash", tool_input: { command }, tool_response: resp });
-    const fired = (g) => g.status === 0 && g.json?.hookSpecificOutput?.hookEventName === "PostToolUse" && /PR quality gate/.test(g.ctx);
-
-    let g = gate(bash(`gh pr create --title "Add cache" --body "${LONG}"`));
-    add("g1 a successful gh pr create fires the gate", "fired", g, fired(g) && /Description: PASS/.test(g.ctx) && /Add cache/.test(g.ctx) && /Lint: SKIPPED/.test(g.ctx));
-    g = gate(bash(`gh pr create -t "Add cache" -b "${LONG}"`, URL_OUT));
-    add("g1b short flags and a string tool_response fire the gate", "fired", g, fired(g) && /Description: PASS/.test(g.ctx));
-    g = gate(bash(`gh pr create --title T --body-file - <<'EOF'\n${LONG}\nEOF`));
-    add("g2 --body-file - from a heredoc skips the description check", "skipped", g, fired(g) && /Description: SKIPPED \(body not readable from the command\)/.test(g.ctx) && !/Description: FAIL/.test(g.ctx));
-    g = gate(bash(`gh pr create --title T --fill`));
-    add("g2b --fill skips the description check", "skipped", g, fired(g) && /Description: SKIPPED/.test(g.ctx));
-    writeFileSync(join(gateDir, "body.md"), LONG + "\n");
-    g = gate(bash(`gh pr create --title T --body-file body.md`));
-    add("g2c --body-file reads the file relative to the payload cwd", "pass", g, fired(g) && /Description: PASS/.test(g.ctx));
-    g = gate(bash(`cd repo && GH_TOKEN=x gh pr create --title "Add cache" --body "${LONG}"`));
-    add("g3 cd repo && gh pr create fires the gate", "fired", g, fired(g) && /Description: PASS/.test(g.ctx));
-    g = gate(bash(`gh pr create --title T --body "${LONG}"`, { stdout: "", stderr: "GraphQL: a pull request already exists", interrupted: false }));
-    add("g4 a failed create (no PR URL) is silent", "silent", g, g.status === 0 && !g.stdout.trim());
-    g = gate(bash(`git commit -m "gh pr create"`));
-    add("g5 git commit -m with the words is silent", "silent", g, g.status === 0 && !g.stdout.trim());
-    g = gate(bash(`echo gh pr create`));
-    add("g5b echo gh pr create is silent", "silent", g, g.status === 0 && !g.stdout.trim());
-    g = gate(bash(`git commit -F - <<'EOF'\nrun gh pr create\nEOF`));
-    add("g5c a heredoc body mentioning gh pr create is silent", "silent", g, g.status === 0 && !g.stdout.trim());
-    g = gate(bash(`ls -la`, { stdout: URL_OUT }));
-    add("g6 an unrelated Bash command is silent", "silent", g, g.status === 0 && !g.stdout.trim());
-    g = gate({ tool_name: "mcp__github__create_pull_request", tool_input: { title: "MCP PR", body: LONG } });
-    add("g7 the MCP create_pull_request payload still fires", "fired", g, fired(g) && /Description: PASS/.test(g.ctx) && /MCP PR/.test(g.ctx));
-    g = gate(bash(`gh pr create --title T --body "too short"`));
-    add("g8 a short body is flagged FAIL", "fail", g, fired(g) && /Description: FAIL/.test(g.ctx) && /BLOCKING/.test(g.ctx));
-    g = gate({ tool_name: "mcp__github__create_pull_request", tool_input: { title: "T", body: "short" } });
-    add("g8b a short MCP body is flagged FAIL", "fail", g, fired(g) && /Description: FAIL/.test(g.ctx));
     floorCases(sandbox, out);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

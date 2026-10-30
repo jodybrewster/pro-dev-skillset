@@ -18,6 +18,8 @@ import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
+import { runShipHookCases } from "./ship-hooks.mjs";
+import { runShipCheckCases } from "./ship-check.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 import { runDocHookCases } from "./doc-hooks.mjs";
@@ -388,7 +390,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-ai-sdlc", "pro-spdd", "pro-egm", "pro-speckit", "pro-ship", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-ai-sdlc", "pro-spdd", "pro-egm", "pro-speckit", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -1143,6 +1145,52 @@ checks["quality-hooks"] = () => {
   }
   if (!results.length) failures.push("tests/quality-hooks.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`quality hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// pro-ship hooks and pr-check cases (plan step 16). Each runner returns { skipped, results }.
+checks["ship-hooks"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runShipHookCases();
+  if (skipped) { warnings.push(`ship hook cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/ship-hooks.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ship hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+checks["ship-check"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runShipCheckCases();
+  if (skipped) { warnings.push(`ship check cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/ship-check.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ship check ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// One stamp, two readers: pro-ship's pr-gate and pro-security's push gate must each
+// give the verdict expect.json records for every fixture in tests/fixtures/pr-check-stamp.
+checks["stamp-contract"] = () => {
+  const failures = [], warnings = [];
+  const fixDir = join(ROOT, "tests", "fixtures", "pr-check-stamp");
+  const expected = JSON.parse(readFileSync(join(fixDir, "expect.json"), "utf8"));
+  const names = Object.keys(expected);
+  const files = readdirSync(fixDir).filter((f) => f.endsWith(".json") && f !== "expect.json");
+  for (const f of files) if (!expected[f]) failures.push(`fixture ${f} is not listed in expect.json`);
+  for (const n of names) if (!files.includes(n)) failures.push(`expect.json lists ${n} but the fixture file is missing`);
+  const ship = runShipHookCases();
+  const sec = runSecurityHookCases();
+  if (ship.skipped || sec.skipped) {
+    warnings.push(`stamp contract skipped - ${ship.skipped || sec.skipped}`);
+    return { failures, warnings };
+  }
+  for (const n of names) {
+    const a = ship.results.find((r) => r.id === `x:${n}`);
+    const b = sec.results.find((r) => r.id === `push-gate/stamp-fixture-${n.replace(/\.json$/, "")}`);
+    if (!a) failures.push(`pr-gate produced no verdict for ${n}`);
+    else if (!a.ok) failures.push(`pr-gate verdict for ${n} differs from expect.json (expected ${a.expect})${a.reason ? ` - ${a.reason}` : ""}`);
+    if (!b) failures.push(`push gate produced no verdict for ${n}`);
+    else if (!b.ok) failures.push(`push gate verdict for ${n} differs from expect.json (expected ${b.expect}, got ${b.actual})`);
+  }
   return { failures, warnings };
 };
 

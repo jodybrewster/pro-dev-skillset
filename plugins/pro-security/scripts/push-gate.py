@@ -5,7 +5,8 @@ Detects `git push` and `gh pr create` in a Bash command, computes the diff that
 would leave the machine (`git diff <upstream>...HEAD`), and if it touches security
 surface denies once per distinct diff per session, asking Claude to dispatch the
 security-architect subagent in diff mode on that diff and nothing else. The
-identical retry passes. `git commit` is never gated, `git push --dry-run` is not
+identical retry passes. A valid, fresh, passing pr-check stamp whose security
+review ran (docs/pr-check-stamp.md) passes with no output instead. `git commit` is never gated, `git push --dry-run` is not
 gated and Markdown-only changes never trigger (see security_surface.diff_files).
 Fails open on any error.
 """
@@ -148,6 +149,9 @@ def main() -> int:
         return 0
     files = ss.diff_files(diff)
     if not files:
+        return 0
+    ok, head = ss.run_git(["rev-parse", "HEAD"], root)
+    if ok and head.strip() and ss.security_review_done(ss.read_stamp(root, head.strip())):
         return 0
     cats = sorted(files)
     h = hashlib.sha256(diff.encode("utf-8", "replace")).hexdigest()

@@ -230,6 +230,37 @@ def run_git(args: list[str], cwd: str, timeout: int = 10) -> tuple[bool, str]:
         return False, ""
 
 
+def read_stamp(root: str, head: str) -> dict | None:
+    """The pr-check stamp when valid (docs/pr-check-stamp.md), else None.
+
+    Valid: a JSON object at .pro-dev/ship/pr-check.json under root, schema 1,
+    head equal to `head` and result "pass". Any read or parse problem is None.
+    """
+    try:
+        with open(os.path.join(root, ".pro-dev", "ship", "pr-check.json"), encoding="utf-8") as f:
+            stamp = json.load(f)
+    except Exception:
+        return None
+    if not isinstance(stamp, dict):
+        return None
+    schema = stamp.get("schema")
+    if isinstance(schema, bool) or schema != 1 or not isinstance(schema, int):
+        return None
+    if stamp.get("head") != head or stamp.get("result") != "pass":
+        return None
+    return stamp
+
+
+def security_review_done(stamp: dict | None) -> bool:
+    """True when the stamp records a security review that ran fresh with nothing blocking."""
+    rev = stamp.get("reviewers") if stamp else None
+    sec = rev.get("security") if isinstance(rev, dict) else None
+    if not isinstance(sec, dict) or sec.get("status") not in ("done", "skipped-no-surface"):
+        return False
+    blocking = sec.get("blocking")
+    return isinstance(blocking, int) and not isinstance(blocking, bool) and blocking == 0
+
+
 def key_root(cwd: str) -> str:
     ok, out = run_git(["rev-parse", "--show-toplevel"], cwd)
     return out.strip() if ok and out.strip() else cwd
