@@ -1,8 +1,8 @@
 # Plan: Codex as a second reviewer on high-risk PRs
 
 Built from `spec.md` (draft, committed with this plan) and `intent.md` in this folder.
-Status: draft.
-Approver: Jody Brewster.
+Status: approved.
+Approver: Jody Brewster (approved 2026-10-30 in the batch; flagged concerns 3 and 9 decided as the spec recommends).
 Dated: 2026-10-30.
 
 Jody approves because the change sends diffs to a second vendor, adds a field to the gate's stamp contract and a new kind to the engine registry.
@@ -269,10 +269,30 @@ AC9 and AC10 are pasted into the PR.
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1 to AC13: <pass or fail, with what was observed>
-- Sign-off: <the person's words and the date>
+- Build commit: 9afc3e1 (last code commit on `feat/codex-second-reviewer`; the plan edit that fills this section follows it).
+- Checks run, from the worktree on 2026-10-30:
+  - `node tests/check.mjs`: 35 checks, 0 failures, 12 warnings (the same 12 as the baseline before the first edit).
+  - `node tests/eval.mjs --dry`: 88 cases reference real skills, 98 skills in catalog and 7 distractors.
+  - `node tests/route-lexical.mjs --min-rank1 70`: rank-1 70/87 (80.5%), top-k 83/87, notOneOf failures 3, exit 0.
+  - `node --test tests/unit/*.test.mjs`: pass 165, fail 0.
+  - `claude plugin validate . --strict`: Validation passed.
+  - The per-plugin strict loop: Validation passed for all 20 plugins.
+  - `node tests/codex-run.mjs`: 25/25. `node tests/ship-check.mjs`: 170/170. `node tests/pro-dev.mjs`: 195 cases, 0 failures.
+  - `grep -n "pro-ship\|pro-quality\|pro-core" plugins/pro-ship/scripts/codex-run.py`: no output. `git diff --stat origin/main -- plugins/pro-ship/scripts/pr-gate.py plugins/pro-security/scripts`: empty.
+  - `wc -l plugins/pro-ship/scripts/codex-run.py`: 247.
+  - One live smoke run of `codex-run.py` against the real Codex with a tiny prompt in a scratch repo: stdout `ok`, exit 0, 10 seconds, no file written under the repo beyond the scratch files.
+- AC1 to AC13:
+  - AC1 pass. AC2 pass (`tests/codex-run.mjs`). AC3 pass (the grep prints nothing and case c12 runs a copy from another folder).
+  - AC4 pass (`registry` check passes; adding `install` to the row failed it with "a manual-cli row must not have install" and removing it restored the pass).
+  - AC5 pass (`manual/` cases in `tests/pro-dev.mjs`). AC6 pass (cases k1 to k4 in `tests/ship-check.mjs`).
+  - AC7 pass (`stamp-contract` with `valid-pass-codex.json`; the gate and push-gate diff is empty).
+  - AC8 pass (`agent-twins` passes; changing one word in the `.toml` failed it at body line 3 and the revert restored the pass; both files hold the location sentence).
+  - AC9 pending, run by the orchestrator after the PR opens (a real high-tier PR with Codex opted in).
+  - AC10 pending, run by the orchestrator after the PR opens (the same run with `codex` off PATH).
+  - AC11 pass (`versions` and `codex-manifests` checks; pro-ship 0.5.0, pro-core 0.21.0, pro-quality 0.15.1, `metadata.version` 1.65.0, rows in `docs/releases.md`).
+  - AC12 pass (ADR-0018 is proposed with its README row, ADR-0006 carries the amended line, `docs/pr-check-stamp.md` documents `reviewers.codex`).
+  - AC13 pass with one note: the `codex` row shows `kind` `manual-cli` and the `manual` list, with `state` `not-applicable` here because pro-core is not installed for this repo; `pro-dev.md` names both `check` and `install` forms.
+- Sign-off: pending, Jody's words and the date.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0018 from `proposed` to `accepted`.
@@ -281,3 +301,15 @@ It also moves ADR-0018 from `proposed` to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 1, test PATH: `python3` and `git` are symlinked into a folder of their own (`<sandbox>/tools`) in place of putting their own folders on PATH, so a real `codex` installed beside either cannot shadow the stub or break the not-installed case.
+  The "stub shadows any real one" assertion still runs first.
+- Step 2, `--check`: `--prompt` and `--instructions` or `--agent` are not required with `--check`, because the check runs R3 only.
+- Step 2, `--check` and `--cwd`: `--cwd` is resolved with `realpath` before use.
+- Step 3, test layout: the `find` cases run a copy of `pr-check.py` placed in a throwaway `plugins/pro-ship/scripts` folder, so the in-place sibling lookup does not find this repo's own `plugins/pro-quality`.
+- Step 8, `registry` check: the `manual-cli` rules also reject a `detect` object with extra keys and an empty `manual` string.
+- Step 11, AC13: in this worktree `pro-dev.py status --json` shows the `codex` row with `kind` `manual-cli` and a `manual` list but `state` `not-applicable`, because pro-core is not installed for this repo.
+- Step 14, `docs/releases.md`: the table was behind (marketplace line 1.59.1, pro-ship 0.2.0, pro-core 0.20.0 dated 2026-10-28, pro-quality 0.12.0).
+  The three rows and the marketplace line now carry the new versions, and each row says earlier releases were not listed.
+- Commits: steps 12 and 13 are one commit and step 14 is a second, in place of the single Checkpoint E commit.
+
