@@ -71,7 +71,7 @@ Stop-list categories: none (no migration, public API, auth or deploy config).
 ```bash
 node tests/check.mjs && node tests/eval.mjs --dry
 node tests/route-lexical.mjs --min-rank1 70 && node --test tests/unit/*.test.mjs
-node --test plugins/pro-electron/skills/electron-security-audit/scripts/
+node --test plugins/pro-electron/skills/electron-security-audit/scripts/audit.test.mjs
 node tests/behavioral.mjs --dry-run
 claude plugin validate . --strict
 ( for p in plugins/*/; do claude plugin validate "${p%/}" --strict || exit 1; done )
@@ -81,18 +81,27 @@ Each must exit 0.
 
 ## Done
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: the `feat: pro-electron` commit on `feat/pro-electron`.
+- Checks run: `node tests/check.mjs` 37 checks, 0 failures, 10 warnings; `node tests/eval.mjs --dry` 96 cases, 102 skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 77/95 (81.1%, main 79.5%), notOneOf failures 2 (main 3); `node --test tests/unit/*.test.mjs` 167 pass; audit tests 16 pass; `node tests/behavioral.mjs --dry-run` ok, 8 runs planned; `claude plugin validate . --strict` and the per-plugin loop pass.
+- Definition of done: met except AC6, which needs a live run.
 - Doubt: none
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
+- AC1: pass.
+- AC2: pass, 16 of 16; every planted fault found, clean fixture zero findings.
+- AC3: pass, all seven new cases rank first.
+- AC4: pass.
+- AC5: pass; the plugin's `install` command is listed in `components-uncovered.json` with the same reason as the other owner install commands.
+- AC6: not run yet; needs an API key and about two dollars on Sonnet.
 - Sign-off:
 
 ## Departures from plan
 
+- `node --test <dir>/` does not work on Node 22, so the proof command names `audit.test.mjs` directly.
+- `WORKFLOW_PLUGINS` lives in `tests/lib/components.mjs`, so the coverage change landed there and in `tests/unit/components.test.mjs`.
+- `.agents/plugins/marketplace.json` gained a pro-electron entry; the `codex-manifests` check needs it.
+- The upgrade eval fixture went from 45-to-47 (47 is not released) to 43-to-45, using the Electron 45 removal of `Buffer` and `setImmediate` in sandboxed preloads.
+- The `electron-security-audit` description was narrowed after it outranked `security-architect` on a generic SQL injection case.
+
 ## Noticed but not touched
+
+- `tests/bridge-install-smoke.mjs`: the `taste-skills-bridge` target fails with 12 of 13 skills missing upstream; unrelated to this change.
+- `tests/route-lexical.mjs`: "Can you do a security audit of this repo?" was already a miss on main; `electron-security-audit` now sits second behind `security-architect` there.

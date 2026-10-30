@@ -57,6 +57,8 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-nextjs | next-skills-bridge | [vercel/next.js `skills/`](https://github.com/vercel/next.js/tree/canary/skills) | MIT | Copyright (c) 2025 Vercel, Inc. | bridged |
 | pro-nextjs | vercel-skills-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-nextjs | next-upgrade | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
+| pro-electron | electron-skills-bridge (electron-best-practices) | [jwynia/agent-skills](https://github.com/jwynia/agent-skills) | MIT, stated in the skill's SKILL.md frontmatter; no license file in the repo | none published | bridged |
+| pro-electron | electron-skills-bridge (electron-release) | [laststance/skills](https://github.com/laststance/skills) | MIT | Copyright (c) 2026 Laststance.io | bridged |
 | pro-pdd | brainstorming | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | writing-plans | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | interview-me | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
@@ -96,6 +98,7 @@ The three skills first adapted from vercel-labs/next-skills, a repository with n
 | Plugin | Origin | Evidence |
 |---|---|---|
 | pro-astro | original, written from the public Astro, Cloudflare and Vercel docs | 5b09a01 (PR 49); no upstream in git history; no matching skill in withastro/astro, withastro/docs, cloudflare/skills, vercel-labs/agent-skills or vercel-labs/skills; no shared prose with incluud/astro-agent-skills or ianshk/astro-skills |
+| pro-electron (`electron-upgrade`, `electron-security-audit`) | original, written from the public Electron docs and security checklist | no upstream; the two bridged engines are listed above and none of their text is vendored |
 | pro-legal | original | 9ee43b0 (PR 48); code search for distinctive phrases finds only this repo; no shared eight-word sequence with VoltAgent legal-advisor or anthropics/knowledge-work-plugins legal skills |
 | pro-motion | original | c4460d3 (2026-06-23), added whole; overlap with greensock/gsap-skills, remotion-dev/skills and heygen-com/hyperframes is code fragments only; the `hyperframes` skill covers Framer Motion and shares only a name with HeyGen's HyperFrames |
 | pro-research | original | ef447db (2026-06-02); agent names match langchain-ai company-researcher and people-researcher but no text is shared |

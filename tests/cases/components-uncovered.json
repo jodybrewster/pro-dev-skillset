@@ -132,6 +132,10 @@
     "reason": "installs from the network"
   },
   {
+    "id": "pro-electron/command:install",
+    "reason": "installs from the network"
+  },
+  {
     "id": "pro-ai-sdlc/command:intent",
     "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
   },

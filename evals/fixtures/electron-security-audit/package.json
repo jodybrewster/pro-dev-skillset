@@ -1,0 +1,6 @@
+{
+  "name": "audit-demo",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "devDependencies": { "electron": "^45.0.0" }
+}

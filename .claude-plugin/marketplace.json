@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.70.0"
+    "version": "1.71.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -17,7 +17,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev (install, update, check) installs the engines, updates the plugins and health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.23.0",
+      "version": "0.24.0",
       "category": "development",
       "strict": true
     },
@@ -58,6 +58,14 @@
       "source": "./plugins/pro-astro",
       "description": "Astro skills: astro-best-practices (auto-applied guardrails for routing, output modes, islands and server islands, the content layer, actions, sessions, astro:env, images, view transitions and agent-friendly dev servers), astro-upgrade (major-version upgrade workflow for Astro 5 to 6 to 7 and its adapters), astro-on-cloudflare (@astrojs/cloudflare on Workers: cloudflare:workers env, wrangler bindings, sessions on KV, Pages-to-Workers migration) and astro-on-vercel (@astrojs/vercel: on-demand routes, maxDuration, ISR, redirects, images). Points agents at the official Astro Docs MCP for lookups. Pairs with the optional cloudflare/skills and vercel@claude-plugins-official companions.",
       "version": "0.1.1",
+      "category": "development",
+      "strict": true
+    },
+    {
+      "name": "pro-electron",
+      "source": "./plugins/pro-electron",
+      "description": "Electron skills: electron-skills-bridge (routes Electron work to two pinned upstream engines installed with /pro-dev install: jwynia electron-best-practices for architecture, security, IPC and packaging; laststance electron-release for signing, notarization and publishing), electron-upgrade (major-version upgrade workflow for Electron and its tooling) and electron-security-audit (read-only audit of an Electron app against the official security checklist). Driving the running app through Playwright MCP over CDP is a manual setup the skills describe, not something the plugin installs.",
+      "version": "0.1.0",
       "category": "development",
       "strict": true
     },
@@ -168,7 +176,7 @@
     {
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
-      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research, security and ship). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in and installed by hand.",
+      "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research, security and ship). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs, pro-astro and pro-electron are opt-in and installed by hand.",
       "version": "3.1.1",
       "category": "development",
       "strict": true

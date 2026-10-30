@@ -1,0 +1,12 @@
+{
+  "name": "pro-electron",
+  "version": "0.1.0",
+  "description": "Electron skills: electron-skills-bridge (routes Electron work to two pinned upstream engines installed with /pro-dev install: jwynia electron-best-practices for architecture, security, IPC and packaging; laststance electron-release for signing, notarization and publishing), electron-upgrade (major-version upgrade workflow for Electron and its tooling) and electron-security-audit (read-only audit of an Electron app against the official security checklist). Driving the running app through Playwright MCP over CDP is a manual setup the skills describe, not something the plugin installs.",
+  "author": {
+    "name": "Jody Brewster",
+    "email": "jodybrewster@gmail.com"
+  },
+  "experimental": {
+    "evals": "evals"
+  }
+}

@@ -1264,6 +1264,104 @@
       ],
       "why": "The Codex CLI runs a second code review on high-tier PRs; yes also agrees to send the diff to OpenAI when it runs.",
       "note": "Detect-only (ADR-0018): pro-dev never installs, updates, logs in to or runs it. The review runner checks the login when it runs."
+    },
+    {
+      "id": "electron-best-practices",
+      "owner": "pro-electron",
+      "bridges": [
+        "electron-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/electron-best-practices/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32/skills/tech/development/tooling/electron-best-practices",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "electron-best-practices"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32/skills/tech/development/tooling/electron-best-practices",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "electron-best-practices"
+      ],
+      "why": "Electron architecture, security, IPC, packaging and testing guidance from jwynia/agent-skills that electron-skills-bridge routes to.",
+      "upstream": [
+        "gh api 'repos/jwynia/agent-skills/git/trees/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32?recursive=1' --jq '.tree[] | select(.path | startswith(\"skills/tech/development/tooling/electron-best-practices/\")) | .path'"
+      ],
+      "note": "Pinned to commit e02ec7e so /pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md and scripts. The repo has no LICENSE file (the SKILL.md frontmatter says MIT). The skill ships Deno scripts, which the bridge asks before running."
+    },
+    {
+      "id": "electron-release",
+      "owner": "pro-electron",
+      "bridges": [
+        "electron-skills-bridge"
+      ],
+      "kind": "skills-cli",
+      "default": true,
+      "detect": {
+        "all": [
+          {
+            "file": "skills/electron-release/SKILL.md",
+            "scopes": [
+              "project",
+              "user"
+            ]
+          }
+        ]
+      },
+      "install": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/laststance/skills/tree/746d4db0d9cbd767f19b96a432a15c0e42beaa29/skills/electron-release",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "electron-release"
+      ],
+      "update": [
+        "npx",
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/laststance/skills/tree/746d4db0d9cbd767f19b96a432a15c0e42beaa29/skills/electron-release",
+        "-a",
+        "claude-code",
+        "-y",
+        "-s",
+        "electron-release"
+      ],
+      "why": "Electron release guidance (signing, notarization, auto-update and publishing) from laststance/skills that electron-skills-bridge routes to.",
+      "upstream": [
+        "gh api 'repos/laststance/skills/git/trees/746d4db0d9cbd767f19b96a432a15c0e42beaa29?recursive=1' --jq '.tree[] | select(.path | startswith(\"skills/electron-release/\")) | .path'"
+      ],
+      "note": "Pinned to commit 746d4db so /pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md. MIT licensed."
     }
   ]
 }
