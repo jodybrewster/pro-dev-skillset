@@ -169,7 +169,7 @@
       "name": "pro-dev-starter",
       "source": "./plugins/pro-dev-starter",
       "description": "Meta-plugin: installs Jody's default pro dev stack (core, pdd, execution, quality, design, motion, testing, data, research, security and ship). Run /pro-dev install after it. pro-ai-sdlc, pro-nextjs and pro-astro are opt-in and installed by hand.",
-      "version": "3.1.0",
+      "version": "3.1.1",
       "category": "development",
       "strict": true
     }

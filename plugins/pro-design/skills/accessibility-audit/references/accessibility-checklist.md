@@ -20,10 +20,10 @@ Each failed check is a finding in the Issue Format with its WCAG criterion numbe
 - [ ] Focus is visible, with an outline or ring on focused elements (2.4.7)
 - [ ] Focused elements are not hidden behind sticky headers, banners or modals (2.4.11 Focus Not Obscured (Minimum))
 - [ ] Focus indicator has enough size and contrast (2.4.13 Focus Appearance, AAA, rate as Enhancement)
-- [ ] Custom widgets have keyboard support (Enter to activate, Escape to close)
+- [ ] Custom widgets have keyboard support (Enter to activate, Escape to close) (2.1.1)
 - [ ] No keyboard traps; the user can always Tab away from a component (2.1.2)
 - [ ] Skip-to-content link at the top of the page, visible at least on keyboard focus (2.4.1)
-- [ ] Modals trap focus while open and return focus on close
+- [ ] Modals trap focus while open and return focus on close (2.4.3)
 - [ ] Every drag interaction has a single-pointer alternative, such as buttons or a menu (2.5.7 Dragging Movements)
 
 ### Screen readers
@@ -38,20 +38,21 @@ Each failed check is a finding in the Issue Format with its WCAG criterion numbe
 
 ### Visual
 
-- [ ] Text contrast is at least 4.5:1 for normal text and at least 3:1 for large text, 18px and up (1.4.3)
+- [ ] Text contrast is at least 4.5:1 for normal text and at least 3:1 for large text (at least 24px regular or 18.66px bold) (1.4.3)
 - [ ] UI components and graphics have contrast of at least 3:1 against the background (1.4.11)
 - [ ] Color is not the only way to convey information (1.4.1)
 - [ ] Text resizes to 200% without breaking the layout (1.4.4)
 - [ ] No content flashes more than 3 times per second (2.3.1)
 - [ ] Pointer targets are at least 24 by 24 CSS pixels, or have enough spacing (2.5.8 Target Size (Minimum))
+- [ ] Touch targets are at least 44 by 44 px on mobile (2.5.5, AAA, rate as Enhancement)
 
 ### Forms
 
 - [ ] Every input has a visible label (3.3.2)
-- [ ] Required fields are indicated by more than color
+- [ ] Required fields are indicated by more than color (1.4.1)
 - [ ] Error messages are specific and associated with the field (3.3.1)
 - [ ] The error state is visible by more than color, such as an icon, text or border (1.4.1)
-- [ ] Submission errors are summarized and focusable
+- [ ] Submission errors are summarized and focusable (3.3.1)
 - [ ] Known fields use autocomplete, for example `type="email" autocomplete="email"` (1.3.5)
 - [ ] Information the user already gave in the same process is not asked for again (3.3.7 Redundant Entry)
 - [ ] Login does not depend on a cognitive test; paste and password managers work (3.3.8 Accessible Authentication (Minimum))
@@ -61,9 +62,8 @@ Each failed check is a finding in the Issue Format with its WCAG criterion numbe
 - [ ] Language is declared, for example `<html lang="en">` (3.1.1)
 - [ ] The page has a descriptive `<title>` (2.4.2)
 - [ ] Links are distinguishable from surrounding text by more than color (1.4.1)
-- [ ] Touch targets are at least 44 by 44 px on mobile (2.5.5, AAA)
 - [ ] Help links or contact options sit in the same place across pages (3.2.6 Consistent Help)
-- [ ] Meaningful empty states, not blank screens
+- [ ] Meaningful empty states, not blank screens (best practice, Enhancement)
 
 ## Common HTML patterns
 

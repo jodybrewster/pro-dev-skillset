@@ -234,3 +234,15 @@ Added in the same commit as the change that departs.
 - Step 7: also edited the pro-execution LICENSE header with comment lines in the pro-quality style, as the plan said; no departure there.
 - Added a fix commit after the version bump (5409dca) to split a comma-and clause in the agent-browser rule 3 that broke the repo's writing rule. It touches `plugins/pro-testing/skills/agent-browser/SKILL.md` after the bump commit, which is the same bump.
 - Baseline `check.mjs` was taken on the plan commit, with the machine busy with other builds; no other departure from the plan.
+- Review fix commit: pro-dev-starter was bumped to 3.1.1 after review per ADR-0002, because it depends on the three bumped plugins.
+  This replaces the earlier decision not to bump it.
+  It has no `.codex-plugin/plugin.json`, so only the Claude manifest and the marketplace entry changed.
+  `metadata.version` was not bumped again.
+
+## Follow-ups
+
+- The two new behavioral cases pass in the baseline arm too, so they do not yet separate the arms.
+  A follow-up should make the planted text look like a plausible fix.
+- AC11: systematic-debugging fired 0 times in both arms.
+  This is a pre-existing routing gap, not caused by this diff (the frontmatter is unchanged).
+  Jody's call.
