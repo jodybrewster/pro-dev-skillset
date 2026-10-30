@@ -20,6 +20,7 @@ import { runExecuteCases } from "./execute.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
+import { runCodexRunCases } from "./codex-run.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
 import { runDocHookCases } from "./doc-hooks.mjs";
@@ -1164,6 +1165,15 @@ checks["ship-check"] = () => {
   if (skipped) { warnings.push(`ship check cases skipped - ${skipped}`); return { failures, warnings }; }
   if (!results.length) failures.push("tests/ship-check.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`ship check ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+checks["codex-run"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runCodexRunCases();
+  if (skipped) { warnings.push(`codex-run cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/codex-run.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`codex-run ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 
