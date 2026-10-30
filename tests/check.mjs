@@ -1242,6 +1242,9 @@ checks["sdlc-contract"] = () => {
     // loop guardrails (ADR-0017): the stop list, the scope rules and the definition-of-done pointer.
     for (const a of ["## Stop list", "## Scope discipline", "## Noticed but not touched", "git add -A", "Things I didn't touch", "Potential concerns", "consented in Risks", "references/definition-of-done.md"])
       if (!execC.includes(a)) failures.push(`pro-ai-sdlc: /execute lacks the anchor "${a}"`);
+    // the two section headings must stand alone on a line; other text also names them.
+    for (const h of ["## Stop list", "## Scope discipline"])
+      if (!execC.split("\n").includes(h)) failures.push(`pro-ai-sdlc: /execute has no heading line "${h}"`);
     const stopBlock = execC.split(/^## Stop list\s*$/m)[1]?.split(/^## /m)[0] ?? "";
     for (const w of ["auth", "migrations", "payments", "deploys", "secrets"])
       if (!stopBlock.includes(w)) failures.push(`pro-ai-sdlc: /execute stop list does not name "${w}"`);
