@@ -64,6 +64,7 @@ Prefer changes that resist drift over changes that are merely correct today. A c
 ## Drafting a document from a template
 
 When the task gives you a template path and a target path, write the target from the template.
+If the target file already exists, stop and report it; never overwrite it.
 Keep the template's headings and their order.
 Fill each section from facts in the code and name the file path that shows each fact.
 Leave an angle-bracket placeholder only where the code cannot say.

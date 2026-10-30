@@ -163,6 +163,44 @@ export function runRequiredDocsCases() {
     { const r = run(mkrepo({ "README.md": "# r\n" }), []);
       const lines = r.stdout.split("\n").filter((l) => l.startsWith("missing  "));
       add("human", "one missing line per document", r.status === 3 && lines.length === 4 && /^missing {2}CLAUDE\.md {2}\(always\)$/.test(lines[0]), r.stdout + r.stderr); }
+    // 23 worktree presence
+    { const repo = mkrepo({ "README.md": "# r\n" }); put(repo, { "CLAUDE.md": "# c\n", "docs/decisions/0001-x.md": "# x\n" });
+      const r = run(repo, ["--json", "--worktree"]);
+      add("worktree-untracked", "--worktree counts an untracked file and folder as present", hasNot(r, "CLAUDE.md", "docs/decisions/") && has(r, "AGENTS.md", "REVIEW.md"), r.stdout + r.stderr);
+      const outside = join(sandbox, "outside.md"); writeFileSync(outside, "# o\n");
+      symlinkSync(outside, join(repo, "AGENTS.md"));
+      const l = run(repo, ["--json", "--worktree"]);
+      add("worktree-symlink-out", "--worktree does not follow a symlink out of the repo", has(l, "AGENTS.md"), l.stdout + l.stderr);
+      symlinkSync("README.md", join(repo, "REVIEW.md"));
+      const k = run(repo, ["--json", "--worktree"]);
+      add("worktree-symlink-in", "--worktree follows a symlink that stays inside the repo", hasNot(k, "REVIEW.md"), k.stdout + k.stderr); }
+    // 24 policy-ref handling
+    { const repo = mkrepo(ALWAYS);
+      const bad = run(repo, ["--json", "--policy-ref", "nosuchref"]);
+      add("policy-ref-bad", "an unknown ref is could-not-run, not defaults", bad.status === 2 && bad.json?.could_not_run === true, bad.stdout + bad.stderr);
+      const dash = run(repo, ["--json", "--policy-ref=-x"]);
+      add("policy-ref-dash", "a ref starting with - is could-not-run", dash.status === 2 && dash.json?.could_not_run === true, dash.stdout + dash.stderr);
+      const base = commit(repo, { "x.txt": "x\n" }, "x");
+      const noReview = mkrepo({ "README.md": "# r\n" });
+      const first = git(noReview, "rev-parse", "HEAD").stdout.trim();
+      const ok = run(noReview, ["--json", "--policy-ref", first]);
+      add("policy-ref-no-review", "a base with no REVIEW.md stays defaults", ok.json?.source === "defaults" && base !== "", ok.stdout + ok.stderr); }
+    // 25 dot-prefixed workspace glob
+    { const r = run(mkrepo({ ...ALWAYS, "package.json": pkg({ workspaces: ["./.config/*"] }), ".config/web/package.json": pkg({ dependencies: { react: "1" } }) }));
+      add("ui-dot-glob", "a ./.config/* workspace glob keeps its leading dot", has(r, "DESIGN.md", "PRODUCT.md"), r.stdout + r.stderr); }
+    // 26 pnpm member with a UI dependency and the workspaces object form
+    { const r = run(mkrepo({ ...ALWAYS, "pnpm-workspace.yaml": "packages:\n  - 'pkgs/*'\n", "pkgs/web/package.json": pkg({ dependencies: { vue: "1" } }) }));
+      add("ui-pnpm-member", "a pnpm-workspace member with a UI dependency makes the UI signal hold", has(r, "DESIGN.md", "PRODUCT.md"), r.stdout + r.stderr);
+      const o = run(mkrepo({ ...ALWAYS, "package.json": pkg({ workspaces: { packages: ["apps/*"] } }), "apps/web/package.json": pkg({ dependencies: { svelte: "1" } }) }));
+      add("ui-workspaces-object", "the workspaces {packages: [...]} form is read", has(o, "DESIGN.md", "PRODUCT.md"), o.stdout + o.stderr); }
+    // 27 add validation and folder entries
+    { for (const [id, entry] of [["add-dotdot", "../x"], ["add-abs", "/abs"]]) {
+        const r = run(mkrepo({ ...ALWAYS, "REVIEW.md": block(`add: ["${entry}"]`) }));
+        add(id, `add ${entry} is unreadable`, String(r.json?.source).startsWith("unreadable (") && finding(r, "required-docs-block-unreadable"), r.stdout + r.stderr); }
+      const miss = run(mkrepo({ ...ALWAYS, "REVIEW.md": block("add: [foo/]") }));
+      add("add-folder-missing", "a folder add entry is missing when the folder is absent", has(miss, "foo/"), miss.stdout + miss.stderr);
+      const there = run(mkrepo({ ...ALWAYS, "REVIEW.md": block("add: [foo/]"), "foo/a.md": "# a\n" }));
+      add("add-folder-present", "a folder add entry is present when the folder holds a tracked file", hasNot(there, "foo/") && there.status === 0, there.stdout + there.stderr); }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

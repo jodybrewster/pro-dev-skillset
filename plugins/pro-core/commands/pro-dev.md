@@ -216,7 +216,8 @@ Do this after the folders and the review policy, so a `REVIEW.md` written above 
 
 1. Find the set.
    Look in the status JSON `plugins` list for an entry named `pro-quality` with `covers` true.
-   If there is one, run `python3 "<its installPath>/scripts/required-docs.py" --json`.
+   If there is one, run `python3 "<its installPath>/scripts/required-docs.py" --json --worktree`.
+   `--worktree` counts a file that exists on disk as present even when it is not committed, so step 4 cannot overwrite it.
    Say that the call prompts, because running a script from another plugin's path is not pre-approved.
    Exit 3 means documents are missing and exit 2 means the script could not run: name the reason and go on to step 2 with the table below.
    If pro-quality is not found, apply the table below from your own inspection and say the deterministic check is not installed.
@@ -224,12 +225,13 @@ Do this after the folders and the review policy, so a `REVIEW.md` written above 
    | Document | Required when |
    |----------|---------------|
    | README.md, CLAUDE.md, AGENTS.md, REVIEW.md | always |
-   | `docs/decisions/` | always; it counts as present when a tracked file sits under `docs/decisions/` or `docs/adr/` |
+   | `docs/decisions/` | always; it counts as present when the folder exists with a file under `docs/decisions/` or `docs/adr/` |
    | ARCHITECTURE.md | a workspace file (`pnpm-workspace.yaml`, `lerna.json`, `nx.json`, `turbo.json`, `go.work`, or a workspace table in the root `package.json`, `Cargo.toml` or `pyproject.toml`), or two directories with their own manifest, or two Dockerfiles; paths under `tests`, `fixtures`, `examples`, `node_modules`, `vendor` and `third_party` do not count |
    | PRODUCT.md | the UI rule below holds |
    | DESIGN.md | the root `package.json` or a declared workspace member lists a UI framework (react, vue, svelte, next, nuxt, astro, angular, solid, preact, remix, react-native, expo or electron), or a tracked `pubspec.yaml` names flutter, or DESIGN.md is tracked |
 
-   A document is present only when it is tracked.
+   With the script a document is present when the file exists in the working tree, tracked or not.
+   With the table, look on disk the same way.
 
 2. Ask at most four questions, one at a time, each with its default.
    Skip any the code already answers.

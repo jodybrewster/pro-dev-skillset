@@ -43,6 +43,7 @@ Every subcommand prints JSON and is run from the repo root.
    Exit 0 prints `documents   pass`.
    Exit 3 prints `documents   missing <n>` and one `Should-fix: <doc> (<rule>)` line for each entry in `missing`.
    Exit 2 prints `documents   could-not-run <reason>` and never reads as none missing.
+   Any other exit prints `documents   could-not-run <stderr tail>` and never reads as none missing.
    When `REVIEW.md` is among the missing documents, point to `/pro-dev install`.
    A missing document is Should-fix.
    It never changes `result`, never stops the run and never blocks.
@@ -234,7 +235,8 @@ pr-check on 3f9c2ab (base 81d04e7)
   build       pass   pnpm run build
   test        pass   pnpm test
   floor       pass   floor-guard.py --check
-  documents   missing 1  Should-fix: ARCHITECTURE.md
+  documents   missing 1
+              Should-fix: ARCHITECTURE.md (more than one module, service or deployable: workspaces in package.json)
   mutation    killed src/gate.ts
   code review done   reviewer: 0 blocking, 2 important
   codex       done   codex: 3 important, 1 agreed, 1 disputed

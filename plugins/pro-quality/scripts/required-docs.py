@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Work out the documents a repo must have and say which are missing (ADR-0020).
 
-Usage: required-docs.py [--repo <path>] [--json] [--policy-ref <ref>]
+Usage: required-docs.py [--repo <path>] [--json] [--policy-ref <ref>] [--worktree]
 
   --repo <path>        the repo to check (default: the current directory)
   --json               print {source, signals, rows, missing, findings}
   --policy-ref <ref>   read REVIEW.md from that commit with `git show`, so a pull request
-                       cannot loosen its own set; presence is always judged at HEAD
+                       cannot loosen its own set; presence is always judged at HEAD. A ref
+                       that is not a commit, starts with "-" or cannot be read is could-not-run
+  --worktree           count a document as present when the file exists in the working tree,
+                       tracked or not (never through a symlink that leaves the repo), so a
+                       drafting step cannot overwrite an uncommitted file
 
 The built-in set has eight rows: README.md, CLAUDE.md, AGENTS.md, REVIEW.md and docs/decisions/
 always; ARCHITECTURE.md when the code shows more than one module, service or deployable;
 PRODUCT.md when the repo has users (today: a UI); DESIGN.md when it has a UI. An optional
 `## Required documents` block in REVIEW.md (keys `add` and `remove`) tunes the set.
 
-A document is present only when tracked at HEAD. The script reads tracked paths and a few
+Unless --worktree is given, a document is present only when tracked at HEAD. The script reads tracked paths and a few
 manifests, writes nothing and makes no network call. Every git call is bounded by a timeout.
 
 Without --json it prints `missing  <doc>  (<rule>)` per missing document, then one line per
@@ -108,7 +112,7 @@ def workspace_globs(repo, tracked):
                     globs.append(m.group(1).strip("\"'"))
                 elif line.strip() and not line.lstrip().startswith("#"):
                     in_list = False
-    return [g.rstrip("/").lstrip("./") for g in globs if not g.startswith("!")]
+    return [g.rstrip("/").removeprefix("./") for g in globs if not g.startswith("!")]
 
 
 def ui_signal(repo, tracked):
@@ -241,6 +245,27 @@ def is_present(doc, tracked):
     return doc in tracked
 
 
+def is_present_worktree(top, doc):
+    """True when the path exists under top, resolving symlinks and refusing any that leave it."""
+    root = os.path.realpath(top)
+
+    def inside(rel):
+        full = os.path.join(top, rel)
+        if not os.path.lexists(full):
+            return None
+        real = os.path.realpath(full)
+        if real != root and not real.startswith(root + os.sep):
+            return None
+        return real
+
+    if doc == "docs/decisions/":
+        return any(inside(d) and os.path.isdir(inside(d)) for d in ("docs/decisions", "docs/adr"))
+    real = inside(doc.rstrip("/"))
+    if not real:
+        return False
+    return os.path.isdir(real) if doc.endswith("/") else os.path.isfile(real)
+
+
 def agent_files_differ(repo, tracked):
     a, c = os.path.join(repo, "AGENTS.md"), os.path.join(repo, "CLAUDE.md")
     if "AGENTS.md" not in tracked or "CLAUDE.md" not in tracked:
@@ -260,7 +285,7 @@ def agent_files_differ(repo, tracked):
     return True
 
 
-def check(repo_arg, policy_ref):
+def check(repo_arg, policy_ref, worktree=False):
     ok, top = git(repo_arg, "rev-parse", "--show-toplevel")
     if not ok or not top:
         raise NotRunnable("not a git repository, or git failed")
@@ -278,8 +303,17 @@ def check(repo_arg, policy_ref):
     }
 
     if policy_ref:
-        ok, text = git(top, "show", f"{policy_ref}:REVIEW.md", raw=True)
+        if policy_ref.startswith("-"):
+            raise NotRunnable("policy ref must not start with -")
+        ok, _ = git(top, "cat-file", "-e", f"{policy_ref}^{{commit}}")
         if not ok:
+            raise NotRunnable(f"policy ref {policy_ref} is not a readable commit")
+        ok, _ = git(top, "cat-file", "-e", f"{policy_ref}:REVIEW.md")
+        if ok:
+            ok, text = git(top, "show", f"{policy_ref}:REVIEW.md", raw=True)
+            if not ok:
+                raise NotRunnable(f"could not read REVIEW.md at {policy_ref}")
+        else:
             text = ""
     else:
         text = read_text(top, "REVIEW.md")
@@ -306,7 +340,7 @@ def check(repo_arg, policy_ref):
             rows.append({"doc": doc, "rule": "REVIEW.md add", "applies": True})
             have.add(doc)
     for r in rows:
-        r["present"] = is_present(r["doc"], tracked)
+        r["present"] = is_present_worktree(top, r["doc"]) if worktree else is_present(r["doc"], tracked)
     missing = [{"doc": r["doc"], "rule": r["rule"]} for r in rows if r["applies"] and not r["present"]]
     if agent_files_differ(top, tracked):
         findings.append("agent-files-differ (AGENTS.md and CLAUDE.md are separate files with different content)")
@@ -318,9 +352,10 @@ def main():
     ap.add_argument("--repo", default=".")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--policy-ref")
+    ap.add_argument("--worktree", action="store_true")
     args = ap.parse_args()
     try:
-        res = check(args.repo, args.policy_ref)
+        res = check(args.repo, args.policy_ref, args.worktree)
     except NotRunnable as e:
         print(json.dumps({"could_not_run": True, "reason": str(e)}))
         return 2

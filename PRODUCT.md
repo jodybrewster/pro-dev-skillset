@@ -28,8 +28,8 @@ Each plugin keeps its hooks in one `hooks/hooks.json` (`docs/hook-loading.md`, `
 
 The marketplace lists 20 plugin folders, each versioned in `.claude-plugin/marketplace.json` and under `plugins/`.
 `pro-dev-starter` pulls the default stack and `/pro-dev install` installs the external engines named in `plugins/pro-core/registry/engines.json`.
-Every enabled skill and hook costs context and routing accuracy each session, so the plugin boundary is the only switch a person has (`docs/decisions/0013-plugin-layering.md`).
-Forked skills keep their MIT attribution (`docs/licenses.md`).
+Every enabled skill and hook costs context and routing accuracy each session, so a plugin boundary is where a person turns a group of them off (`docs/decisions/0013-plugin-layering.md`).
+Forked and adapted content keeps its upstream attribution (`docs/licenses.md`).
 
 ## Evidence on Hand
 

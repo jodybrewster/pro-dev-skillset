@@ -34,7 +34,8 @@ Every repo with the plugins has these documents:
 | DESIGN.md | the project has a UI |
 
 One deterministic script, `plugins/pro-quality/scripts/required-docs.py`, works the set out from the tracked files.
-`/pro-dev install` and `pr-check` both run it; neither carries its own copy of the rules.
+`/pro-dev install` passes `--worktree` so a file that exists on disk but is not committed still counts as present.
+`/pro-dev install` and `pr-check` both run it; pr-check carries none; install keeps a fallback table for when pro-quality is absent.
 
 A repo tunes the set with one fenced block under `## Required documents` in `REVIEW.md`, holding `add` and `remove` lists.
 `remove` may name only the three conditional rows.

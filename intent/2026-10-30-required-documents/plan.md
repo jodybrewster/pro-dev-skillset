@@ -332,3 +332,5 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 13: `pro-quality:documentation-engineer` is not a dispatchable agent type in this run, so two Sonnet general-purpose subagents acted in that role with the template, the target and the fact list.
   The PRODUCT.md draft lowered the case of five section names; they were set back to the template's impeccable names.
 - Step 14: AC3 ran as described; AC6 and AC8 are recorded as not run under Done.
+- Review round 1 fixes: `required-docs.py` gained `--worktree` (a document counts when the file exists on disk, never through a symlink out of the repo) and `/pro-dev install` uses it; the drafting agent and its Codex twin never overwrite an existing target; a bad or dash-led `--policy-ref` is could-not-run instead of defaults; `removeprefix` replaces `lstrip` for workspace globs; the `plugins/pro-ai-sdlc/LICENSE` carries the impeccable attribution; ARCHITECTURE.md and PRODUCT.md were cut to checkable claims; pr-check lists any other exit as could-not-run; ADR-0020, the README row and the CLAUDE.md sample were corrected.
+  No version bumps in this round: the orchestrator re-takes versions at rebase.
