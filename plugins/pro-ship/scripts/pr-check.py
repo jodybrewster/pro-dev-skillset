@@ -12,8 +12,10 @@ restores it before it returns):
                                    FILE with a `/` is a path inside the plugin (for example
                                    .codex-plugin/agents/code-reviewer.toml); an absolute path, a
                                    `..` part or a backslash prints not-installed.
-  codex-trigger --tier TIER        print {run, setting, reason}: whether the Codex second review
-                                   runs, from the `codex-review:` line of REVIEW.md (ADR-0018)
+  codex-trigger --tier TIER [--base REF]
+                                   print {run, setting, reason}: whether the Codex second review
+                                   runs, from the `codex-review:` line of REVIEW.md as the base
+                                   branch has it, never the working tree (ADR-0018)
   agree --code FILE --codex FILE   pair the findings of two review reports by file and nearby
                                    lines; prints each side's findings and the agreed, disputed,
                                    code_only and codex_only lists. No model takes part.
@@ -757,15 +759,25 @@ def reviewer_record(raw, which: str) -> dict:
 # PRs (ADR-0018).
 NEAR = 5
 CODEX_STATUS = ("done", "skipped", "not-installed", "could-not-run")
-SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing)\b", re.I)
+SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing|skipped|ignored)\b", re.I)
 ITEM_RE = re.compile(r"^\s*(?:-|\d+\.)\s")
 LOC_RE = re.compile(r"`?([A-Za-z0-9_./-]+):(\d+)(?:-(\d+))?`?")
+
+
+def base_review_md(root: str, base_arg: str | None) -> str:
+    """REVIEW.md as the base branch has it, so a PR cannot switch off its own second look.
+    Empty when there is no base or the base has no REVIEW.md."""
+    base = merge_base(root, base_arg) if base_arg else default_base(root)
+    if not base:
+        return ""
+    r = sh(["git", "show", f"{base}:REVIEW.md"], root)
+    return r.stdout if r.returncode == 0 else ""
 
 
 def cmd_codex_trigger(root: str, args: list[str]) -> dict:
     tier = flag(args, "--tier") or "unclassified"
     setting, note = "high", ""
-    for ln in read(os.path.join(root, "REVIEW.md")).splitlines():
+    for ln in base_review_md(root, flag(args, "--base")).splitlines():
         m = re.match(r"^\s*codex-review:\s*(\S+)\s*$", ln, re.I)
         if m:
             value = m.group(1).lower()
@@ -783,17 +795,28 @@ def cmd_codex_trigger(root: str, args: list[str]) -> dict:
     return {"run": False, "setting": setting, "reason": note + f"tier {tier}"}
 
 
-def parse_findings(text: str) -> list[dict]:
+def norm_path(path: str, root: str | None) -> str:
+    """./a/b.py and an absolute path under the repo root both become a/b.py."""
+    if root and os.path.isabs(path):
+        for r in {root, os.path.realpath(root)}:
+            if path.startswith(r.rstrip(os.sep) + os.sep):
+                path = os.path.relpath(path, r)
+                break
+    return os.path.normpath(path) if path else path
+
+
+def parse_findings(text: str, root: str | None = None) -> list[dict]:
     """Findings of one review report: list items with a path:line location, tagged by the
-    nearest Important, Nits or Pre-existing heading above them."""
+    nearest Important, Nits or Pre-existing heading above them. Items under a Skipped or
+    Ignored heading are not findings."""
     out, severity = [], "unknown"
     for line in text.splitlines():
         if ITEM_RE.match(line):
             m = LOC_RE.search(line)
-            if m:
+            if m and severity not in ("skipped", "ignored"):
                 start = int(m.group(2))
                 end = int(m.group(3)) if m.group(3) else start
-                out.append({"severity": severity, "path": m.group(1), "start": start, "end": max(start, end), "text": line.strip()})
+                out.append({"severity": severity, "path": norm_path(m.group(1), root), "start": start, "end": max(start, end), "text": line.strip()})
             continue
         h = SECTION_RE.match(line)
         if h:
@@ -806,11 +829,11 @@ def near(a: dict, b: dict) -> bool:
     return a["path"] == b["path"] and a["start"] - NEAR <= b["end"] + NEAR and b["start"] - NEAR <= a["end"] + NEAR
 
 
-def cmd_agree(args: list[str]) -> dict:
+def cmd_agree(args: list[str], root: str | None = None) -> dict:
     code_path, codex_path = flag(args, "--code"), flag(args, "--codex")
     if not code_path or not codex_path:
         raise Refuse("pr-check: usage: agree --code FILE --codex FILE")
-    code, codex = parse_findings(read(code_path)), parse_findings(read(codex_path))
+    code, codex = parse_findings(read(code_path), root), parse_findings(read(codex_path), root)
     taken: set[int] = set()
     agreed, disputed = [], []
     for i, c in enumerate(code):
@@ -826,22 +849,28 @@ def cmd_agree(args: list[str]) -> dict:
             "counts": {"agreed": len(agreed), "disputed": len(disputed)}}
 
 
+MALFORMED_CODEX = {"agent": None, "status": "could-not-run", "reason": "malformed codex record", "blocking": 0,
+                   "important": 0, "agreed": 0, "disputed": 0, "range": None}
+
+
 def codex_record(raw) -> dict:
-    """reviewers.codex: informational, never blocking and never read by the result rule."""
+    """reviewers.codex: informational, never blocking and never read by the result rule.
+    Only a nonzero blocking is refused; any other malformed record is recorded as could-not-run."""
     if not isinstance(raw, dict):
-        raise Refuse("pr-check: reviewers.codex must be an object")
-    status = raw.get("status", "could-not-run")
-    if status not in CODEX_STATUS:
-        raise Refuse(f"pr-check: reviewers.codex.status must be one of {', '.join(CODEX_STATUS)}")
-    agent, reason, rng = raw.get("agent"), raw.get("reason"), raw.get("range")
-    if any(v is not None and not isinstance(v, str) for v in (agent, reason, rng)):
-        raise Refuse("pr-check: reviewers.codex agent, reason and range must be strings or null")
-    if count(raw.get("blocking", 0), "blocking") != 0:
+        return dict(MALFORMED_CODEX)
+    blocking = raw.get("blocking", 0)
+    if isinstance(blocking, int) and not isinstance(blocking, bool) and blocking > 0:
         raise Refuse("pr-check: reviewers.codex.blocking must be 0, a Codex finding never blocks")
+    status = raw.get("status", "could-not-run")
+    agent, reason, rng = raw.get("agent"), raw.get("reason"), raw.get("range")
+    try:
+        if status not in CODEX_STATUS or any(v is not None and not isinstance(v, str) for v in (agent, reason, rng)):
+            raise Refuse("malformed")
+        counts = [count(raw.get(k, 0), k) for k in ("blocking", "important", "agreed", "disputed")]
+    except Refuse:
+        return dict(MALFORMED_CODEX)
     return {"agent": agent, "status": status, "reason": reason, "blocking": 0,
-            "important": count(raw.get("important", 0), "important"),
-            "agreed": count(raw.get("agreed", 0), "agreed"),
-            "disputed": count(raw.get("disputed", 0), "disputed"), "range": rng}
+            "important": counts[1], "agreed": counts[2], "disputed": counts[3], "range": rng}
 
 
 def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None) -> str:
@@ -993,7 +1022,7 @@ def main(argv: list[str]) -> int:
             emit(cmd_codex_trigger(repo_root(), rest))
             return 0
         if cmd == "agree":
-            emit(cmd_agree(rest))
+            emit(cmd_agree(rest, repo_root()))
             return 0
         if cmd == "run":
             emit(cmd_run(repo_root(), rest))

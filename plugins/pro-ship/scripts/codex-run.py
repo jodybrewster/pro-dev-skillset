@@ -18,10 +18,10 @@ Checks, in order: consent (<cwd>/.claude/pro-dev.json holds answers.codex.answer
 `codex` binary on PATH, `codex login status` exit 0.
 
 Output: on success the report text on stdout, exit 0. On any failure exactly one stdout line
-`could-not-run: <reason>: <detail>`, at most five lines of Codex's stderr on stderr, and
+`could-not-run: <reason>: <detail>` and at most five lines of Codex's stderr on stderr. Exit codes:
   exit 2  usage         bad arguments, an unreadable or empty instructions or prompt file
   exit 3  not-opted-in, not-installed, not-logged-in
-  exit 4  timeout, exit-<n> (Codex exited nonzero), empty-output
+  exit 4  timeout, exit-<n> (Codex exited nonzero), empty-output, signal (the runner was stopped), error (an unexpected exception)
 
 The instructions and the prompt go to Codex on stdin, never on a command line. Python 3 standard
 library only; the only network use is the `codex` process this script starts.
@@ -186,7 +186,21 @@ def kill_group(proc: subprocess.Popen) -> None:
         pass
 
 
+def on_signal(n: int, _frame) -> None:
+    fail(4, "signal", f"stopped by signal {n}")
+
+
 def main(argv: list[str]) -> int:
+    for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+        signal.signal(sig, on_signal)
+    try:
+        return run(argv)
+    except Exception as e:  # SystemExit from fail() passes through
+        fail(4, "error", type(e).__name__)
+        return 4
+
+
+def run(argv: list[str]) -> int:
     ap = Parser(prog="codex-run.py", add_help=True)
     src = ap.add_mutually_exclusive_group()
     src.add_argument("--instructions")
@@ -210,8 +224,6 @@ def main(argv: list[str]) -> int:
     instructions = load_instructions(a.instructions or find_agent(a.agent, cwd))
     prompt = read_text(a.prompt, "prompt")
     codex = preflight(cwd)
-    for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
-        signal.signal(sig, lambda n, _f: sys.exit(128 + n))
     composed = f"# Instructions\n\n{instructions}\n\n# Handoff\n\n{prompt}"
     tmp = tempfile.mkdtemp(prefix="codex-run-")
     proc = None
@@ -235,7 +247,8 @@ def main(argv: list[str]) -> int:
             report = ""
         if not report.strip():
             fail(4, "empty-output", "codex exec finished with an empty report", err_text)
-        sys.stdout.write(report if report.endswith("\n") else report + "\n")
+        sys.stdout.buffer.write((report if report.endswith("\n") else report + "\n").encode("utf-8"))
+        sys.stdout.buffer.flush()
         return 0
     finally:
         if proc is not None and proc.poll() is None:

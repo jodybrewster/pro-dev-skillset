@@ -310,6 +310,19 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 8, `registry` check: the `manual-cli` rules also reject a `detect` object with extra keys and an empty `manual` string.
 - Step 11, AC13: in this worktree `pro-dev.py status --json` shows the `codex` row with `kind` `manual-cli` and a `manual` list but `state` `not-applicable`, because pro-core is not installed for this repo.
 - Step 14, `docs/releases.md`: the table was behind (marketplace line 1.59.1, pro-ship 0.2.0, pro-core 0.20.0 dated 2026-10-28, pro-quality 0.12.0).
-  The three rows and the marketplace line now carry the new versions, and each row says earlier releases were not listed.
+  The three rows and the marketplace line now carry the new versions.
+  Each row says earlier releases were not listed.
 - Commits: steps 12 and 13 are one commit and step 14 is a second, in place of the single Checkpoint E commit.
 
+- Review round 1 fixes:
+  A `manual-cli` row now asks for consent whenever it has no answer, also when its binary is already on PATH.
+  `codex-run.py` prints exactly one `could-not-run:` line for a signal (`signal`) or an unexpected exception (`error`), installs its signal handler before preflight and writes the report as UTF-8 bytes.
+  `codex-trigger` reads `codex-review:` from the base branch's `REVIEW.md` through `--base`, so a PR cannot turn off its own second look.
+  A malformed `reviewers.codex` record is written as `could-not-run` with the reason `malformed codex record`; only a nonzero `blocking` is refused.
+  `agree` skips items under Skipped and Ignored headings and normalizes `./` and absolute-under-repo paths.
+  The stamp doc now says `important` is not checked against `status`, as the fixture shows.
+
+## Follow-ups
+
+- For a pro-security follow-up: consent is read from the working tree of the branch under review, so a PR could add its own opt-in to `.claude/pro-dev.json`.
+- For a pro-security follow-up: Codex loads the branch's `AGENTS.md` and `.codex/` config, so the branch under review can steer its own second reviewer.

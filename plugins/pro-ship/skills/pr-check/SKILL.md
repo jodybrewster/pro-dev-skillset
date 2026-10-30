@@ -122,11 +122,11 @@ Never add a summary of the work, the session's reasoning, your own opinion of th
 After the handoff is filled, ask whether a second review from Codex applies:
 
 ```bash
-python3 "$CHECK" codex-trigger --tier <tier>
+python3 "$CHECK" codex-trigger --tier <tier> --base <base>
 ```
 
 It prints `{run, setting, reason}`.
-The setting comes from a `codex-review: always | high | never` line in `REVIEW.md`; the default is `high`.
+The setting comes from a `codex-review: always | high | never` line in the base branch's `REVIEW.md`, never the working tree, so a PR cannot turn off its own second look; the default is `high`.
 When `run` is false, record `reviewers.codex` as `skipped` with that reason and go on.
 
 When `run` is true:
@@ -141,13 +141,14 @@ When `run` is true:
    ```
 
    When `$TWIN` is `not-installed` or `$CODEXRUN` does not exist, record `not-installed` with the reason `runner or instructions missing`.
-3. Run it, with stdout to a file, and keep the exit code:
+3. Run it with stdout to a file and keep the exit code:
 
    ```bash
    python3 "$CODEXRUN" --instructions "$TWIN" --prompt .pro-dev/ship/handoff.md > .pro-dev/ship/review-codex.md
    ```
 
-   Start it in the same turn as the subagent dispatches below, as a background shell command when the host offers one, and give it the host's longest command timeout.
+   Start it in the same turn as the subagent dispatches below, as a background shell command when the host offers one.
+   Give it the host's longest command timeout.
    The runner stops by itself after 540 seconds.
 
 The runner checks consent, the `codex` binary and the login itself.
@@ -183,7 +184,7 @@ Codex report: when the Codex run was started, read its first line with the same 
 - Trigger false: `skipped`, with the trigger's reason.
 - `$TWIN` is `not-installed` or the runner file is missing: `not-installed`, reason `runner or instructions missing`.
 - Runner exit 3: `not-installed`, reason the runner's word (`not-opted-in`, `not-installed` or `not-logged-in`).
-  For `not-opted-in` say to run `/pro-dev install`.
+  For `not-opted-in` say to run `/pro-dev install`, which asks for the consent even when the codex command is already on PATH.
 - Runner exit 0 with the tally line first: `done`, `important` from the tally.
 - Runner exit 0 without that line, exit 2, exit 4 or any other exit: `could-not-run`, reason the runner's word (`timeout`, `exit-<n>`, `empty-output`, `usage`) or `no tally line`.
 

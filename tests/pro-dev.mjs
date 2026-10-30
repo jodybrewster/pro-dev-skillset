@@ -2772,6 +2772,17 @@ CASES.push(
     },
   },
   {
+    id: "manual/installed-binary-with-no-answer-still-asks-for-consent",
+    run: (s) => {
+      const w = codexWorld(s, { stub: true });
+      const e = s.engine(s.status({ bin: w.bin }), "codex");
+      if (!e || e.state !== "installed" || e.needsQuestion !== true || e.wantsInstall !== false) return bad(JSON.stringify(e));
+      s.run(["answer", "codex", "yes"], { bin: w.bin });
+      const y = s.engine(s.status({ bin: w.bin }), "codex");
+      return y.needsQuestion === false && y.answer === "yes" ? ok() : bad(JSON.stringify(y));
+    },
+  },
+  {
     id: "manual/no-answer-asks-and-a-no-is-declined",
     run: (s) => {
       const w = codexWorld(s, { stub: false });

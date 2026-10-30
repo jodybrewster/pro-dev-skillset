@@ -948,7 +948,9 @@ def engine_state(row: dict, repo: str, installs: list[dict], answers: dict) -> d
         "id": row["id"], "owner": owner, "kind": row.get("kind"), "default": bool(row.get("default")),
         "bridges": row.get("bridges", []), "state": state, "answer": ans,
         "why": row.get("why", ""),
-        "needsQuestion": state == "missing" and not row.get("default") and ans is None,
+        # a manual-cli row asks for consent in every state: the yes also covers sending diffs out
+        "needsQuestion": (row.get("kind") == "manual-cli" and state in ("missing", "installed") and not row.get("default") and ans is None)
+        or (state == "missing" and not row.get("default") and ans is None),
         "wantsInstall": state == "missing" and (bool(row.get("default")) or ans == "yes"),
     }
     if row.get("kind") == "manual-cli":

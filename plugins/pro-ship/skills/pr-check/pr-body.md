@@ -13,7 +13,8 @@ Then say what was `not-found`, `timeout` or `could-not-run` plus what the floor 
 ## Reviews
 
 When the Codex second review ran (`reviewers.codex.status` is `done`), list the findings in four groups from `pr-check.py agree`.
-Tag each finding with its source: `[Claude, <severity>]` or `[Codex, <severity>]`, and `[Claude, Codex]` for an agreed one.
+Tag each finding with its source: `[Claude, <severity>]` or `[Codex, <severity>]`.
+Tag an agreed one `[Claude, Codex]`.
 
 - Raised by both (agreed): one line per pair.
 - Raised by both, rated differently: each reviewer's line as written, one under the other.

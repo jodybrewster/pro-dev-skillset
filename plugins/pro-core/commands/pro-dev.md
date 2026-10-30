@@ -99,6 +99,7 @@ Print a short report, then one line naming the next command to run.
 1. Show the engines the run will install: the rows with `wantsInstall` true.
    Say which are skipped because their owner plugin is not installed.
 2. Ask about each optional row with `needsQuestion` true, one at a time.
+   A `manual-cli` row is asked even when its binary is already on PATH, because the yes is the consent to use it; an installed row with a yes needs no install.
    Give the row `id`, its `why` line and ask yes or no.
    Save each reply with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" answer <id> yes` or `no`, using the row `id` exactly as the status JSON gives it.
 3. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again.

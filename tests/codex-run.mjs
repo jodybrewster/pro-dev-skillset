@@ -32,7 +32,11 @@ if [ "$1" = "exec" ]; then
   done
   case "\${STUB_MODE:-ok}" in
     ok)
+      echo "STUB-STDERR-MARKER" >&2
       printf 'important: 1  nits: 0  pre-existing: 0  skipped: 0\\n- [correctness] src/a.py:10 - stub finding' > "$out"
+      exit 0 ;;
+    unicode)
+      printf 'important: 0  nits: 0  pre-existing: 0  skipped: 0\ncaf\\303\\251 \\342\\200\\224 \\346\\227\\245\\346\\234\\254\n' > "$out"
       exit 0 ;;
     empty) exit 0 ;;
     fail) echo boom >&2; exit 1 ;;
@@ -119,7 +123,7 @@ export function runCodexRunCases() {
     let r = run(repo, std(repo));
     const a = r.argv;
     add("c1 ok: exit 0, the report on stdout", "exit 0, stdout is the stub report plus a newline",
-      r.status === 0 && r.stdout === "important: 1  nits: 0  pre-existing: 0  skipped: 0\n- [correctness] src/a.py:10 - stub finding\n", `${r.status} ${JSON.stringify(r.stdout)} ${r.stderr}`);
+      r.status === 0 && r.stderr === "" && r.stdout === "important: 1  nits: 0  pre-existing: 0  skipped: 0\n- [correctness] src/a.py:10 - stub finding\n", `${r.status} ${JSON.stringify(r.stdout)} ${r.stderr}`);
     add("c1b argv has exec, the sandbox flags, -C and -o and ends with -", "read-only, ephemeral, color never",
       ["exec", "-s", "read-only", "--ephemeral", "--color", "never", "-C", "-o"].every((x) => a.includes(x)) && a[a.length - 1] === "-" && a[a.indexOf("-C") + 1] === repo, a.join(" "));
     add("c1c stdin holds the instructions without frontmatter, the handoff and the marker", "# Instructions ... # Handoff",
@@ -171,6 +175,22 @@ export function runCodexRunCases() {
     fails("c7 timeout", "exit 4 within 10 seconds", r, 4, "could-not-run: timeout:", r.ms < 10000);
     r = run(repo, std(repo), { env: { STUB_MODE: "fail" } });
     fails("c8 a failing codex", "exit 4, exit-1, stderr holds boom", r, 4, "could-not-run: exit-1:", r.stderr.includes("boom"));
+    r = run(repo, std(repo), { env: { STUB_MODE: "unicode" } });
+    add("c9b a non-ASCII report is written as UTF-8", "exit 0, exact bytes", r.status === 0 && r.stdout === "important: 0  nits: 0  pre-existing: 0  skipped: 0\ncaf\u00e9 \u2014 \u65e5\u672c\n", `${r.status} ${JSON.stringify(r.stdout)} ${r.stderr}`);
+    {
+      // SIGTERM while the stub sleeps: exactly one could-not-run line, exit 4, no stray child left running.
+      const log = join(sandbox, `sig${++n}`);
+      const outFile = join(sandbox, `sigout${n}`);
+      const quote = (x) => `'${x.replace(/'/g, "'\\''")}'`;
+      const script = `${quote(python)} ${quote(RUNNER)} ${std(repo).map(quote).join(" ")} > ${quote(outFile)} & pid=$!
+i=0; while [ ! -e ${quote(log + ".stdin")} ] && [ $i -lt 150 ]; do sleep 0.1; i=$((i+1)); done
+kill -TERM $pid; wait $pid; echo $?`;
+      const sr = spawnSync("/bin/sh", ["-c", script], { cwd: repo, encoding: "utf8", timeout: 30000, env: { ...baseEnv, PATH: PATH_STUB, STUB_LOG: log, STUB_MODE: "sleep" } });
+      const code = Number((sr.stdout || "").trim());
+      const so = existsSync(outFile) ? readFileSync(outFile, "utf8") : "";
+      add("c9c SIGTERM gives one could-not-run: signal line and exit 4", "exit 4, one line",
+        code === 4 && so.startsWith("could-not-run: signal:") && so.split("\n").filter(Boolean).length === 1, `${code} ${JSON.stringify(so)}`);
+    }
     r = run(repo, std(repo), { env: { STUB_MODE: "empty" } });
     fails("c9 an empty report", "exit 4, empty-output", r, 4, "could-not-run: empty-output:");
     r = run(repo, ["--instructions", join(repo, "review.md"), "--prompt", join(repo, "missing.md"), "--cwd", repo]);

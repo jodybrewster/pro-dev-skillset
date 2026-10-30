@@ -107,9 +107,12 @@ export function runShipCheckCases() {
     add("k1f the bare form still resolves under scripts/", "the scripts path", pc(plain, ["find", "pro-quality", "floor-guard.py"], { script }).stdout.trim() === join(plain, "plugins", "pro-quality", "scripts", "floor-guard.py"), "");
 
     // codex-trigger: setting by tier.
-    const trig = (line, tier) => {
+    // REVIEW.md is read from the base branch: the line is committed on main, the work is on feat.
+    const trig = (line, tier, { headLine } = {}) => {
       const t = mkrepo(line === null ? {} : { "REVIEW.md": `# Review\n\n${line}\n` });
-      return pc(t, ["codex-trigger", "--tier", tier]).json;
+      git(t, "checkout", "-q", "-b", "feat");
+      commit(t, { "f.txt": "1\n", ...(headLine === undefined ? {} : { "REVIEW.md": `# Review\n\n${headLine}\n` }) }, "feature");
+      return pc(t, ["codex-trigger", "--tier", tier, "--base", "main"]).json;
     };
     const table = [
       [null, "high", { high: true, medium: false, low: false, unclassified: false }],
@@ -128,6 +131,11 @@ export function runShipCheckCases() {
     }
     add("k2b an unknown setting names the value in its reason", "reason holds sometimes", /sometimes/.test(trig("codex-review: sometimes", "high")?.reason || ""), JSON.stringify(trig("codex-review: sometimes", "high")));
     add("k2c tier unclassified under high says why", "reason tier unclassified", trig(null, "unclassified")?.reason === "tier unclassified", JSON.stringify(trig(null, "unclassified")));
+
+    add("k2d a PR that sets never in its own REVIEW.md cannot turn the review off", "run true, setting high",
+      trig("codex-review: high", "high", { headLine: "codex-review: never" })?.run === true && trig("codex-review: high", "high", { headLine: "codex-review: never" })?.setting === "high", JSON.stringify(trig("codex-review: high", "high", { headLine: "codex-review: never" })));
+    add("k2e no REVIEW.md on the base falls back to the default even when the PR adds one", "setting high, tier medium not run",
+      trig(null, "medium", { headLine: "codex-review: always" })?.setting === "high" && trig(null, "medium", { headLine: "codex-review: always" })?.run === false, JSON.stringify(trig(null, "medium", { headLine: "codex-review: always" })));
 
     // agree: two report files, deterministic pairing.
     const dir = join(sandbox, "agree");
@@ -158,6 +166,11 @@ export function runShipCheckCases() {
     g = agree(`## Pre-existing\n- [a] src/a.py:10 - one\n`, `Pre-existing:\n1. \`src/a.py:10\` old\n`);
     add("k3h Pre-existing sections are read and agree", "agreed 1", g?.counts?.agreed === 1 && g.code?.[0]?.severity === "pre-existing", JSON.stringify(g));
 
+    g = agree(`Important\n- [a] ./src/a.py:10 - one\n`, `Important\n1. \`${fr}/src/a.py:12\` two\n`);
+    add("k3i ./ and absolute-under-repo paths normalize and agree", "agreed 1, path src/a.py", g?.counts?.agreed === 1 && g.code?.[0]?.path === "src/a.py" && g.codex?.[0]?.path === "src/a.py", JSON.stringify(g));
+    g = agree(`Important\n- [a] src/a.py:10 - one\n`, `Important:\n1. \`src/a.py:11\` two\n\nSkipped:\n1. \`src/b.py:5\` not a finding\n\nIgnored from the handoff:\n- \`src/c.py:7\` nor this\n`);
+    add("k3j items under Skipped and Ignored headings are not collected", "one codex finding", g?.codex?.length === 1 && g.counts.agreed === 1, JSON.stringify(g));
+
     // stamp with reviewers.codex
     const GOOD_RUN = { checks: ["build", "lint", "typecheck", "test"].map((step) => ({ step, command: `make ${step}`, status: "pass", exit_code: 0, output_tail: [] })), floor: "pass",
       mutation: { status: "killed", reason: null, file: "src/index.ts", accepted: false }, sources: { "floor-guard": "/x/floor-guard.py" } };
@@ -182,10 +195,12 @@ export function runShipCheckCases() {
       && x.st?.reviewers?.codex?.important === 3, x.r.stdout + x.r.stderr);
     x = sp({ ...CODEX, blocking: 1 });
     add("k4b codex.blocking above 0 is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
-    x = sp({ ...CODEX, status: "inline" });
-    add("k4c codex.status inline is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
-    x = sp({ ...CODEX, agreed: -1 });
-    add("k4d a negative codex count is refused", "exit 1", x.r.status === 1, x.r.stdout + x.r.stderr);
+    for (const [label, rec] of [["status inline", { ...CODEX, status: "inline" }], ["a negative count", { ...CODEX, agreed: -1 }], ["a non-string reason", { ...CODEX, reason: 5 }], ["a non-object record", "oops"], ["a non-integer blocking", { ...CODEX, blocking: "x" }]]) {
+      x = sp(rec);
+      const c = x.st?.reviewers?.codex;
+      add(`k4c a malformed codex record (${label}) becomes could-not-run and the stamp is written`, "pass, could-not-run, malformed codex record",
+        x.r.status === 0 && x.st?.result === "pass" && c?.status === "could-not-run" && c?.reason === "malformed codex record" && c?.blocking === 0 && c?.important === 0, x.r.stdout + x.r.stderr);
+    }
     x = sp(undefined);
     add("k4e no codex key writes no reviewers.codex", "pass, no codex key", x.r.status === 0 && x.st?.result === "pass" && !("codex" in (x.st?.reviewers || {})), x.r.stdout + x.r.stderr);
     x = sp({ ...CODEX, status: "done", important: 4, agreed: 1, disputed: 1, range: "A..B" });
