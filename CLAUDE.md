@@ -33,6 +33,8 @@ Mieruka is only a UI over it and reads the plugin's templates and rules.
 - Version-bump law: a content change under `plugins/<name>/` bumps that plugin in both manifests and its marketplace entry, plus `metadata.version`, in the same commit ([ADR-0002](./docs/decisions/0002-version-bump-law.md), [detail](./docs/version-bump-law.md)).
 - Hook-loading law: every hook a plugin registers lives in its one `hooks/hooks.json` and every script a hook runs exists and is tracked by git ([ADR-0003](./docs/decisions/0003-one-hooks-json-per-plugin.md), [detail](./docs/hook-loading.md)).
 - Codex parity: every skill-bearing plugin also loads under Codex, with harness-neutral prose, standard frontmatter, a version-aligned `.codex-plugin/plugin.json` and a `.toml` per agent ([ADR-0004](./docs/decisions/0004-codex-parity.md), [detail](./docs/codex-parity.md)).
+- Layering: a plugin boundary exists where a real audience ends (core, domain, a layer under a domain, stack) or where a gate needs its own switch; methods are switchable plugins; a skill goes in the narrowest layer whose every user would want it ([ADR-0011](./docs/decisions/0011-plugin-layering.md), proposed).
+- Layering: a plugin boundary exists where a real audience ends (core, domain, a layer under a domain, stack) or where a gate needs its own switch; methods are switchable plugins; a skill goes in the narrowest layer whose every user would want it ([ADR-0011](./docs/decisions/0011-plugin-layering.md), proposed).
 
 Other decisions are in [docs/decisions/](./docs/decisions/README.md).
 

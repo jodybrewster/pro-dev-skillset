@@ -46,6 +46,7 @@ In both use cases, one of this repo's jobs is to communicate with a Mieruka MCP 
 Skills write workstream status, stories, structured prompts and canvas artifacts to `.mieruka/` or call Mieruka MCP tools directly.
 This lets Mieruka surface live progress to clients - saved stories, REASONS canvases, approval gates and daily progress summaries - without requiring them to read code or talk to Claude directly.
 
-The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins).
-`pro-legal` is opt-in too.
+The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins) so that SDLC methods can be trialled by turning them on and off.
+`pro-legal` is opt-in too, because its release gate needs its own switch.
+The reasoning for which plugins are separate, and the audience test for where a new skill goes, is [ADR-0011](./decisions/0011-plugin-layering.md).
 The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.
