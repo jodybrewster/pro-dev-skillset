@@ -325,3 +325,8 @@ It also moves ADR-0010, Status `proposed` from this change, to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Track A lost the test-first order inside steps 1 to 6: the first write of the cases failed silently and they were first run after the script existed.
+  To make up for it, each rule, the mode lookup, `floor-allow:` parsing and redaction were broken in turn and every breakage failed at least one case (single-case coverage for `test-deleted`, `assertion-removed` and `new-exception`).
+- Only `CONSTRAINTS.md` at the repo root is read as the bar (case f95b), found in step 17 when the guard flagged the shipped template's example Exceptions row; the intent places the file at the root and the spec did not say so.
+- The build was rebased onto main after #80, #83, #84 and #85 merged; versions were taken from main then and match the spec's 0.13.0, 0.7.0 and 1.60.0.

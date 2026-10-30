@@ -7,6 +7,11 @@
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/docs-before-push.py\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/floor-guard.py\"",
+            "timeout": 30
           }
         ]
       },

@@ -9,7 +9,7 @@ allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git
 - Repo root: !`git rev-parse --show-toplevel 2>&1`
 - Current branch: !`git branch --show-current`
 - Working tree: !`git status --short --branch`
-- Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null; true`
+- Review policy present: !`cd "$(git rev-parse --show-toplevel)" && ls -1 REVIEW.md CONSTRAINTS.md CLAUDE.md AGENTS.md DESIGN.md 2>/dev/null; true`
 - Intents: !`ls -1 "$(git rev-parse --show-toplevel)/intent" 2>/dev/null | tail -10`
 - Spec methods: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage review; true`
 
@@ -30,6 +30,7 @@ With no argument, diff the current branch against its merge base and add uncommi
 
 Read the repo's `REVIEW.md`.
 If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the repo has no review policy of its own; `/pro-dev install` can add one.
+Read `CONSTRAINTS.md` at the repo root when "Review policy present" lists it, beside `REVIEW.md`.
 Read the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
 Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names, else the newest folder under `intent/` the diff relates to.
 
@@ -37,7 +38,7 @@ Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names,
 
 Normally bugs, then security, then compliance.
 Compliance compares the diff with the spec and plan and flags a departure that plan.md does not record.
-For a large or risky diff, hand the passes to the `reviewer` subagent with the diff spec and the policy paths and nothing else, so its read is not anchored on yours.
+For a large or risky diff, hand the passes to the `reviewer` subagent with the diff spec and the policy paths (`CONSTRAINTS.md` included when present) and nothing else, so its read is not anchored on yours.
 
 ### 4. Offer spec methods
 

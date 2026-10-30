@@ -12,6 +12,7 @@ Never edit, commit, push, approve or comment.
 ## 1. Load the policy
 
 Read the repo's `REVIEW.md`; if there is none, say so and use the three passes below.
+Read `CONSTRAINTS.md` at the repo root when present, beside `REVIEW.md`.
 Read the agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
 Find the brief: the `intent.md`, `spec.md` and `plan.md` the diff names, else the newest folder under `intent/` it relates to.
 
@@ -20,6 +21,7 @@ Find the brief: the `intent.md`, `spec.md` and `plan.md` the diff names, else th
 - Bugs: wrong conditions, missing edge cases, regressions in behavior something else relies on, failure paths that are not handled, references to files or paths that do not exist.
 - Security: injection, authentication and authorization gaps, secrets or personal data in the diff or in logs, unsafe deserialization, SSRF, and any hook or script that runs on every call and could wedge a session.
 - Compliance: the diff matches the spec and plan, follows the agent file, and records any departure in plan.md in the same change.
+A diff that loosens `CONSTRAINTS.md` is Important unless a commit message carries a `floor-allow: <rule> <reason>` line: a threshold moved the wrong way, a Floor bullet or numbered row removed or an Exceptions row added.
 
 Read the code around each hunk, not only the hunk.
 For each suspected finding, find the concrete input or state that makes it fail; if you cannot, drop it or list it as skipped.
