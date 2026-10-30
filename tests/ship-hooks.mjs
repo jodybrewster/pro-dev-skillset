@@ -464,12 +464,9 @@ export function runShipHookCases() {
 
       // ---- step 11: bypass ------------------------------------------------------------
       for (const [label, repo, head] of [["medium", medR, medH], ["high", highR, highH]]) {
-        for (const pm of ["bypassPermissions", "dontAsk", "auto"]) {
-          r = mrun(`${MERGE} --match-head-commit ${head}`, { cwd: repo, env: MENF(), pm });
-          add(`mg80 ${label} under ${pm} in enforce denies`, "deny", r,
-            denies(r) && /approval needs a prompt and this session cannot show one/.test(r.text) && new RegExp(label).test(r.text) && /default mode/.test(r.text) && /by hand after review/.test(r.text));
-        }
-        for (const pm of ["default", "plan", "acceptEdits", undefined]) {
+        // NO_PROMPT_MODES is empty after the step 11 probe, so every mode asks (the deny branch
+        // is exercised by mg27x only if a probed mode is added to PROBED_NO_PROMPT).
+        for (const pm of ["bypassPermissions", "dontAsk", "auto", "default", "plan", "acceptEdits", undefined]) {
           r = mrun(`${MERGE} --match-head-commit ${head}`, { cwd: repo, env: MENF(), pm });
           add(`mg81 ${label} under ${pm ?? "no permission_mode"} asks`, "ask", r, asks(r));
         }
@@ -483,7 +480,7 @@ export function runShipHookCases() {
       r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: MWARN(), pm: "bypassPermissions" });
       add("mg83 bypass in warn allows with a message", "message", r, allowsMsg(r));
       r = mrun(MERGE, { cwd: mainRepo, env: MENF(), pm: "bypassPermissions" });
-      add("mg84 could not run under bypass denies as high", "deny", r, denies(r));
+      add("mg84 could not run under bypass asks as high", "ask", r, asks(r) && /could-not-run/.test(r.log));
 
       // ---- review fixes: separators, eval, xargs, the pin, the deadline, the base --------
       for (const [id, cmd] of [["mg100 a single & before the merge", `git status & ${MERGE}`],
@@ -641,6 +638,16 @@ export function runShipHookCases() {
         add("mg257 a graphql query is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
         r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${prLowH}`, { cwd: prLowR, env: MENF(), extraEnv: stub(prLowOut) });
         add("mg258 an api merge of a low PR allows silently", "silent", r, allowsQuiet(r));
+      }
+
+      // ---- ask per permission mode (step 11, probed headless on Claude Code 2.1.314) ------
+      // Each value the hook logged: a hook "ask" was denied by --permission-prompts none in all of
+      // them, so no mode is in NO_PROMPT_MODES. A mode listed here would deny instead of ask.
+      const PROBED_NO_PROMPT = [];
+      for (const [i, pm] of ["auto", "default", "acceptEdits", "plan", "dontAsk", "bypassPermissions"].entries()) {
+        r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), pm, extraEnv: stub(prOut) });
+        const want = PROBED_NO_PROMPT.includes(pm) ? "deny" : "ask";
+        add(`mg27${i} a high PR with the pin under ${pm} in enforce: ${want}`, want, r, want === "deny" ? denies(r) : asks(r));
       }
 
       // ---- --auto (step 5) ---------------------------------------------------------------

@@ -39,9 +39,16 @@ import sys
 import time
 
 HOOK = "merge-gate"
-# permission_mode values in which a hook "ask" is not known to prompt. Checked against Claude
-# Code docs on 2026-10-30: the docs do not say, so these deny (step 15 may relax this).
-NO_PROMPT_MODES = {"bypassPermissions", "dontAsk", "auto"}
+# permission_mode values in which a hook "ask" is not known to prompt; in enforce these deny.
+# Probed headless on 2026-10-30, Claude Code 2.1.314: `claude -p` with --permission-prompts none
+# under each --permission-mode, a PreToolUse hook answering "ask" for one echo command. The ask
+# denied the command in every mode (the hook logged these permission_mode values): auto, default
+# (the flag value manual), acceptEdits, plan, dontAsk and bypassPermissions. A plain echo ran
+# under bypassPermissions, dontAsk and auto, so the denial came from the ask. plan is not
+# conclusive on its own (the mode may stop Bash itself) and was never in this set. The probe is a
+# proxy for a person at the terminal: repeat it interactively before any enforce switch, and add
+# a mode here if a live ask does not prompt.
+NO_PROMPT_MODES: set[str] = set()
 DEADLINE = 20
 try:  # test hook: a shorter deadline for the slow-module case
     DEADLINE = float(os.environ.get("PRO_SHIP_MERGE_GATE_DEADLINE") or DEADLINE)
