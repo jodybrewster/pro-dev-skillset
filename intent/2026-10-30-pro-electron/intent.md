@@ -46,7 +46,7 @@ Later, only if the first two prove useful: `electron-testing` (Playwright `_elec
 
 ## Affected users and systems
 
-A new `plugins/pro-electron/` with both manifests, its marketplace entry and `metadata.version`, rows in `plugins/pro-core/registry/engines.json` (a pro-core bump), routing cases in `tests/cases/routing.jsonl`, `docs/licenses.md`, the README plugin list and `docs/roadmap.md`.
+A new `plugins/pro-electron/` with both manifests, its marketplace entry and `metadata.version`, rows in `plugins/pro-core/registry/engines.json` (a pro-core bump), routing cases in `tests/cases/routing.jsonl`, plugin eval cases, behavioral cases and fixtures under `evals/`, `tests/bridge-install-smoke.mjs`, the `component-coverage` check, `docs/licenses.md`, the README plugin list and `docs/roadmap.md`.
 Nothing changes for repos that do not install it; `pro-dev-starter` does not pull it in.
 
 ## Constraints
@@ -65,11 +65,29 @@ A scaffold skill: jwynia's `scaffold-electron-app.ts` covers it.
 Tauri.
 Moving the plugin under the `pro-dev-*` names of ADR-0013 while that ADR is proposed; it follows whatever rename the other stack plugins get.
 
+## Evals
+
+Every skill in the plugin ships with evals in the same PR as the skill, across all four tiers of [docs/evals.md](../../docs/evals.md):
+
+- Keyless and model routing: at least two cases per skill in `tests/cases/routing.jsonl`, plus `notOneOf` cases for the boundaries that matter: an Electron upgrade must not route to `next-upgrade` or `astro-upgrade`; an Electron security audit must not route to pro-security's generic review.
+  Nothing goes into `tests/cases/uncovered.json`.
+- Plugin evals: a `-fires` and a `-stays-quiet` pair for `electron-skills-bridge`, `electron-upgrade` and `electron-security-audit` under `plugins/pro-electron/evals/`, with `"experimental": {"evals": "evals"}` in the manifest.
+  pro-electron joins the `component-coverage` check, so a later skill without a case fails CI.
+- Behavioral: `evals/cases/electron-upgrade.json` and `evals/cases/electron-security-audit.json`, each run with `--baseline`.
+  The upgrade fixture is a tiny app on an old major that uses an API removed in the next one; the agent must upgrade one major at a time, find the removed API and rebuild native modules.
+  The audit fixture has planted faults (`nodeIntegration: true`, no `setWindowOpenHandler`, an unchecked `shell.openExternal`, no CSP and Fuses left at their defaults); the agent must report each one with `file:line` and no false alarms on a clean control file.
+- The audit script gets its own `node --test` unit tests over the same fixtures.
+- The bridge installs go into `tests/bridge-install-smoke.mjs`, so the weekly run catches jwynia or laststance moving or removing a skill.
+
+A skill counts as shipped only when its plugin eval fires in at least 2 of 3 Sonnet runs, its stays-quiet case fires in 0 and its behavioral case beats the baseline.
+The first numbers go into the "Measured changes" section of `docs/evals.md` with the model and Claude Code version pinned.
+
 ## Success looks like
 
 In an Electron repo with pro-electron installed, `/pro-dev install` offers the jwynia and laststance skills and the MCP setup.
 "set up typed IPC between main and renderer" routes to `electron-skills-bridge`, "upgrade Electron from 43 to 45" routes to `electron-upgrade` and "audit this Electron app's security" routes to `electron-security-audit`.
 `node tests/check.mjs`, `node tests/eval.mjs --dry`, the lexical routing gate and every strict validation pass.
+The plugin and behavioral evals meet the bar in the Evals section.
 
 ## Facts the survey got wrong or left unverified
 
@@ -90,3 +108,4 @@ Checked with `gh api` on 2026-10-30:
   The spec needs a security challenge: localhost only, dev builds only, never shipped with the port open (a Fuse can enforce that).
 - One PR for bridges and both original skills, or bridges first?
   Recommended: one PR for the bridges and `electron-upgrade`, then `electron-security-audit` in a second, since the audit script needs its own tests.
+  Each PR carries the evals for the skills it adds.
