@@ -1,7 +1,7 @@
 # Plan: a detailed code-reviewer agent
 
 Built from `spec.md` (commit dcdb98f, amended 2026-10-29 before approval) and `intent.md` in this folder.
-Status: draft.
+Status: approved (Jody, 2026-10-30: "keep going and finish P0 you have my approval on all").
 Approver: Jody Brewster.
 Dated: 2026-10-29.
 
@@ -9,10 +9,12 @@ Jody is named as approver because the spec sets a contract every reviewer in the
 The prose of the agent prompt is the product and AC7 needs a person to read one real review.
 It does not suit auto mode.
 
-Prerequisite to confirm, not a step: the spec says the ADR for the four-field handoff is "to be drafted" and does not list it among the files this change ships.
-The orchestrator may fold it into one shared review-contract ADR with review-policy (next free number is 0011 unless review-policy takes it first).
-This plan treats that ADR as written and committed before the build starts.
-If Jody wants the ADR in this PR, add it and its row in `docs/decisions/README.md` as one more step before step 1.
+The ADR for the four-field handoff ships in this PR as `docs/decisions/0012-review-handoff.md` (proposed), with its row in `docs/decisions/README.md`, written in step 7 (one PR per intent, Jody 2026-10-30).
+ADR-0011 is review convergence, shipped in #82.
+
+Build-time readings on 2026-10-30, replacing the numbers below: pro-quality 0.13.0 to 0.14.0, pro-execution 0.6.0 to 0.6.1 and `metadata.version` 1.61.0 to 1.62.0.
+review-policy shipped the summary line `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>` as the first line of every report and "Nothing to fix." when important and nits are zero; the agent uses that line wherever this plan says "tally line".
+`policy` names `CONSTRAINTS.md` when present beside `REVIEW.md` and the agent file (ADR-0010).
 
 ## Files that change
 
@@ -172,7 +174,7 @@ Overlaps with sibling plans:
 
 Decided by Jody on 2026-10-29 and no longer open: effort high set by the dispatcher, a subagent dispatch (`pr-gate` may choose `claude -p` later without changing the agent), one shared `handoff.md` that pr-check also uses, the mutation check moving into pr-check (pr-gate spec R29) and the three extra callers with the pro-execution patch bump.
 
-Assumed, confirm with Jody (open questions in the spec):
+Decided on 2026-10-30 under Jody's approval of all P0 work, with the spec's recommendations:
 
 - Both severities stay and Critical goes; this changes the wording `commands/review.md` and the gate hook use today.
 - The caller filters repeated findings with a new base sha and the handoff gets no prior-findings field (flagged concern 3).
