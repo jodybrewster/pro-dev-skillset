@@ -1246,6 +1246,23 @@ checks["sdlc-contract"] = () => {
     for (const w of ["auth", "migrations", "payments", "deploys", "secrets"])
       if (!stopBlock.includes(w)) failures.push(`pro-ai-sdlc: /execute stop list does not name "${w}"`);
   }
+  // loop upgrades (ADR-0017): definition of done, plan and spec shapes, agent lenses and the ADR status.
+  const need = (file, anchors, ci = false) => {
+    const body = read(file);
+    if (body === null) { failures.push(`pro-ai-sdlc: ${file} missing`); return; }
+    const hay = ci ? body.toLowerCase() : body;
+    for (const a of anchors) if (!hay.includes(ci ? a.toLowerCase() : a)) failures.push(`pro-ai-sdlc: ${file} lacks the anchor "${a}"`);
+  };
+  need("references/definition-of-done.md", ["Addy Osmani"]);
+  need("templates/plan.md", ["## Noticed but not touched", "references/definition-of-done.md", "Checkpoint", "- Build commit:"]);
+  need("commands/plan.md", ["references/definition-of-done.md", "XS", "Checkpoint"]);
+  need("commands/plan.md", ["never overwrite"], true);
+  need("templates/spec.md", ["## Assumptions", "### Boundaries", "Always:", "Ask first:", "Never:"]);
+  need("commands/spec.md", ["capability-map.md", "unconfirmed"]);
+  for (const f of ["agents/verifier.md", ".codex-plugin/agents/verifier.toml"]) need(f, ["one concept per test", "A test that never fails"]);
+  for (const f of ["agents/simplifier.md", ".codex-plugin/agents/simplifier.toml"]) need(f, ["git blame"]);
+  need("commands/adr.md", ["deprecated", "Never delete"]);
+  need("templates/adr.md", ["deprecated"]);
   // review policy (R21): the template, the reviewer and its Codex twin, and /pr-babysit carry the convergence rules.
   const revT = read("templates/REVIEW.md") ?? "";
   for (const h of ["What failure looks like here", "Evidence", "Pre-existing", "Rounds"])
