@@ -4,7 +4,7 @@ Built from `spec.md` (commit 6926f78, with its open questions and flagged concer
 Status: approved.
 Approver: Jody Brewster (2026-10-30: "keep going and finish P0 you have my approval on all").
 It adds a merge gate on `gh pr merge` in every repo that installs pro-ship and sets a tier model every gate and reviewer here will follow, which is why an approver is named.
-No second approver is needed because Jody owns this marketplace and decided the open questions and ADR-0014 under that approval.
+No second approver is needed because Jody owns this marketplace and decided the open questions and ADR-0015 under that approval.
 The blast radius is bounded: the hook starts in warn mode, makes no network or model call, edits nothing and treats a run that could not happen as high, never low.
 The review pass in step 22 reads both scripts as a second pair of eyes.
 Dated: 2026-10-30.
@@ -16,7 +16,7 @@ Decided on 2026-10-30 under Jody's approval, recorded in the spec:
 - The size thresholds are placeholder named constants marked unmeasured until the calibration run over merged PRs (open question 4, AC9).
 - Whether a hook's `ask` still prompts when permission checks are bypassed is verified live in step 15; until then and if the check cannot be run, medium and high are denied under `bypassPermissions` (open question 6, R24).
 - R28 lands here, because review-policy shipped in #82 without the `## Risk tiers` section (flagged concern 2).
-- The tier model ships as ADR-0014 in this PR.
+- The tier model ships as ADR-0015 in this PR.
 
 Build order: this builds after pr-gate, which adds `/pro-ship:pr-check`, `scripts/pr-check.py`, `scripts/pr-gate.py`, pro-ship's `hooks/hooks.json`, `tests/ship-hooks.mjs`, the stamp at `.pro-dev/ship/pr-check.json` with `tier: unclassified`, the stamp contract page under `docs/`, ADR-0013 and pro-ship's place in `pro-dev-starter`.
 It also needs code-reviewer's `plugins/pro-quality/skills/requesting-code-review/handoff.md` with its `risk` field and ADR-0012.
@@ -44,7 +44,7 @@ Modified in pro-ai-sdlc:
 
 New and modified at the root:
 
-- `docs/decisions/0014-risk-tiers.md` (new): the tier model, status proposed.
+- `docs/decisions/0015-risk-tiers.md` (new): the tier model, status proposed.
 - `docs/decisions/README.md` (modified): the 0014 row.
 - The stamp contract page pr-gate wrote under `docs/` (modified): the `risk` field and the meaning of `tier` once classified.
 - `tests/unit/risk-classifier.test.mjs` (new): the classifier cases of AC3 and AC5 to AC8, run by `node --test`.
@@ -58,7 +58,7 @@ New and modified at the root:
 
 At sign-off only:
 
-- `docs/decisions/0014-risk-tiers.md` (modified): Status to accepted and "Where it is enforced" filled in.
+- `docs/decisions/0015-risk-tiers.md` (modified): Status to accepted and "Where it is enforced" filled in.
 - `intent/2026-10-29-risk-tiers/intent.md` and `spec.md` (modified): `status` to accepted.
 - `intent/2026-10-29-risk-tiers/plan.md` (modified): Status to implemented and the Done block filled in.
 
@@ -182,7 +182,7 @@ Track C: the skill, template and ADR (one subagent; it owns the files below).
 
 13. Template, ADR and README. Satisfies R28, the ADR and the README row.
     Add the commented `## Risk tiers` block to `plugins/pro-ai-sdlc/templates/REVIEW.md` after "Presumptive blockers" and before "Output format", with the fenced block holding every key of R16 at its default and one line each saying the approval and local decision columns are fixed and `paths.low` cannot lower `workflows` or `hook-scripts`.
-    Write `docs/decisions/0014-risk-tiers.md` from `plugins/pro-ai-sdlc/templates/adr.md`, status proposed, deciding: the tier is the highest floor among deterministic signals; declared risk only raises it; could not run is high; only the person answering a permission prompt approves and an agent's approval never counts; an approval covers one HEAD sha through `--match-head-commit`; the tier table lives in an optional `REVIEW.md` section with the approval column fixed until the scaling block exists; a tier is overridden down only by Jody, recorded in the stamp (later work).
+    Write `docs/decisions/0015-risk-tiers.md` from `plugins/pro-ai-sdlc/templates/adr.md`, status proposed, deciding: the tier is the highest floor among deterministic signals; declared risk only raises it; could not run is high; only the person answering a permission prompt approves and an agent's approval never counts; an approval covers one HEAD sha through `--match-head-commit`; the tier table lives in an optional `REVIEW.md` section with the approval column fixed until the scaling block exists; a tier is overridden down only by Jody, recorded in the stamp (later work).
     "Where it is enforced" names `risk-classify.py`, `merge-gate.py`, the `pr-check` stamp and the template.
     Add the row to `docs/decisions/README.md` and update the pro-ship bullet in `README.md`.
     Check: `node tests/check.mjs` passes and the fenced block in the template, uncommented into a fixture, parses with `policy:` not reading `unreadable` (run in step 17).
@@ -227,7 +227,7 @@ Serial tail.
     Check: `node tests/check.mjs` version and codex-manifests checks pass and `git diff origin/main -- .claude-plugin/marketplace.json` shows two entries and `metadata.version`.
 
 20. Roadmap and checks. Satisfies AC1.
-    Update `docs/roadmap.md`: risk-tiers built on #85, ADR-0014 proposed, AC9 calibration and AC12 pending.
+    Update `docs/roadmap.md`: risk-tiers built on #88, ADR-0015 proposed, AC9 calibration and AC12 pending.
     Run every command under "Proof of done" and fix what fails.
 
 21. Dogfood and calibrate. Satisfies AC9, AC10, AC7 by hand.
@@ -360,7 +360,7 @@ Filled in when the build is finished, before sign-off.
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
-It also moves ADR-0014, Status `proposed` from this change, to `accepted`.
+It also moves ADR-0015, Status `proposed` from this change, to `accepted`.
 
 ## Departures from plan
 

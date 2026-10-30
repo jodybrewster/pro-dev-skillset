@@ -228,7 +228,7 @@ The mode handling follows `production-gate.py`, which already returns `ask` in e
 Sources read: the policies listed at the top.
 
 ADR needed: yes, the tier model, the rule that an agent's approval never counts and the home of the tier table are rules every gate and reviewer here will share.
-Decided on 2026-10-30 under Jody's approval: it ships in this PR as `docs/decisions/0014-risk-tiers.md` (0012 is the reviewer handoff and 0013 the gate stamp).
+Decided on 2026-10-30 under Jody's approval: it ships in this PR as `docs/decisions/0015-risk-tiers.md` (0012 is the reviewer handoff and 0013 the gate stamp).
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
