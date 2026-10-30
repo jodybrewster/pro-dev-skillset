@@ -280,9 +280,34 @@ Then the manual runs of step 14.
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1 to AC13: <pass or fail, with what was observed>
+- Build commit: 3c03a17 (content and bumps) and the dogfood commit after it; the commit holding this section follows.
+- Checks run:
+  - `node tests/check.mjs`: 36 checks, 0 failures, 12 warnings (35 checks and 12 warnings before the change, so one new check and no new warnings).
+    One earlier full run under a machine load average above 300 printed 1 failure that the output tail did not name; a rerun with the load down passed with 0 failures.
+  - `node tests/eval.mjs --dry`: 88 cases reference real skills, 98 skills in the catalog and 7 distractors.
+  - `node tests/route-lexical.mjs --min-rank1 70`: exit 0.
+  - `node --test tests/unit/*.test.mjs`: 166 pass, 0 fail.
+  - `claude plugin validate . --strict`: passed; the per-plugin strict loop passed for all 20 plugin directories.
+  - `node tests/required-docs.mjs`: 25 of 25 cases pass.
+  - `python3 plugins/pro-quality/scripts/required-docs.py --json`: exit 0, `source` `REVIEW.md`, `missing` empty.
+  - The AC10 `git diff origin/main --stat` on the unchanged files prints nothing.
+  - The `verifier` agent was not dispatched in this run.
+- AC1: pass (the commands above).
+- AC2: pass; the case runner failed before the script existed (4 of 25 cases passed vacuously) and now passes 25 of 25.
+- AC3: pass; in this repo the script exits 0 with `source` `REVIEW.md` and empty `missing`.
+  In a throwaway clone with `ARCHITECTURE.md` removed from the index it exited 3 naming ARCHITECTURE.md with a rule starting "more than one module".
+- AC4: pass; case `block-template` covers it (defaults as shipped, `REVIEW.md` once uncommented).
+- AC5: pass; the three templates exist and the `required-docs` check pins the schema comment, the ten headings in order and `## Twelve-factor`.
+- AC6: not run, needs Jody (a hand run of the pr-check skill, which needs a model).
+- AC7: pass by grep; the skill says `not-installed` and "did not run" and prints `documents   pass` only after running the script.
+- AC8: not run, needs Jody (a hand run of `/pro-dev install` on a copy of a small app, which needs a model).
+- AC9: pass; both reviewer files name `ARCHITECTURE.md` in the compliance lens and `handoff.md` is unchanged.
+- AC10: pass; the diff is empty.
+- AC11: pass; the version-bump check passes with 0.22.0, 0.11.0, 0.16.0 and 0.6.0 in both manifests and the marketplace, and `metadata.version` 1.68.0.
+- AC12: pass; ADR-0020 is proposed with its index row and `docs/licenses.md` has the impeccable row.
+- AC13: pass; ARCHITECTURE.md and PRODUCT.md exist at the root, each path they name was checked with `ls` (the relative names left over were plugin-relative or slash commands), and REVIEW.md holds `add: [PRODUCT.md]`.
+  PRODUCT.md leaves out Positioning, Brand Commitments and Accessibility & Inclusion because the code cannot inform them.
+- Definition of done: met except the verifier run and AC6 and AC8, which wait for Jody.
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -304,3 +329,6 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 11: the licenses row copies its copyright line (Copyright 2025 Paul Bakaus) from the existing impeccable-bridge row, since no upstream `LICENSE` is cached locally and the repo already records it.
 - Step 13 (dogfood) and step 14 (manual runs) are recorded under Done.
 - Jody's decisions of 2026-10-30, all already in the spec: `/pro-dev install` does not draft DESIGN.md and names `/impeccable document`; pr-check lists DESIGN.md as missing until it exists; the templates stay in pro-ai-sdlc; the impeccable credit is a licenses row.
+- Step 13: `pro-quality:documentation-engineer` is not a dispatchable agent type in this run, so two Sonnet general-purpose subagents acted in that role with the template, the target and the fact list.
+  The PRODUCT.md draft lowered the case of five section names; they were set back to the template's impeccable names.
+- Step 14: AC3 ran as described; AC6 and AC8 are recorded as not run under Done.
