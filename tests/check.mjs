@@ -1181,6 +1181,26 @@ checks["ship-check"] = () => {
   return { failures, warnings };
 };
 
+// agent-twins: the Codex .toml twin of pro-quality's code-reviewer carries the same instructions as
+// the .md, because the Codex runner sends the .toml text as the reviewer's instructions (ADR-0018).
+checks["agent-twins"] = () => {
+  const failures = [], warnings = [];
+  const mdPath = join(ROOT, "plugins", "pro-quality", "agents", "code-reviewer.md");
+  const tomlPath = join(ROOT, "plugins", "pro-quality", ".codex-plugin", "agents", "code-reviewer.toml");
+  if (!existsSync(mdPath) || !existsSync(tomlPath)) { failures.push("agent-twins: code-reviewer.md or its .toml twin is missing"); return { failures, warnings }; }
+  const md = readFileSync(mdPath, "utf8");
+  const mm = md.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  const tm = readFileSync(tomlPath, "utf8").match(/developer_instructions = """\n?([\s\S]*?)"""/);
+  if (!mm) failures.push("agent-twins: code-reviewer.md has no frontmatter block");
+  if (!tm) failures.push("agent-twins: code-reviewer.toml has no developer_instructions block");
+  if (mm && tm) {
+    const a = mm[1].trim().split("\n"), b = tm[1].trim().split("\n");
+    const at = a.findIndex((l, i) => l !== b[i]);
+    if (at >= 0 || a.length !== b.length) failures.push(`agent-twins: the .md body and the .toml developer_instructions differ at body line ${(at >= 0 ? at : Math.min(a.length, b.length)) + 1}`);
+  }
+  return { failures, warnings };
+};
+
 checks["codex-run"] = () => {
   const failures = [], warnings = [];
   const { skipped, results } = runCodexRunCases();
