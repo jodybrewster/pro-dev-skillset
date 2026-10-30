@@ -247,9 +247,21 @@ Then the manual checks at checkpoints A and B (AC3, AC4) and the trial in step 1
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- AC1: <pass or fail, with what was observed>
+- Build commit: e92d1fe (the version bump; the Done fill follows in the next commit)
+- Checks run: `node tests/check.mjs` pass (36 checks, 0 failures, 12 warnings); `node tests/eval.mjs --dry` pass (89 cases, 99 skills); `node tests/route-lexical.mjs --min-rank1 70` pass (rank-1 70/88, 79.5%); `node --test tests/unit/*.test.mjs` pass (165, 0 fail); `claude plugin validate . --strict` pass; the per-plugin strict loop pass (20 of 20); `cmp` on the two runner copies prints nothing; `git ls-files` lists the three skill files and the runner.
+- Definition of done: met
+- AC1: pass, every command above passed.
+- AC2: pass, `git ls-files` lists `SKILL.md`, `doubt-instructions.md`, `handoff.md` and `codex-run.py`.
+- AC3: pass, `{claim}` and `<claim>` in the instruction text failed `doubt` and a `claim` bullet in the skill's `handoff.md` failed `handoff`; both passed once restored.
+- AC4: pass, a one-byte change to the pro-ai-sdlc runner copy made `doubt` name the runner; it passed once restored.
+- AC5: pass, `execute.md` has `## Doubt` with the plan marker, the high-tier classifier backstop, the three-round stop and the draft PR rule; `templates/plan.md` shows the `irreversible` marker and the `Doubt:` line; `commands/plan.md` tells the planner when to mark a step.
+- AC6: not run, needs Jody (a hand trial of `/execute` on a throwaway repo).
+- AC7: not run, needs Jody (the Codex yes path and the `codex`-off-PATH path; the real `codex` was not run).
+- AC8: pass, the Codex manifest has `"skills": "./skills/"` and `codex-manifests` passes.
+- AC9: pass, the routing case is in `routing.jsonl` and `eval.mjs --dry` counts 89 cases.
+- AC10: pass, the `docs/licenses.md` row, the LICENSE notice and the footer on both skill files are in place.
+- AC11: pass, pro-ai-sdlc is 0.11.0 in both manifests and its marketplace entry and `metadata.version` is 1.68.0, bumped once.
+- AC12: pass, ADR-0019 and its row exist (written at the spec stage and updated for Jody's decisions).
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
