@@ -84,7 +84,7 @@ review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for ev
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
 pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
 risk-tiers shipped in #88 on 2026-10-30 with ADR-0015. All of P0 (ranked items 1 to 6) shipped on 2026-10-30.
-Follow-ups before any gate goes to enforce mode: AC9 of constraint-floor (a week of warn-mode use), the size thresholds from the risk-tiers calibration table, the merge gate resolving a PR number to its head, and naming `pr-check` and `risk-tiers` in the pro-core router.
+What still blocks enforce mode, per gate and with owners: [docs/enforce-mode.md](./enforce-mode.md); the decision record is pending until 2026-11-13.
 Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 
 ## Parked intents

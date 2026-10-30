@@ -110,15 +110,21 @@ With `--json` it prints `{"could_not_run": true, "reason": ..., "tier": "high"}`
 
 ## Merging a PR
 
+The merge gate resolves the PR itself: it reads the PR with `gh pr view`, fetches the PR head and the base tip in one `git fetch` and classifies that head against that base tip.
+The tier is the PR's even when the session sits on `main`.
 When `/merge-pr` runs on a PR, use the classifier this way:
 
-1. Run the classifier on the PR's branch at its current HEAD and note the sha with `git rev-parse HEAD`.
-2. Show Jody the tier, every signal with its evidence, any finding and the HEAD sha.
+1. Read the head with `gh pr view <number> --json headRefOid,baseRefName`, run `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>` and classify with `--head <headRefOid>` against the base tip that fetch wrote to `FETCH_HEAD`, the same way the gate does.
+2. Show Jody the tier, every signal with its evidence, any finding, the PR number and the `headRefOid` sha.
 3. Low needs no question.
    Medium and high wait for his answer.
    An agent's own statement of approval never counts.
-4. Merge only with the commit pinned: `gh pr merge <number> --match-head-commit <sha>`.
+4. Merge only with the commit pinned: `gh pr merge <number> <method> --match-head-commit <headRefOid>`.
    GitHub refuses the merge if the PR moved on, and a new commit needs a new look.
+   The same pin holds with `--auto`: GitHub then refuses the merge if a later push changes the head.
+   A `gh api .../pulls/<n>/merge` call pins with `-f sha=<headRefOid>`.
+5. When `gh` cannot answer, the gate treats the PR as high and says why.
+   Fix the cause (sign in, reach the network, name the repo with `-R`) and run the merge again.
 
 ## Overrides
 
