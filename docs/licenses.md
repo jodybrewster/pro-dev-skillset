@@ -67,6 +67,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-ai-sdlc | optional review lists in `templates/REVIEW.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted (the two commented optional blocks are rewritten from its review checklists) |
 | pro-ai-sdlc | loop guardrails in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ai-sdlc | `skills/doubt-driven-development` and the `## Doubt` section of `/execute` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ai-sdlc | section names and schema comment in `templates/PRODUCT.md` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0 | Copyright 2025 Paul Bakaus | adapted (section names and the schema comment only) |
 | pro-quality | receiving-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | requesting-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | verification-before-completion | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |

@@ -6,6 +6,13 @@
 # (https://github.com/addyosmani/agent-skills), also MIT licensed:
 #   addyosmani/agent-skills: Copyright (c) 2025 Addy Osmani
 # The text was rewritten for this marketplace.
+#
+# templates/PRODUCT.md adapts its section names and its schema comment from
+# pbakaus/impeccable (https://github.com/pbakaus/impeccable), licensed under the
+# Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
+#   pbakaus/impeccable: Copyright 2025 Paul Bakaus
+# Only the section names and the schema comment follow the upstream; the rest is original.
+# The full Apache-2.0 text is at the URL above and in plugins/pro-testing/LICENSE.
 
 MIT License
 

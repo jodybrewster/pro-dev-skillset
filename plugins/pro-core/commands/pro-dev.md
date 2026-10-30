@@ -17,6 +17,8 @@ allowed-tools:
   - "Bash(ls:*)"
   - "Bash(wc -l*)"
   - "Bash(mkdir:*)"
+  - "Bash(ln -s CLAUDE.md AGENTS.md)"
+  - "Bash(ln -s AGENTS.md CLAUDE.md)"
   - Read
   - Glob
   - Grep
@@ -205,9 +207,74 @@ The "How work flows here" section says, in short sentences, one per line:
 - Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/`, `.claude/.fix-task` and `.claude/fix-mode`; append only the missing lines.
 - `.claude/pro-dev.json` is meant to be committed so a team shares its optional-engine choices; do not ignore it.
 
+### Required documents
+
+Every repo gets a short list of documents it must have (ADR-0020).
+README.md, CLAUDE.md, AGENTS.md, REVIEW.md and a decisions folder are always on it.
+ARCHITECTURE.md, PRODUCT.md and DESIGN.md join when the code calls for them.
+Do this after the folders and the review policy, so a `REVIEW.md` written above already exists.
+
+1. Find the set.
+   Look in the status JSON `plugins` list for an entry named `pro-quality` with `covers` true.
+   If there is one, run `python3 "<its installPath>/scripts/required-docs.py" --json --worktree`.
+   `--worktree` counts a file that exists on disk as present even when it is not committed, so step 4 cannot overwrite it.
+   Say that the call prompts, because running a script from another plugin's path is not pre-approved.
+   Exit 3 means documents are missing and exit 2 means the script could not run: name the reason and go on to step 2 with the table below.
+   If pro-quality is not found, apply the table below from your own inspection and say the deterministic check is not installed.
+
+   | Document | Required when |
+   |----------|---------------|
+   | README.md, CLAUDE.md, AGENTS.md, REVIEW.md | always |
+   | `docs/decisions/` | always; it counts as present when the folder exists with a file under `docs/decisions/` or `docs/adr/` |
+   | ARCHITECTURE.md | a workspace file (`pnpm-workspace.yaml`, `lerna.json`, `nx.json`, `turbo.json`, `go.work`, or a workspace table in the root `package.json`, `Cargo.toml` or `pyproject.toml`), or two directories with their own manifest, or two Dockerfiles; paths under `tests`, `fixtures`, `examples`, `node_modules`, `vendor` and `third_party` do not count |
+   | PRODUCT.md | the UI rule below holds |
+   | DESIGN.md | the root `package.json` or a declared workspace member lists a UI framework (react, vue, svelte, next, nuxt, astro, angular, solid, preact, remix, react-native, expo or electron), or a tracked `pubspec.yaml` names flutter, or DESIGN.md is tracked |
+
+   With the script a document is present when the file exists in the working tree, tracked or not.
+   With the table, look on disk the same way.
+
+2. Ask at most four questions, one at a time, each with its default.
+   Skip any the code already answers.
+   - Does the project have users or an install base? Default yes when the users signal holds, else no.
+   - Does it have more than one module, service or deployable? Default the architecture signal.
+   - Does it have a UI? Ask only when no UI signal holds and tracked `.html`, `.css` or template files exist. Default no.
+   - Should `AGENTS.md` be a symlink or a pointer? Ask only when neither agent file is a symlink or pointer yet. Default symlink.
+   In a non-interactive run take every default and say so.
+
+3. Never overwrite a document that exists.
+   List each present document as present and leave it alone.
+   Report an `agent-files-differ` finding with both paths and write nothing for it.
+
+4. Draft each missing README.md, ARCHITECTURE.md or PRODUCT.md.
+   Read `<aiSdlcInstallPath>/templates/README.md`, `templates/ARCHITECTURE.md` or `templates/PRODUCT.md`.
+   When the host offers `pro-quality:documentation-engineer`, dispatch it once per document with the template path, the target path and the facts from the inspection.
+   The agent writes the file.
+   Without that agent, write the bare template and list the sections left to fill.
+   When the template file is missing, report "no template for <doc> in the installed pro-ai-sdlc; run /pro-dev update" and go on.
+
+5. Make the agent file pair.
+   When AGENTS.md exists in any form (a file or a symlink, dangling ones included), do not write it and report it; check with `test -e AGENTS.md || test -L AGENTS.md`.
+   Only when no AGENTS.md path exists, make it a symlink with `ln -s CLAUDE.md AGENTS.md`, or a pointer file that says to read CLAUDE.md when the person chose a pointer or the symlink fails.
+   When the repo's file is AGENTS.md and CLAUDE.md is missing, do the same the other way round with `ln -s AGENTS.md CLAUDE.md`.
+   Never write a copy.
+
+6. When neither `docs/decisions/` nor `docs/adr/` exists, create `docs/decisions/README.md` with a one-line purpose and an empty index table with the columns `| ADR | Decision | Date |`.
+
+7. Do not draft DESIGN.md.
+   When the UI signal holds and DESIGN.md is missing, name `/impeccable document` (through pro-design's `impeccable-bridge`) as the next step, or say the impeccable engine is not installed.
+   `pr-check` keeps listing DESIGN.md as missing until it exists.
+
+8. Write the answers into `REVIEW.md` only in the run that wrote it.
+   Fill its `## Required documents` block with an `add` or `remove` entry for every answer that differs from the check's default, and uncomment the block.
+   With no difference the block stays commented.
+   When `REVIEW.md` already exists, print the block to paste and do not edit the file.
+
 ### Report
 
 List each file created or changed with its path.
 List each thing left alone because it existed.
 Give the verify command found, or say none was found and ask for it.
 Remind the person that nothing is committed.
+For each required document give one line: drafted, bare template, present, left as a gap (with the reason) or not required.
+Add the placeholder count of each drafted file.
+Name any `agent-files-differ` finding with both paths.

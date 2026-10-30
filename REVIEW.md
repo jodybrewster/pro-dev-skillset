@@ -60,3 +60,12 @@ Drop the rest.
 - Lockfiles (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`).
 - Anything `node tests/check.mjs`, `node tests/eval.mjs --dry` or `claude plugin validate --strict` already enforces: manifest shape, frontmatter keys, version equality, hook file names, sidecar references and routing case targets.
 - `CHANGELOG.md` wording and other generated files.
+
+## Required documents
+
+This repo has an install base and no UI, so PRODUCT.md is required by hand.
+See [ADR-0020](./docs/decisions/0020-required-documents.md).
+
+```yaml
+add: [PRODUCT.md]
+```

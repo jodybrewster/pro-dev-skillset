@@ -44,6 +44,16 @@ Return:
 - validations actually performed, and outstanding environment-level checks
 - residual risk and prioritized follow-ups
 
+## Drafting a document from a template
+
+When the task gives you a template path and a target path, write the target from the template.
+If the target file already exists, stop and report it; never overwrite it.
+Keep the template's headings and their order.
+Fill each section from facts in the code and name the file path that shows each fact.
+Leave an angle-bracket placeholder only where the code cannot say.
+Omit an optional section the code cannot inform instead of padding it.
+Never invent users, numbers, customers or claims, and keep the result under one page.
+
 Hard rules:
 - Do not invent undocumented behavior or operational guarantees. If the code does not prove it, mark it open.
 - Do not report a doc as fixed because you edited it. Re-walk the path; a documentation fix is verified by running it.

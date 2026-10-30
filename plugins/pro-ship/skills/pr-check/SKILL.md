@@ -30,9 +30,23 @@ Every subcommand prints JSON and is run from the repo root.
    If it is not, say "commit first, the stamp is bound to a commit" and stop.
 2. Find the base: `git merge-base origin/main HEAD` (use the default branch the repo has).
    Record base and head shas with `git rev-parse`.
-3. Look for `REVIEW.md` at the repo root.
-   When it is missing, say so once and point to `/sdlc-init`.
-   Continue anyway.
+3. Check the required documents (ADR-0020).
+   Find pro-quality's script the way the floor guard is found:
+
+   ```bash
+   DOCS=$(python3 "$CHECK" find pro-quality required-docs.py)
+   ```
+
+   When `find` reports `not-installed`, print `documents   not-installed` and say the required-documents check did not run.
+   Never read that as none missing.
+   Otherwise run `python3 "$DOCS" --json --policy-ref <base>` from the repo root, so a PR cannot loosen its own set.
+   Exit 0 prints `documents   pass`.
+   Exit 3 prints `documents   missing <n>` and one `Should-fix: <doc> (<rule>)` line for each entry in `missing`.
+   Exit 2 prints `documents   could-not-run <reason>` and never reads as none missing.
+   Any other exit prints `documents   could-not-run <stderr tail>` and never reads as none missing.
+   When `REVIEW.md` is among the missing documents, point to `/pro-dev install`.
+   A missing document is Should-fix.
+   It never changes `result`, never stops the run and never blocks.
 
 ## Classify
 
@@ -221,6 +235,8 @@ pr-check on 3f9c2ab (base 81d04e7)
   build       pass   pnpm run build
   test        pass   pnpm test
   floor       pass   floor-guard.py --check
+  documents   missing 1
+              Should-fix: ARCHITECTURE.md (more than one module, service or deployable: workspaces in package.json)
   mutation    killed src/gate.ts
   code review done   reviewer: 0 blocking, 2 important
   codex       done   codex: 3 important, 1 agreed, 1 disputed
@@ -254,4 +270,5 @@ When the script is missing (Codex ships only skills, or the plugin path is not s
 3. Review inline as above and record it as not fresh.
 4. Draft the PR body.
 5. The Codex review is skipped: no script.
-6. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.
+6. Run `required-docs.py` from pro-quality when it can be found, and otherwise report "required documents: not checked".
+7. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.

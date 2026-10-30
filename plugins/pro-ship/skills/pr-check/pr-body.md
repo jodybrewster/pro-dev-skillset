@@ -35,6 +35,8 @@ When Codex did not run, write one line: `Codex review: <status> (<reason>)`, tak
   The finding is shown and never fails the run.
 - Areas touched: the top-level directories in `git diff --name-only <base>...HEAD`.
 - Open findings: floor findings and reviewer findings that are still unresolved, with the counts from the stamp.
+- Missing documents: each missing required document with its rule and "Should-fix", from the `documents` line of the report.
+  Write "none" only when the check ran and found none, else "not checked (<why>)".
 - Security surface: the categories the classifier reported, or "none".
 
 ## How to revert

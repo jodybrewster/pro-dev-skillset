@@ -20,6 +20,7 @@ import { runExecuteCases } from "./execute.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
+import { runRequiredDocsCases } from "./required-docs.mjs";
 import { runCodexRunCases } from "./codex-run.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
 import { runMemoryHookCases } from "./memory-hooks.mjs";
@@ -1178,6 +1179,47 @@ checks["ship-check"] = () => {
   if (skipped) { warnings.push(`ship check cases skipped - ${skipped}`); return { failures, warnings }; }
   if (!results.length) failures.push("tests/ship-check.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`ship check ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// required-docs: the pro-quality required-set script (cases in tests/required-docs.mjs) and the
+// contract between it, the three pro-ai-sdlc templates, /pro-dev install and the pr-check skill
+// (ADR-0020).
+checks["required-docs"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runRequiredDocsCases();
+  if (skipped) warnings.push(`required-docs cases skipped - ${skipped}`);
+  else {
+    if (!results.length) failures.push("tests/required-docs.mjs produced no cases to run");
+    for (const r of results) if (!r.ok) failures.push(`required-docs ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  }
+  const tdir = join(ROOT, "plugins", "pro-ai-sdlc", "templates");
+  const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+  for (const t of ["README.md", "ARCHITECTURE.md", "PRODUCT.md"]) {
+    const body = read(join(tdir, t));
+    if (body === null) { failures.push(`required-docs: plugins/pro-ai-sdlc/templates/${t} is missing`); continue; }
+    if (body.split("\n").length >= 60) failures.push(`required-docs: templates/${t} is 60 lines or more`);
+    if (t === "PRODUCT.md") {
+      if (!body.split("\n").includes("<!-- impeccable:product-schema 1 -->")) failures.push("required-docs: templates/PRODUCT.md lacks the line <!-- impeccable:product-schema 1 -->");
+      const heads = ["Platform", "Users", "Product Purpose", "Positioning", "Operating Context", "Capabilities and Constraints", "Brand Commitments", "Evidence on Hand", "Product Principles", "Accessibility & Inclusion"];
+      let at = -1;
+      for (const h of heads) {
+        const i = body.indexOf(`\n## ${h}\n`);
+        if (i < 0) { failures.push(`required-docs: templates/PRODUCT.md lacks the heading ## ${h}`); break; }
+        if (i < at) { failures.push(`required-docs: templates/PRODUCT.md has ## ${h} out of order`); break; }
+        at = i;
+      }
+    }
+    if (t === "ARCHITECTURE.md" && !body.split("\n").includes("## Twelve-factor")) failures.push("required-docs: templates/ARCHITECTURE.md lacks the line ## Twelve-factor");
+  }
+  const proDev = read(join(ROOT, "plugins", "pro-core", "commands", "pro-dev.md")) || "";
+  for (const needle of ["required-docs.py", "templates/README.md", "templates/ARCHITECTURE.md", "templates/PRODUCT.md"]) {
+    if (!proDev.includes(needle)) failures.push(`required-docs: plugins/pro-core/commands/pro-dev.md does not contain ${needle}`);
+  }
+  const prCheck = read(join(ROOT, "plugins", "pro-ship", "skills", "pr-check", "SKILL.md")) || "";
+  for (const needle of ["required-docs.py", "Should-fix"]) {
+    if (!prCheck.includes(needle)) failures.push(`required-docs: plugins/pro-ship/skills/pr-check/SKILL.md does not contain ${needle}`);
+  }
   return { failures, warnings };
 };
 

@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Jody's portable pro dev skill stack",
-    "version": "1.69.0"
+    "version": "1.70.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -17,7 +17,7 @@
       "name": "pro-core",
       "source": "./plugins/pro-core",
       "description": "Universal base skills and guardrails: find-skills, using-pro-dev (the cross-lifecycle router that maps a task to the right phase and skill, including bridge skills like impeccable-bridge, qa-suite, and lavish), and dream (memory consolidation over Claude Code auto-memory: scans session transcripts for corrections, decisions, preferences, and patterns, merges the findings into the memory files, and rebuilds a lean MEMORY.md index under 200 lines). /gh universal GitHub workflow command (briefing, new, commit, push, pr, ship, sync, resolve). /dream runs a consolidation on demand, with dry-run and status modes. /kaizen raises the bar one notch per run from a planning repo: it judges each tracked project against its own profile and current practice, red-teams it, applies one reversible improvement, briefs the rest and writes a dated ledger and HTML report; /kaizen init scaffolds the planning repo. PreToolUse hook blocks dangerous Bash (force-push to main, rm -rf /, .env redirects, sudo, chmod 777, curl|bash). SessionStart hook nudges parallel subagent dispatch. A Stop hook flags when a 24h memory consolidation is due, per project, and a SessionStart hook nudges the next session to run /dream. A UserPromptSubmit hook recalls the memories relevant to each prompt, ranking the project's memory notes with BM25 and injecting nothing when nothing clears the score floor. A second Stop hook keeps a dated session ledger under the memory directory so consolidation knows which transcripts to read. /pro-dev (install, update, check) installs the engines, updates the plugins and health-checks an installed marketplace (plugin coverage, strict validation, routing smoke check).",
-      "version": "0.22.0",
+      "version": "0.23.0",
       "category": "development",
       "strict": true
     },
@@ -25,7 +25,7 @@
       "name": "pro-ai-sdlc",
       "source": "./plugins/pro-ai-sdlc",
       "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<date>-<slug>/intent.md), /spec, /plan, /execute (build an approved plan in its own worktree and open the PR, never merge), /adr (record a decision with no change behind it), /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge); repo setup for the loop moved to /pro-dev install in pro-core. The templates the commands read ship as files under templates/ (intent, spec, plan, adr, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Three hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update) and production-gate (flags push to main, deploys, publishes and merges). /execute pauses before steps that touch auth, migrations, payments, deploys or secrets unless the plan's Risks names them; every plan cites references/definition-of-done.md. A doubt-driven-development skill sends a hard-to-undo build step to a fresh-context reviewer before the next step, with an optional Codex second opinion.",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "category": "development",
       "strict": true
     },
@@ -41,7 +41,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook suggests /validate after repo changes; /validate writes a validation handoff (what changed, what was verified, what needs your eyes) to .pro-dev/validation/latest.md. Ships three documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs, adapted from VoltAgent/awesome-codex-subagents. Enforces doc freshness before git push (the block routes into /document), nudges api-documenter when an OpenAPI/GraphQL/proto contract changes, and blocks plan saves outside the project directory. A floor guard warns on git push and gh pr create when a diff lowers the bar; /constraints writes a repo's CONSTRAINTS.md. A code-reviewer agent (Opus, read-only) reviews with fresh context from a four-field handoff.",
-      "version": "0.15.1",
+      "version": "0.16.0",
       "category": "development",
       "strict": true
     },
@@ -113,7 +113,7 @@
       "name": "pro-ship",
       "source": "./plugins/pro-ship",
       "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. A risk classifier sorts each change into low, medium or high and a merge gate on gh pr merge asks for approval at medium and high, pinned to the head commit. In pro-dev-starter. Deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "category": "development",
       "strict": true
     },
