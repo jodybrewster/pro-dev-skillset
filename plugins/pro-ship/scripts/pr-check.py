@@ -764,7 +764,9 @@ CODEX_STATUS = ("done", "skipped", "not-installed", "could-not-run")
 SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing|skipped|ignored)\b(\s+findings)?\s*:?\s*\**\s*$", re.I)
 INLINE_SEV_RE = re.compile(r"\b(important|nits?)\b", re.I)
 ITEM_RE = re.compile(r"^\s*(?:-|\d+\.)\s")
-LOC_RE = re.compile(r"`?([A-Za-z0-9_./-]+):(\d+)(?:-(\d+))?`?")
+# Brackets, parentheses and @ are path characters too (Next.js routes such as app/[id]/page.tsx).
+LOC_RE = re.compile(r"`?([A-Za-z0-9_./@+~()\[\]-]+):(\d+)(?:-(\d+))?`?")
+PAIRS = {"(": ")", "[": "]"}
 
 
 def base_review_md(root: str, base_arg: str | None) -> str:
@@ -799,7 +801,10 @@ def cmd_codex_trigger(root: str, args: list[str]) -> dict:
 
 
 def norm_path(path: str, root: str | None) -> str:
-    """./a/b.py and an absolute path under the repo root both become a/b.py."""
+    """./a/b.py and an absolute path under the repo root both become a/b.py. An opening bracket
+    with no partner, as in "(src/a.py:10)", is prose and is dropped."""
+    while path and path[0] in PAIRS and path.count(path[0]) > path.count(PAIRS[path[0]]):
+        path = path[1:]
     if root and os.path.isabs(path):
         for r in {root, os.path.realpath(root)}:
             if path.startswith(r.rstrip(os.sep) + os.sep):

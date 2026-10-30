@@ -287,8 +287,10 @@ Filled in when the build is finished, before sign-off.
   - AC5 pass (`manual/` cases in `tests/pro-dev.mjs`). AC6 pass (cases k1 to k4 in `tests/ship-check.mjs`).
   - AC7 pass (`stamp-contract` with `valid-pass-codex.json`; the gate and push-gate diff is empty).
   - AC8 pass (`agent-twins` passes; changing one word in the `.toml` failed it at body line 3 and the revert restored the pass; both files hold the location sentence).
-  - AC9 pending, run by the orchestrator after the PR opens (a real high-tier PR with Codex opted in).
-  - AC10 pending, run by the orchestrator after the PR opens (the same run with `codex` off PATH).
+  - AC9 pass in part: the runner ran the real Codex (0.166.0) on this PR's own diff (#99) with a local, uncommitted opt-in, exit 0 in 1 min 46 s, tally line `important: 1  nits: 0  pre-existing: 0  skipped: 2` first.
+    Its one Important finding was real (bracketed route paths broke the location parser) and is fixed with tests k3h2 to k3h4.
+    The full `/pro-ship:pr-check` flow with the stamp and the Reviews section was not run, because this repo has not opted in on main.
+  - AC10 pass for the runner: with `--consent-ref origin/main` the real runner printed `could-not-run: not-opted-in: no .claude/pro-dev.json at origin/main` and exited 3, which pr-check records as `not-installed` and never as a clean review.
   - AC11 pass (`versions` and `codex-manifests` checks; pro-ship 0.5.0, pro-core 0.21.0, pro-quality 0.15.1, `metadata.version` 1.67.0 after rebasing onto #97 and #98, rows in `docs/releases.md`).
   - AC12 pass (ADR-0018 is proposed with its README row, ADR-0006 carries the amended line, `docs/pr-check-stamp.md` documents `reviewers.codex`).
   - AC13 pass with one note: the `codex` row shows `kind` `manual-cli` and the `manual` list, with `state` `not-applicable` here because pro-core is not installed for this repo; `pro-dev.md` names both `check` and `install` forms.
@@ -330,6 +332,8 @@ An empty section tells the reviewer the diff follows the plan.
   This closes the first former follow-up (a PR adding its own opt-in).
   `codex-run.py` is trimmed to 246 lines.
   The `agent-twins` check also fails when the twinned body holds a backslash, because tomllib would process it as an escape.
+- Live Codex finding: the AC9 run found that `LOC_RE` cut paths at `[` and `(`, so `app/users/[id]/page.tsx` and `app/orders/[id]/page.tsx` both read as `/page.tsx` and falsely agreed.
+  The character class now takes brackets, parentheses, `@`, `+` and `~`, and `norm_path` drops an unpaired opening bracket from prose.
 
 ## Follow-ups
 

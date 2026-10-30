@@ -166,6 +166,15 @@ export function runShipCheckCases() {
     g = agree(`## Pre-existing\n- [a] src/a.py:10 - one\n`, `Pre-existing:\n1. \`src/a.py:10\` old\n`);
     add("k3h Pre-existing sections are read and agree", "agreed 1", g?.counts?.agreed === 1 && g.code?.[0]?.severity === "pre-existing", JSON.stringify(g));
 
+    g = agree(CLAUDE("app/users/[id]/page.tsx:10"), SPIKE("app/orders/[id]/page.tsx:10"));
+    add("k3h2 bracketed route paths keep their full path and do not agree", "agreed 0, full paths",
+      g?.counts?.agreed === 0 && g.code?.[0]?.path === "app/users/[id]/page.tsx" && g.codex?.[0]?.path === "app/orders/[id]/page.tsx", JSON.stringify(g));
+    g = agree(CLAUDE("app/(shop)/cart/page.tsx:3"), SPIKE("app/(shop)/cart/page.tsx:4"));
+    add("k3h3 a parenthesized route group path agrees with itself", "agreed 1", g?.counts?.agreed === 1 && g.code?.[0]?.path === "app/(shop)/cart/page.tsx", JSON.stringify(g));
+
+    g = agree(`Important\n- [a] a race (src/a.py:10) - one\n`, SPIKE("src/a.py:10"));
+    add("k3h4 a location wrapped in prose parentheses keeps a clean path", "path src/a.py, agreed 1", g?.code?.[0]?.path === "src/a.py" && g.counts.agreed === 1, JSON.stringify(g));
+
     g = agree(`Important\n- [a] ./src/a.py:10 - one\n`, `Important\n1. \`${fr}/src/a.py:12\` two\n`);
     add("k3i ./ and absolute-under-repo paths normalize and agree", "agreed 1, path src/a.py", g?.counts?.agreed === 1 && g.code?.[0]?.path === "src/a.py" && g.codex?.[0]?.path === "src/a.py", JSON.stringify(g));
     g = agree(`Important\n- [a] src/a.py:10 - one\n`, `Important:\n1. \`src/a.py:11\` two\n\nSkipped:\n1. \`src/b.py:5\` not a finding\n\nIgnored from the handoff:\n- \`src/c.py:7\` nor this\n`);
