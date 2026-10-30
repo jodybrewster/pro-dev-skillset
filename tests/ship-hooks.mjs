@@ -607,6 +607,33 @@ export function runShipHookCases() {
       r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
       add("mg241 a pin of the PR head asks", "ask", r, asks(r));
 
+      // ---- gh api merges (step 4) -------------------------------------------------------
+      {
+        const af = join(sandbox, `args${++n}`);
+        const hi = (extra = {}) => stub(prOut, { GH_STUB_ARGS: af, ...extra });
+        r = mrun("gh api -X PUT repos/o/r/pulls/42/merge", { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg250 an api merge with no sha denies and names sha", "deny", r, denies(r) && /sha/.test(r.text) && r.text.includes(prH));
+        r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${prH}`, { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg251 an api merge with the head as sha asks", "ask", r, asks(r));
+        r = mrun(`gh api --method PUT /repos/{owner}/{repo}/pulls/42/merge -F sha=${prH}`, { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg252 placeholders and a leading slash ask with no -R sent", "ask, no -R", r, asks(r) && !/ -R /.test(readArgs(af).split("\n").at(-2) || ""));
+        r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${mainH}`, { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg252b an api merge with a sha that is not the head denies", "deny", r, denies(r));
+        const af2 = join(sandbox, `args${++n}`);
+        r = mrun("gh api -X GET repos/o/r/pulls/42/merge", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
+        add("mg253 an explicit GET is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
+        r = mrun("gh api repos/o/r/pulls/42", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
+        add("mg254 another api path is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
+        r = mrun("gh api graphql -f query='mutation { mergePullRequest(input: {}) { clientMutationId } }'", { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg255 a graphql merge asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log));
+        r = mrun("gh api graphql -f query='mutation { enablePullRequestAutoMerge(input: {}) { clientMutationId } }'", { cwd: prR, env: MENF(), extraEnv: hi() });
+        add("mg256 a graphql auto-merge asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log));
+        r = mrun("gh api graphql -f query='query { viewer { login } }'", { cwd: prR, env: MENF(), extraEnv: hi({ GH_STUB_ARGS: af2 }) });
+        add("mg257 a graphql query is silent", "silent", r, allowsQuiet(r) && readArgs(af2) === "");
+        r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${prLowH}`, { cwd: prLowR, env: MENF(), extraEnv: stub(prLowOut) });
+        add("mg258 an api merge of a low PR allows silently", "silent", r, allowsQuiet(r));
+      }
+
       // ---- the PR head is fetched when it is not local, and every failure is could-not-run ----
       // A work repo with a bare origin: the PR head is pushed as refs/pull/42/head only, then the
       // local branch, reflog and loose objects are removed so the commit is gone from the clone.

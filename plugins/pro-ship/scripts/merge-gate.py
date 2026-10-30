@@ -286,6 +286,41 @@ def merge_selector(args: list[str]) -> str:
     return ""
 
 
+API_VALUE_FLAGS = {"-X", "--method", "-f", "--raw-field", "-F", "--field", "-H", "--header", "-q", "--jq",
+                   "-t", "--template", "--input", "--hostname", "--cache", "-p", "--preview"}
+API_MERGE_RE = re.compile(r"^/?repos/([^/]+)/([^/]+)/pulls/(\d+)/merge$")
+GRAPHQL_MERGES = ("mergePullRequest", "enablePullRequestAutoMerge")
+
+
+def api_parts(args: list[str]) -> tuple[str, list[str], str | None]:
+    """(endpoint path, every other argument, explicit method) of a `gh api` call."""
+    path, rest, method, k = "", [], None, 0
+    while k < len(args):
+        a = args[k]
+        if a in ("-X", "--method") and k + 1 < len(args):
+            method = args[k + 1].upper()
+            k += 2
+        elif a.startswith("--method="):
+            method = a.split("=", 1)[1].upper()
+            k += 1
+        elif a.startswith("-X") and len(a) > 2:
+            method = a[2:].upper()
+            k += 1
+        elif a in API_VALUE_FLAGS:
+            rest.extend(args[k : k + 2])
+            k += 2
+        elif a.startswith("-"):
+            rest.append(a)
+            k += 1
+        else:
+            if not path:
+                path = a
+            else:
+                rest.append(a)
+            k += 1
+    return path, rest, method
+
+
 def actions(command: str, base: str | None, env_repo: str | None = None) -> list[dict]:
     """One dict per merge in the command: dir, args, repo, selector and kind.
 
@@ -347,12 +382,35 @@ def actions(command: str, base: str | None, env_repo: str | None = None) -> list
             if not any(a in ("--help", "-h") for a in args):
                 found.append({"dir": cur, "args": args, "kind": "pr-merge", "selector": merge_selector(args),
                               "repo": repo_flag(args) or pre_repo or seg_repo})
+        elif i < len(toks) and toks[i] == "api":
+            args = toks[i + 1 :]
+            path, rest, method = api_parts(args)
+            if path == "graphql":
+                if any(m in a for a in rest for m in GRAPHQL_MERGES):
+                    found.append({"dir": cur, "args": args, "kind": "graphql-merge", "selector": "", "repo": None})
+                continue
+            m = API_MERGE_RE.match(path)
+            if m and method != "GET":
+                owner, name_, number = m.groups()
+                repo = None if (owner, name_) == ("{owner}", "{repo}") else f"{owner}/{name_}"
+                found.append({"dir": cur, "args": rest, "kind": "api-merge", "selector": number,
+                              "repo": repo or pre_repo or seg_repo})
     return found
 
 
-def pinned_shas(args: list[str]) -> list[str]:
-    """Every value given to --match-head-commit, in order (empty string when the value is missing)."""
+def pinned_shas(args: list[str], kind: str = "pr-merge") -> list[str]:
+    """Every pin given to the merge, in order (empty string when the value is missing).
+
+    `gh pr merge` pins with --match-head-commit; a `gh api` merge pins with a sha field.
+    """
     found: list[str] = []
+    if kind == "api-merge":
+        for k, a in enumerate(args):
+            if a in ("-f", "-F", "--field", "--raw-field") and k + 1 < len(args) and args[k + 1].startswith("sha="):
+                found.append(args[k + 1][4:])
+            elif a.startswith(("--field=", "--raw-field=")) and a.split("=", 1)[1].startswith("sha="):
+                found.append(a.split("=", 2)[2])
+        return found
     for k, a in enumerate(args):
         if a == "--match-head-commit":
             found.append(args[k + 1] if k + 1 < len(args) else "")
@@ -452,7 +510,9 @@ def resolve_pr(root: str, selector: str, repo: str | None) -> tuple[str, str, in
     raise CouldNotRun(f"base {base_name} not found")
 
 
-def classify_dir(directory: str | None, selector: str = "", repo: str | None = None) -> dict:
+def classify_dir(directory: str | None, selector: str = "", repo: str | None = None, kind: str = "pr-merge") -> dict:
+    if kind == "graphql-merge":
+        raise CouldNotRun("a GraphQL merge names its PR by node id and cannot be read")
     root = repo_root(directory)
     base, head, number = resolve_pr(root, selector, repo)
     mod = load_classifier()
@@ -482,7 +542,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
     unknown = None
     res = None
     try:
-        res = classify_dir(hit["dir"], hit["selector"], hit["repo"])
+        res = classify_dir(hit["dir"], hit["selector"], hit["repo"], hit["kind"])
     except CouldNotRun as e:
         unknown = str(e)
     if res is not None and res.get("tier") == "low":
@@ -497,10 +557,12 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
     else:
         tier = res["tier"]
         head = res["head"]
-        pins = pinned_shas(args)
+        pins = pinned_shas(args, hit["kind"])
+        flag = f"-f sha={head}" if hit["kind"] == "api-merge" else f"--match-head-commit {head}"
+        what = "sha field" if hit["kind"] == "api-merge" else "--match-head-commit"
         if len({p.lower() for p in pins}) > 1:
-            msg = (f"[{HOOK}] {tier} risk merge of PR {res['pr']} has several different --match-head-commit values ({', '.join(pins)}); "
-                   f"gh uses the last one. Give one, --match-head-commit {head}. {summary(res)}")
+            msg = (f"[{HOOK}] {tier} risk merge of PR {res['pr']} has several different pins ({', '.join(pins)}); "
+                   f"the last one wins. Give one, {flag}. {summary(res)}")
             if enforcing:
                 log(HOOK, "deny", f"{tier} several pins", cwd)
                 return 3, msg
@@ -509,9 +571,8 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
         sha = pins[-1] if pins else None
         valid = (sha is not None and re.fullmatch(r"[0-9a-fA-F]{7,64}", sha) is not None
                  and head.startswith(sha.lower()))
-        flag = f"--match-head-commit {head}"
         if not valid:
-            why = "has no --match-head-commit" if sha is None else f"has --match-head-commit {sha!r}, which is not the head of PR {res['pr']} ({head[:8]})"
+            why = f"has no {what}" if sha is None else f"has {what} {sha!r}, which is not the head of PR {res['pr']} ({head[:8]})"
             msg = f"[{HOOK}] {tier} risk merge of PR {res['pr']} {why}. Add {flag} so GitHub refuses the merge if the PR has moved. {summary(res)}"
             if enforcing:
                 log(HOOK, "deny", f"{tier} PR {res['pr']} pin {head[:8]}", cwd)
@@ -564,7 +625,7 @@ def main_hook() -> int:
         return 0
     inp = payload.get("tool_input")
     command = inp.get("command") if isinstance(inp, dict) else None
-    if not isinstance(command, str) or "gh" not in command or "merge" not in command:
+    if not isinstance(command, str) or "gh" not in command or "merge" not in command.lower():
         return 0
     cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) and payload.get("cwd") else os.getcwd()
     hits = actions(command, cwd, os.environ.get("GH_REPO") or None)
