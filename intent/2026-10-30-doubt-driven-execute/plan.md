@@ -1,10 +1,11 @@
 # Plan: doubt-driven step in /execute
 
 Built from `spec.md` and `intent.md` in this folder, committed together with this plan.
-Status: draft.
+Status: approved.
 Approver: Jody Brewster.
 Dated: 2026-10-30.
 
+Jody approved the plan with the batch on 2026-10-30 and named the changes in the Departures section.
 Jody is named as approver because the change adds a rule every `/execute` build follows (ADR-0019) and lets a session send code to a second vendor on a yes.
 The skill's prose is the product and AC6 and AC7 need a person to watch one real run.
 It does not suit auto mode.
@@ -125,10 +126,10 @@ Add `{claim}` to `doubt-instructions.md`, see `doubt` fail, restore; add a `` - 
    - Place it directly after the stop list section added by sdlc-loop-upgrades, at the same heading level (`## Doubt` if the stop list is a `##` section; if the stop list sits under `## Your task`, still use a `## Doubt` line placed right after that task step and before `### 6.` and record the placement under Departures).
    - Content, one sentence per line:
      - A step is doubted when the plan marks it `irreversible`; it runs with no question because the person approved the plan.
-     - When pro-ship is installed, after each step's commit run its `risk-classify.py` with `--base <sha before the step> --head HEAD --json` and no `--intent`, found the same way the stop list section finds it; a tier of `high` or any signal with strength `strong` makes an unmarked step a candidate; an interactive run asks once naming the tier and the signal ids; a non-interactive run doubts it with no question; exit 2 prints "classifier could not run: <reason>" and the step goes on; without pro-ship say once that the classifier backstop is skipped.
+     - When pro-ship is installed, after each step's commit run its `risk-classify.py` with `--base <sha before the step> --head HEAD --json` and no `--intent`, found the same way the stop list section finds it; a tier of `high` makes an unmarked step a candidate; an interactive run asks once naming the tier and the signal ids; a non-interactive run doubts it with no question; exit 2 prints "classifier could not run: <reason>" and the step goes on; without pro-ship say once that the classifier backstop is skipped.
      - The `doubt-driven-development` skill runs in this session after the step's commit and before the next step; a builder subagent's step is doubted here after the subagent returns.
      - The skill's dispatch carries its own env-file rule, so the Secrets copy rule is met without adding text to the handoff.
-     - After three rounds with open findings the build stops at that step: print the stage, the open findings in your own words and the next choices; keep the worktree and open no PR.
+     - After three rounds with open findings an interactive run stops at that step and prints the open findings in your own words; an unattended run finishes the build, opens the PR with `gh pr create --draft` and lists them under "Potential concerns".
      - Record each doubted step as one `Doubt:` line under `## Done`.
    - In `### 5. Build the plan`, add one line: "After a step's commit, run the `## Doubt` section before the next step."
    - Add "step N doubted (R rounds)" to the list of stage lines in the opening paragraph.
@@ -192,7 +193,7 @@ Checkpoint D: run the full proof of done below.
 What might this break?
 `templates/plan.md` is read by `execute-gate.py` (Status and the Build commit line) and by the `sdlc-contract` check; step 8 adds lines only and runs both.
 `commands/execute.md` is checked for its never-merge line and named sections; step 7 adds a section and three lines.
-A doubt section that fires too often would slow every build; it fires only on a plan marker or a strong classifier result; the classifier runs only when pro-ship is installed.
+A doubt section that fires too often would slow every build; it fires only on a plan marker or a high-tier classifier result; the classifier runs only when pro-ship is installed.
 Adding the skills path to pro-ai-sdlc's Codex manifest makes Codex load a skill folder there for the first time; the `codex-manifests` check covers the shape.
 
 Which step is the most likely to go wrong?

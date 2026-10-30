@@ -26,7 +26,7 @@ When `/execute` finishes a step that the plan marks irreversible, it sends the s
 The reviewer gets a fixed adversarial instruction text and the four handoff fields of ADR-0012, all of them paths or shas.
 It never gets the author's claim or reasoning.
 The session reads each finding against the diff, fixes the real ones, records accepted trade-offs and runs again, for at most three rounds.
-When pro-ship is installed, `/execute` also runs the risk classifier on each step's commit and offers a doubt round on a high tier or a strong signal.
+When pro-ship is installed, `/execute` also runs the risk classifier on each step's commit and offers a doubt round on a high tier.
 In an interactive run the person can ask for a Codex second opinion each round, confirmed per run through a copy of the shared runner.
 A non-interactive run skips Codex and says so.
 `/plan` can mark a step irreversible in the same field style as its size marker.
@@ -50,7 +50,7 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   When nothing is found after a thorough read it says so plainly.
   It also says to read the diff and the brief and policy files itself, never to open, read or quote env files and to report each finding with file, line and a failure scenario.
   It has no placeholder of any kind. (Intent: Proposed outcome, Constraints.)
-- R6. `skills/doubt-driven-development/handoff.md` holds the four fields of ADR-0012 under a `## Fields` heading, in this order: `range`, `brief`, `policy` and `risk`, each with what goes in it and what never does.
+- R6. `skills/doubt-driven-development/handoff.md` is pro-ai-sdlc's own copy of the four-field template (the accepted exception to ADR-0012, Jody 2026-10-30) and holds the four fields of ADR-0012 under a `## Fields` heading, in this order: `range`, `brief`, `policy` and `risk`, each with what goes in it and what never does.
   `range` is `<sha before the step>..<head of the step>`.
   `brief` is the paths to the plan (with the step number), the spec and the intent.
   `policy` is the paths to `REVIEW.md`, the agent file and `CONSTRAINTS.md` when each exists.
@@ -66,7 +66,8 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   The loop stops early when a round returns only repeats or nothing substantive.
   It also stops when the person says to go on.
   A round is never run on an unchanged diff.
-  After three rounds with substantive findings still open, `/execute` stops the build at that step, prints the open findings in its own words and waits for the person; in a non-interactive run it stops with the same report and opens no PR.
+  After three rounds with substantive findings still open, an interactive run stops at that step, prints the open findings in its own words and waits for the person.
+  An unattended run finishes the build, opens the pull request as a draft (`gh pr create --draft`) and lists the open findings under "Potential concerns" in the PR body; it does not stop the build (Jody, 2026-10-30).
   A large step is split, never given a fourth round. (Intent: Constraints; ADR-0011.)
 - R12. When two rounds in a row raise substantive findings and the session classes none of them as actionable, the skill treats that as validating instead of doubting and stops to ask the person. (Intent: Evidence, upstream red flag.)
 - R13. In an interactive run, after each single-model round and before reconcile, the skill offers a Codex second opinion as a yes or no question.
@@ -89,7 +90,7 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
 - R19. A step the plan marks irreversible is doubted with no question, since the person approved the plan with that marker. (Intent: Open questions, offer or automatic.)
 - R20. When pro-ship is installed, after each step's commit `/execute` runs `risk-classify.py --base <sha before the step> --head HEAD --json` with no `--intent`, so the intent's declared risk does not raise every step.
   It finds the script the same way the stop list section finds it.
-  On tier `high` or any signal with strength `strong` for a step the plan does not mark, an interactive run pauses and offers a doubt round naming the tier and signal ids; a non-interactive run runs the single-model round with no question.
+  On tier `high` for a step the plan does not mark, an interactive run pauses and offers a doubt round naming the tier and signal ids; a non-interactive run runs the single-model round with no question.
   Exit 2 prints "classifier could not run: <reason>" and the step goes on with the plan marker alone.
   Without pro-ship the classifier half is skipped and named once in the run's output. (Intent: Open questions, what counts as hard to undo; ADR-0013.)
 - R21. `templates/plan.md` lets a step carry an `irreversible` marker in the same field style as the size marker sdlc-loop-upgrades adds, with a few words on what cannot be undone.
@@ -105,10 +106,12 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   - `doubt-instructions.md` contains any placeholder in braces or angle brackets;
   - `doubt-instructions.md` lacks the words "Do not validate";
   - `SKILL.md` does not say "three rounds" or does not say the claim is never sent to the reviewer;
+  - the skill's `handoff.md` does not match pro-quality's four fields and closing line (R25);
   - `commands/execute.md` lacks a `## Doubt` heading or does not name `doubt-driven-development`;
   - either copy of `codex-run.py` exists without the other or the two differ by a byte.
   (Intent: Success looks like, a check can confirm.)
-- R25. The `handoff` check also bars placeholders named `claim` or `reasoning` in every `handoff.md`, so the doubt handoff is held to the same four fields as pro-quality's. (Intent: Constraints; ADR-0012.)
+- R25. The `handoff` check also bars placeholders named `claim` or `reasoning` in every `handoff.md`.
+  The `doubt` check also fails when the doubt `handoff.md` does not name the same four fields in the same order as pro-quality's or lacks its closing "Nothing else goes in any field" line, the same pattern as the runner copy check. (Intent: Constraints; ADR-0012.)
 - R26. `plugins/pro-ai-sdlc/.codex-plugin/plugin.json` gains `"skills": "./skills/"`.
   The skill prose is harness-neutral and names the Codex fallback for the dispatch. (ADR-0004.)
 - R27. `tests/cases/routing.jsonl` gains one case that expects `doubt-driven-development` and has `egm-bridge` and `requesting-code-review` as `notOneOf`.
@@ -163,7 +166,7 @@ The Done section later reads:
 - Doubt: step 3 (plan marker), 2 rounds, Codex ran in round 1; null customer id now rejected before the copy (fixed); row lock held for the whole copy accepted because the table is small; one note on naming was noise.
 ```
 
-A step the classifier raises in an interactive run gets one question first: `step 5 touches auth (tier high: path-auth). Doubt it before going on? yes / no`.
+A step the classifier raises to tier high in an interactive run gets one question first: `step 5 touches auth (tier high: path-auth). Doubt it before going on? yes / no`.
 
 ### System
 
@@ -180,7 +183,7 @@ Step-scoped staging from sdlc-loop-upgrades makes the step's commit hold only it
 
 - Dispatch pro-quality's `code-reviewer`: its prompt ignores any text outside the four fields (code-reviewer spec R3), so the adversarial wording would be dropped; pro-ai-sdlc also cannot depend on pro-quality.
 - Doubt the uncommitted diff: the session keeps editing while the reviewer reads, the classifier cannot read a working tree and a fix would have no clean range.
-- Doubt every step the classifier rates medium: it fires on size and area signals that say nothing about reversibility.
+- Doubt a step on a strong signal at medium tier: those signals include size and area that say nothing about reversibility (Jody, 2026-10-30).
 - Pre-approve `codex-run.py` in `/execute`'s allowed tools: it would turn the per-run confirmation into a one-time grant.
 - Put the runner in pro-core: pro-ai-sdlc would still need to find it in another plugin's folder; a checked copy has no lookup.
 - Let a non-interactive run skip doubt on classifier-raised steps: an unattended run is where an unreviewed risky step costs most; the single-model round sends nothing off the machine.
@@ -198,13 +201,13 @@ ADR needed: yes, a hard-to-undo step in `/execute` gets a fresh-context adversar
 | 3 | `/execute` says to copy its Secrets section into every subagent prompt, while ADR-0012 bars any text beyond the four fields. | `commands/execute.md` Secrets; ADR-0012 | resolved: `doubt-instructions.md` carries the env-file rule as fixed text that never varies with the change (R5) |
 | 4 | Two copies of `codex-run.py` can drift. | codex-second-reviewer; ADR-0013 | resolved: the `doubt` check fails on any byte difference (R24); a runner change edits both copies in one commit |
 | 5 | A Codex run sends the step's diff to a second vendor. | N2; Jody | resolved: per-run yes that shows the command and names the vendor (R13); never in a non-interactive run (R16) |
-| 6 | Stopping a non-interactive build after three open rounds breaks `/execute`'s run-to-PR promise. | `commands/execute.md`; ADR-0011 | resolved: treated as a failure stop with the worktree kept and no PR (R11), the same as a failing baseline |
+| 6 | Stopping a non-interactive build after three open rounds breaks `/execute`'s run-to-PR promise. | `commands/execute.md`; ADR-0011 | resolved (Jody, 2026-10-30): an unattended run finishes the build and opens a draft PR with the open findings under "Potential concerns"; only an interactive run stops (R11) |
 | 7 | sdlc-loop-upgrades, untrusted-input-safety and required-documents may also bump pro-ai-sdlc and `metadata.version`. | ADR-0002 | resolved: take the next minor over `main` at build time and rebase first |
 | 8 | The doubt section's place and the plan marker's syntax depend on sdlc-loop-upgrades, which is not merged. | sdlc-loop-upgrades | resolved: the plan names sections by heading and reads the marker style after a rebase; it stops if the sections are missing |
 
 ## Open questions
 
-1. What counts as hard to undo: answered, the plan marker set by `/plan` and approved by the person, with the classifier as a backstop when pro-ship is installed (R19 to R21).
+1. What counts as hard to undo: answered, the plan marker set by `/plan` and approved by the person, with the classifier as a backstop on a high tier when pro-ship is installed (R19 to R21).
 2. Offer or automatic: answered, a marked step runs with no question and a classifier-raised step pauses and offers in an interactive run (R19, R20).
    A non-interactive run doubts a classifier-raised step with no question.
 3. How the contract maps onto the four fields: answered, `brief`, `policy` and `risk` as they are and `range` as the step's committed range (R6).
