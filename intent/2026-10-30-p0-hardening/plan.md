@@ -383,6 +383,7 @@ It also moves ADR-0016, Status `proposed` from this change, to `accepted`.
 Added in the same commit as the change that departs, or in this one where noted.
 
 - Version: main took `metadata.version` 1.65.0 in PR 97 while this branch was in progress, so this branch takes 1.66.0 (commit "chore(p0-hardening): metadata.version 1.66.0"). pro-ship 0.5.0 and pro-core 0.21.0 stand because main did not move them.
+- Version, at merge: PR 98 and PR 99 merged first and PR 99 took pro-ship 0.5.0 and pro-core 0.21.0, so after rebasing this branch ships pro-ship 0.6.0, pro-core 0.22.0 and `metadata.version` 1.68.0, with one release row per plugin that also names what the earlier version carried.
 - Step 1: the bump commit also carries this plan's status change to approved.
 - Steps 2 and 3: the gh failure mapping was written in the step 2 change, so mg230 to mg235 already passed when step 3's cases were added. Only mg220 and mg221 failed first. Cases beyond the plan: mg216, mg217 (selector parsing), mg252b, mg257, mg258 (api twins), mg262 (the `--auto` twin) and each of mg230 to mg235 runs in enforce and in warn.
 - Step 4: `api-merge` message names `-f sha=<head>` instead of `--match-head-commit`.
