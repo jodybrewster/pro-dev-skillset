@@ -61,6 +61,15 @@ Prefer changes that resist drift over changes that are merely correct today. A c
 - Validations you actually performed, and the environment-level checks still outstanding.
 - Residual risk and prioritized follow-ups.
 
+## Drafting a document from a template
+
+When the task gives you a template path and a target path, write the target from the template.
+Keep the template's headings and their order.
+Fill each section from facts in the code and name the file path that shows each fact.
+Leave an angle-bracket placeholder only where the code cannot say.
+Omit an optional section the code cannot inform instead of padding it.
+Never invent users, numbers, customers or claims, and keep the result under one page.
+
 ## Hard rules
 
 Do not invent undocumented behavior or operational guarantees. If the code does not prove it, mark it open.

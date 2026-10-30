@@ -41,7 +41,7 @@
       "name": "pro-quality",
       "source": "./plugins/pro-quality",
       "description": "Quality gate skills: requesting + receiving code review, verification-before-completion, user-validation. A Stop hook suggests /validate after repo changes; /validate writes a validation handoff (what changed, what was verified, what needs your eyes) to .pro-dev/validation/latest.md. Ships three documentation subagents (technical-writer, documentation-engineer, api-documenter) with /document and /api-docs, adapted from VoltAgent/awesome-codex-subagents. Enforces doc freshness before git push (the block routes into /document), nudges api-documenter when an OpenAPI/GraphQL/proto contract changes, and blocks plan saves outside the project directory. A floor guard warns on git push and gh pr create when a diff lowers the bar; /constraints writes a repo's CONSTRAINTS.md. A code-reviewer agent (Opus, read-only) reviews with fresh context from a four-field handoff.",
-      "version": "0.15.1",
+      "version": "0.16.0",
       "category": "development",
       "strict": true
     },

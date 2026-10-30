@@ -51,7 +51,7 @@ Pre-existing findings do not block.
 ## Learning from repeats
 
 When the same kind of mistake is flagged a second time, add a line to the agent file's "Things Claude gets wrong" and say that you did.
-If the change makes a line of the agent file stale, flag that too.
+If the change makes a line of the agent file or `ARCHITECTURE.md` untrue, flag that too.
 
 <!-- Design smells: uncomment this block to have the reviewer flag them as findings, not nits.
 
@@ -103,6 +103,18 @@ tiers.medium.checks: [all]
 tiers.medium.reviewers: [code-reviewer]
 tiers.high.checks: [all]
 tiers.high.reviewers: [code-reviewer, security-architect]
+```
+-->
+
+<!-- Required documents: uncomment this block to add documents to the required set or drop one that does not fit.
+`add` lists paths that must exist beyond the default set; a trailing `/` means a folder that must hold a tracked file.
+`remove` may name only ARCHITECTURE.md, PRODUCT.md or DESIGN.md.
+
+## Required documents
+
+```yaml
+add: []
+remove: []
 ```
 -->
 

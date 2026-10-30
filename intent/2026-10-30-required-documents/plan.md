@@ -1,8 +1,8 @@
 # Plan: required documents per project
 
 Built from `spec.md` (written in the same commit as this plan) and `intent.md` in this folder.
-Status: draft.
-Approver: Jody Brewster.
+Status: approved.
+Approver: Jody Brewster (approved the batch, 2026-10-30).
 Dated: 2026-10-30.
 
 Jody is named as approver because the spec sets a rule every gate and reviewer will read (ADR-0020) and the intent is risk medium.
@@ -292,3 +292,15 @@ It also moves ADR-0020 from `proposed` to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 0: the rebase was already done onto origin/main at 6c520df, which holds the codex-second-reviewer change (#99) and the sdlc-loop-upgrades change (#98).
+  Versions read there: pro-core 0.21.0, pro-ai-sdlc 0.10.0, pro-quality 0.15.1, pro-ship 0.5.0 and `metadata.version` 1.67.0 (the plan's numbers were older).
+  Step 12 took the next minor over those: 0.22.0, 0.11.0, 0.16.0, 0.6.0 and 1.68.0.
+  A second `git fetch` before the bump showed origin/main had not moved.
+- Steps 1 to 12 landed in one content commit instead of one per step, because the plan itself says the content and its bumps land together and no commit may carry plugin content without its bump.
+- `tests/check.mjs` takes one check name per call, so the plan's "node tests/check.mjs required-docs ship-check stamp-contract" ran as one call per name.
+- Step 10: after #99, the pr-check "No script" list already held a Codex item 5, so the required-documents line is its own item 6 and the stamp line became item 7.
+  The old Setup step 3 pointed a missing `REVIEW.md` to `/sdlc-init`; the new step points to `/pro-dev install`, as R29 says.
+- Step 11: the licenses row copies its copyright line (Copyright 2025 Paul Bakaus) from the existing impeccable-bridge row, since no upstream `LICENSE` is cached locally and the repo already records it.
+- Step 13 (dogfood) and step 14 (manual runs) are recorded under Done.
+- Jody's decisions of 2026-10-30, all already in the spec: `/pro-dev install` does not draft DESIGN.md and names `/impeccable document`; pr-check lists DESIGN.md as missing until it exists; the templates stay in pro-ai-sdlc; the impeccable credit is a licenses row.

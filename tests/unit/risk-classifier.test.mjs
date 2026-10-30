@@ -711,3 +711,19 @@ test("the six thresholds hold their calibrated values and the comment names the 
   assert.match(src, /^AREAS_MEDIUM = 3$/m);
   assert.match(src, /^NO_TEST_LINES = 50$/m);
 });
+
+test("a REVIEW.md with both a Risk tiers block and a Required documents block still reads its risk policy", () => {
+  const review = [
+    "# Review", "",
+    "## Risk tiers", "",
+    "```yaml", "paths.high: [ops/deploy/**]", "```", "",
+    "## Required documents", "",
+    "```yaml", "add: [SECURITY.md]", "```", "",
+  ].join("\n");
+  const repo = templateRepo(review);
+  try {
+    const r = classify(repo, ["--json"]);
+    assert.equal(r.json.policy, "REVIEW.md", r.stdout + r.stderr);
+    assert.ok(ids(r.json).includes("policy-high"), "the Risk tiers path still matched");
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});

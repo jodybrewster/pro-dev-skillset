@@ -66,6 +66,8 @@ Do not use `git blame`.
    - gratuitous `any` or casts.
 4. Performance: N+1 queries, unbounded loops or fetches, a heavy import on a hot path and a synchronous call that should be async.
 5. Compliance: the diff matches the plan and spec, follows the agent file and `REVIEW.md` and records any departure in `plan.md` in the same change.
+   Read `ARCHITECTURE.md` at the repo root when it exists.
+   Flag a line in it or in the agent file that the diff makes untrue, with the file and line.
 
 Security is out of scope.
 Leave injection, authentication, secrets and similar issues to pro-security.
