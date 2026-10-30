@@ -144,7 +144,7 @@ When `run` is true:
 3. Run it with stdout to a file and keep the exit code:
 
    ```bash
-   python3 "$CODEXRUN" --instructions "$TWIN" --prompt .pro-dev/ship/handoff.md > .pro-dev/ship/review-codex.md
+   python3 "$CODEXRUN" --instructions "$TWIN" --prompt .pro-dev/ship/handoff.md --consent-ref <base> > .pro-dev/ship/review-codex.md
    ```
 
    Start it in the same turn as the subagent dispatches below, as a background shell command when the host offers one.
@@ -153,6 +153,7 @@ When `run` is true:
 
 The runner checks consent, the `codex` binary and the login itself.
 It never sends anything unless the repo answered yes for `codex` through `/pro-dev install`.
+`--consent-ref <base>` reads that answer from the base branch, so a PR cannot add its own opt-in.
 A Codex finding never blocks the merge and never makes `result` `incomplete`.
 
 ### Dispatch
@@ -189,6 +190,7 @@ Codex report: when the Codex run was started, read its first line with the same 
 - Runner exit 0 without that line, exit 2, exit 4 or any other exit: `could-not-run`, reason the runner's word (`timeout`, `exit-<n>`, `empty-output`, `usage`) or `no tally line`.
 
 When Codex is `done`, run `python3 "$CHECK" agree --code .pro-dev/ship/review-code.md --codex .pro-dev/ship/review-codex.md` and take `agreed` and `disputed` from its `counts`.
+When either report file is missing or empty the step refuses with an error: the Codex section then shows `could-not-run` with that error as the reason and `agreed` and `disputed` stay 0.
 The `codex` record holds `agent` (`codex:code-reviewer` or null), `status`, `reason`, `blocking` (always 0), `important`, `agreed`, `disputed` and `range`.
 A Codex run that never started has `important`, `agreed` and `disputed` at 0.
 

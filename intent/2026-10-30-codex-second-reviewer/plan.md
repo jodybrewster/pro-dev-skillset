@@ -279,7 +279,7 @@ Filled in when the build is finished, before sign-off.
   - The per-plugin strict loop: Validation passed for all 20 plugins.
   - `node tests/codex-run.mjs`: 25/25. `node tests/ship-check.mjs`: 170/170. `node tests/pro-dev.mjs`: 195 cases, 0 failures.
   - `grep -n "pro-ship\|pro-quality\|pro-core" plugins/pro-ship/scripts/codex-run.py`: no output. `git diff --stat origin/main -- plugins/pro-ship/scripts/pr-gate.py plugins/pro-security/scripts`: empty.
-  - `wc -l plugins/pro-ship/scripts/codex-run.py`: 247.
+  - `wc -l plugins/pro-ship/scripts/codex-run.py`: 246 (after review round 2).
   - One live smoke run of `codex-run.py` against the real Codex with a tiny prompt in a scratch repo: stdout `ok`, exit 0, 10 seconds, no file written under the repo beyond the scratch files.
 - AC1 to AC13:
   - AC1 pass. AC2 pass (`tests/codex-run.mjs`). AC3 pass (the grep prints nothing and case c12 runs a copy from another folder).
@@ -322,7 +322,15 @@ An empty section tells the reviewer the diff follows the plan.
   `agree` skips items under Skipped and Ignored headings and normalizes `./` and absolute-under-repo paths.
   The stamp doc now says `important` is not checked against `status`, as the fixture shows.
 
+- Review round 2 fixes:
+  A line is a section heading in `agree` only when nothing but an optional "findings", a colon or emphasis follows the keyword, so `Ignored from the handoff: none` and the tally line no longer hide the items after them; with no heading the severity is read from an inline Important or nit word.
+  `agree` refuses when either report file is missing or empty, and the pr-check SKILL says the Codex section then shows could-not-run.
+  Consent comes from the base: `codex-run.py` takes an optional `--consent-ref REF` and reads the answer from `git show REF:.claude/pro-dev.json`, and the pr-check SKILL passes `--consent-ref <base>`.
+  Without the flag it still reads the working tree, for the later pro-ai-sdlc copy on the person's own branch.
+  This closes the first former follow-up (a PR adding its own opt-in).
+  `codex-run.py` is trimmed to 246 lines.
+  The `agent-twins` check also fails when the twinned body holds a backslash, because tomllib would process it as an escape.
+
 ## Follow-ups
 
-- For a pro-security follow-up: consent is read from the working tree of the branch under review, so a PR could add its own opt-in to `.claude/pro-dev.json`.
 - For a pro-security follow-up: Codex loads the branch's `AGENTS.md` and `.codex/` config, so the branch under review can steer its own second reviewer.

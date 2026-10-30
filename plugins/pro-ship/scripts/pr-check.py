@@ -759,7 +759,10 @@ def reviewer_record(raw, which: str) -> dict:
 # PRs (ADR-0018).
 NEAR = 5
 CODEX_STATUS = ("done", "skipped", "not-installed", "could-not-run")
-SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing|skipped|ignored)\b", re.I)
+# A heading is the keyword alone, with an optional "findings", a colon or markdown emphasis. A line
+# with more after the keyword ("Ignored from the handoff: none", the tally line) is not a heading.
+SECTION_RE = re.compile(r"^\s*#*\s*\**\s*(important|nits?|pre-existing|skipped|ignored)\b(\s+findings)?\s*:?\s*\**\s*$", re.I)
+INLINE_SEV_RE = re.compile(r"\b(important|nits?)\b", re.I)
 ITEM_RE = re.compile(r"^\s*(?:-|\d+\.)\s")
 LOC_RE = re.compile(r"`?([A-Za-z0-9_./-]+):(\d+)(?:-(\d+))?`?")
 
@@ -807,8 +810,8 @@ def norm_path(path: str, root: str | None) -> str:
 
 def parse_findings(text: str, root: str | None = None) -> list[dict]:
     """Findings of one review report: list items with a path:line location, tagged by the
-    nearest Important, Nits or Pre-existing heading above them. Items under a Skipped or
-    Ignored heading are not findings."""
+    nearest Important, Nits or Pre-existing heading above them (read inline when no heading set
+    one). Items under a Skipped or Ignored heading are not findings."""
     out, severity = [], "unknown"
     for line in text.splitlines():
         if ITEM_RE.match(line):
@@ -816,7 +819,11 @@ def parse_findings(text: str, root: str | None = None) -> list[dict]:
             if m and severity not in ("skipped", "ignored"):
                 start = int(m.group(2))
                 end = int(m.group(3)) if m.group(3) else start
-                out.append({"severity": severity, "path": norm_path(m.group(1), root), "start": start, "end": max(start, end), "text": line.strip()})
+                sev = severity
+                if sev == "unknown":
+                    w = INLINE_SEV_RE.search(line)
+                    sev = ("nit" if w.group(1).lower().startswith("nit") else "important") if w else "unknown"
+                out.append({"severity": sev, "path": norm_path(m.group(1), root), "start": start, "end": max(start, end), "text": line.strip()})
             continue
         h = SECTION_RE.match(line)
         if h:
@@ -833,7 +840,16 @@ def cmd_agree(args: list[str], root: str | None = None) -> dict:
     code_path, codex_path = flag(args, "--code"), flag(args, "--codex")
     if not code_path or not codex_path:
         raise Refuse("pr-check: usage: agree --code FILE --codex FILE")
-    code, codex = parse_findings(read(code_path), root), parse_findings(read(codex_path), root)
+    texts = []
+    for label, path in (("code", code_path), ("codex", codex_path)):
+        try:
+            text = read(path)
+        except (Refuse, OSError):
+            text = ""
+        if not text.strip():
+            raise Refuse(f"pr-check: the {label} report {path} is missing or empty, so there is nothing to compare")
+        texts.append(text)
+    code, codex = parse_findings(texts[0], root), parse_findings(texts[1], root)
     taken: set[int] = set()
     agreed, disputed = [], []
     for i, c in enumerate(code):

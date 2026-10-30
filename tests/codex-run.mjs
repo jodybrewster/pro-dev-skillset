@@ -167,6 +167,25 @@ export function runCodexRunCases() {
       fails("c4c a symlinked .claude folder is not opted in", "exit 3 not-opted-in", r, 3, "could-not-run: not-opted-in:", r.argv.length === 0);
     }
 
+    {
+      // Consent from a ref: a branch that adds its own opt-in is not opted in against main; the base opt-in works.
+      const q = mkrepo(null);
+      git(q, "checkout", "-q", "-b", "feat");
+      mkdirSync(join(q, ".claude"));
+      writeFileSync(join(q, ".claude", "pro-dev.json"), '{"answers":{"codex":{"answer":"yes"}}}');
+      git(q, "add", "-A");
+      git(q, "commit", "-q", "-m", "self opt-in");
+      r = run(q, [...std(q), "--consent-ref", "main"]);
+      fails("c4d a branch that adds its own opt-in is not opted in with --consent-ref main", "exit 3 not-opted-in, no exec", r, 3, "could-not-run: not-opted-in:", r.argv.length === 0);
+      r = run(q, std(q));
+      add("c4e without --consent-ref the work tree answer is read", "exit 0", r.status === 0, `${r.status} ${r.stdout}`);
+      const q2 = mkrepo();
+      git(q2, "checkout", "-q", "-b", "feat");
+      r = run(q2, [...std(q2), "--consent-ref", "main"]);
+      add("c4f the base opt-in works with --consent-ref", "exit 0", r.status === 0, `${r.status} ${r.stdout}`);
+      r = run(q2, [...std(q2), "--consent-ref", "nope"]);
+      fails("c4g an unknown ref is not opted in", "exit 3 not-opted-in", r, 3, "could-not-run: not-opted-in:", r.argv.length === 0);
+    }
     r = run(repo, std(repo), { path: PATH_NONE });
     fails("c5 not-installed", "exit 3, could-not-run: not-installed:", r, 3, "could-not-run: not-installed:");
     r = run(repo, std(repo), { env: { STUB_LOGIN: "1" } });

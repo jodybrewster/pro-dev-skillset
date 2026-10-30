@@ -170,6 +170,20 @@ export function runShipCheckCases() {
     add("k3i ./ and absolute-under-repo paths normalize and agree", "agreed 1, path src/a.py", g?.counts?.agreed === 1 && g.code?.[0]?.path === "src/a.py" && g.codex?.[0]?.path === "src/a.py", JSON.stringify(g));
     g = agree(`Important\n- [a] src/a.py:10 - one\n`, `Important:\n1. \`src/a.py:11\` two\n\nSkipped:\n1. \`src/b.py:5\` not a finding\n\nIgnored from the handoff:\n- \`src/c.py:7\` nor this\n`);
     add("k3j items under Skipped and Ignored headings are not collected", "one codex finding", g?.codex?.length === 1 && g.counts.agreed === 1, JSON.stringify(g));
+    g = agree(`important: 2  nits: 0  pre-existing: 0  skipped: 0\nIgnored from the handoff: none\n\n- [a] src/a.py:10 - Important one\n- [b] src/b.py:4 - a nit here\n- [c] src/c.py:2 - plain\n`, SPIKE("src/a.py:11"));
+    add("k3k an Ignored line is not a heading and later items keep a severity read inline", "three findings, important, nit, unknown",
+      g?.code?.length === 3 && g.code[0].severity === "important" && g.code[1].severity === "nit" && g.code[2].severity === "unknown" && g.counts.agreed === 1, JSON.stringify(g));
+    g = agree(`important: 1  nits: 0  pre-existing: 0  skipped: 0\n- [a] src/a.py:10 - x\n`, `Nits\n1. \`src/a.py:11\` y\n`);
+    add("k3l the tally line is not a heading", "unknown severity", g?.code?.[0]?.severity === "unknown", JSON.stringify(g));
+    {
+      writeFileSync(join(dir, "empty.md"), "");
+      writeFileSync(join(dir, "ok.md"), "Important\n- [a] src/a.py:10 - x\n");
+      const ag = (c, x) => pc(fr, ["agree", "--code", c, "--codex", x]);
+      let ar = ag(join(dir, "empty.md"), join(dir, "ok.md"));
+      add("k3m an empty report refuses agree", "exit 1, message names it", ar.status === 1 && /missing or empty/.test(ar.stderr), ar.stdout + ar.stderr);
+      ar = ag(join(dir, "ok.md"), join(dir, "nope.md"));
+      add("k3n a missing report refuses agree", "exit 1, message names it", ar.status === 1 && /missing or empty/.test(ar.stderr), ar.stdout + ar.stderr);
+    }
 
     // stamp with reviewers.codex
     const GOOD_RUN = { checks: ["build", "lint", "typecheck", "test"].map((step) => ({ step, command: `make ${step}`, status: "pass", exit_code: 0, output_tail: [] })), floor: "pass",

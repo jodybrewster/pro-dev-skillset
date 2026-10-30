@@ -1193,6 +1193,7 @@ checks["agent-twins"] = () => {
   const tm = readFileSync(tomlPath, "utf8").match(/developer_instructions = """\n?([\s\S]*?)"""/);
   if (!mm) failures.push("agent-twins: code-reviewer.md has no frontmatter block");
   if (!tm) failures.push("agent-twins: code-reviewer.toml has no developer_instructions block");
+  if (tm && tm[1].includes("\\")) failures.push("agent-twins: the .toml developer_instructions holds a backslash, which tomllib processes as an escape, so the runner would send different text than the .md body");
   if (mm && tm) {
     const a = mm[1].trim().split("\n"), b = tm[1].trim().split("\n");
     const at = a.findIndex((l, i) => l !== b[i]);

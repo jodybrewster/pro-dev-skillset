@@ -3,28 +3,17 @@
 
 Usage:
   codex-run.py (--instructions FILE | --agent NAME) --prompt FILE [--cwd DIR] [--timeout SECONDS]
-  codex-run.py --check [--cwd DIR]
+               [--consent-ref REF]
+  codex-run.py --check [--cwd DIR] [--consent-ref REF]
 
-  --instructions FILE  a .toml file gives its developer_instructions string, a .md file its body
-                       after the frontmatter, any other file is read as plain text.
-  --agent NAME         the first of <cwd>/.codex/agents/NAME.toml and $CODEX_HOME/agents/NAME.toml
-                       (Codex's default home when CODEX_HOME is unset).
-  --prompt FILE        the text to send after the instructions.
-  --cwd DIR            where Codex works; default is the top of the git work tree, else the cwd.
-  --timeout SECONDS    1 to 3600, default 540 (under a 600 second host command limit).
-  --check              run the checks below only; print `ready` and exit 0, never start `codex exec`.
+Checks, in order: consent (answers.codex.answer == "yes" in .claude/pro-dev.json, read from the
+work tree or, with --consent-ref, from `git show REF:.claude/pro-dev.json`), the `codex` binary on
+PATH, `codex login status` exit 0. --check runs them only and prints `ready`.
 
-Checks, in order: consent (<cwd>/.claude/pro-dev.json holds answers.codex.answer == "yes"), the
-`codex` binary on PATH, `codex login status` exit 0.
-
-Output: on success the report text on stdout, exit 0. On any failure exactly one stdout line
-`could-not-run: <reason>: <detail>` and at most five lines of Codex's stderr on stderr. Exit codes:
-  exit 2  usage         bad arguments, an unreadable or empty instructions or prompt file
-  exit 3  not-opted-in, not-installed, not-logged-in
-  exit 4  timeout, exit-<n> (Codex exited nonzero), empty-output, signal (the runner was stopped), error (an unexpected exception)
-
-The instructions and the prompt go to Codex on stdin, never on a command line. Python 3 standard
-library only; the only network use is the `codex` process this script starts.
+On success the report is on stdout, exit 0. On any failure stdout is one line
+`could-not-run: <reason>: <detail>` and stderr has at most five lines of Codex's stderr.
+Exit 2 usage, 3 not-opted-in, not-installed or not-logged-in, 4 timeout, exit-<n>, empty-output,
+signal or error. The instructions and the prompt go to Codex on stdin. Standard library only.
 """
 from __future__ import annotations
 
@@ -71,11 +60,10 @@ def read_text(path: str, what: str) -> str:
 def toml_instructions(path: str) -> str:
     try:
         import tomllib
-    except ImportError:
-        fail(2, "usage", "reading a .toml file needs Python 3.11 or newer")
-    try:
         with open(path, "rb") as f:
             value = tomllib.load(f).get("developer_instructions")
+    except ImportError:
+        fail(2, "usage", "reading a .toml file needs Python 3.11 or newer")
     except (OSError, ValueError) as e:
         fail(2, "usage", f"cannot read {path} ({type(e).__name__})")
     if not isinstance(value, str) or not value.strip():
@@ -109,55 +97,65 @@ def find_agent(name: str, cwd: str) -> str:
 
 def default_cwd() -> str:
     try:
-        r = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=15)
-        if r.returncode == 0 and r.stdout.strip():
-            return os.path.realpath(r.stdout.strip())
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=15).stdout.strip()
     except (OSError, subprocess.SubprocessError):
-        pass
-    return os.getcwd()
+        top = ""
+    return os.path.realpath(top) if top else os.getcwd()
 
 
 def answers_problem(repo: str) -> str | None:
     """Why the answers file is unsafe to read, or None. Never follows a symlink."""
-    path = os.path.join(repo, ANSWERS_FILE)
     claude_dir = os.path.join(repo, ".claude")
     if not os.path.lexists(claude_dir):
         return None
     if os.path.realpath(claude_dir) != os.path.join(os.path.realpath(repo), ".claude"):
         return ".claude is a symlink or resolves outside the repo"
     try:
-        st = os.lstat(path)
+        st = os.lstat(os.path.join(repo, ANSWERS_FILE))
     except OSError:
-        return None  # missing: opted_in reports it; unreadable: the open below fails
+        return None  # missing or unreadable: answers_raw reports it
     return None if stat.S_ISREG(st.st_mode) else f"{ANSWERS_FILE} is not a regular file"
 
 
-def opted_in(repo: str) -> str | None:
-    """None when the repo answered yes for codex, else the reason it did not."""
+def answers_raw(repo: str, ref: str | None) -> bytes | str:
+    """The answers file bytes, or the reason there are none. A ref reads the committed copy."""
+    if ref:
+        r = subprocess.run(["git", "-C", repo, "show", f"{ref}:{ANSWERS_FILE.replace(os.sep, '/')}"], capture_output=True)
+        return r.stdout[:MAX_ANSWERS_BYTES + 1] if r.returncode == 0 else f"no {ANSWERS_FILE} at {ref}"
     problem = answers_problem(repo)
     if problem:
         return problem
-    path = os.path.join(repo, ANSWERS_FILE)
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
+        fd = os.open(os.path.join(repo, ANSWERS_FILE), os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
         with os.fdopen(fd, "rb") as fh:
-            raw = fh.read(MAX_ANSWERS_BYTES + 1)
-        if len(raw) > MAX_ANSWERS_BYTES:
-            return f"{ANSWERS_FILE} is larger than 64 KiB"
-        data = json.loads(raw.decode("utf-8"))
+            return fh.read(MAX_ANSWERS_BYTES + 1)
     except FileNotFoundError:
         return f"no {ANSWERS_FILE} in this repo"
-    except (OSError, ValueError):
+    except OSError:
         return f"{ANSWERS_FILE} cannot be read as JSON"
-    entry = (data.get("answers") or {}).get("codex") if isinstance(data, dict) and isinstance(data.get("answers"), dict) else None
+
+
+def opted_in(repo: str, ref: str | None = None) -> str | None:
+    """None when the repo answered yes for codex, else the reason it did not."""
+    raw = answers_raw(repo, ref)
+    if isinstance(raw, str):
+        return raw
+    if len(raw) > MAX_ANSWERS_BYTES:
+        return f"{ANSWERS_FILE} is larger than 64 KiB"
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except ValueError:
+        return f"{ANSWERS_FILE} cannot be read as JSON"
+    answers = data.get("answers") if isinstance(data, dict) else None
+    entry = answers.get("codex") if isinstance(answers, dict) else None
     if isinstance(entry, dict) and entry.get("answer") == "yes":
         return None
     return f"{ANSWERS_FILE} has no yes for codex; answer it with /pro-dev install"
 
 
-def preflight(cwd: str) -> str:
+def preflight(cwd: str, ref: str | None = None) -> str:
     """R3 in order; returns the codex path or exits with the reason."""
-    why = opted_in(cwd)
+    why = opted_in(cwd, ref)
     if why:
         fail(3, "not-opted-in", why)
     codex = shutil.which("codex")
@@ -175,14 +173,8 @@ def preflight(cwd: str) -> str:
 def kill_group(proc: subprocess.Popen) -> None:
     try:
         os.killpg(proc.pid, signal.SIGKILL)
-    except OSError:
-        try:
-            proc.kill()
-        except OSError:
-            pass
-    try:
         proc.wait(timeout=5)
-    except subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         pass
 
 
@@ -197,7 +189,6 @@ def main(argv: list[str]) -> int:
         return run(argv)
     except Exception as e:  # SystemExit from fail() passes through
         fail(4, "error", type(e).__name__)
-        return 4
 
 
 def run(argv: list[str]) -> int:
@@ -209,21 +200,20 @@ def run(argv: list[str]) -> int:
     ap.add_argument("--cwd")
     ap.add_argument("--timeout", type=int, default=540)
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--consent-ref")
     a = ap.parse_args(argv)
-    if not 1 <= a.timeout <= 3600:
-        fail(2, "usage", "--timeout must be an integer from 1 to 3600")
     cwd = os.path.realpath(a.cwd) if a.cwd else default_cwd()
-    if not os.path.isdir(cwd):
-        fail(2, "usage", f"--cwd {cwd} is not a folder")
+    if not 1 <= a.timeout <= 3600 or not os.path.isdir(cwd):
+        fail(2, "usage", "--timeout must be an integer from 1 to 3600 and --cwd a folder")
     if a.check:
-        preflight(cwd)
+        preflight(cwd, a.consent_ref)
         print("ready")
         return 0
     if not a.prompt or not (a.instructions or a.agent):
         fail(2, "usage", "give --prompt and one of --instructions or --agent")
     instructions = load_instructions(a.instructions or find_agent(a.agent, cwd))
     prompt = read_text(a.prompt, "prompt")
-    codex = preflight(cwd)
+    codex = preflight(cwd, a.consent_ref)
     composed = f"# Instructions\n\n{instructions}\n\n# Handoff\n\n{prompt}"
     tmp = tempfile.mkdtemp(prefix="codex-run-")
     proc = None
@@ -240,11 +230,7 @@ def run(argv: list[str]) -> int:
         err_text = err.decode("utf-8", "replace")
         if proc.returncode != 0:
             fail(4, f"exit-{proc.returncode}", "codex exec exited with an error", err_text)
-        try:
-            with open(out_file, encoding="utf-8") as f:
-                report = f.read()
-        except (OSError, UnicodeDecodeError):
-            report = ""
+        report = open(out_file, encoding="utf-8", errors="replace").read() if os.path.exists(out_file) else ""
         if not report.strip():
             fail(4, "empty-output", "codex exec finished with an empty report", err_text)
         sys.stdout.buffer.write((report if report.endswith("\n") else report + "\n").encode("utf-8"))
