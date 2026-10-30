@@ -2,7 +2,7 @@
 description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /execute <path to plan.md>"
 argument-hint: "<path to plan.md>"
 model: opus
-allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
+allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
 ---
 
 ## Context
@@ -16,9 +16,9 @@ allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash
 Requested plan: $ARGUMENTS
 
 This is the build stage of the SDLC loop, between `/plan` and `/pr-babysit`.
-The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails.
+The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails or the stop list fires.
 You are the builder: build the plan in this session and dispatch subagents only when a step benefits from one.
-Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, proof of done, verifier, PR opened).
+Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, checkpoint, proof of done, verifier, PR opened).
 Name any stage that was skipped and why.
 On a stop, print the stage, the reason and what the person can do next.
 pro-execution's `using-git-worktrees` and `subagent-driven-development` skills are used when installed, never required; this plugin declares no dependency on pro-execution.
@@ -31,8 +31,38 @@ Only their relative paths may appear in output, a commit message, a log line or 
 If a failure looks like a missing or wrong env value, say which variable name the error mentions and stop; do not inspect the file to find out.
 Command output can echo a value from an env file, such as a connection string in a database error.
 Record each check in plan.md, a commit or the PR body as the command, pass or fail and its counts, never as pasted output.
-Copy this section into the prompt of every subagent you dispatch.
+Copy this section, `## Stop list` and `## Scope discipline` into the prompt of every subagent you dispatch.
+A subagent that hits a stop-list signal stops without committing and reports back, so the main session pauses.
 `python3` and `node` are not pre-approved, so a one-off interpreter call asks the person first.
+
+## Stop list
+
+Five categories pause the build for a person.
+auth: a directory or file stem named `auth`, `login`, `signin`, `signup`, `oauth`, `session`, `sessions`, `permissions`, `rbac`, `acl`, `policies` or `middleware`.
+migrations: a path under `migrations/`, `migrate/` or `drizzle/`, `prisma/schema.prisma`, `schema.sql` or a `.sql` file under `db/` or `database/`.
+payments: a directory or file stem named `payments`, `payment`, `billing` or `stripe`.
+deploys: a `Dockerfile`, a `docker-compose` file, a `.tf` file, a path under `k8s/`, `kubernetes/`, `helm/`, `terraform/`, `pulumi/` or `cdk/`, or a path under `.github/workflows/`.
+secrets: an env file other than `.example`, `.sample`, `.template` or `.dist`, a `config.`, `settings.` or `env.` file at the root or under `config/`, or a step that adds an environment variable, key or credential.
+A step whose text says it changes one of these (for example "add a migration" or "deploy") also fires.
+Test files, fixtures and Markdown files never fire.
+The check reads path names and plan text only and never opens an env file.
+When it fires, stop before building or committing that step, print `stop list: step <N> touches <category> (<path or phrase>). Build it? (yes to continue)` and wait for an explicit yes.
+Anything else is a stop: print the stage, the reason and what the person can do next.
+Keep the worktree.
+An explicit yes given during the run covers that category for the rest of the run and is listed under "Potential concerns" in the PR body.
+A step is already consented only when the plan's `## Risks` has a `Stop-list categories:` line that lists the category for that step and the header's `Approver:` names a person, not an angle-bracket placeholder.
+A mention of the category anywhere else in Risks, such as "no migration", is not consent.
+Then print `stop list: <category> on step <N>, consented in Risks` and go on.
+Anything the plan did not name pauses.
+
+## Scope discipline
+
+A problem noticed outside the current step is never fixed in that step.
+Write one line (the file, what was seen and why it was left) under `## Noticed but not touched` in plan.md, in the step's commit.
+Stage the step's files by path and never use `git add -A`, `git add .` or `git commit -a`.
+Before each commit compare `git diff --cached --name-only` with the step's files.
+The plan file itself is always allowed in a step's commit.
+A staged file the step did not name is unstaged with `git restore --staged <path>`, or kept with a line under `## Departures from plan` saying why.
 
 ## Your task
 
@@ -68,8 +98,14 @@ If it fails, stop before any change: print the command and the last lines of its
 ### 5. Build the plan
 
 Follow the plan's `## Order of work` in order.
+Before the first step, run the `## Stop list` over `## Files that change` and the text of every step in `## Order of work`; print `stop list: nothing fired` when nothing does.
+Before each step's commit, run it over `git diff --cached --name-only`.
+At each checkpoint the plan names, when pro-ship's `risk-tiers` skill is available, follow it to classify `origin/<default_branch>..HEAD`.
+A signal with id `auth`, `payments`, `migrations`, `iac`, `workflows` or `env-config` that no consent covers pauses before the next step as the stop list does.
+The classifier ids `iac` and `workflows` count as deploys and `env-config` counts as secrets.
+Without the skill, say the classifier was skipped.
 For each step write or extend the test first, see it fail, then write the code until it passes.
-Commit each step, or a small group of steps, with a message that names the step.
+Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
 When the build has to stray from the plan, add a line under `## Departures from plan` in plan.md in the same commit as the change that departs.
 Steps the plan marks as independent may go to builder subagents in parallel when the pro-execution `subagent-driven-development` skill is available; give each a self-contained prompt and name its model and effort.
 Broad code search may go to the `researcher` agent.
@@ -80,6 +116,7 @@ Run every command under the plan's `## Proof of done` and keep each real result.
 Dispatch the `verifier` agent in a fresh context with the plan path and name its model and effort.
 Fix what it finds.
 Fill in the plan's `## Done` section: the build commit, each check with its real result and one line per acceptance criterion with what was observed.
+Fill the `- Definition of done:` line against `${CLAUDE_PLUGIN_ROOT}/references/definition-of-done.md`, naming the items not met or "met".
 Leave Sign-off empty; it belongs to the person.
 Commit plan.md.
 
@@ -88,6 +125,7 @@ Commit plan.md.
 Push with `git push -u origin <branch>`.
 Open the pull request with `gh pr create` against `<default_branch>`.
 Its body links the intent folder, lists each acceptance criterion with its proof and names any departures.
+The body ends with "Things I didn't touch" (the `## Noticed but not touched` lines and neighboring work left out on purpose) and "Potential concerns" (consented stop-list steps, what the verifier could not check and risks seen), each "None" when empty.
 If `gh` fails, give the compare URL for the branch instead.
 
 ### 8. Report
@@ -96,3 +134,5 @@ The PR URL, the worktree path, the checks that ran with their results and any de
 Suggest `/pr-babysit` as the next step.
 
 Never merge, never push to the default branch, never force-push and never pass `--no-verify`.
+
+Stop list, scope rules and staging rule adapted from addyosmani/agent-skills (commands/build.toml, skills/incremental-implementation/SKILL.md and skills/git-workflow-and-versioning/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

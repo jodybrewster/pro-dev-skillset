@@ -26,14 +26,23 @@ Run it in plan mode when you can: read, do not change code.
 Use the path in the arguments if given.
 Otherwise take the first entry under "Specs without a plan" (the newest).
 If there is none, stop and suggest `/spec`.
-Read the spec, the intent beside it, the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and the template at `${CLAUDE_PLUGIN_ROOT}/templates/plan.md`.
+A path to `spec-<module-id>.md` writes `plan-<module-id>.md` beside it.
+When the target plan file already exists, never overwrite it: stop, name the file and suggest editing it or recording a departure.
+Read the spec, the intent beside it, the repo's agent file (`CLAUDE.md` or `AGENTS.md`), the template at `${CLAUDE_PLUGIN_ROOT}/templates/plan.md` and the standing definition of done at `${CLAUDE_PLUGIN_ROOT}/references/definition-of-done.md`.
 Look through the code the spec points at.
 Use a read-only subagent for breadth when the spec touches many files.
 
 ### 2. Draft the plan
 
 Write `<intent dir>/plan.md` from the template, sections in its order, one sentence per line.
-Cover the files touched (new, modified or deleted, with a reason), the sequence of work in separately checkable steps, the test or visual check behind each step, the risks, the alternatives you rejected, the exact commands that show it is done and an empty departures section.
+Cover the files touched (new, modified or deleted, with a reason), the sequence of work in separately checkable steps, the test or visual check behind each step, the risks (with the template's `Stop-list categories:` line filled in), the alternatives you rejected, the exact commands that show it is done and an empty departures section.
+Size every step XS, S, M or L: XS is one file and under 30 minutes, S is one or two files and under an hour, M is up to two hours and L is more.
+Aim for XS to S.
+Split a step that is over two hours, carries more than three acceptance criteria, has "and" in its title or touches two or more subsystems.
+These are prompts, not hard rules; a step left at L states its reason in the plan.
+Put a `Checkpoint:` line after every two or three steps with the commands to run and what to confirm.
+Order the riskiest steps early, after any failing test they need.
+Leave the `- Definition of done:` line in `## Done` for the build to fill.
 
 ### 3. Question it
 
@@ -43,6 +52,12 @@ Before showing it, answer these and fold the answers into the plan.
 - Which step is the most likely to go wrong?
 - What was left out on purpose, and what is the reason?
 - Which steps touch separate files and could run in parallel worktrees?
+
+Then run three checks before the plan is shown.
+
+- Coverage: every requirement and acceptance criterion in the spec maps to at least one step; an unmapped one gets a step or a stated reason.
+- Placeholders: no angle-bracket field, TBD, TODO or "fill in" is left outside `## Done` and `## Departures from plan`.
+- Names: each file, function, flag and heading is spelled the same in every step that uses it.
 
 A change to architecture, security, data, a public API or a deploy names an approver (a lead or architect) in the header.
 Routine work with a small blast radius and good test coverage can say it suits auto mode.
@@ -70,3 +85,5 @@ When the build strays from the plan, record that under Departures in the same co
 ### 6. Report
 
 The path, the commit hash, the riskiest step and the approver if one is needed.
+
+Sizes, split triggers, checkpoints and self-review adapted from addyosmani/agent-skills (skills/planning-and-task-breakdown/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

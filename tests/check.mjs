@@ -1239,7 +1239,33 @@ checks["sdlc-contract"] = () => {
       if (!execC.includes(h)) failures.push(`pro-ai-sdlc: /execute does not name the plan's ${h} section`);
     if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
       failures.push("pro-ai-sdlc: /execute lost its never-merge line");
+    // loop guardrails (ADR-0017): the stop list, the scope rules and the definition-of-done pointer.
+    for (const a of ["## Stop list", "## Scope discipline", "## Noticed but not touched", "git add -A", "Things I didn't touch", "Potential concerns", "consented in Risks", "Stop-list categories:", "references/definition-of-done.md", "Build it? (yes to continue)", "never opens an env file"])
+      if (!execC.includes(a)) failures.push(`pro-ai-sdlc: /execute lacks the anchor "${a}"`);
+    // the two section headings must stand alone on a line; other text also names them.
+    for (const h of ["## Stop list", "## Scope discipline"])
+      if (!execC.split("\n").includes(h)) failures.push(`pro-ai-sdlc: /execute has no heading line "${h}"`);
+    const stopBlock = execC.split(/^## Stop list\s*$/m)[1]?.split(/^## /m)[0] ?? "";
+    for (const w of ["auth", "migrations", "payments", "deploys", "secrets"])
+      if (!stopBlock.includes(w)) failures.push(`pro-ai-sdlc: /execute stop list does not name "${w}"`);
   }
+  // loop upgrades (ADR-0017): definition of done, plan and spec shapes, agent lenses and the ADR status.
+  const need = (file, anchors, ci = false) => {
+    const body = read(file);
+    if (body === null) { failures.push(`pro-ai-sdlc: ${file} missing`); return; }
+    const hay = ci ? body.toLowerCase() : body;
+    for (const a of anchors) if (!hay.includes(ci ? a.toLowerCase() : a)) failures.push(`pro-ai-sdlc: ${file} lacks the anchor "${a}"`);
+  };
+  need("references/definition-of-done.md", ["Addy Osmani"]);
+  need("templates/plan.md", ["## Noticed but not touched", "references/definition-of-done.md", "Checkpoint", "- Build commit:"]);
+  need("commands/plan.md", ["references/definition-of-done.md", "XS", "Checkpoint"]);
+  need("commands/plan.md", ["never overwrite"], true);
+  need("templates/spec.md", ["## Assumptions", "### Boundaries", "Always:", "Ask first:", "Never:"]);
+  need("commands/spec.md", ["capability-map.md", "unconfirmed"]);
+  for (const f of ["agents/verifier.md", ".codex-plugin/agents/verifier.toml"]) need(f, ["one concept per test", "A test that never fails", "at best `VERDICT: incomplete`"]);
+  for (const f of ["agents/simplifier.md", ".codex-plugin/agents/simplifier.toml"]) need(f, ["git blame", "## 2b. Before removing anything"]);
+  need("commands/adr.md", ["deprecated", "Never delete"]);
+  need("templates/adr.md", ["deprecated"]);
   // review policy (R21): the template, the reviewer and its Codex twin, and /pr-babysit carry the convergence rules.
   const revT = read("templates/REVIEW.md") ?? "";
   for (const h of ["What failure looks like here", "Evidence", "Pre-existing", "Rounds"])

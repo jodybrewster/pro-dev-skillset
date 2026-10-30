@@ -16,6 +16,10 @@ Policies and skills consulted: <the files and skills read before writing this>.
 
 One paragraph on what exists once this ships and who gets it.
 
+## Assumptions
+
+What this spec rests on, confirmed by the person or marked unconfirmed: stack, auth scheme, platforms or browsers, data, scale and who uses it, whichever apply.
+
 ## Requirements
 
 ### Functional
@@ -29,6 +33,12 @@ One paragraph on what exists once this ships and who gets it.
 ### Policy constraints applied
 
 - <rule from design, security, compliance or UX>: <how this spec honors it>
+
+### Boundaries
+
+Always: <what an agent may always do here>
+Ask first: <what needs a person's yes>
+Never: <what is off limits>
 
 ## Design
 

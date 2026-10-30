@@ -30,6 +30,7 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 - `templates/plan.md`
 - `templates/adr.md`
 - `templates/REVIEW.md`
+- `references/definition-of-done.md`, the standing definition of done that every plan's `## Done` section cites
 
 The interview rules for `/intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
@@ -46,6 +47,7 @@ Two scripts hold the parts that must not depend on the model:
   Every copy is removed if one would not be ignored in the worktree or fails.
 
 The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`; the session moves into it.
+`/execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
 The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
 
 ## Decisions

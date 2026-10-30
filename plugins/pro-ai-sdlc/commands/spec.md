@@ -28,6 +28,11 @@ Otherwise take the first entry under "Intents without a spec" (the newest).
 If there is none, stop and suggest `/intent`.
 Read the intent in full.
 If its `status` is still `draft`, say so and carry on; the spec records the status it was written against.
+When the intent spans more than one module or would need more than about fifteen requirements, offer a capability map once as a yes or no question.
+On yes, write `<intent dir>/capability-map.md` with a table (id, module, purpose, depends on, build order) using short stable ids such as `m1`, then one `spec-<module-id>.md` per module from the template, committed together.
+Say that modules are planned and built one at a time in build order because they share the intent's branch name.
+On no, write one `spec.md` as before.
+With no one to answer, write one `spec.md` and name the capability-map option in the report.
 
 ### 2. Load the policy sources
 
@@ -42,17 +47,25 @@ Read whichever of these exist:
 
 Read enough of the code the intent touches to ground the design in what exists.
 
-### 3. Write spec.md beside the intent
+### 3. Check assumptions and targets
+
+List the assumptions the spec would rest on as a numbered list: stack, auth scheme, platforms or browsers, data, scale and who uses it, whichever apply.
+Turn each vague ask in the intent ("faster", "simpler", "more reliable" and the like) into a measurable criterion with a proposed target.
+Send the list and the proposed targets in one message, ask the person to correct the assumptions and say whether each target is right, then wait.
+When the person has said to go ahead without questions or no one is there to answer, write the assumptions under `## Assumptions` marked `unconfirmed`, carry on and name them in the report.
+
+### 4. Write spec.md beside the intent
 
 Read the template at `${CLAUDE_PLUGIN_ROOT}/templates/spec.md` and write `<intent dir>/spec.md` from it, one sentence per line.
 List the policy files and skills you loaded under "Skills and policies in force".
+Fill `## Assumptions` and `### Boundaries` from the answers to step 3.
 Every requirement is testable and traces to a line of the intent.
 Flagged concerns is mandatory: write one row per conflict between the intent or design and a policy, or "None found" with the sources checked.
 Never settle a flagged concern on your own; show it to the person.
 Bring each open question from the intent across, answered or still open.
 Follow the user's writing rules if they have any: by default no em dashes, no Oxford comma and straight quotes.
 
-### 4. Draft the ADR when one is needed
+### 5. Draft the ADR when one is needed
 
 The spec's Flagged concerns section ends with an `ADR needed:` line, `yes` or `no` with a one-line reason.
 It is `yes` when the change sets a rule other work must follow or would be expensive to reverse.
@@ -63,8 +76,7 @@ When it is yes:
 
 - Ask only what the ADR still lacks beyond the spec: at most what would make the person reverse the decision and what must stay true afterwards.
   One question at a time.
-- Find the folder: `docs/adr/` if it exists, else `docs/decisions/` if it exists, else create `docs/adr/`.
-- Number the ADR one above the highest existing number in that folder, zero-padded to four digits, or 0001 when there are none.
+- Find the folder and the numbering as `/adr` step 2 does.
 - Write `<NNNN>-<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/adr.md` with Status `proposed` and Source set to the intent folder.
   Follow the folder's existing ADRs for style when they differ from the template.
 - If the folder has a `README.md` with an index table, add a row for it.
@@ -72,7 +84,7 @@ When it is yes:
 
 The Done sign-off in plan.md moves the ADR from `proposed` to `accepted`.
 
-### 5. Offer spec methods
+### 6. Offer spec methods
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py" --stage spec --target <spec.md path>`.
 Offer each printed line once as a yes or no question.
@@ -83,15 +95,18 @@ After a goldfish review, keep the fixes EGM applied to the draft.
 For each Blocker or Major finding still open, write one line of your own under Flagged concerns in your words with no quoted file content; show those lines before committing.
 The review writes `goldfish_review_report.md` in the working directory; leave it untracked and name its path in the report.
 
-### 6. Commit
+### 7. Commit
 
-- `git add <intent dir>/spec.md`, and when step 4 wrote an ADR, that file and the index too, so they land in the same commit.
+- `git add <intent dir>/spec.md` (or `capability-map.md` and each `spec-<module-id>.md`).
+  When step 5 wrote an ADR, add that file and the index too so they land in the same commit.
 - `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date prefix.
 
 Never stage other files, never pass `--no-verify` and do not push.
 Check `git status` that nothing else got staged.
 
-### 7. Report
+### 8. Report
 
 The path, the commit hash, the number of requirements, the ADR path when one was drafted, each flagged concern in one line and the open questions that block planning.
 Suggest `/plan <intent dir>/spec.md` as the next step.
+
+Capability map and assumptions steps adapted from addyosmani/agent-skills (skills/spec-driven-development/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

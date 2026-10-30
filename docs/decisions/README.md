@@ -21,3 +21,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0013](./0013-plugin-layering.md) | Plugins are split by audience, not by size: core, domain, a layer under a domain, stack, plus switchable methods and gates (proposed) | 2026-10-30 |
 | [0014](./0014-gate-stamp.md) | One pr-check stamp bound to HEAD has one writer and many readers; pr-gate and the push gate read it and a forged stamp is accepted for a local guardrail | 2026-10-30 |
 | [0015](./0015-risk-tiers.md) | The tier is the highest floor among deterministic signals, declared risk only raises it and only the person at the prompt approves a merge, pinned to one HEAD sha | 2026-10-30 |
+| [0017](./0017-loop-guardrails.md) | Every plan cites one standing definition of done and /execute pauses for a person before auth, migration, payment, deploy or secrets steps the plan did not name (proposed) | 2026-10-30 |

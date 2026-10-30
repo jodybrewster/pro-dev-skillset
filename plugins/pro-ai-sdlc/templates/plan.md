@@ -11,7 +11,8 @@ Dated: <YYYY-MM-DD>.
 
 ## Order of work
 
-1. <a step small enough to check by itself>
+1. <a step small enough to check by itself> (size XS or S; R1, AC1)
+   Checkpoint: <the commands to run and what to confirm>
 
 ## Tests that prove it
 
@@ -21,6 +22,8 @@ Dated: <YYYY-MM-DD>.
 ## Risks
 
 The step most likely to go wrong, what it could break, how far the damage would reach, and anything irreversible such as a migration.
+
+Stop-list categories: <none, or each category with the steps that touch it>
 
 ## Options not taken
 
@@ -36,6 +39,7 @@ Filled in when the build is finished, before sign-off.
 
 - Build commit: <sha>
 - Checks run: <each command with its real result>
+- Definition of done: <met, or the items not met> (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
 - AC1: <pass or fail, with what was observed>
 - Sign-off: <the person's words and the date>
 
@@ -46,6 +50,11 @@ It also moves any ADR with Status `proposed` from this change to `accepted`.
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+## Noticed but not touched
+
+Problems seen outside a step during the build, one per line: the file, what was seen and why it was left.
+/execute copies them into the PR body.
 
 <!--
 Write this in plan mode from an accepted spec, then question it before approval:
