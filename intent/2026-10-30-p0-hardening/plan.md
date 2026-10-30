@@ -340,20 +340,53 @@ What counts as finished:
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Built on 2026-10-30 by the builder session on branch `feat/p0-hardening`, rebased on origin/main at 6581c04 (PR 97).
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- Step 5 (`gh pr merge --help` on `--auto` with `--match-head-commit`): <what it said>
-- Step 11 (`ask` per permission mode): <per mode result and Claude Code version or not verified and why>
-- AC1 to AC10, AC12 to AC15: <pass or fail, with what was observed>
+- Build commit: 71e3bbd (the last content commit before this block; the commit that adds this block follows it).
+- Baseline before any change: `node tests/check.mjs` 33 checks, 0 failures, 12 warnings; `node tests/ship-hooks.mjs` 182 cases; `node --test tests/unit/*.test.mjs` 165 pass, 0 fail; routing gate passing.
+- Checks run on the final branch, each passing:
+  - `node tests/check.mjs`: 33 checks, 0 failures, 10 warnings (two fewer than the 12 on main).
+  - `node tests/eval.mjs --dry`: 88 cases reference real skills, 98 skills in catalog plus 7 distractors (live routing skipped, no API key).
+  - `node tests/route-lexical.mjs --min-rank1 70`: rank-1 70/87 (80.5%), top-k 83/87, 3 notOneOf warnings, exit 0.
+  - `node --test tests/unit/*.test.mjs`: 166 pass, 0 fail.
+  - `node tests/ship-hooks.mjs`: 231/231 cases passed.
+  - `claude plugin validate . --strict`: Validation passed once; the per-plugin loop passed for 20 of 20 plugin directories.
+  - `node tests/check.mjs | grep -c -E "pro-ship/(pr-check|risk-tiers)"` prints 0; the placeholder `grep -c` prints 0; the `match-head-commit <headRefOid>` `grep -c` prints 1; `grep -c "No network calls"` on the gate prints 0; the network `grep -c` on `risk-classify.py` prints 0 (N3).
+  - The `warn.log` summary commands ran on a fixture log: one count per gate and action, the line before `SINCE` left out and one could-not-run reason line; the push gate command summed 3 gated diffs over two fixture state files.
+- Calibration (step 6): `calibrate.py` over PRs #60 to #89 prints 30 rows and "30 PRs: 11 low, 9 medium and 10 high", the same split as the risk-tiers Done block. All six values kept. Ranges: files_medium 6 and up, files_high 24 and up, lines_medium 191 and up, lines_high 968 and up, areas_medium 3 only, no_test_lines 0 to 56. The table is `calibration.md`.
+- Step 5 (`gh pr merge --help` on `--auto` with `--match-head-commit`): on gh 2.21.2 the help lists both flags (`--auto`: "Automatically merge only after necessary requirements are met"; `--match-head-commit SHA`: "Commit SHA that the pull request head must match to allow merge") and says nothing that makes them exclude each other.
+- Step 11 (`ask` per permission mode), Claude Code 2.1.314, haiku, `--permission-prompts none`, one run per mode from a temp folder outside the repo, PreToolUse hook answering "ask" for `echo merge-gate-probe`. The hook logged the `permission_mode` values below. In every run the command was denied, `post.log` got no `ran` line and `permission_denials` named Bash:
+  - no flag: hook logged `auto` (the machine default), denied.
+  - `manual`: hook logged `default`, denied.
+  - `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`: hook logged the same value, denied.
+  - Control, plain `echo plain-control` with the same settings under `bypassPermissions`, `dontAsk` and `auto`: ran, no denials. So the denial came from the hook's ask.
+  - Result: `NO_PROMPT_MODES` is empty. `plan` could also have been stopped by the mode itself but it was never in the set. The probe is a headless proxy, so the interactive recheck stays with Jody before any enforce switch (written in `docs/enforce-mode.md`).
+- AC1 to AC7: pass, by mg200 to mg262 in `tests/ship-hooks.mjs` (231 cases, all passing).
+- AC8: pass (placeholder `grep -c` 0, 30 rows, ranges, 11 low 9 medium 10 high with no PR changing tier).
+- AC9: pass (the router `grep -c` prints 0, check warnings down from 12 to 10).
+- AC10: pass (ADR-0016 and its row, `docs/enforce-mode.md` with four gates, criteria, commands and template, fixture-log run).
+- AC12: pass (the table above, comment above `NO_PROMPT_MODES`, mg270 to mg275 and mg81).
+- AC13: pass (skill `grep -c` prints 1, amendment line in ADR-0015).
+- AC14: pass (roadmap line replaced).
+- AC15: pass for every command under "Proof of done" that was run here. The last two (`git diff origin/main --stat` and `git status --short`) are checked at the end of this build: the stat lists the marketplace file and the four manifests and the tree is clean.
+- Not done here: step 13 (the `/review` pass with the reviewer subagent at high effort), the draft PR and its body with the calibration lines and probe results. They are left to the orchestrator.
 - AC11: deferred; `enforce-decision.md` is pending with Jody as owner and 2026-11-13 as the decision date.
-- Sign-off: <the person's words and the date>
+- Sign-off: pending.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0016, Status `proposed` from this change, to `accepted`.
 
 ## Departures from plan
 
-Added in the same commit as the change that departs.
-An empty section tells the reviewer the diff follows the plan.
+Added in the same commit as the change that departs, or in this one where noted.
+
+- Version: main took `metadata.version` 1.65.0 in PR 97 while this branch was in progress, so this branch takes 1.66.0 (commit "chore(p0-hardening): metadata.version 1.66.0"). pro-ship 0.5.0 and pro-core 0.21.0 stand because main did not move them.
+- Step 1: the bump commit also carries this plan's status change to approved.
+- Steps 2 and 3: the gh failure mapping was written in the step 2 change, so mg230 to mg235 already passed when step 3's cases were added. Only mg220 and mg221 failed first. Cases beyond the plan: mg216, mg217 (selector parsing), mg252b, mg257, mg258 (api twins), mg262 (the `--auto` twin) and each of mg230 to mg235 runs in enforce and in warn.
+- Step 4: `api-merge` message names `-f sha=<head>` instead of `--match-head-commit`.
+  The hook's first filter lowers the command case so `enablePullRequestAutoMerge` is seen.
+- Step 6: the sweep reports exact boundaries (a tier changes only when a threshold crosses an observed value, so the observed values and their neighbours are tested) with "and up" where nothing above the default moves a PR. The planner's `no_test_lines` range of 10 to 62 was off: the measure is source lines added in PRs with no test change, #77 has 56, so the range is 0 to 56 and 57 moves #77. The value 50 stays inside it. The planner's other ranges hold.
+- Step 7: the existing unit case "the size thresholds are named placeholder constants" asserted the old wording, so it was renamed and its wording check removed. The new case holds the check.
+- Step 9: the push gate command prints nothing when no state file is newer than `SINCE` on macOS xargs, which reads as zero.
+- Step 11: the probe found the ask held in every mode, so `NO_PROMPT_MODES` is empty and mg80's deny cases are gone; mg81 now asks under all seven mode values and mg84 asks. While the set is empty the deny branch of the gate has no case (`PROBED_NO_PROMPT` in the test file takes a mode if one is added). Three extra control runs (plain echo under the three modes that were in the old set) were added to show the ask caused the denial.
+- Orchestrator decisions applied: `/merge-pr` is already edited outside this repo, so it is listed as done and not as a blocker in `docs/enforce-mode.md`; the app repo reads "this repo plus one app repo (Jody to name: JJ or mieruka)" in the decision record.
