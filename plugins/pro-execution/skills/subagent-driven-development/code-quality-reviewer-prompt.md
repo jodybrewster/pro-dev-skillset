@@ -7,13 +7,13 @@ Use this template when dispatching a code quality reviewer subagent.
 **Only dispatch after spec compliance review passes.**
 
 ```
-Subagent invocation (Claude Code: Task tool/general-purpose; Codex: subagent or a fresh agent run):
-  Use template at requesting-code-review/code-reviewer.md
+Subagent invocation (Claude Code: the pro-quality:code-reviewer agent; Codex: a fresh agent run with the code-reviewer.toml instructions):
+  Fill the four fields of requesting-code-review/handoff.md and send nothing else:
 
-  DESCRIPTION: [task summary, from implementer's report]
-  PLAN_OR_REQUIREMENTS: Task N from [plan-file]
-  BASE_SHA: [commit before task]
-  HEAD_SHA: [current commit]
+  range: [commit before task]..[current commit]
+  brief: [plan-file] and the spec or issue for Task N
+  policy: REVIEW.md, the agent file and CONSTRAINTS.md when present
+  risk: [tier or "unclassified"], plus .pro-dev/ship/pr-check.json when it exists
 ```
 
 **In addition to standard code quality concerns, the reviewer should check:**
@@ -22,4 +22,4 @@ Subagent invocation (Claude Code: Task tool/general-purpose; Codex: subagent or 
 - Is the implementation following the file structure from the plan?
 - Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
 
-**Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment
+**Code reviewer returns:** a report that opens with `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`, then Important findings and nits.

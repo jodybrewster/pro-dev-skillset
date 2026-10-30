@@ -5,7 +5,7 @@ description: Use when finished work on a branch or PR needs a code review agains
 
 # Requesting Code Review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+Dispatch the `pro-quality:code-reviewer` agent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
 
 **Core principle:** Review early, review often.
 
@@ -23,27 +23,29 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 ## How to Request
 
-**1. Get git SHAs:**
+**1. Get the two shas:**
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+BASE_SHA=$(git merge-base origin/main HEAD)  # or the commit before the task
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Dispatch code reviewer subagent:**
+**2. Find the brief and policy paths.**
+The brief is the intent, spec, plan or issue the work answers to.
+The policy is `REVIEW.md`, the agent file and `CONSTRAINTS.md` when present.
 
-Dispatch a general-purpose subagent (in Claude Code, the Task tool; in other harnesses, the equivalent subagent invocation), filling the template at `code-reviewer.md`
+**3. Fill `handoff.md`.**
+It has four fields: `range` (base and head shas), `brief`, `policy` and `risk` (the tier or "unclassified", plus `.pro-dev/ship/pr-check.json` when it exists).
+Nothing else goes to the reviewer: no author description, PR body, session summary or earlier findings.
 
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
+**4. Dispatch with that text and nothing else.**
+In Claude Code, dispatch the `pro-quality:code-reviewer` agent with the filled template.
+Under Codex, copy `.codex-plugin/agents/code-reviewer.toml` into the Codex agents folder or start a fresh agent run with its instructions.
 
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
+**5. Act on feedback.**
+The report opens with `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.
+- Fix Important issues before merge
+- Weigh nits and fix the cheap ones
+- Push back if the reviewer is wrong (with reasoning)
 
 ## Example
 
@@ -55,18 +57,16 @@ You: Let me request code review before proceeding.
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
+[Dispatch pro-quality:code-reviewer with the handoff]
+  range: a7981ec..3df7661
+  brief: docs/superpowers/plans/deployment-plan.md (Task 2)
+  policy: REVIEW.md, the code-reviewer agent file
+  risk: unclassified
 
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
+[Reviewer returns]:
+  important: 1  nits: 1  pre-existing: 0  skipped: 0
+  Important: no progress indicators in repairIndex()
+  nit: magic number (100) for reporting interval
 
 You: [Fix progress indicators]
 [Continue to Task 3]
@@ -91,7 +91,7 @@ You: [Fix progress indicators]
 
 **Never:**
 - Skip review because "it's simple"
-- Ignore Critical issues
+- Ignore Important issues
 - Proceed with unfixed Important issues
 - Argue with valid technical feedback
 
@@ -100,7 +100,7 @@ You: [Fix progress indicators]
 - Show code/tests that prove it works
 - Request clarification
 
-See template at: requesting-code-review/code-reviewer.md
+See template at: requesting-code-review/handoff.md
 
 ---
 

@@ -1,4 +1,4 @@
-# ADR-0011: Plugins are split by audience, not by size
+# ADR-0013: Plugins are split by audience, not by size
 
 Date: 2026-10-30
 

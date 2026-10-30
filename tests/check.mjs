@@ -1192,6 +1192,45 @@ checks["sdlc-contract"] = () => {
     if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
       failures.push("pro-ai-sdlc: /execute lost its never-merge line");
   }
+  // review policy (R21): the template, the reviewer and its Codex twin, and /pr-babysit carry the convergence rules.
+  const revT = read("templates/REVIEW.md") ?? "";
+  for (const h of ["What failure looks like here", "Evidence", "Pre-existing", "Rounds"])
+    if (!new RegExp(`^#{1,6} ${h}\\s*$`, "m").test(revT)) failures.push(`pro-ai-sdlc: templates/REVIEW.md lacks the heading "${h}"`);
+  for (const f of ["agents/reviewer.md", ".codex-plugin/agents/reviewer.toml"]) {
+    const body = read(f) ?? "";
+    for (const w of ["Pre-existing", "since"]) if (!body.includes(w)) failures.push(`pro-ai-sdlc: ${f} does not name "${w}"`);
+  }
+  const babyC = read("commands/pr-babysit.md") ?? "";
+  if (!babyC.includes("three rounds")) failures.push('pro-ai-sdlc: commands/pr-babysit.md does not say "three rounds"');
+  if (/\bfive\b/i.test(babyC)) failures.push('pro-ai-sdlc: commands/pr-babysit.md still says "five"');
+  return { failures, warnings };
+};
+
+// Review handoff contract (R21, R22): the one template the reviewer is dispatched with
+// carries exactly four fields; no field is a place for an author description,
+// a summary or earlier findings. The reviewer agent must name the same four fields.
+checks["handoff"] = () => {
+  const failures = [], warnings = [];
+  const want = ["range", "brief", "policy", "risk"];
+  const main = "plugins/pro-quality/skills/requesting-code-review/handoff.md";
+  if (!existsSync(join(ROOT, main))) failures.push(`${main} missing`);
+  const files = new Set(walkFiles(PLUGINS_DIR, (f) => f.endsWith("/handoff.md")).map((f) => relative(ROOT, f)));
+  for (const f of files) {
+    const text = readFileSync(join(ROOT, f), "utf8");
+    const block = text.split(/^## Fields\s*$/m)[1]?.split(/^## /m)[0];
+    if (block === undefined) { failures.push(`${f}: no "## Fields" section`); continue; }
+    const names = [...block.matchAll(/^- `([^`]+)`:/gm)].map((m) => m[1]);
+    if (names.join(",") !== want.join(","))
+      failures.push(`${f}: fields are [${names.join(", ")}], expected exactly [${want.join(", ")}]`);
+    for (const m of text.matchAll(/\{\s*([A-Za-z_ -]+?)\s*\}/g))
+      if (/^(description|summary|findings)$/i.test(m[1])) failures.push(`${f}: placeholder {${m[1]}} is barred`);
+  }
+  const agent = "plugins/pro-quality/agents/code-reviewer.md";
+  if (!existsSync(join(ROOT, agent))) failures.push(`${agent} missing`);
+  else {
+    const body = readFileSync(join(ROOT, agent), "utf8");
+    for (const w of want) if (!body.includes(w)) failures.push(`${agent} does not name the field "${w}"`);
+  }
   return { failures, warnings };
 };
 

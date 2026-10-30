@@ -48,5 +48,5 @@ This lets Mieruka surface live progress to clients - saved stories, REASONS canv
 
 The client/team frameworks are opt-in (`pro-spdd` and `pro-pdd` are separate plugins) so that SDLC methods can be trialled by turning them on and off.
 `pro-legal` is opt-in too, because its release gate needs its own switch.
-The reasoning for which plugins are separate, and the audience test for where a new skill goes, is [ADR-0011](./decisions/0011-plugin-layering.md).
+The reasoning for which plugins are separate, and the audience test for where a new skill goes, is [ADR-0013](./decisions/0013-plugin-layering.md).
 The default stack (`pro-core`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-data`, `pro-testing`, `pro-research`, `pro-security`) works without them.

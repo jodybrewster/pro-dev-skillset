@@ -20,9 +20,11 @@ Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-fl
 - ADR: [ADR-0010](./decisions/0010-constraint-floor.md), status proposed; it moves to accepted at the plan's Done sign-off.
   Jody saw no reason he would remove the floor, so it records a revisit trigger instead: findings that mostly get waved through with `floor-allow:` mean a rule is too broad.
 - Flagged concerns 1-4 resolved on 2026-10-29 with the recommendations: copy the mode lookup into pro-quality; accept pro-quality's mixed hook behavior for now; enforce mode denies every retry; the verifier reading `CONSTRAINTS.md` is a follow-up change.
-- Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks (guard and tests; template, skill and command; pro-ai-sdlc reviewer; licensing and docs) plus a serial tail; status draft.
+- Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks plus a serial tail; approved by Jody on 2026-10-30.
   Jody approved on 2026-10-29 three spec changes found while planning: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
-- Next steps: Jody approves the plan, then the build runs on the intent's branch and lands in [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (Opus builds, dispatching parallel subagents for the independent steps).
+- Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
+- Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
+- Signed off by Jody on 2026-10-30 and merged in #81. AC9 (a week of warn-mode use in two repos) gates the later switch to enforce mode.
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
 
@@ -35,14 +37,13 @@ They replace the dropped [pro-ship-scope intent](../intent/2026-10-28-pro-ship-s
 
 | Intent | Ranked items | Plugins | Builds on | Spec size |
 |---|---|---|---|---|
-| [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | 21 R, 3 N, 10 AC, 8 concerns |
-| [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | 23 R, 4 N, 11 AC, 8 concerns |
+| [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
+| [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | shipped in #87 |
 | [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | 28 R, 5 N, 13 AC, 8 concerns |
 | [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | 30 R, 6 N, 12 AC, 12 concerns |
 
 Questions waiting on Jody, with the drafts' recommendations:
 
-- review-policy: round cap three or five (recommended three, for every `/pr-babysit` round); move the finding count to the top of the review report (recommended yes); should `/pro-dev update` offer to refresh an old `REVIEW.md`.
 - code-reviewer: effort high or medium for the reviewer (recommended high, set by the dispatcher); the mutation check needs to edit and run tests, so it runs only in a throwaway worktree at medium or high risk (recommended); subagent versus `claude -p` (recommended subagent).
 - pr-gate: should pro-ship join pro-dev-starter (recommended yes, in the same release; risk-tiers raises the same question); do draft PRs need the stamp (recommended no); the 300-second per-command timeout; how sibling plugin scripts are found in the plugin cache.
 - risk-tiers: which plugin owns the classifier (recommended pro-ship); can a tier be overridden down (recommended Jody only, recorded in the stamp, later); the size thresholds (recommended placeholder constants until a calibration run over merged PRs); does `ask` still prompt when permission checks are bypassed (verify live; deny medium and high if not).
@@ -61,8 +62,9 @@ Cross-cutting decisions for Jody:
 - One PR per intent (Jody, 2026-10-29): each intent's PR holds its intent, spec, plan and build, and stays a draft until the build lands.
   constraint-floor [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81), review-policy [#82](https://github.com/jodybrewster/pro-dev-skillset/pull/82), code-reviewer [#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), pr-gate [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84) and risk-tiers [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85).
 
-Plans: review-policy and code-reviewer have draft plans.
-review-policy's plan assumes, not yet confirmed: round cap three for every round, the finding count first and no REVIEW.md refresh in `/pro-dev update`.
+review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
+code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
+Plans: pr-gate (#89) and risk-tiers (#88) are approved; pr-gate builds next.
 Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; three callers of the old reviewer template are added (pro-quality `/review`, `pr-quality-gate.py`, pro-execution's quality-reviewer prompt).
 
 ## Parked intents
@@ -106,12 +108,12 @@ Within a tier, items are in the order to build them.
 
 ### P0: every edit and every PR
 
-- [ ] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): in progress as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
+- [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
 - [ ] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): specced as [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
-- [ ] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): specced as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
+- [x] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): shipped in #87 as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
 - [ ] 4. Risk classifier and approval tiers (M, pro-ship): specced as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
-- [ ] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): specced as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
-- [ ] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): specced as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
+- [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
+- [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 
 ### P1: every feature through the loop plus safety
 

@@ -23,7 +23,11 @@ Stop and report if the PR lookup failed or the PR is not `OPEN`.
 If the current branch is not the PR's `headRefName`, switch to it when the tree is clean and stop otherwise.
 Never touch the base branch.
 
-### 2. Loop, at most five rounds
+### 2. Loop, at most three rounds
+
+Every round counts toward the cap, including a round that only fixes failing checks or conflicts.
+Keep a handled list of the threads and checks you have addressed.
+Never start a round whose only open items repeat an entry on it.
 
 Each round:
 
@@ -39,10 +43,12 @@ Each round:
      ```
 
      A thread needs work when it is unresolved and its last comment is not your reply.
+     Skip a thread whose comment is tagged Pre-existing and list it in the report.
    - Conflicts: `mergeStateStatus` `DIRTY` or `BEHIND`.
 2. If nothing needs work and every check passed (or there are none), leave the loop.
    Pending checks are not done: wait with `gh pr checks <number> --watch --fail-fast` and fetch again.
 3. Address each item.
+   Fix every instance of one class of problem in the same round and reply once per thread with the same commit.
    - Failing check: reproduce it locally, fix the cause and never weaken the check, skip a test or relax a lint rule to get green.
    - Review thread: make the change it asks for, or, if you disagree, leave the code as is and reply with the reason.
      Reply on the thread with what changed and the commit hash:
@@ -64,12 +70,12 @@ Each round:
 ### 3. Stop
 
 Stop when checks are green, no thread needs work and the PR is waiting only on approval.
-Also stop after five rounds.
+Also stop after three rounds: stop, ask Jody to reconsider the approach and list what is still open.
 Never merge, never enable auto-merge and never approve.
 If a draft PR is otherwise ready, say so; do not mark it ready yourself.
 
 ### 4. Report
 
-A few lines: the PR link, the rounds used, each fix with its commit hash, each thread answered without a code change and why, the verify command result and the current `reviewDecision`.
-If you gave up after five rounds, list what is still failing or open and what you think it needs.
+A few lines: the PR link, the rounds used, each fix with its commit hash, each thread answered without a code change and why, each Pre-existing thread skipped, the verify command result and the current `reviewDecision`.
+If you stopped at the cap of three rounds, list what is still failing or open, what you think it needs and ask Jody whether to reconsider the approach.
 When everything is green, say it is waiting on approval and that a person merges.

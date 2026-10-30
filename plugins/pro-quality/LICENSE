@@ -11,12 +11,20 @@
 #   VoltAgent/awesome-claude-code-subagents: Copyright (c) 2025 VoltAgent
 # Their instruction bodies were substantially rewritten for this marketplace.
 #
+# The constraints skill, the CONSTRAINTS.md template, the rule list in
+# scripts/floor-guard.py and the code-reviewer agent (agents/code-reviewer.md
+# and its Codex twin) adapt content from addyosmani/agent-skills
+# (https://github.com/addyosmani/agent-skills), also MIT licensed:
+#   addyosmani/agent-skills: Copyright (c) 2025 Addy Osmani
+# The text, the agent prompt and the guard code were rewritten for this marketplace.
+#
 # The user-validation skill, its Stop hook, and all scripts/ in this plugin are
 # original work.
 
 MIT License
 
 Copyright (c) 2025 Jesse Vincent
+Copyright (c) 2025 Addy Osmani
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
