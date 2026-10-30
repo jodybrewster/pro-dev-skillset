@@ -49,6 +49,8 @@ Rules this script keeps:
     the repo, so a repo change cannot raise the baseline. Plugin files are third-party
     input: only regular files that stay inside the plugin folder are opened, each
     read is capped and any failure reads as "surface unknown"
+  - a `manual-cli` row (ADR-0018) is detect-only: `shutil.which` on its `bin`, never a run of
+    the CLI; install and update print the row's `manual` lines for the person to run
   - only python3 and the standard library
 """
 from __future__ import annotations
@@ -905,6 +907,8 @@ def detected(row: dict, repo: str, installs: list[dict]) -> bool:
     det = row.get("detect")
     if not isinstance(det, dict):
         return False
+    if isinstance(det.get("bin"), str):
+        return shutil.which(det["bin"]) is not None  # manual-cli: look on PATH, never run it
     if isinstance(det.get("plugin"), str):
         return any(i.get("id") == det["plugin"] and i.get("enabled") is not False and covers_repo(i, repo)
                    for i in installs)
@@ -947,6 +951,8 @@ def engine_state(row: dict, repo: str, installs: list[dict], answers: dict) -> d
         "needsQuestion": state == "missing" and not row.get("default") and ans is None,
         "wantsInstall": state == "missing" and (bool(row.get("default")) or ans == "yes"),
     }
+    if row.get("kind") == "manual-cli":
+        out["manual"] = row.get("manual", [])
     if state == "installed" and info is not None and info["drift"]:
         out["versionDrift"] = info["drift"]  # replacing the install is a run, so the row wants one
         out["wantsInstall"] = True
@@ -1277,6 +1283,15 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     eid = row["id"]
     if st["state"] == "not-applicable":
         return "skipped", f"{eid}: skipped, owner {row['owner']} is not installed and enabled for this repo"
+    if row.get("kind") == "manual-cli":  # detect-only: print what the person runs, start nothing
+        manual = [str(x) for x in row.get("manual", [])]
+        if action == "install":
+            if st["state"] == "installed":
+                return "skipped", f"{eid}: already installed"
+            return "skipped", f"{eid}: install it yourself: " + "; then ".join(manual)
+        if st["state"] == "installed":
+            return "skipped", f"{eid}: update it yourself: {manual[0] if manual else ''}"
+        return "skipped", f"{eid}: not installed, nothing to update"
     if action == "update" and st["state"] != "installed":
         return "skipped", f"{eid}: not installed, nothing to update"
     installed = st["state"] == "installed"
@@ -1711,6 +1726,8 @@ def cmd_status(args, repo: str) -> int:
     say("engines:")
     for e in engines:
         say(f"  {e['id']}: {e['state']}")
+        if e.get("kind") == "manual-cli" and e["state"] == "missing":
+            say(f"    install by hand: {'; then '.join(e.get('manual', []))}")
         if e.get("versionDrift"):
             d = e["versionDrift"]
             say(f"    version: installed {d['installed']}, pinned {d['pinned']}" + (f" ({d['reason']})" if d.get("reason") else ""))
@@ -1792,7 +1809,8 @@ def cmd_run(args, repo: str) -> int:
             continue
         st = engine_state(row, repo, installs, data)
         if st["wantsInstall"]:
-            say(f"{row['id']}: installing")
+            if row.get("kind") != "manual-cli":
+                say(f"{row['id']}: installing")
             outcome, msg = run_engine(row, "install", repo, installs, data)
             say(msg)
             if outcome in ("failed", "question"):

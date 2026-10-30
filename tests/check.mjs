@@ -792,7 +792,18 @@ checks.registry = (m) => {
     if (seen.has(id)) failures.push(`engines.json: duplicate id "${id}"`);
     seen.add(id);
     if (!pluginNames.has(row.owner)) failures.push(`engines.json ${id}: owner "${row.owner}" is not a plugin in this marketplace`);
-    if (!["skills-cli", "npx", "claude-plugin", "uv-tool"].includes(row.kind)) failures.push(`engines.json ${id}: kind "${row.kind}" is not skills-cli, npx, claude-plugin or uv-tool`);
+    if (!["skills-cli", "npx", "claude-plugin", "uv-tool", "manual-cli"].includes(row.kind)) failures.push(`engines.json ${id}: kind "${row.kind}" is not skills-cli, npx, claude-plugin, uv-tool or manual-cli`);
+    // manual-cli (ADR-0018): detect-only. The person installs it by hand, so the row has no argv to run.
+    const manual = row.kind === "manual-cli";
+    if (manual) {
+      const dk = row.detect && typeof row.detect === "object" ? Object.keys(row.detect) : [];
+      if (dk.length !== 1 || dk[0] !== "bin" || typeof row.detect.bin !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(row.detect.bin))
+        failures.push(`engines.json ${id}: a manual-cli row needs detect to be exactly {"bin": "<name>"}`);
+      if (!Array.isArray(row.manual) || row.manual.length === 0 || row.manual.some((x) => typeof x !== "string" || !x))
+        failures.push(`engines.json ${id}: a manual-cli row needs manual, a non-empty array of strings`);
+      for (const k of ["install", "update"])
+        if (k in row) failures.push(`engines.json ${id}: a manual-cli row must not have ${k}, pro-dev never runs it`);
+    }
     if (row.kind === "uv-tool") {
       // a uv-tool row is pinned: argv that starts with uv carries --exclude-newer and a --from ending in @<40 hex>
       const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
@@ -835,8 +846,9 @@ checks.registry = (m) => {
     }
     if (typeof row.default !== "boolean") failures.push(`engines.json ${id}: default must be true or false`);
     if (!row.detect || typeof row.detect !== "object") failures.push(`engines.json ${id}: detect is missing`);
-    for (const k of ["install", "update"])
-      if (!argvOk(row[k])) failures.push(`engines.json ${id}: ${k} must be an array of strings (no shell string)`);
+    if (!manual)
+      for (const k of ["install", "update"])
+        if (!argvOk(row[k])) failures.push(`engines.json ${id}: ${k} must be an array of strings (no shell string)`);
     if (row.marketplace !== undefined) {
       const mk = row.marketplace;
       if (!mk || typeof mk !== "object" || Array.isArray(mk)) failures.push(`engines.json ${id}: marketplace must be an object`);
@@ -902,6 +914,7 @@ checks.installers = (m) => {
     if (existsSync(sp)) scripts.push({ plugin: p.name, path: sp, bytes: readFileSync(sp) });
   }
   for (const owner of owners) {
+    if (owner === "pro-core") continue; // /pro-dev is pro-core's own installer (ADR-0018)
     const p = byName.get(owner);
     if (!p) continue; // the registry check reports an owner that is not a plugin
     const missing = [];
