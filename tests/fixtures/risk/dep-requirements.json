@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "requirements.txt": "flask==2.0\n"
+  },
+  "head": {
+    "requirements.txt": "flask==2.0\nrequests-lib==1.0\n"
+  }
+}

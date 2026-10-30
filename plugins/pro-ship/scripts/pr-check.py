@@ -9,9 +9,11 @@ restores it before it returns):
                                    .pro-dev/ship/run.json keyed by HEAD. NAME is a discovered
                                    step, `floor` or `mutation`.
   find PLUGIN FILE                 print the path of a sibling plugin's script, or not-installed
-  stamp [--base REF] [--tier TIER] [--reviewers JSON] [--accept-mutation]
+  stamp [--base REF] [--tier TIER] [--risk FILE] [--reviewers JSON] [--accept-mutation]
                                    write .pro-dev/ship/pr-check.json from run.json and the
                                    reviewer records. The contract is docs/pr-check-stamp.md.
+                                   --risk reads the classifier JSON: it sets `tier` and the
+                                   `risk` field; an unreadable file gives tier high, never low.
 
 Python 3 standard library only. No network calls. It runs the commands the repo names in its
 own CLAUDE.md, AGENTS.md, package.json or Makefile, which is the same trust as running the
@@ -753,6 +755,32 @@ def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, mi
     return "incomplete"
 
 
+def risk_from_file(path: str, head: str | None = None) -> tuple[str, dict]:
+    """Return (tier, risk) from the classifier's JSON. Anything unusable is high, never low.
+
+    A risk file written for another commit than the current HEAD is stale and counts as could not run."""
+    def failed(reason: str) -> tuple[str, dict]:
+        return "high", {"tier": "high", "could_not_run": True, "reason": reason}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError) as e:
+        return failed(f"risk file unreadable: {type(e).__name__}")
+    if not isinstance(data, dict):
+        return failed("risk file is not a JSON object")
+    if data.get("could_not_run") is True:
+        risk = dict(data)
+        risk["tier"] = "high"
+        if not isinstance(risk.get("reason"), str) or not risk["reason"]:
+            risk["reason"] = "the classifier could not run"
+        return "high", risk
+    if data.get("tier") not in ("low", "medium", "high"):
+        return failed("risk file has no valid tier")
+    if head and data.get("head") != head:
+        return failed("risk file head does not match the current HEAD (stale risk file)")
+    return data["tier"], data
+
+
 def cmd_stamp(root: str, args: list[str]) -> dict:
     recover(root)
     require_clean(root)
@@ -764,6 +792,10 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     if not base:
         raise Refuse("pr-check: cannot find the base commit. Pass --base <ref>.")
     tier = flag(args, "--tier") or "unclassified"
+    risk_path = flag(args, "--risk")
+    risk = None
+    if risk_path:
+        tier, risk = risk_from_file(risk_path, head)
     raw = flag(args, "--reviewers")
     try:
         revs = json.loads(raw) if raw else {}
@@ -808,6 +840,8 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         "result": compute_result(checks, floor, mutation, reviewers, missing),
         "sources": run.get("sources") if isinstance(run.get("sources"), dict) else {"floor-guard": "not-installed"},
     }
+    if risk is not None:
+        stamp["risk"] = risk
     path = os.path.join(ship_dir(root), "pr-check.json")
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

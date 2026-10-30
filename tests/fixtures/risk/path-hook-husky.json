@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    ".husky/pre-commit": "npm test\n"
+  }
+}

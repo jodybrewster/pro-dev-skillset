@@ -346,6 +346,11 @@ export function runShipCheckCases() {
     r = mutate(s, ["--tier", "low"]);
     add("m4 tier low is skipped", "skipped, low tier", mut(r)?.status === "skipped" && mut(r).reason === "low tier", r.stdout + r.stderr);
     add("m4b low tier left the tree clean", "clean and identical", intact(s, "lib.py"), "");
+    for (const t of ["medium", "high", "unclassified"]) {
+      s = scenario({ "lib.py": LIB0, "test_lib.py": TEST_ASSERT }, { "lib.py": LIB1 });
+      r = mutate(s, ["--tier", t]);
+      add(`m4c tier ${t} runs the mutation step`, "killed on lib.py", mut(r)?.status === "killed" && mut(r).file === "lib.py", r.stdout + r.stderr);
+    }
 
     s = scenario({ "lib.py": LIB0, "test_lib.py": TEST_NOASSERT }, { "lib.py": "def f(x):\n    y = 3\n    return 0\n" });
     r = mutate(s);
@@ -464,6 +469,45 @@ export function runShipCheckCases() {
       `${keys(st)} vs ${keys(fixture)}`);
     add("s1c schema, head, base, tier and created are right", "1, HEAD sha, base sha, unclassified, ISO with offset",
       st?.schema === 1 && st.head === p.head && st.base === p.baseSha && st.tier === "unclassified" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/.test(st.created) && /^[0-9a-f]{40}$/.test(st.base), JSON.stringify(st));
+    // Risk field (step 16): the classifier JSON feeds tier and risk; failures are never low.
+    const CLS = { tier: "medium", signals: [{ name: "x", weight: "strong" }], declared: "none", findings: [], demands: { label: "risk:medium" }, tie: null };
+    const withRisk = (content, extra = []) => {
+      const q = prep();
+      const f = join(q.repo, ".pro-dev", "ship", "risk.json");
+      const body = content && typeof content === "object" && !Array.isArray(content) && !("head" in content) ? { ...content, head: q.head } : content;
+      if (content !== null) writeFileSync(f, typeof body === "string" ? body : JSON.stringify(body));
+      const x = stamp(q, GOOD_REV, ["--risk", f, ...extra]);
+      return { q, x, st: written(q) };
+    };
+    for (const t of ["low", "medium", "high"]) {
+      const ro = withRisk({ ...CLS, tier: t });
+      add(`s11 --risk with tier ${t} sets tier and stores risk`, `tier ${t}, risk has the classifier keys`,
+        ro.st?.tier === t && ro.st.risk?.tier === t && ["signals", "declared", "findings", "demands"].every((k) => k in ro.st.risk) && ro.st.schema === 1 && ro.st.result === "pass", JSON.stringify(ro.st));
+    }
+    let ro = withRisk({ could_not_run: true, reason: "empty range" });
+    add("s11b a could-not-run classifier gives tier high and risk.could_not_run", "high, true, reason kept",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true && ro.st.risk.reason === "empty range", JSON.stringify(ro.st));
+    ro = withRisk("{not json");
+    add("s11c a malformed risk file gives tier high with a reason", "high, could_not_run, non-empty reason",
+      ro.x.status === 0 && ro.st?.tier === "high" && ro.st.risk?.could_not_run === true && !!ro.st.risk.reason, ro.x.stdout + ro.x.stderr);
+    ro = withRisk(null);
+    add("s11d a missing risk file gives tier high with a reason", "high, could_not_run, non-empty reason",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true && !!ro.st.risk.reason, ro.x.stdout + ro.x.stderr);
+    ro = withRisk({ tier: "bogus", signals: [] });
+    add("s11e an unknown tier in the risk file gives tier high", "high", ro.st?.tier === "high" && ro.st.risk?.could_not_run === true, JSON.stringify(ro.st));
+    ro = withRisk([1, 2]);
+    add("s11f a risk file that is not an object gives tier high", "high", ro.st?.tier === "high", JSON.stringify(ro.st));
+    ro = withRisk({ ...CLS, tier: "low", head: "0".repeat(40) });
+    add("s11j a risk file for another HEAD gives tier high with a reason", "high, could_not_run, reason names head",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true && /head/i.test(ro.st.risk.reason || ""), JSON.stringify(ro.st));
+    ro = withRisk({ ...CLS, tier: "low", head: undefined });
+    add("s11k a risk file with no head gives tier high", "high, could_not_run",
+      ro.st?.tier === "high" && ro.st.risk?.could_not_run === true, JSON.stringify(ro.st));
+    ro = withRisk({ ...CLS, tier: "low" }, ["--tier", "high"]);
+    add("s11g --risk wins over --tier", "low", ro.st?.tier === "low", JSON.stringify(ro.st));
+    ro = (() => { const q = prep(); const x = stamp(q, GOOD_REV, ["--tier", "medium"]); return { x, st: written(q) }; })();
+    add("s11h no risk file keeps --tier and writes no risk field", "medium, no risk", ro.st?.tier === "medium" && !("risk" in ro.st), JSON.stringify(ro.st));
+    add("s11i a stamp without risk has no risk key", "unclassified, no risk", st?.tier === "unclassified" && !("risk" in st), JSON.stringify(st));
     add("s1d sources and the four checks are carried over", "floor-guard path and 4 checks", st?.sources?.["floor-guard"] === "/x/floor-guard.py" && st.checks.length === 4, JSON.stringify(st));
     add("s1e the tree is clean and .pro-dev/ is in the exclude file", "git status empty, exclude lists .pro-dev/",
       git(p.repo, "status", "--short").stdout.trim() === "" && readFileSync(resolve(p.repo, git(p.repo, "rev-parse", "--git-path", "info/exclude").stdout.trim()), "utf8").split("\n").includes(".pro-dev/"), git(p.repo, "status", "--short").stdout);

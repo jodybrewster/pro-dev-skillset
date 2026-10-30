@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "tests/a.test.js": "expect(0).toBe(0)\nexpect(1).toBe(1)\nexpect(2).toBe(2)\n"
+  },
+  "head": {
+    "tests/a.test.js": "expect(0).toBe(0)\nexpect(1).toBe(0)\nexpect(2).toBe(0)\n"
+  }
+}

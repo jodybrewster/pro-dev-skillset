@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "src/contest.js": "x\n"
+  },
+  "head": {
+    "src/contest.js": null
+  }
+}

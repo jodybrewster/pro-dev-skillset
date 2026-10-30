@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "lefthook.yml": "pre-commit:\n  commands:\n    lint:\n      run: npm run lint\n"
+  }
+}

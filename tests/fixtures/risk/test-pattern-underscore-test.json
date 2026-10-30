@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "pkg/a_test.go": "x\n"
+  },
+  "head": {
+    "pkg/a_test.go": null
+  }
+}

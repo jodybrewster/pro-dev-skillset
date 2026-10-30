@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "Gemfile": "gem 'rails'\n"
+  },
+  "head": {
+    "Gemfile": "gem 'rails'\ngem 'sinatra'\n"
+  }
+}

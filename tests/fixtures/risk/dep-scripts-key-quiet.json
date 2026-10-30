@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "package.json": "{\n  \"name\": \"app\",\n  \"scripts\": {\n    \"test\": \"node a.js\"\n  }\n}\n"
+  },
+  "head": {
+    "package.json": "{\n  \"name\": \"app\",\n  \"scripts\": {\n    \"test\": \"node a.js\",\n    \"lint\": \"eslint .\"\n  }\n}\n"
+  }
+}

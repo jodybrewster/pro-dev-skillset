@@ -1,7 +1,7 @@
 {
   "name": "pro-ship",
-  "version": "0.3.0",
-  "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. In pro-dev-starter. Opt-in shipping plugin. Today it holds the Vercel deploy bridge: a deploy walk with its own token and .env checks that asks before staging, committing, pushing, linking, installing the CLI, an anonymous --temporary deploy or production. Install the upstream skill with /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
+  "version": "0.4.0",
+  "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. A risk classifier sorts each change into low, medium or high and a merge gate on gh pr merge asks for approval at medium and high, pinned to the head commit. In pro-dev-starter. Opt-in shipping plugin. Today it holds the Vercel deploy bridge: a deploy walk with its own token and .env checks that asks before staging, committing, pushing, linking, installing the CLI, an anonymous --temporary deploy or production. Install the upstream skill with /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
   "author": {
     "name": "Jody Brewster",
     "email": "jodybrewster@gmail.com"

@@ -1,0 +1,8 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "src/payments/charge.js": "x = 1\n"
+  }
+}

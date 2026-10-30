@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "README.md": "# z\n"
+  }
+}

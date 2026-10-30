@@ -1,0 +1,10 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "a/x.js": "x\n",
+    "b/x.js": "x\n",
+    "c/x.js": "x\n"
+  }
+}

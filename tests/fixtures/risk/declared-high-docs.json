@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "intent/2026-10-30-x/intent.md": "---\nstatus: draft\nrisk: high\n---\n\n# Intent\n",
+    "README.md": "# y\n"
+  }
+}

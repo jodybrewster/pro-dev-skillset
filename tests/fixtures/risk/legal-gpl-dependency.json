@@ -1,0 +1,10 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "package.json": "{\n  \"name\": \"app\"\n}\n"
+  },
+  "head": {
+    "package.json": "{\n  \"name\": \"app\",\n  \"dependencies\": {\n    \"gpl-lib\": \"^1.0.0\"\n  }\n}\n",
+    "node_modules/gpl-lib/package.json": "{\n  \"name\": \"gpl-lib\",\n  \"license\": \"GPL-3.0\"\n}\n"
+  }
+}

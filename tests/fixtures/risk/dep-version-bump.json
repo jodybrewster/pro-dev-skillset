@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "package.json": "{\n  \"name\": \"app\",\n  \"dependencies\": {\n    \"left-pad\": \"^1.0.0\"\n  }\n}\n"
+  },
+  "head": {
+    "package.json": "{\n  \"name\": \"app\",\n  \"dependencies\": {\n    \"left-pad\": \"^2.0.0\"\n  }\n}\n"
+  }
+}

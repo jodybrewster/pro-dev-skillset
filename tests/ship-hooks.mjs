@@ -20,7 +20,7 @@
 //   could not run     none                       e1-e5
 //   timing            none                       t1, t2
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, cpSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -28,6 +28,7 @@ import { spawnSync } from "node:child_process";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const GATE = join(ROOT, "plugins", "pro-ship", "scripts", "pr-gate.py");
+const MERGE_GATE = join(ROOT, "plugins", "pro-ship", "scripts", "merge-gate.py");
 const FIX = join(ROOT, "tests", "fixtures", "pr-check-stamp");
 
 export function runShipHookCases() {
@@ -122,6 +123,17 @@ export function runShipHookCases() {
     add("m10 cd and env prefix are acted on", "deny", r, r.deny);
     r = run("gh pr create -R owner/repo --fill", { cwd: repo, env: enforce() });
     add("m11 -R is acted on", "deny", r, r.deny);
+    for (const [id, cmd] of [["m30 a single & before gh pr create", "git status & gh pr create --fill"],
+      ["m31 |& before gh pr create", "echo x |& gh pr create --fill"],
+      ["m32 eval of gh pr create", `eval "gh pr create --fill"`],
+      ["m33 eval with bare words", "eval gh pr create --fill"],
+      ["m34 xargs gh pr create", "echo x | xargs -n1 gh pr create --fill"]]) {
+      r = run(cmd, { cwd: repo, env: enforce() });
+      add(id, "deny", r, r.deny);
+    }
+    quietCase("m35 2>&1 is not a separator", "git status 2>&1 && gh pr create --draft");
+    quietCase("m36 &> is not a separator", "git status &>/dev/null; echo gh pr create");
+    quietCase("m37 >&2 is not a separator", "echo x >&2; gh pr create --draft");
     r = run(`${PR}`, { cwd: repo, env: enforce() });
     add("m12 plain create is acted on", "deny", r, r.deny);
     r = run("gh pr create --draft=false", { cwd: repo, env: enforce() });
@@ -262,6 +274,265 @@ export function runShipHookCases() {
     add(`t1 median of 50 non-PR commands is ${med} ms (limit ${ci ? 400 : 100})`, `under ${ci ? 400 : 100}`, { status: 0, stdout: "", stderr: "", log: "" }, med < (ci ? 400 : 100));
     r = run(PR, { cwd: rp, env: enforce() });
     add(`t2 one gh pr create took ${r.ms} ms (limit ${ci ? 3000 : 1000})`, `under ${ci ? 3000 : 1000}`, r, r.ms < (ci ? 3000 : 1000));
+
+    // ======================================================================================
+    // Merge gate (merge-gate.py, risk-tiers steps 10 and 11). Cases m:* below. Every decision
+    // that can block has one case that blocks and one that allows.
+    // ======================================================================================
+    {
+      const mrun = (command, { cwd, env = newEnv(), raw = null, pm, extraEnv = {}, gate = MERGE_GATE } = {}) => {
+        const body = { tool_name: "Bash", session_id: "ms", cwd, tool_input: { command } };
+        if (pm) body.permission_mode = pm;
+        const input = raw !== null ? raw : JSON.stringify(body);
+        const t0 = Date.now();
+        const r = spawnSync("python3", [gate], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, CLAUDE_GUARD_DIR: env.gdir, PRO_DEV_STATE_DIR: env.sdir, ...extraEnv } });
+        let json = null;
+        try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* not json */ }
+        let log = "";
+        try { log = readFileSync(join(env.gdir, "warn.log"), "utf8"); } catch { /* none */ }
+        const h = json?.hookSpecificOutput || {};
+        const decision = h.permissionDecision || "";
+        const text = json?.systemMessage ?? h.permissionDecisionReason ?? "";
+        return { status: r.status, json, stdout: r.stdout, stderr: r.stderr, log, text, decision, ms: Date.now() - t0 };
+      };
+      const menv = (mode, modeMg) => {
+        const e = newEnv({ mode });
+        if (modeMg) writeFileSync(join(e.gdir, "mode.merge-gate"), modeMg + "\n");
+        return e;
+      };
+      const MENF = () => menv("enforce");
+      const MWARN = () => menv("warn");
+      // A repo on branch feat that changes the given files against main.
+      const featRepo = (files) => {
+        const repo = newRepo();
+        writeFileSync(join(repo, "package.json"), JSON.stringify({ name: "x", dependencies: { a: "1.0.0" } }, null, 2) + "\n");
+        writeFileSync(join(repo, "README.md"), "hi\n");
+        sh(repo, "add", "-A");
+        sh(repo, "commit", "-q", "-m", "base");
+        sh(repo, "checkout", "-q", "-b", "feat");
+        for (const [name, content] of Object.entries(files)) {
+          mkdirSync(dirname(join(repo, name)), { recursive: true });
+          writeFileSync(join(repo, name), content);
+        }
+        sh(repo, "add", "-A");
+        sh(repo, "commit", "-q", "-m", "change");
+        return repo;
+      };
+      const lowR = featRepo({ "README.md": "hi there\n" });
+      const medR = featRepo({ "package.json": JSON.stringify({ name: "x", dependencies: { a: "1.0.0", "left-pad": "1.0.0" } }, null, 2) + "\n" });
+      const highR = featRepo({ ".github/workflows/ci.yml": "name: ci\non: push\n" });
+      const lowH = sha(lowR), medH = sha(medR), highH = sha(highR);
+      const MERGE = "gh pr merge 42 --squash";
+      const asks = (r) => r.status === 0 && r.decision === "ask";
+      const denies = (r) => r.status === 0 && r.decision === "deny";
+      const allowsQuiet = (r) => r.status === 0 && !r.stdout.trim();
+      const allowsMsg = (r) => r.status === 0 && !r.decision && !!r.json?.systemMessage;
+
+      // ---- step 10: matching ---------------------------------------------------------
+      const mq = (id, command) => { const r = mrun(command, { cwd: highR, env: MENF() }); add(id, "silent", r, allowsQuiet(r)); };
+      mq("mg1 gh pr view", "gh pr view 42");
+      mq("mg2 git push", "git push origin feat");
+      mq("mg3 echo of the words", "echo gh pr merge");
+      mq("mg4 heredoc body", "git commit -F - <<'EOF'\nthen gh pr merge 42\nEOF");
+      mq("mg5 commit message", 'git commit -m "gh pr merge"');
+      mq("mg6 gh pr merge --help", "gh pr merge --help");
+      mq("mg7 quoted string", "echo 'x && gh pr merge 42'");
+      mq("mg8 gh pr list", "gh pr list");
+      let r = mrun(MERGE, { cwd: highR, env: MENF() });
+      add("mg10 gh pr merge <n> acts", "deny", r, denies(r));
+      r = mrun(`cd ${highR} && gh pr merge 42 --squash`, { cwd: sandbox, env: MENF() });
+      add("mg11 cd then merge acts", "deny", r, denies(r));
+      r = mrun(`bash -c "gh pr merge 42"`, { cwd: highR, env: MENF() });
+      add("mg12 bash -c acts", "deny", r, denies(r));
+      r = mrun(`echo $(gh pr merge 42)`, { cwd: highR, env: MENF() });
+      add("mg13 command substitution acts", "deny", r, denies(r));
+      r = mrun(`GH_TOKEN=x gh pr merge --squash`, { cwd: highR, env: MENF() });
+      add("mg14 env prefix and no number acts", "deny", r, denies(r));
+      r = mrun(`cd ${medR} && gh pr merge 42 --match-head-commit ${medH}`, { cwd: highR, env: MENF() });
+      add("mg15 the cd target is classified, not the session cwd", "ask medium", r, asks(r) && /medium/.test(r.text) && !/workflows/.test(r.text));
+
+      // ---- step 10: low ---------------------------------------------------------------
+      r = mrun(MERGE, { cwd: lowR, env: MENF() });
+      add("mg20 low allows silently in enforce", "silent", r, allowsQuiet(r));
+      r = mrun(MERGE, { cwd: lowR, env: MWARN() });
+      add("mg21 low allows silently in warn", "silent", r, allowsQuiet(r));
+      r = mrun(`${MERGE} --match-head-commit ${"0".repeat(40)}`, { cwd: lowR, env: MENF() });
+      add("mg22 low ignores the pin", "silent", r, allowsQuiet(r));
+
+      // ---- step 10: medium and high with a matching pin -------------------------------
+      r = mrun(`${MERGE} --match-head-commit ${medH}`, { cwd: medR, env: MENF() });
+      add("mg30 medium asks in enforce with tier, signals, sha and the commit-only line", "ask", r,
+        asks(r) && /medium/.test(r.text) && /dependencies/.test(r.text) && r.text.includes(medH) && /this approval covers this commit only/i.test(r.text));
+      r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg31 high asks in enforce", "ask", r, asks(r) && /high/.test(r.text) && /workflows/.test(r.text) && r.text.includes(highH));
+      let e = MWARN();
+      r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: e });
+      add("mg32 high in warn allows with the same text as a systemMessage", "message", r,
+        allowsMsg(r) && /high/.test(r.text) && /workflows/.test(r.text) && /this approval covers this commit only/i.test(r.text) && /warn/.test(r.log));
+      r = mrun(`${MERGE} --match-head-commit ${medH}`, { cwd: medR, env: MWARN() });
+      add("mg33 medium in warn allows with a message", "message", r, allowsMsg(r) && /medium/.test(r.text));
+      r = mrun(`${MERGE} --match-head-commit=${highH}`, { cwd: highR, env: MENF() });
+      add("mg34 the --flag=sha form is read", "ask", r, asks(r));
+      r = mrun(`${MERGE}`, { cwd: highR, env: menv("warn", "enforce") });
+      add("mg35 mode.merge-gate overrides mode (enforce over warn)", "deny", r, denies(r));
+      r = mrun(`${MERGE}`, { cwd: highR, env: menv("enforce", "warn") });
+      add("mg36 mode.merge-gate overrides mode (warn over enforce)", "message", r, allowsMsg(r));
+      r = mrun(`${MERGE}`, { cwd: highR, env: newEnv() });
+      add("mg37 the default mode is warn", "message", r, allowsMsg(r));
+
+      // ---- R23: nothing turns an ask into an allow ------------------------------------
+      mkdirSync(join(highR, ".pro-dev", "ship"), { recursive: true });
+      writeFileSync(join(highR, ".pro-dev", "ship", "pr-check.json"), JSON.stringify({ schema: 1, head: highH, result: "pass", tier: "low" }));
+      r = mrun(`RELEASE_APPROVAL=1 ${MERGE} --match-head-commit ${highH} --label risk:low`, { cwd: highR, env: MENF(), extraEnv: { RELEASE_APPROVAL: "1", PRO_SHIP_APPROVED: "1", CLAUDE_GUARD_MODE: "warn" } });
+      add("mg40 env, passing stamp and a risk:low label still ask", "ask", r, asks(r));
+      sh(highR, "checkout", "-q", "--", ".");
+      rmSync(join(highR, ".pro-dev"), { recursive: true, force: true });
+
+      // ---- malformed payloads ---------------------------------------------------------
+      for (const [id, raw] of [["mg50 empty payload", ""], ["mg51 not json", "{nope"], ["mg52 json array", "[1]"], ["mg53 no tool_input", JSON.stringify({ tool_name: "Bash" })], ["mg54 command not a string", JSON.stringify({ tool_input: { command: 7 } })]]) {
+        r = mrun("", { raw, cwd: highR, env: MENF() });
+        add(id, "exit 0 silent", r, allowsQuiet(r));
+      }
+
+      // ---- step 11: the commit pin ----------------------------------------------------
+      for (const [label, repo, head] of [["medium", medR, medH], ["high", highR, highH]]) {
+        r = mrun(MERGE, { cwd: repo, env: MENF() });
+        add(`mg60 ${label} with no pin denies and names the flag`, "deny", r, denies(r) && r.text.includes(`--match-head-commit ${head}`));
+        r = mrun(`${MERGE} --match-head-commit ${head.slice(0, 7)}`, { cwd: repo, env: MENF() });
+        add(`mg61 ${label} with a 7 character prefix asks`, "ask", r, asks(r));
+        r = mrun(`${MERGE} --match-head-commit ${head}`, { cwd: repo, env: MENF() });
+        add(`mg62 ${label} with the full sha asks`, "ask", r, asks(r));
+        r = mrun(`${MERGE} --match-head-commit ${head.slice(0, 6)}`, { cwd: repo, env: MENF() });
+        add(`mg63 ${label} with a 6 character prefix denies`, "deny", r, denies(r) && r.text.includes(`--match-head-commit ${head}`));
+        r = mrun(`${MERGE} --match-head-commit ${lowH}`, { cwd: repo, env: MENF() });
+        add(`mg64 ${label} with another commit denies`, "deny", r, denies(r) && r.text.includes(head));
+        r = mrun(`${MERGE} --match-head-commit ${head.slice(0, 7).toUpperCase()}`, { cwd: repo, env: MENF() });
+        add(`mg65 ${label} with an upper case prefix of HEAD asks`, "ask", r, asks(r));
+        r = mrun(`${MERGE} --match-head-commit zzzzzzz`, { cwd: repo, env: MENF() });
+        add(`mg66 ${label} with a non-hex value denies`, "deny", r, denies(r));
+        r = mrun(`${MERGE} --match-head-commit`, { cwd: repo, env: MENF() });
+        add(`mg67 ${label} with the flag and no value denies`, "deny", r, denies(r));
+      }
+      r = mrun(MERGE, { cwd: highR, env: MWARN() });
+      add("mg68 a missing pin in warn allows with the flag in the message", "message", r, allowsMsg(r) && r.text.includes(`--match-head-commit ${highH}`));
+
+      // ---- step 11: could not run -----------------------------------------------------
+      const mainRepo = newRepo();
+      const noBase = join(sandbox, `nb${++n}`);
+      mkdirSync(noBase, { recursive: true });
+      sh(noBase, "init", "-q", "-b", "main");
+      sh(noBase, "config", "user.name", "t");
+      sh(noBase, "config", "user.email", "t@example.com");
+      commit(noBase, "a.txt");
+      sh(noBase, "checkout", "-q", "--orphan", "other");
+      commit(noBase, "b.txt");
+      const plain = join(sandbox, `plain${++n}`);
+      mkdirSync(plain, { recursive: true });
+      for (const [label, dir] of [["an empty range on main", mainRepo], ["no merge base", noBase], ["a non-git target", plain]]) {
+        r = mrun(MERGE, { cwd: dir, env: MENF() });
+        add(`mg70 ${label} asks as high in enforce`, "ask", r, asks(r) && /high/.test(r.text) && /could-not-run/.test(r.log));
+        r = mrun(MERGE, { cwd: dir, env: MWARN() });
+        add(`mg71 ${label} in warn says the tier is unknown`, "message", r, allowsMsg(r) && /unknown/i.test(r.text) && /could-not-run/.test(r.log));
+      }
+      r = mrun(`cd ${plain}/nowhere-such && ${MERGE}`, { cwd: highR, env: MENF() });
+      add("mg72 an unresolvable directory asks as high", "ask", r, asks(r) && /could-not-run/.test(r.log));
+      r = mrun(`cd $SOMEWHERE && ${MERGE}`, { cwd: highR, env: MENF() });
+      add("mg73 a variable directory asks as high", "ask", r, asks(r) && /could-not-run/.test(r.log));
+
+      // ---- step 11: bypass ------------------------------------------------------------
+      for (const [label, repo, head] of [["medium", medR, medH], ["high", highR, highH]]) {
+        for (const pm of ["bypassPermissions", "dontAsk", "auto"]) {
+          r = mrun(`${MERGE} --match-head-commit ${head}`, { cwd: repo, env: MENF(), pm });
+          add(`mg80 ${label} under ${pm} in enforce denies`, "deny", r,
+            denies(r) && /approval needs a prompt and this session cannot show one/.test(r.text) && new RegExp(label).test(r.text) && /default mode/.test(r.text) && /by hand after review/.test(r.text));
+        }
+        for (const pm of ["default", "plan", "acceptEdits", undefined]) {
+          r = mrun(`${MERGE} --match-head-commit ${head}`, { cwd: repo, env: MENF(), pm });
+          add(`mg81 ${label} under ${pm ?? "no permission_mode"} asks`, "ask", r, asks(r));
+        }
+      }
+      r = mrun(MERGE, { cwd: lowR, env: MENF(), pm: "dontAsk" });
+      add("mg82b low under dontAsk still allows", "silent", r, allowsQuiet(r));
+      r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: MWARN(), pm: "auto" });
+      add("mg83b auto in warn allows with a message", "message", r, allowsMsg(r));
+      r = mrun(MERGE, { cwd: lowR, env: MENF(), pm: "bypassPermissions" });
+      add("mg82 low under bypassPermissions still allows", "silent", r, allowsQuiet(r));
+      r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: MWARN(), pm: "bypassPermissions" });
+      add("mg83 bypass in warn allows with a message", "message", r, allowsMsg(r));
+      r = mrun(MERGE, { cwd: mainRepo, env: MENF(), pm: "bypassPermissions" });
+      add("mg84 could not run under bypass denies as high", "deny", r, denies(r));
+
+      // ---- review fixes: separators, eval, xargs, the pin, the deadline, the base --------
+      for (const [id, cmd] of [["mg100 a single & before the merge", `git status & ${MERGE}`],
+        ["mg101 |& before the merge", `echo x |& ${MERGE}`],
+        ["mg102 eval of the merge", `eval "${MERGE}"`],
+        ["mg103 eval with bare words", `eval ${MERGE}`],
+        ["mg104 xargs with options", `echo 42 | xargs -n1 gh pr merge --squash`]]) {
+        r = mrun(cmd, { cwd: highR, env: MENF() });
+        add(id, "deny", r, denies(r));
+      }
+      for (const [id, cmd] of [["mg105 2>&1 is not a separator", "git status 2>&1; echo gh pr merge"],
+        ["mg106 &> is not a separator", "git status &>/dev/null; echo gh pr merge"],
+        ["mg107 xargs of something else", "echo x | xargs echo gh pr merge"]]) {
+        r = mrun(cmd, { cwd: highR, env: MENF() });
+        add(id, "silent", r, allowsQuiet(r));
+      }
+      r = mrun(`${MERGE} --match-head-commit ${lowH} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg110 two different pins deny with a reason", "deny", r, denies(r) && /more than one|several|different/i.test(r.text));
+      r = mrun(`${MERGE} --match-head-commit ${highH} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg111 two identical pins that match HEAD ask", "ask", r, asks(r));
+      r = mrun(`${MERGE} --match-head-commit ${highH} --match-head-commit=${lowH}`, { cwd: highR, env: MENF() });
+      add("mg112 a last pin that is not HEAD denies", "deny", r, denies(r));
+
+      {
+        // a slow surface module under a short deadline is could-not-run, never a quiet allow
+        const box = realpathSync(mkdtempSync(join(tmpdir(), "mg-slow-")));
+        try {
+          mkdirSync(join(box, "pro-ship"), { recursive: true });
+          cpSync(join(ROOT, "plugins", "pro-ship", "scripts"), join(box, "pro-ship", "scripts"), { recursive: true });
+          mkdirSync(join(box, "surf"));
+          writeFileSync(join(box, "surf", "security_surface.py"), "import time\ndef diff_files(patch, repo=None):\n    time.sleep(8)\n    return {}\n");
+          mkdirSync(join(box, "home"));
+          const slow = { HOME: join(box, "home"), PRO_SHIP_SURFACE_DIR: join(box, "surf"), PRO_SHIP_MERGE_GATE_DEADLINE: "1" };
+          r = mrun(MERGE, { cwd: lowR, env: MENF(), gate: join(box, "pro-ship", "scripts", "merge-gate.py"), extraEnv: slow });
+          add("mg120 a deadline during classification asks as high", "ask, could-not-run logged", r, asks(r) && /could-not-run/.test(r.log) && r.ms < 6000);
+        } finally { rmSync(box, { recursive: true, force: true }); }
+      }
+
+      {
+        // a pushed feature branch: the base is the target branch, never the branch's own remote copy
+        const remote = join(sandbox, `remote${++n}.git`);
+        sh(sandbox, "init", "-q", "--bare", "-b", "main", remote);
+        const pushed = newRepo();
+        sh(pushed, "remote", "add", "origin", remote);
+        sh(pushed, "push", "-q", "-u", "origin", "main");
+        sh(pushed, "checkout", "-q", "-b", "feat");
+        mkdirSync(join(pushed, ".github", "workflows"), { recursive: true });
+        writeFileSync(join(pushed, ".github", "workflows", "ci.yml"), "name: ci\n");
+        sh(pushed, "add", "-A");
+        sh(pushed, "commit", "-q", "-m", "ci");
+        sh(pushed, "push", "-q", "-u", "origin", "feat");
+        r = mrun(MERGE, { cwd: pushed, env: MENF() });
+        add("mg130 a fully pushed branch is classified, not could-not-run", "deny high workflows", r, denies(r) && /workflows/.test(r.text) && !/could-not-run/.test(r.log));
+        writeFileSync(join(pushed, "README.md"), "docs\n");
+        sh(pushed, "add", "-A");
+        sh(pushed, "commit", "-q", "-m", "readme");
+        r = mrun(MERGE, { cwd: pushed, env: MENF() });
+        add("mg131 an unpushed docs commit on top of a pushed workflow change is still high", "deny high workflows", r, denies(r) && /workflows/.test(r.text));
+      }
+
+      // ---- a merge run from another branch --------------------------------------------
+      sh(highR, "checkout", "-q", "main");
+      r = mrun(`${MERGE} --match-head-commit ${highH}`, { cwd: highR, env: MENF() });
+      add("mg90 gh pr merge <n> from main (empty range) asks as high", "ask", r, asks(r) && /could-not-run/.test(r.log));
+      sh(highR, "checkout", "-q", "feat");
+      sh(medR, "checkout", "-q", "-b", "other-branch");
+      r = mrun("gh pr merge 42", { cwd: medR, env: MENF() });
+      add("mg91 gh pr merge <n> from a branch that is not the PR's still pins to the local HEAD", "deny", r, denies(r) && r.text.includes(medH));
+      r = mrun(`gh pr merge 42 --match-head-commit ${highH}`, { cwd: medR, env: MENF() });
+      add("mg92 a pin for another PR's head is refused", "deny", r, denies(r));
+      sh(medR, "checkout", "-q", "feat");
+    }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

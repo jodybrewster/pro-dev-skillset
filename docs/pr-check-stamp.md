@@ -36,13 +36,38 @@ Shas are 40 lowercase hex characters.
 | `head` | string | the full sha of HEAD when the stamp was written |
 | `base` | string | the full sha of the merge base the review range started from |
 | `created` | string | ISO 8601 with offset, for example `2026-10-30T09:15:00-04:00` |
-| `tier` | string | `unclassified` until `intent/2026-10-29-risk-tiers` lands; no gate reads it |
+| `tier` | string | `low`, `medium`, `high` or `unclassified`, see "The tier and risk fields"; no gate reads it |
 | `checks` | array | zero or more check records, see below |
 | `floor` | string | `pass`, `findings`, `could-not-run`, `not-installed` or `not-found` |
 | `mutation` | object | `{status, reason, file, accepted}`, see below |
 | `reviewers` | object | exactly the keys `code` and `security`, see below |
 | `result` | string | `pass`, `fail` or `incomplete` |
+| `risk` | object | optional; `{tier, signals, declared, findings, tie}` from the classifier, plus `could_not_run: true` and `reason` when it could not run |
 | `sources` | object | optional; `{"floor-guard": <path or "not-installed">}`, the path `pr-check.py find` used |
+
+### The tier and risk fields
+
+`pr-check.py stamp --risk <file>` copies the classifier's JSON (`plugins/pro-ship/scripts/risk-classify.py --json`) into the stamp.
+`schema` stays 1, because the change adds a field and no gate reads `tier` for validity.
+
+| `tier` | When it is written | How readers treat it |
+|---|---|---|
+| `low`, `medium`, `high` | the classifier ran and printed that tier | The tier of the change. The mutation check is skipped at `low` with reason `low tier` and runs at the others. |
+| `high` with `risk.could_not_run` true | the classifier is installed but could not run (an empty range, no merge base, a git timeout) | Read as high. A run that could not classify is never low. `risk.reason` says why. |
+| `unclassified` | the classifier is not installed, or the stamp was written before the classifier existed | No tier is known. Read it as unknown, not as low. The mutation check runs whenever non-test code changed. |
+
+The `risk` object holds:
+
+| Field | Type | Allowed values |
+|---|---|---|
+| `tier` | string | `low`, `medium` or `high`, the same as the top-level `tier` |
+| `signals` | array | the classifier's records `{id, floor, strength, evidence, reason}` |
+| `declared` | string | `low`, `medium`, `high` or `none`, the risk `REVIEW.md` or the intent declared |
+| `findings` | array of strings | for example `risk-underdeclared: ...`; shown in the PR body and never fails the run |
+| `tie` | array or null | `[top, one below]` when only weak signals set the top tier |
+
+A stamp with no `risk` field is valid.
+Readers ignore a `risk` field they do not know how to read.
 
 ### Check record
 

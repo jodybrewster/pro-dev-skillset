@@ -1,0 +1,11 @@
+{
+  "base": {
+    "README.md": "# x\n"
+  },
+  "head": {
+    "plugins/a/x.js": "x\n",
+    "plugins/b/x.js": "x\n",
+    "plugins/c/x.js": "x\n",
+    "plugins/d/x.js": "x\n"
+  }
+}

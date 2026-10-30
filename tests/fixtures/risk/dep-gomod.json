@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "go.mod": "module a\n\nrequire github.com/a/b v1.0.0\n"
+  },
+  "head": {
+    "go.mod": "module a\n\nrequire github.com/a/b v1.0.0\nrequire github.com/c/d v1.2.0\n"
+  }
+}

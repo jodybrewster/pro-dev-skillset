@@ -1,0 +1,11 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "plugin/hooks/hooks.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ${CLAUDE_PLUGIN_ROOT}/scripts/gate.py\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    "plugin/scripts/gate.py": "print(0)\n"
+  },
+  "head": {
+    "plugin/scripts/gate.py": null,
+    "plugin/scripts/other.py": "print(0)\n"
+  }
+}

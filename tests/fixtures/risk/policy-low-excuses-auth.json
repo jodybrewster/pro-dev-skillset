@@ -1,0 +1,8 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.low:\n  - \"src/gen/**\"\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    "src/gen/auth/x.js": "x\n"
+  }
+}

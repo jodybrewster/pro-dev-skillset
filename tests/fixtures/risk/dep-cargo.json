@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "Cargo.toml": "[package]\nname = \"a\"\nversion = \"0.1.0\"\n\n[dependencies]\nserde = \"1.0\"\n"
+  },
+  "head": {
+    "Cargo.toml": "[package]\nname = \"a\"\nversion = \"0.1.0\"\n\n[dependencies]\nserde = \"1.0\"\nanyhow = \"1.0\"\n"
+  }
+}

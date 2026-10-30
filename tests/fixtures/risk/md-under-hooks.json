@@ -1,0 +1,9 @@
+{
+  "base": {
+    "README.md": "# x\n",
+    "plugin/hooks/hooks.json": "{}\n"
+  },
+  "head": {
+    "plugin/hooks/NOTES.md": "notes\n"
+  }
+}

@@ -34,6 +34,33 @@ Every subcommand prints JSON and is run from the repo root.
    When it is missing, say so once and point to `/sdlc-init`.
    Continue anyway.
 
+## Classify
+
+Run the risk classifier before any check, so every later step sees the tier.
+It sits next to this script:
+
+```bash
+RISK="${CLAUDE_PLUGIN_ROOT}/scripts/risk-classify.py"
+python3 "$RISK" --json --base <base> > .pro-dev/ship/risk.json
+```
+
+Make `.pro-dev/ship/` first when it does not exist.
+Read the exit code and the JSON together:
+
+- Exit 0, 3 or 4 means low, medium or high.
+  The JSON holds `tier`, `signals`, `declared`, `findings`, `tie`, `architecture` and `demands`.
+- Exit 2 means the classifier could not run.
+  The JSON is `{"could_not_run": true, "reason": ..., "tier": "high"}`.
+  Treat the tier as `high`, say why in the report and never read it as low.
+- A missing `$RISK` file means the classifier is not installed.
+  The tier is `unclassified` and the run goes on as before.
+
+Print `risk: <tier>` and one line per signal in the report.
+A `tie` of `[top, one below]` is settled only as the `risk-tiers` skill says.
+A `risk-underdeclared` entry in `findings` is shown in the handoff and the PR body.
+It never fails the run.
+When `demands.checks` or `demands.reviewers` name more than this skill runs by default, run or dispatch them.
+
 ## Run
 
 1. `python3 "$CHECK" discover` prints the commands and where each came from.
@@ -49,7 +76,8 @@ Every subcommand prints JSON and is run from the repo root.
    A step with status `timeout` does not stop the run; it makes the result `incomplete`.
 5. Mutation check: `python3 "$CHECK" run --step mutation`.
    It runs when the diff touches non-test code and the tier is not `low`.
-   The tier is `unclassified` for now, so it runs whenever non-test code changed.
+   Pass the classified tier with `--tier <low|medium|high>`, which is `high` when the classifier could not run.
+   With `unclassified` it runs whenever non-test code changed.
    The script inverts one condition, reruns the related tests and restores the file.
    Confirm `git status --porcelain --untracked-files=no` is empty afterwards.
    If it is not, run `git checkout -- <file>` for each listed file and report it.
@@ -81,7 +109,10 @@ The four fields are:
 - `range`: `<base>..<head>` as full shas.
 - `brief`: the intent, spec and plan paths for this work, when they exist.
 - `policy`: `REVIEW.md`, `CLAUDE.md` or `AGENTS.md` plus `CONSTRAINTS.md` when present.
-- `risk`: `unclassified` and the path `.pro-dev/ship/run.json`, which holds this run's `mutation` record (the stamp is written only after the reviewers return).
+- `risk`: the tier, its signals (id, floor and evidence, one per line) and any `risk-underdeclared` finding, plus the path `.pro-dev/ship/run.json`, which holds this run's `mutation` record (the stamp is written only after the reviewers return).
+  For a tier of `high` that came from a run that could not classify, write `high (classifier could not run: <reason>)`.
+  Write `unclassified` only when the classifier is not installed.
+  Never add your own view of how risky the change is.
 
 Send that text and nothing else.
 Never add a summary of the work, the session's reasoning, your own opinion of the diff or earlier findings.
@@ -91,7 +122,7 @@ Never add a summary of the work, the session's reasoning, your own opinion of th
 Dispatch both reviewers in one turn so they run in parallel.
 Choose from the agents the host offers:
 
-- Code review: `pro-quality:code-reviewer`, else `pro-ai-sdlc:reviewer`, else record `not-installed` (not `could-not-run`) in `--reviewers`.
+- Code review: `pro-quality:code-reviewer` (plus every other reviewer in `demands.reviewers`), else `pro-ai-sdlc:reviewer`, else record `not-installed` (not `could-not-run`) in `--reviewers`.
 - Security review, only on surface: `pro-security:security-architect` in diff mode.
 
 When the host cannot dispatch subagents, say so.
@@ -123,7 +154,9 @@ Every round counts, including rounds that only fixed failing checks.
 
 ## Stamp and report
 
-1. `python3 "$CHECK" stamp --reviewers '<json>'`, plus `--accept-mutation` when confirmed.
+1. `python3 "$CHECK" stamp --reviewers '<json>' --risk .pro-dev/ship/risk.json`, plus `--accept-mutation` when confirmed.
+   The stamp records the tier and a `risk` field from that file.
+   Leave `--risk` out when the classifier is not installed.
    It refuses on a dirty tree.
 2. Write `.pro-dev/ship/pr-body.md` from [pr-body.md](./pr-body.md).
 3. Print the report in the order things ran, then the result, the stamp path and the draft path:
@@ -143,6 +176,14 @@ PR body draft: .pro-dev/ship/pr-body.md
 
 Print the draft body.
 Never run `gh pr create`.
+When the person opens the PR with `gh pr create` at high tier, apply the label right after it succeeds:
+
+```bash
+gh label create risk:high --force --description "High-risk change, see the PR body" --color B60205
+gh pr edit <number> --add-label risk:high
+```
+
+Another tier gets no label.
 Say "confirm" for every claim in the draft that was not checked.
 A `not-installed` code reviewer, a `could-not-run`, a timeout or a surviving mutation makes the result `incomplete`. The report says which.
 

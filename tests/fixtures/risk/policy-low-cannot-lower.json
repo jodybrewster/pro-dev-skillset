@@ -1,0 +1,9 @@
+{
+  "base": {
+    "REVIEW.md": "# Review\n\n## Presumptive blockers\n\n- none\n\n## Risk tiers\n\n```yaml\npaths.low:\n  - \".github/workflows/**\"\n  - \"plugin/hooks/**\"\n  - \"plugin/scripts/**\"\n```\n\n## Output format\n\ntext\n"
+  },
+  "head": {
+    ".github/workflows/ci.yml": "on: push\n",
+    "plugin/hooks/hooks.json": "{}\n"
+  }
+}
