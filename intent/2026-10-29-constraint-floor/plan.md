@@ -1,7 +1,7 @@
 # Plan: constraint floor and CONSTRAINTS.md
 
 Built from `spec.md` (commit b23f41c, amended 2026-10-29 before approval) and `intent.md` in this folder.
-Status: draft.
+Status: approved (Jody, 2026-10-30).
 Approver: Jody Brewster.
 It adds a hook that runs on every Bash call in every repo that installs pro-quality, which is why an approver is named at all.
 No second approver is needed because Jody owns this marketplace and decided the spec, the four flagged concerns and ADR-0010 himself.
