@@ -17,3 +17,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0009](./0009-three-eval-tiers.md) | Three eval tiers: keyless routing gates CI, behavioral and plugin evals run on demand (proposed) | 2026-10-29 |
 | [0010](./0010-constraint-floor.md) | Every repo gets the same constraint floor; `CONSTRAINTS.md` holds a repo's quality bar and every gate and reviewer reads it | 2026-10-29 |
 | [0011](./0011-review-convergence.md) | Review rounds converge: later rounds read only new commits, a finding is raised once, old bugs never block and /pr-babysit stops after three rounds | 2026-10-30 |
+| [0012](./0012-review-handoff.md) | Every reviewer dispatch hands over exactly four fields (range, brief, policy, risk) from one template so the read stays fresh | 2026-10-30 |
