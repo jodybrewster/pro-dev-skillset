@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 """PreToolUse Bash hook - the merge gate.
 
-Before `gh pr merge` it classifies the local HEAD of the repo the command targets with
-risk-classify.py (a sibling script) and decides by tier. It never reads a tier from a
-stamp or a label.
-  low          allows with no output.
+Before `gh pr merge` it classifies the PR the command names with risk-classify.py (a sibling
+script) and decides by tier. It never reads a tier from a stamp or a label. It also gates
+`gh api .../pulls/<n>/merge` (unless the method is GET) and treats `gh api graphql` with
+mergePullRequest or enablePullRequestAutoMerge as could not run, since a node id names no PR.
+The PR is read with `gh pr view [selector] --json number,headRefOid,baseRefName,headRepository`
+(5 second timeout, -R from -R, --repo, GH_REPO= or GH_REPO) so the tier is the PR's even from
+main. When the head is not in the local clone it runs `git fetch --no-tags origin
+pull/<n>/head` (8 second timeout), the one write the gate makes, objects and FETCH_HEAD only.
+  low          allows with no output (a low merge is not pinned).
   medium/high  needs `--match-head-commit <sha>` (full sha or a prefix of 7 or more hex
-               characters) that matches HEAD. Without it: enforce denies and names the flag;
-               warn allows with a message. With it: enforce returns permissionDecision "ask"
-               with the tier, signals, findings and HEAD sha; warn logs, shows the same text
-               as a systemMessage and allows.
-  could not run (no git, no merge base, empty range, timeout, deadline) counts as high and
-               logs could-not-run; enforce asks, warn says the tier is unknown.
+               characters) that matches the PR head; a gh api merge needs `-f sha=<sha>`.
+               Without it: enforce denies and names the flag; warn allows with a message.
+               With it: enforce returns permissionDecision "ask" with the tier, signals,
+               findings, PR number and head sha; warn logs, shows the same text as a
+               systemMessage and allows. With --auto the pin is held the same way.
+  could not run (no git, no gh, gh failing, timing out or not answering in JSON, a head that
+               cannot be fetched, no merge base, empty range, timeout, deadline) counts as
+               high and logs could-not-run with the reason; enforce asks, warn says the tier
+               is unknown. An unresolved PR is never low.
   NO_PROMPT_MODES  in enforce, medium and high deny instead of ask, because an ask may not
                prompt there. Nothing else (env var, flag, file, stamp) clears an ask.
 Mode: mode.merge-gate, then mode, in CLAUDE_GUARD_DIR or ~/.claude/hooks (default warn).
-A malformed payload exits 0 with no output. No network calls; nothing from the payload is
-executed. The gate answers within 20 seconds, before the hook's 30 second timeout.
+A malformed payload exits 0 with no output. A command with no merge in it makes no call;
+nothing from the payload is executed. The gate answers within 20 seconds, before the hook's
+30 second timeout, with both calls inside it.
 """
 from __future__ import annotations
 
@@ -573,7 +582,8 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
                  and head.startswith(sha.lower()))
         if not valid:
             why = f"has no {what}" if sha is None else f"has {what} {sha!r}, which is not the head of PR {res['pr']} ({head[:8]})"
-            msg = f"[{HOOK}] {tier} risk merge of PR {res['pr']} {why}. Add {flag} so GitHub refuses the merge if the PR has moved. {summary(res)}"
+            auto = " With --auto, GitHub refuses the merge if a later push changes the head." if "--auto" in args else ""
+            msg = f"[{HOOK}] {tier} risk merge of PR {res['pr']} {why}. Add {flag} so GitHub refuses the merge if the PR has moved.{auto} {summary(res)}"
             if enforcing:
                 log(HOOK, "deny", f"{tier} PR {res['pr']} pin {head[:8]}", cwd)
                 return 3, msg

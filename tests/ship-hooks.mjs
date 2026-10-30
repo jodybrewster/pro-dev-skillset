@@ -278,6 +278,15 @@ export function runShipHookCases() {
     // ======================================================================================
     // Merge gate (merge-gate.py, risk-tiers steps 10 and 11). Cases m:* below. Every decision
     // that can block has one case that blocks and one that allows.
+    //
+    //   area (p0-hardening)       blocks / acted on             allows / quiet
+    //   PR resolution             mg200, mg201                  mg202, mg203
+    //   repo and selector         mg210-mg217                   mg203
+    //   pin against PR head       mg240                         mg241
+    //   fetch of the PR head      mg220                         mg221 (could not run)
+    //   gh failures               mg230-mg235 (ask or message)  none, never silent
+    //   gh api and graphql        mg250, mg252b, mg255, mg256   mg251, mg252-mg254, mg257, mg258
+    //   --auto                    mg260                         mg261, mg262
     // ======================================================================================
     {
       // A stub gh first on PATH so no case reaches the network or the real gh. It records its
@@ -633,6 +642,14 @@ export function runShipHookCases() {
         r = mrun(`gh api -X PUT repos/o/r/pulls/42/merge -f sha=${prLowH}`, { cwd: prLowR, env: MENF(), extraEnv: stub(prLowOut) });
         add("mg258 an api merge of a low PR allows silently", "silent", r, allowsQuiet(r));
       }
+
+      // ---- --auto (step 5) ---------------------------------------------------------------
+      r = mrun("gh pr merge 42 --auto --squash", { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg260 --auto at high with no pin denies and says GitHub refuses a moved head", "deny", r, denies(r) && /With --auto, GitHub refuses the merge if a later push changes the head/.test(r.text));
+      r = mrun(`gh pr merge 42 --auto --squash --match-head-commit ${prH}`, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg261 --auto with the pin asks", "ask", r, asks(r));
+      r = mrun(MERGE, { cwd: prR, env: MENF(), extraEnv: stub(prOut) });
+      add("mg262 a direct merge with no pin does not carry the --auto sentence", "deny", r, denies(r) && !/--auto/.test(r.text));
 
       // ---- the PR head is fetched when it is not local, and every failure is could-not-run ----
       // A work repo with a bare origin: the PR head is pushed as refs/pull/42/head only, then the
