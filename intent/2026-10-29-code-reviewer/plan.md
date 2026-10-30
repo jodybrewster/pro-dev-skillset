@@ -1,7 +1,7 @@
 # Plan: a detailed code-reviewer agent
 
 Built from `spec.md` (commit dcdb98f, amended 2026-10-29 before approval) and `intent.md` in this folder.
-Status: approved (Jody, 2026-10-30: "keep going and finish P0 you have my approval on all").
+Status: implemented.
 Approver: Jody Brewster.
 Dated: 2026-10-29.
 
@@ -212,20 +212,20 @@ Then the two manual runs in step 10 (AC4 and AC7).
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit:
-- Checks run:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- AC10:
-- AC11:
-- Sign-off:
+- Build commit: the head of #87.
+- Checks run: `node tests/check.mjs` 30 checks, 0 failures, 10 warnings (the new `handoff` check failed first on the missing template and agent); eval dry 86 cases; route-lexical rank-1 80.0%; unit tests; `node tests/quality-hooks.mjs` 152/152; strict validate on the marketplace and all 20 plugins.
+- AC1: pass, the commands above.
+- AC2: pass, both agent files are tracked and the agents and codex-parity checks name no warning for `code-reviewer`.
+- AC3: pass, `model: opus`, the five lenses, Important, nit, Pre-existing, failure scenario and "out of scope" are in the agent.
+- AC4: pass, adding a `description` field and removing `brief` each failed the `handoff` check; the file was restored both times.
+- AC5: pass, `grep -rn "DESCRIPTION" plugins/pro-quality` prints nothing and the skill folder holds `SKILL.md` and `handoff.md` only.
+- AC6: pass, the five smells, the five scenarios, the five blockers and the mutation rule are in the agent; `tools` has no Edit.
+- AC7: pass after the fixes recorded under departures; see the trial there.
+- AC8: pass, `grep -rn "requesting-code-review/code-reviewer.md" plugins README.md` prints nothing.
+- AC9: pass, a routing case expects `code-reviewer`; rank-1 80.0%.
+- AC10: pass, the Addy Osmani line in the LICENSE notice, the `docs/licenses.md` row and the footer in both agent files.
+- AC11: pass, pro-quality 0.14.0, pro-execution 0.6.1 and `metadata.version` 1.62.0 agree across manifests and the marketplace.
+- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves any ADR with Status `proposed` from this change to `accepted`.
@@ -238,3 +238,6 @@ An empty section tells the reviewer the diff follows the plan.
 - AC8's grep `grep -rn "code-reviewer.md" plugins docs README.md` also matches the new agent's own path (`agents/code-reviewer.md`), the license notice and ADR-0012's history, so the stray-pointer check is `grep -rn "requesting-code-review/code-reviewer.md" plugins README.md`, which prints nothing.
 - The lexical routing gate shows 3 notOneOf warnings instead of 2: the README-onboarding case (line 31) now ranks `systematic-debugging` 0.12 over `documentation-engineer` 0.11 because the new agent shifts term weights.
   It is a warning the gate leaves to the model router; rank-1 rose to 80.0%.
+- The AC7 trial (a fresh Opus reviewer on a fixture with an off-by-one at a discount boundary and untested error paths) found the planted bug with a failure scenario, flagged the untested paths as an Important tests finding, reported the mutation check as not run, made no edits and used only the four fields.
+  It also found an unplanted bug (`TIERS['constructor']`).
+  It showed five gaps, fixed here: R13 and AC7 still said the tally ends the report (amended to "opens", as review-policy shipped); labels mixed lens and pass; "mutation check: not run" now has an exact lowercase form; `skipped` is defined; a finding that breaks behavior is never a borderline nit; handoff paths are relative to the repo root.

@@ -3,6 +3,9 @@
 Fill the four fields below and send them to the reviewer with no other text.
 The reviewer reads the files and the diff itself.
 
+Paths in every field are relative to the repo root.
+The reviewer runs with the repo root as its working directory.
+
 ## Fields
 
 - `range`: the base sha and the head sha of the change, for example `<base-sha>..<head-sha>`. Never a branch description or a list of changed files.

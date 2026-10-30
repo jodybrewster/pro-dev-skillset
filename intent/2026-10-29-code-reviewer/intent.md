@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: draft
+status: accepted
 risk: medium
 created: 2026-10-29T19:00:00-0400
 author: Jody Brewster
@@ -13,7 +13,7 @@ Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 3 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md).
 It comes from Jody's asks in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `agents/code-reviewer.md` (MIT).
 The `code-reviewer` row of the [specialist agents intent](../2026-10-28-specialist-agents/intent.md) moves into this intent; that intent keeps the other agents.
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Created: 2026-10-29.
 
 ## Problem

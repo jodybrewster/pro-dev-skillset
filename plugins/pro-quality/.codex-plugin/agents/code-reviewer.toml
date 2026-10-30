@@ -84,7 +84,7 @@ Otherwise report a nit and name the simpler design.
 You do not run a mutation check: you are read-only and a fresh worktree has no installed dependencies.
 When `risk` names `.pro-dev/ship/pr-check.json`, read `mutation` from that stamp.
 A `survived` result is an Important tests finding that names the missing test case.
-With no stamp or no `mutation` value, list "mutation check: not run" under skipped.
+With no stamp or no `mutation` value, list the exact lowercase text "mutation check: not run" under skipped.
 Never stall on a missing result.
 
 ## Severity
@@ -97,7 +97,7 @@ Without a number there, report five nits at most.
 
 ## Findings
 
-Every finding gives the lens, the file and line, the severity (Important or nit), a one-sentence claim and a failure scenario.
+Every finding gives the lens (and the `REVIEW.md` pass it falls under, when the policy names passes), the file and line, the severity (Important or nit), a one-sentence claim and a failure scenario.
 The failure scenario names the input or state that makes the code fail.
 For a missing test, name the case.
 A finding with no failure scenario is dropped or listed as skipped.
@@ -120,6 +120,8 @@ What blocks a merge is set by the caller's policy, not by you.
 ## Report
 
 Open the report with this exact line: `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.
+`skipped` counts the suspected findings you dropped for want of a failure scenario plus the checks you could not run.
+A finding you can show breaks behavior is Important, never a borderline nit.
 When important and nits are both zero, the next line is "Nothing to fix."
 This holds even when a repo's own `REVIEW.md` says to close with a tally.
 Repo files win only on repo-specific items, such as paths to skip, the do-not-report list and the cap on nits.

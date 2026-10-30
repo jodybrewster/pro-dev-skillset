@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-29-code-reviewer/intent.md
 intent-status: draft
-status: draft
+status: accepted
 created: 2026-10-29T19:30:00-0400
 author: Jody Brewster
 ---
@@ -9,7 +9,7 @@ author: Jody Brewster
 # Spec: a detailed code-reviewer agent
 
 Built from `intent.md` in this folder (not yet committed).
-Status: draft.
+Status: accepted (Jody, 2026-10-30).
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0004 and 0006 bear on this change), `docs/codex-parity.md`, `docs/licenses.md`, `tests/check.mjs` (the `agents` check at line 682 and the coverage checks), `tests/cases/components-uncovered.json`, `plugins/pro-quality/skills/requesting-code-review/`, `plugins/pro-quality/agents/*.md` with their `.codex-plugin/agents/*.toml` twins, `plugins/pro-ai-sdlc/agents/reviewer.md`, the [constraint-floor spec](../2026-10-29-constraint-floor/spec.md) and upstream `agents/code-reviewer.md`, `agents/test-engineer.md` and `skills/code-review-and-quality/SKILL.md` in agent-skills at `eb07f19`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 
@@ -63,7 +63,7 @@ Everyone who installs the starter gets the agent on the next update; `pr-check` 
   Each is reported as Important only when the change makes the structure worse, otherwise as a nit with the simpler design named. (Intent: Proposed outcome, adapted text.)
 - R12. Severity follows `REVIEW.md` when it defines the Important bar; without one, Important means broken behavior, a breached policy or a missing test for new behavior; everything else is a nit.
   The nit cap is the number in `REVIEW.md`; without one it is five. (Intent: Constraints, REVIEW.md.)
-- R13. The report ends with the tally line `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`, so a caller can parse it; the format matches `pro-ai-sdlc:reviewer` where they overlap. (Intent: Success looks like, stable format.)
+- R13. The report opens with the tally line (amended 2026-10-30 to match review-policy, which shipped the summary line first) `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`, so a caller can parse it; the format matches `pro-ai-sdlc:reviewer` where they overlap. (Intent: Success looks like, stable format.)
 - R14. Pre-existing findings are listed after the others, count in the tally and never count toward the nit cap.
   What blocks a merge is set by `review-policy`; this agent only applies the tag. (Intent: Out of scope.)
 - R15. The agent never edits the working tree, commits, pushes, approves or comments.
@@ -203,7 +203,7 @@ Changed on 2026-10-29 after planning (Jody): the mutation check moves from this 
 - AC4. Adding a `description` field to `handoff.md` makes `node tests/check.mjs` fail with the `handoff` check; removing it makes it pass; removing a field makes it fail.
 - AC5. `grep -rn "DESCRIPTION" plugins/pro-quality` prints nothing and `git ls-files plugins/pro-quality/skills/requesting-code-review` lists `SKILL.md` and `handoff.md` only.
 - AC6. The agent prompt lists all five design smells of R8, the mutation-result handling of R9, the five scenarios of R10 and the five presumptive blockers of R11.
-- AC7. On a throwaway diff that adds a branch no test exercises, a dispatch of the agent with the four fields returns an Important tests-lens finding with a file, a line and a failure scenario plus a report whose last line matches the R13 tally; run once by hand and pasted into the PR.
+- AC7. On a throwaway diff that adds a branch no test exercises, a dispatch of the agent with the four fields returns an Important tests-lens finding with a file, a line and a failure scenario plus a report whose first line matches the R13 tally; run once by hand and pasted into the PR.
 - AC8. `grep -rn "code-reviewer.md" plugins docs README.md` finds no reference to the deleted template.
 - AC9. `tests/cases/routing.jsonl` has a case for "review my branch" that expects `requesting-code-review` and the warning count from `node tests/check.mjs` does not rise.
 - AC10. `docs/licenses.md` has a pro-quality row for `code-reviewer` (agent) naming addyosmani/agent-skills as adapted, `plugins/pro-quality/LICENSE` carries the Addy Osmani copyright line and the agent and twin end with the footer.

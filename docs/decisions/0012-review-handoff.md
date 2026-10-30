@@ -4,7 +4,7 @@ Date: 2026-10-30
 
 ## Status
 
-proposed
+accepted (2026-10-30)
 
 Decided by: Jody Brewster.
 Source: intent/2026-10-29-code-reviewer/.
