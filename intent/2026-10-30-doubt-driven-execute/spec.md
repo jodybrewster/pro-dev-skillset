@@ -91,7 +91,9 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
 - R19. A step the plan marks irreversible is doubted with no question, since the person approved the plan with that marker. (Intent: Open questions, offer or automatic.)
 - R20. `/execute` does not classify each step, because a per-step run prompts every time and is denied headless.
   The classifier runs only at the checkpoints that already exist (step 5 and the stop list's risk-tiers checkpoint), with no `--intent`, so the intent's declared risk does not raise every step.
-  When a checkpoint's range reads tier `high`, every step in that range that has not been doubted gets the doubt review before the next group of steps starts.
+  The doubt decision classifies only the group's own range (since the previous checkpoint), never the cumulative range, which stays for the stop-list pause.
+  A tier `high` that comes from the size signal alone does not pick steps.
+  When that range reads tier `high`, every step in that range that has not been doubted gets the doubt review before the next group of steps starts.
   An interactive run pauses once and offers it naming the tier and signal ids; a non-interactive run runs the single-model round with no question.
   Steps marked `irreversible` are still doubted at the step.
   A classifier run that did not happen (denied, exit 2 or pro-ship missing) prints "classifier could not run: <reason>" and is listed under "Potential concerns"; it is never silent.

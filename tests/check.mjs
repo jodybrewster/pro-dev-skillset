@@ -1382,6 +1382,7 @@ checks["doubt"] = () => {
   else {
     if (!/^## Doubt\s*$/m.test(exec)) failures.push("commands/execute.md has no `## Doubt` heading");
     if (!exec.includes("doubt-driven-development")) failures.push("commands/execute.md does not name doubt-driven-development");
+    if (exec.split("adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable)").length < 3) failures.push("commands/execute.md lacks the shared --draft phrase");
     if (!exec.includes("classifier could not run")) failures.push('commands/execute.md lacks the loud "classifier could not run" line');
   }
   const ship = "plugins/pro-ship/scripts/codex-run.py", copy = "plugins/pro-ai-sdlc/scripts/codex-run.py";

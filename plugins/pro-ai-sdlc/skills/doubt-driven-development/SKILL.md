@@ -12,7 +12,7 @@ This skill sends one finished step to a reviewer that has never seen the author'
 
 A step is hard to undo when it changes a data migration, a public API, an auth rule or a deploy or infrastructure config, or when it deletes a file that other code depends on.
 `/execute` doubts every step the plan marks `irreversible`, with no question.
-When pro-ship is installed, `/execute` adds an unmarked step only when the classifier rates that step's diff high tier.
+When pro-ship is installed, `/execute` adds an unmarked step only when a checkpoint's classifier range reads high tier.
 Skip mechanical edits, renames, formatting and one-line changes.
 Skip specs and plans: EGM goldfish, through pro-egm, reviews those.
 This skill reviews a build decision and shares no loop with goldfish.

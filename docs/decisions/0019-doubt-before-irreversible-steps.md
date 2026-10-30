@@ -23,7 +23,7 @@ pro-ai-sdlc cannot depend on pro-quality or pro-ship (ADR-0013), so it cannot re
 
 When `/execute` finishes a step that is hard to undo, the main session runs the `doubt-driven-development` skill on that step's commit: before the next step for a step the plan marks, before the next group for a step the classifier raises.
 A step is hard to undo when the plan marks it `irreversible`.
-When pro-ship is installed, the risk classifier is a backstop at the checkpoints `/execute` already has, never per step: a high tier on a checkpoint's range makes every undoubted step in it a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
+When pro-ship is installed, the risk classifier is a backstop at the checkpoints `/execute` already has, never per step: a high tier on the group's own range (since the previous checkpoint, not the cumulative range, and not from the size signal alone) makes every undoubted step in it a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
 The plan marker always triggers doubt; the classifier adds steps only on a high tier.
 A classifier run that did not happen is printed as `classifier could not run: <reason>` and listed under "Potential concerns".
 The reviewer is a fresh subagent, never a fork.
