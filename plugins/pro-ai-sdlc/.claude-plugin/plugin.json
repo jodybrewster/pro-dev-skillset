@@ -1,6 +1,6 @@
 {
   "name": "pro-ai-sdlc",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<date>-<slug>/intent.md), /spec, /plan, /execute (build an approved plan in its own worktree and open the PR, never merge), /adr (record a decision with no change behind it), /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge); repo setup for the loop moved to /pro-dev install in pro-core. The templates the commands read ship as files under templates/ (intent, spec, plan, adr, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Three hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update) and production-gate (flags push to main, deploys, publishes and merges).",
   "author": {
     "name": "Jody Brewster",

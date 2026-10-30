@@ -1192,6 +1192,17 @@ checks["sdlc-contract"] = () => {
     if (!execC.split("\n").includes("Never merge, never push to the default branch, never force-push and never pass `--no-verify`."))
       failures.push("pro-ai-sdlc: /execute lost its never-merge line");
   }
+  // review policy (R21): the template, the reviewer and its Codex twin, and /pr-babysit carry the convergence rules.
+  const revT = read("templates/REVIEW.md") ?? "";
+  for (const h of ["What failure looks like here", "Evidence", "Pre-existing", "Rounds"])
+    if (!new RegExp(`^#{1,6} ${h}\\s*$`, "m").test(revT)) failures.push(`pro-ai-sdlc: templates/REVIEW.md lacks the heading "${h}"`);
+  for (const f of ["agents/reviewer.md", ".codex-plugin/agents/reviewer.toml"]) {
+    const body = read(f) ?? "";
+    for (const w of ["Pre-existing", "since"]) if (!body.includes(w)) failures.push(`pro-ai-sdlc: ${f} does not name "${w}"`);
+  }
+  const babyC = read("commands/pr-babysit.md") ?? "";
+  if (!babyC.includes("three rounds")) failures.push('pro-ai-sdlc: commands/pr-babysit.md does not say "three rounds"');
+  if (/\bfive\b/i.test(babyC)) failures.push('pro-ai-sdlc: commands/pr-babysit.md still says "five"');
   return { failures, warnings };
 };
 

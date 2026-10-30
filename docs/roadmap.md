@@ -37,14 +37,13 @@ They replace the dropped [pro-ship-scope intent](../intent/2026-10-28-pro-ship-s
 
 | Intent | Ranked items | Plugins | Builds on | Spec size |
 |---|---|---|---|---|
-| [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | 21 R, 3 N, 10 AC, 8 concerns |
+| [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
 | [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | 23 R, 4 N, 11 AC, 8 concerns |
 | [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | 28 R, 5 N, 13 AC, 8 concerns |
 | [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | 30 R, 6 N, 12 AC, 12 concerns |
 
 Questions waiting on Jody, with the drafts' recommendations:
 
-- review-policy: round cap three or five (recommended three, for every `/pr-babysit` round); move the finding count to the top of the review report (recommended yes); should `/pro-dev update` offer to refresh an old `REVIEW.md`.
 - code-reviewer: effort high or medium for the reviewer (recommended high, set by the dispatcher); the mutation check needs to edit and run tests, so it runs only in a throwaway worktree at medium or high risk (recommended); subagent versus `claude -p` (recommended subagent).
 - pr-gate: should pro-ship join pro-dev-starter (recommended yes, in the same release; risk-tiers raises the same question); do draft PRs need the stamp (recommended no); the 300-second per-command timeout; how sibling plugin scripts are found in the plugin cache.
 - risk-tiers: which plugin owns the classifier (recommended pro-ship); can a tier be overridden down (recommended Jody only, recorded in the stamp, later); the size thresholds (recommended placeholder constants until a calibration run over merged PRs); does `ask` still prompt when permission checks are bypassed (verify live; deny medium and high if not).
@@ -63,8 +62,8 @@ Cross-cutting decisions for Jody:
 - One PR per intent (Jody, 2026-10-29): each intent's PR holds its intent, spec, plan and build, and stays a draft until the build lands.
   constraint-floor [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81), review-policy [#82](https://github.com/jodybrewster/pro-dev-skillset/pull/82), code-reviewer [#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), pr-gate [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84) and risk-tiers [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85).
 
-Plans: review-policy and code-reviewer have draft plans.
-review-policy's plan assumes, not yet confirmed: round cap three for every round, the finding count first and no REVIEW.md refresh in `/pro-dev update`.
+review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
+Plans: code-reviewer has a draft plan.
 Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; three callers of the old reviewer template are added (pro-quality `/review`, `pr-quality-gate.py`, pro-execution's quality-reviewer prompt).
 
 ## Parked intents
@@ -112,8 +111,8 @@ Within a tier, items are in the order to build them.
 - [ ] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): specced as [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
 - [ ] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): specced as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
 - [ ] 4. Risk classifier and approval tiers (M, pro-ship): specced as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
-- [ ] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): specced as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
-- [ ] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): specced as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
+- [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
+- [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 
 ### P1: every feature through the loop plus safety
 
