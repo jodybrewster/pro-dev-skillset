@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-10-29 (evening): constraint-floor and the four P0 review-stack intents specced as drafts.
+Last updated 2026-10-30 (evening): all six P1 intents specced, built and merged (#97 to #99, #101 to #103).
 
 A fresh session starts here: read "Now", then the intent folder it names.
 The ranked list came from comparing this marketplace with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
@@ -11,22 +11,23 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
-### P1 intents (drafted 2026-10-30)
+### P1 intents (shipped 2026-10-30)
 
 P0 shipped on 2026-10-30 (#81, #82, #87, #88, #89).
-Each P1 group has an intent in draft, one PR per intent, for Jody to read before any spec.
+Each P1 group went through spec, plan and build in one PR per intent; the ADRs 0016 to 0020 are proposed and wait for Jody's acceptance.
+Hand checks that need a person or a model run are listed in each plan's Done section.
 
-| Intent | Ranked items | Plugins | Risk | PR |
-|---|---|---|---|---|
-| [sdlc-loop-upgrades](../intent/2026-10-30-sdlc-loop-upgrades/intent.md) | 7, 8, 9, 10 with 24, 25, 29 | pro-ai-sdlc | medium | [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90) |
-| [untrusted-input-safety](../intent/2026-10-30-untrusted-input-safety/intent.md) | 11 with 26, 27 | pro-testing, pro-execution, pro-design | low | [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91) |
-| [p0-hardening](../intent/2026-10-30-p0-hardening/intent.md) | follow-ups from P0 | pro-ship, pro-core | medium | [#92](https://github.com/jodybrewster/pro-dev-skillset/pull/92) |
-| [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/intent.md) | 12 | pro-ai-sdlc | medium | [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93) |
-| [codex-second-reviewer](../intent/2026-10-30-codex-second-reviewer/intent.md) | 13 | pro-quality, pro-ship, pro-core | medium | [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94) |
-| [required-documents](../intent/2026-10-30-required-documents/intent.md) | 14 | pro-core, pro-ai-sdlc, pro-ship | medium | [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95) |
+| Intent | Ranked items | Plugins | Risk | Intent PR | Build PR |
+|---|---|---|---|---|---|
+| [sdlc-loop-upgrades](../intent/2026-10-30-sdlc-loop-upgrades/intent.md) | 7, 8, 9, 10 with 24, 25, 29 | pro-ai-sdlc | medium | [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90) | [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98) |
+| [untrusted-input-safety](../intent/2026-10-30-untrusted-input-safety/intent.md) | 11 with 26, 27 | pro-testing, pro-execution, pro-design | low | [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91) | [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97) |
+| [p0-hardening](../intent/2026-10-30-p0-hardening/intent.md) | follow-ups from P0 | pro-ship, pro-core | medium | [#92](https://github.com/jodybrewster/pro-dev-skillset/pull/92) | [#101](https://github.com/jodybrewster/pro-dev-skillset/pull/101) |
+| [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/intent.md) | 12 | pro-ai-sdlc | medium | [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93) | [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102) |
+| [codex-second-reviewer](../intent/2026-10-30-codex-second-reviewer/intent.md) | 13 | pro-quality, pro-ship, pro-core | medium | [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94) | [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99) |
+| [required-documents](../intent/2026-10-30-required-documents/intent.md) | 14 | pro-core, pro-ai-sdlc, pro-ship | medium | [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95) | [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103) |
 
-Recommended order once read: sdlc-loop-upgrades and untrusted-input-safety in parallel, with p0-hardening beside them; then codex-second-reviewer, doubt-driven-execute (they may share one Codex runner) and required-documents.
-Each intent ends with open questions that carry a recommendation.
+Merged in the order #97, #98, #99, #101, #102 and #103; doubt-driven-execute reuses the Codex runner from codex-second-reviewer through a byte-identical copy.
+The warn-mode evidence week for the gates is in [docs/enforce-mode.md](./enforce-mode.md).
 
 ### pro-electron (drafted 2026-10-30)
 
@@ -137,14 +138,14 @@ Within a tier, items are in the order to build them.
 
 ### P1: every feature through the loop plus safety
 
-- [ ] 7. `/execute` guardrails (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 8. Spec template additions (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 9. Plan template additions and a definition of done (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 10. A test-design lens for the verifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 11. Untrusted-input rules for browser and error output (S, pro-testing, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91)
-- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/spec.md), intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93); the build PR link is added when it opens
-- [ ] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94)
-- [ ] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95)
+- [x] 7. `/execute` guardrails (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 8. Spec template additions (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 9. Plan template additions and a definition of done (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 10. A test-design lens for the verifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 11. Untrusted-input rules for browser and error output (S, pro-testing, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
+- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/spec.md), intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
+- [x] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94), built in [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99)
+- [x] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95), built in [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103)
 
 ### P2: situational, or past one person
 
@@ -160,12 +161,12 @@ Within a tier, items are in the order to build them.
 ### P3: small polish, one batch
 
 - [ ] 23. Re-sync `interview-me` and `idea-refine` (S, pro-pdd)
-- [ ] 24. `/adr` convention detection and a Deprecated status (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 25. Two guards in the simplifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
-- [ ] 26. Debugging addendum (S, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91)
-- [ ] 27. An accessibility checklist sidecar (S, pro-design): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91)
+- [x] 24. `/adr` convention detection and a Deprecated status (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 25. Two guards in the simplifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 26. Debugging addendum (S, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
+- [x] 27. An accessibility checklist sidecar (S, pro-design): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
 - [ ] 28. Two `/fix` tweaks (S, pro-core or user scope)
-- [ ] 29. Optional capability map in `/spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90)
+- [x] 29. Optional capability map in `/spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 
 ### Later
 
