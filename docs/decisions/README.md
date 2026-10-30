@@ -17,7 +17,7 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0009](./0009-three-eval-tiers.md) | Three eval tiers: keyless routing gates CI, behavioral and plugin evals run on demand (proposed) | 2026-10-29 |
 | [0010](./0010-constraint-floor.md) | Every repo gets the same constraint floor; `CONSTRAINTS.md` holds a repo's quality bar and every gate and reviewer reads it | 2026-10-29 |
 | [0011](./0011-review-convergence.md) | Review rounds converge: later rounds read only new commits, a finding is raised once, old bugs never block and /pr-babysit stops after three rounds | 2026-10-30 |
-| [0012](./0012-review-handoff.md) | Every reviewer dispatch hands over exactly four fields (range, brief, policy, risk) from one template so the read stays fresh | 2026-10-30 |
+| [0012](./0012-review-handoff.md) | Every reviewer dispatch hands over exactly four fields (range, brief, policy, risk) from one template so the read stays fresh (accepted, amended 2026-10-30) | 2026-10-30 |
 | [0013](./0013-plugin-layering.md) | Plugins are split by audience, not by size: core, domain, a layer under a domain, stack, plus switchable methods and gates (proposed) | 2026-10-30 |
 | [0014](./0014-gate-stamp.md) | One pr-check stamp bound to HEAD has one writer and many readers; pr-gate and the push gate read it and a forged stamp is accepted for a local guardrail | 2026-10-30 |
 | [0015](./0015-risk-tiers.md) | The tier is the highest floor among deterministic signals, declared risk only raises it and only the person at the prompt approves a merge, pinned to one HEAD sha | 2026-10-30 |

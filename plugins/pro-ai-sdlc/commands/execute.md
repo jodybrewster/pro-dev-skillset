@@ -68,19 +68,22 @@ A staged file the step did not name is unstaged with `git restore --staged <path
 
 A step is hard to undo when it changes a data migration, a public API, an auth rule or a deploy or infrastructure config, or deletes a file other code depends on.
 A step the plan marks `irreversible` is doubted with no question, because the person approved the plan with that marker.
-When pro-ship's `risk-tiers` skill is available, classify each step's commit with `--base <sha before the step> --head HEAD --json` and no `--intent`, so the intent's declared risk does not raise every step.
-A tier of `high` makes an unmarked step a candidate; no other tier and no single signal does.
-An interactive run asks once, naming the tier and the signal ids.
-An unattended run doubts the candidate with no question.
-When the classifier exits 2, print `classifier could not run: <reason>` and go on with the plan marker alone.
-Without the skill, say once that the classifier backstop is skipped.
-The `doubt-driven-development` skill runs in this session after the step's commit and before the next step.
+Steps are not classified one by one, since every run would ask and a headless run would be denied.
+The classifier keeps running only at the checkpoints that already exist (step 5 and the stop list's risk-tiers checkpoint).
+When a checkpoint's range reads `high` tier, every step in that range that has not been doubted gets the doubt review before the next group of steps starts.
+No other tier and no single signal raises a step.
+An interactive run asks once for the range, naming the tier and the signal ids.
+An unattended run doubts those steps with no question.
+Any classifier run that did not happen (denied, exit 2 or pro-ship missing) prints `classifier could not run: <reason>` and is listed under "Potential concerns"; it is never silent.
+The step goes on with the plan marker alone.
+The `doubt-driven-development` skill runs in this session after the step's commit.
+It runs before the next step for a step marked `irreversible` and before the next group for a classifier-raised step.
 A builder subagent never runs it; doubt that step here after the subagent returns.
 The skill's instruction text carries its own env-file rule, so the Secrets copy rule is met without adding text to the handoff.
 After three rounds with open findings, an interactive run stops at that step and prints them in your own words.
 An unattended run finishes the build instead and opens the pull request as a draft with `gh pr create --draft`, listing the open findings under "Potential concerns".
 Record each doubted step as one `Doubt:` line under `## Done` in plan.md.
-`codex-run.py` and `risk-classify.py` are not in `allowed-tools`, so each run asks.
+`codex-run.py` and `risk-classify.py` are not in `allowed-tools`, so each run asks; a run that is denied counts as one that did not happen.
 
 ## Your task
 
@@ -118,13 +121,14 @@ If it fails, stop before any change: print the command and the last lines of its
 Follow the plan's `## Order of work` in order.
 Before the first step, run the `## Stop list` over `## Files that change` and the text of every step in `## Order of work`; print `stop list: nothing fired` when nothing does.
 Before each step's commit, run it over `git diff --cached --name-only`.
-At each checkpoint the plan names, when pro-ship's `risk-tiers` skill is available, follow it to classify `origin/<default_branch>..HEAD`.
+At each checkpoint the plan names, when pro-ship's `risk-tiers` skill is available, follow it to classify `origin/<default_branch>..HEAD`; `## Doubt` says what a high tier adds.
 A signal with id `auth`, `payments`, `migrations`, `iac`, `workflows` or `env-config` that no consent covers pauses before the next step as the stop list does.
 The classifier ids `iac` and `workflows` count as deploys and `env-config` counts as secrets.
-Without the skill, say the classifier was skipped.
+Without the skill, print `classifier could not run: pro-ship not installed` and list it under "Potential concerns".
 For each step write or extend the test first, see it fail, then write the code until it passes.
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
-After a step's commit, run `## Doubt` before the next step.
+After the commit of a step marked `irreversible`, run `## Doubt` before the next step.
+At a checkpoint whose range reads high tier, run it on each undoubted step in the range before the next group.
 When the build has to stray from the plan, add a line under `## Departures from plan` in plan.md in the same commit as the change that departs.
 Steps the plan marks as independent may go to builder subagents in parallel when the pro-execution `subagent-driven-development` skill is available; give each a self-contained prompt and name its model and effort.
 Broad code search may go to the `researcher` agent.
@@ -151,7 +155,6 @@ If `gh` fails, give the compare URL for the branch instead.
 ### 8. Report
 
 The PR URL, the worktree path, the checks that ran with their results, any departures and the doubted steps with their rounds.
-Name the doubted steps with their rounds.
 Suggest `/pr-babysit` as the next step.
 
 Never merge, never push to the default branch, never force-push and never pass `--no-verify`.

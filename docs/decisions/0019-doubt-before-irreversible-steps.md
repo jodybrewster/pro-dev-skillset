@@ -21,25 +21,27 @@ pro-ai-sdlc cannot depend on pro-quality or pro-ship (ADR-0013), so it cannot re
 
 ## Decision
 
-When `/execute` finishes a step that is hard to undo, the main session runs the `doubt-driven-development` skill on that step's commit before the next step starts.
+When `/execute` finishes a step that is hard to undo, the main session runs the `doubt-driven-development` skill on that step's commit: before the next step for a step the plan marks, before the next group for a step the classifier raises.
 A step is hard to undo when the plan marks it `irreversible`.
-When pro-ship is installed, the risk classifier on the step's commit is a backstop: a high tier makes the step a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
-The plan marker always triggers doubt; the classifier adds a step only on a high tier.
+When pro-ship is installed, the risk classifier is a backstop at the checkpoints `/execute` already has, never per step: a high tier on a checkpoint's range makes every undoubted step in it a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
+The plan marker always triggers doubt; the classifier adds steps only on a high tier.
+A classifier run that did not happen is printed as `classifier could not run: <reason>` and listed under "Potential concerns".
 The reviewer is a fresh subagent, never a fork.
 It receives a fixed adversarial instruction text and the four fields of ADR-0012 (`range`, `brief`, `policy`, `risk`) and nothing else.
 The author's claim, reasoning and earlier findings never reach it.
 The session reconciles each finding against the diff, keeps the dedupe list itself and stops after three rounds; open findings after three rounds stop an interactive run for the person.
 An unattended run finishes the build and opens the pull request as a draft with the open findings under "Potential concerns".
+The same holds when two rounds in a row raise findings and none is actionable.
 A Codex second opinion is the person's choice in each round, confirmed per exact command, never offered in a non-interactive run and never reported as clean when it could not run.
 pro-ai-sdlc keeps its own `handoff.md` with the same four fields.
-This is the accepted exception to ADR-0012's single template (Jody, 2026-10-30): a check in `tests/check.mjs` fails when it names different fields from pro-quality's or drops its closing line.
+This is the accepted exception to ADR-0012's single template (Jody, 2026-10-30), amended into ADR-0012: a check in `tests/check.mjs` fails when it names different fields from pro-quality's or drops its closing line.
 pro-ai-sdlc keeps a byte-identical copy of `plugins/pro-ship/scripts/codex-run.py`; the `doubt` check fails on any difference.
 The plan's Done section records each doubted step in one line in the session's words.
 
 ## Consequences
 
 A risky decision gets an independent read while it is still cheap to change.
-A step with no marker and no classifier signal runs exactly as before.
+A step with no marker and no high-tier checkpoint runs exactly as before.
 A marked step costs one to three Opus dispatches, plus a Codex run when the person asks.
 An unattended build whose doubt rounds did not converge still ends in a pull request, opened as a draft with the open findings listed.
 Two handoff templates and two runner copies exist, so a change to either contract edits both in one commit.

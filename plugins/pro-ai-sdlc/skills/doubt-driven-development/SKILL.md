@@ -64,8 +64,8 @@ A yes covers that one command only.
 On yes:
 
 1. Write the filled fields to `$(git rev-parse --git-dir)/doubt/step-N-round-R.md`, inside the git directory so it can never be staged.
-2. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex-run.py" --instructions doubt-instructions.md --prompt <that file>`, with the instructions path resolved inside this skill's folder.
-   The runner checks the repo's consent in `.claude/pro-dev.json`, the `codex` binary and the login, runs `codex exec` read-only with a timeout and takes the text on stdin.
+2. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex-run.py" --instructions "${CLAUDE_PLUGIN_ROOT}/skills/doubt-driven-development/doubt-instructions.md" --prompt <that file> --consent-ref origin/<default_branch>`.
+   The runner reads the repo's consent in `.claude/pro-dev.json` from the default branch, so a branch cannot add its own opt-in, and checks the `codex` binary and the login, runs `codex exec` read-only with a timeout and takes the text on stdin.
    Never put the prompt in a shell argument.
 3. Treat its output as findings tagged `codex`.
 
@@ -92,11 +92,12 @@ That list is never sent to the reviewer.
 
 A step gets at most three rounds.
 Stop early when a round returns only repeats or nothing substantive, or when the person says to go on.
-Never run a round on an unchanged diff.
+Never run a round on an unchanged diff, except a re-run after a brief or policy gap.
 Each round after the first runs on the new head, so fix first, commit and then dispatch.
 
 When two rounds in a row raise substantive findings and you class none of them as actionable, you are validating, not doubting.
-Stop and ask the person.
+Stop and ask the person in an interactive run.
+An unattended run treats those findings as open, finishes the build and opens the pull request with `--draft`, listing them under "Potential concerns" as below.
 
 After three rounds with substantive findings still open:
 

@@ -1382,6 +1382,7 @@ checks["doubt"] = () => {
   else {
     if (!/^## Doubt\s*$/m.test(exec)) failures.push("commands/execute.md has no `## Doubt` heading");
     if (!exec.includes("doubt-driven-development")) failures.push("commands/execute.md does not name doubt-driven-development");
+    if (!exec.includes("classifier could not run")) failures.push('commands/execute.md lacks the loud "classifier could not run" line');
   }
   const ship = "plugins/pro-ship/scripts/codex-run.py", copy = "plugins/pro-ai-sdlc/scripts/codex-run.py";
   const a = existsSync(join(ROOT, ship)) ? readFileSync(join(ROOT, ship)) : null;

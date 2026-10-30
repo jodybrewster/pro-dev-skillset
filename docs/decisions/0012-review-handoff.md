@@ -6,6 +6,8 @@ Date: 2026-10-30
 
 accepted (2026-10-30)
 
+Amended 2026-10-30 by ADR-0019: a second template is allowed when a sync check holds it to the same four fields and closing line.
+
 Decided by: Jody Brewster.
 Source: intent/2026-10-29-code-reviewer/.
 
@@ -49,7 +51,7 @@ What must stay true:
 - The handoff has four fields and no more.
 - No field holds author-written prose about the change.
 - The reviewer is never run as a fork of the session, since a fork inherits the whole context.
-- There is one handoff template; a caller references it and does not copy it.
+- There is one handoff template; a caller references it and does not copy it, except that a plugin that cannot depend on pro-quality may keep a second template under a sync check (ADR-0019).
 
 Revisit the decision if the caller-side filter cannot stop repeated findings across rounds, which would push toward a fifth field, or if Claude Code or Codex ship a built-in fresh-context review that makes the template redundant.
 
@@ -61,7 +63,7 @@ Revisit the decision if the caller-side filter cannot stop repeated findings acr
 
 ## Where it is enforced
 
-- `plugins/pro-quality/skills/requesting-code-review/handoff.md`, the single template.
-- The `handoff` check in `tests/check.mjs`, which fails when the field list is not exactly `range`, `brief`, `policy` and `risk`, when a placeholder is named `description`, `summary` or `findings`, or when `code-reviewer.md` names different fields.
+- `plugins/pro-quality/skills/requesting-code-review/handoff.md`, the template, and `plugins/pro-ai-sdlc/skills/doubt-driven-development/handoff.md`, the one second template, held to the same fields and closing line by the `doubt` check.
+- The `handoff` check in `tests/check.mjs`, which fails when the field list is not exactly `range`, `brief`, `policy` and `risk`, when a placeholder is named `description`, `summary`, `findings`, `claim` or `reasoning`, or when `code-reviewer.md` names different fields.
 - `plugins/pro-quality/agents/code-reviewer.md` and its Codex twin, which name the same four fields and ignore other handoff text.
 - `plugins/pro-quality/skills/requesting-code-review/SKILL.md` and the callers that dispatch through it.

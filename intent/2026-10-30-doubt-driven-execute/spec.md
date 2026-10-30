@@ -65,17 +65,18 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
 - R11. A step gets at most three rounds.
   The loop stops early when a round returns only repeats or nothing substantive.
   It also stops when the person says to go on.
-  A round is never run on an unchanged diff.
+  A round is never run on an unchanged diff, except a re-run after a brief or policy gap.
   After three rounds with substantive findings still open, an interactive run stops at that step, prints the open findings in its own words and waits for the person.
   An unattended run finishes the build, opens the pull request as a draft (`gh pr create --draft`) and lists the open findings under "Potential concerns" in the PR body; it does not stop the build (Jody, 2026-10-30).
   A large step is split, never given a fourth round. (Intent: Constraints; ADR-0011.)
-- R12. When two rounds in a row raise substantive findings and the session classes none of them as actionable, the skill treats that as validating instead of doubting and stops to ask the person. (Intent: Evidence, upstream red flag.)
+- R12. When two rounds in a row raise substantive findings and the session classes none of them as actionable, the skill treats that as validating instead of doubting and stops to ask the person in an interactive run.
+  An unattended run treats those findings as open, finishes the build and opens the pull request with `--draft`, listing them under "Potential concerns" as R11 does. (Intent: Evidence, upstream red flag.)
 - R13. In an interactive run, after each single-model round and before reconcile, the skill offers a Codex second opinion as a yes or no question.
   The question shows the exact command it would run.
   A yes covers that one command only.
   The person can say no for the rest of the step. (Intent: Constraints.)
 - R14. The Codex run writes the filled fields to a prompt file inside the git directory (`$(git rev-parse --git-dir)/doubt/`), so the file can never be staged.
-  It then calls `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex-run.py"` with `doubt-instructions.md` as the instruction file and that prompt file, matching the runner's usage line.
+  It then calls `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/codex-run.py"` with `doubt-instructions.md` (by its `${CLAUDE_PLUGIN_ROOT}/skills/doubt-driven-development/` path) as the instruction file, that prompt file and `--consent-ref origin/<default_branch>`, matching the runner's usage line and pro-ship's `pr-check`.
   The runner checks the binary and the login, pipes the prompt through stdin into `codex exec` in a read-only sandbox with a timeout and never puts the prompt in a shell argument. (Intent: Constraints.)
 - R15. A Codex failure (missing binary, no login, timeout, nonzero exit or empty output) is shown to the person as "Codex could not run: <reason>" with a choice to retry or skip.
   It is recorded as could-not-run and never as a clean review. (Intent: Constraints.)
@@ -88,11 +89,13 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   It also says how a doubted step is recorded.
   Step 5 of the task points at it, the stage lines gain "step N doubted (R rounds)" and the report names the doubted steps. (Intent: Affected systems.)
 - R19. A step the plan marks irreversible is doubted with no question, since the person approved the plan with that marker. (Intent: Open questions, offer or automatic.)
-- R20. When pro-ship is installed, after each step's commit `/execute` runs `risk-classify.py --base <sha before the step> --head HEAD --json` with no `--intent`, so the intent's declared risk does not raise every step.
-  It finds the script the same way the stop list section finds it.
-  On tier `high` for a step the plan does not mark, an interactive run pauses and offers a doubt round naming the tier and signal ids; a non-interactive run runs the single-model round with no question.
-  Exit 2 prints "classifier could not run: <reason>" and the step goes on with the plan marker alone.
-  Without pro-ship the classifier half is skipped and named once in the run's output. (Intent: Open questions, what counts as hard to undo; ADR-0013.)
+- R20. `/execute` does not classify each step, because a per-step run prompts every time and is denied headless.
+  The classifier runs only at the checkpoints that already exist (step 5 and the stop list's risk-tiers checkpoint), with no `--intent`, so the intent's declared risk does not raise every step.
+  When a checkpoint's range reads tier `high`, every step in that range that has not been doubted gets the doubt review before the next group of steps starts.
+  An interactive run pauses once and offers it naming the tier and signal ids; a non-interactive run runs the single-model round with no question.
+  Steps marked `irreversible` are still doubted at the step.
+  A classifier run that did not happen (denied, exit 2 or pro-ship missing) prints "classifier could not run: <reason>" and is listed under "Potential concerns"; it is never silent.
+  The step goes on with the plan marker alone. (Intent: Open questions, what counts as hard to undo; ADR-0013.)
 - R21. `templates/plan.md` lets a step carry an `irreversible` marker in the same field style as the size marker sdlc-loop-upgrades adds, with a few words on what cannot be undone.
   `commands/plan.md` tells the planner to mark a step irreversible when it fits R2 and to name it under Risks. (Intent: Open questions.)
 - R22. The plan's `## Done` section gains one `Doubt:` line per doubted step in the session's own words: the step, the trigger (plan marker or classifier with the tier), the rounds used, whether Codex ran, was skipped or could not run plus how each finding was settled (fixed, trade-off with its reason or noise).
@@ -122,7 +125,7 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
 ### Non-functional
 
 - N1. A step that is neither marked nor raised by the classifier runs with no pause and no extra dispatch.
-  The classifier adds one local Python run per step when pro-ship is installed.
+  The classifier adds no run beyond the checkpoints that already exist.
 - N2. Nothing leaves the machine unless the person says yes to a Codex run; the yes is also consent to send that step's diff and file paths to a second vendor.
 - N3. `SKILL.md` stays under 200 lines; detail that does not fit moves to a sidecar in the same folder.
 - N4. All prose follows the repo's writing rules: one sentence per line, no em dash, no Oxford comma and straight quotes.
@@ -177,7 +180,7 @@ Changed at the root: `.claude-plugin/marketplace.json`, `tests/check.mjs` (the `
 Reuse: the four fields and their wording follow pro-quality's `handoff.md`; the `handoff` check already covers any `handoff.md` under `plugins/*/`; the classifier's JSON contract is read as documented at the top of `risk-classify.py`; the runner is copied, not rewritten.
 The doubt round runs on a committed step because the classifier and `git diff <a>..<b>` both need fixed shas.
 Step-scoped staging from sdlc-loop-upgrades makes the step's commit hold only its own files.
-"Before it stands" means before the next step starts and before the push.
+"Before it stands" means before the next step for a marked step, before the next group for a classifier-raised step and before the push.
 
 ### Alternatives considered
 
