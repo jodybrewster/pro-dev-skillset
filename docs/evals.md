@@ -165,6 +165,18 @@ First runs on 2026-10-29, Sonnet:
 
 ## Measured changes
 
+### 2026-10-30: pro-electron ([intent](../intent/2026-10-30-pro-electron/))
+
+`node tests/run-evals.mjs pro-electron --runs 3` and `node tests/behavioral.mjs <skill> --baseline --model sonnet`, Sonnet, Claude Code 2.1.314, macOS, $1.77 for the plugin evals.
+
+| Skill | Fired | Quiet case fired | Reply, with | Reply, without | Behavioral, with | Behavioral, without |
+|---|---|---|---|---|---|---|
+| `electron-skills-bridge` | 3 of 3 | 0 of 3 | 2 of 3 | 0 of 3 | none | none |
+| `electron-upgrade` | 3 of 3 | 0 of 3 | 3 of 3 | 3 of 3 | 4 of 5 | 0 of 5 |
+| `electron-security-audit` | 3 of 3 | 0 of 3 | 3 of 3 | 3 of 3 | 5 of 5 | 4 of 5 |
+
+The upgrade and audit reply graders pass without the plugin too, so their plugin cases show firing rather than a delta; the behavioral cases carry the difference.
+
 ### 2026-10-29: four discipline skills ([intent](../intent/2026-10-29-skill-firing/))
 
 Sonnet pinned, Claude Code 2.1.312, 3 runs per case and arm.

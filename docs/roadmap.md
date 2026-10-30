@@ -34,7 +34,7 @@ The warn-mode evidence week for the gates is in [docs/enforce-mode.md](./enforce
 A new opt-in stack plugin for Electron apps, from Jody's Electron skills survey of 2026-10-30.
 Folder: [intent/2026-10-30-pro-electron/](../intent/2026-10-30-pro-electron/intent.md); spec and plan approved by Jody on 2026-10-30.
 Ships `electron-skills-bridge` (jwynia `electron-best-practices`, laststance `electron-release`, manual Playwright MCP over CDP), `electron-upgrade` and `electron-security-audit`.
-Live plugin and behavioral evals (AC6) still to run.
+Live evals passed on 2026-10-30 (docs/evals.md).
 
 ### constraint-floor (ranked item 1)
 

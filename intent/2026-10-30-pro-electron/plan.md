@@ -83,14 +83,14 @@ Each must exit 0.
 
 - Build commit: the `feat: pro-electron` commit on `feat/pro-electron`.
 - Checks run: `node tests/check.mjs` 37 checks, 0 failures, 10 warnings; `node tests/eval.mjs --dry` 96 cases, 102 skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 77/95 (81.1%, main 79.5%), notOneOf failures 2 (main 3); `node --test tests/unit/*.test.mjs` 167 pass; audit tests 16 pass; `node tests/behavioral.mjs --dry-run` ok, 8 runs planned; `claude plugin validate . --strict` and the per-plugin loop pass.
-- Definition of done: met except AC6, which needs a live run.
+- Definition of done: met.
 - Doubt: none
 - AC1: pass.
 - AC2: pass, 16 of 16; every planted fault found, clean fixture zero findings.
 - AC3: pass, all seven new cases rank first.
 - AC4: pass.
 - AC5: pass; the plugin's `install` command is listed in `components-uncovered.json` with the same reason as the other owner install commands.
-- AC6: not run yet; needs an API key and about two dollars on Sonnet.
+- AC6: pass. Every skill fired 3 of 3 and every quiet case 0 of 3; behavioral upgrade 4 of 5 against 0 of 5, audit 5 of 5 against 4 of 5 (Sonnet, Claude Code 2.1.314, $1.77; numbers in docs/evals.md).
 - Sign-off:
 
 ## Departures from plan
