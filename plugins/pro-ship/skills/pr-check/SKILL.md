@@ -54,6 +54,7 @@ Every subcommand prints JSON and is run from the repo root.
    Print `docs        current` or `docs        stale <n>` with one `Should-fix: <doc> (<what changed>)` line each.
    For each stale doc, either fix it with `/document` from the diff, commit and rerun, or give the doc and why it stays on the Docs line of the PR body.
    Never edit a doc only to show it moved.
+   The `documentation-and-adrs` skill has the table of which change touches which doc.
    A stale doc never changes `result`, never stops the run and never blocks.
 
 ## Classify
