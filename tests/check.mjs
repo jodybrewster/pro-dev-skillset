@@ -663,7 +663,7 @@ checks["memory-hooks"] = () => {
   return { failures, warnings };
 };
 
-// pro-quality doc hooks (docs-before-push, docs-to-project): the case table lives
+// pro-quality doc hook (docs-to-project): the case table lives
 // in tests/doc-hooks.mjs. A missing python3 or git is a warning-level skip.
 checks["doc-hooks"] = () => {
   const failures = [], warnings = [];

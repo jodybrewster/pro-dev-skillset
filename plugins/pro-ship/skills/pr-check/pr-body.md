@@ -37,6 +37,8 @@ When Codex did not run, write one line: `Codex review: <status> (<reason>)`, tak
 - Open findings: floor findings and reviewer findings that are still unresolved, with the counts from the stamp.
 - Missing documents: each missing required document with its rule and "Should-fix", from the `documents` line of the report.
   Write "none" only when the check ran and found none, else "not checked (<why>)".
+- Docs: each stale doc from the `docs` line of the report, either "updated" or the one-line reason it stays.
+  Write "current" when the check found none stale.
 - Security surface: the categories the classifier reported, or "none".
 
 ## How to revert

@@ -106,7 +106,7 @@ def git(repo: str, *args: str) -> tuple[bool, str]:
 
 
 # ---------------------------------------------------------------------------
-# Command parsing, copied from docs-before-push.py and extended to gh pr create.
+# Command parsing, first written for the removed docs-before-push hook and extended to gh pr create.
 # ---------------------------------------------------------------------------
 
 HEREDOC_RE = re.compile(r"(?<!<)<<(?!<)-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
