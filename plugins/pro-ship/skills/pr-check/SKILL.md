@@ -47,6 +47,14 @@ Every subcommand prints JSON and is run from the repo root.
    When `REVIEW.md` is among the missing documents, point to `/pro-dev install`.
    A missing document is Should-fix.
    It never changes `result`, never stops the run and never blocks.
+4. Check that docs changed where behavior changed (the definition of done).
+   Read `git diff <base>..HEAD` and the docs the repo already has: `README.md`, `AGENTS.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `PRODUCT.md`, `DESIGN.md`, `docs/` and the ADRs.
+   A doc is stale only when it now says something the diff made untrue, or leaves out a command, flag, setting or rule the diff added.
+   A doc that describes nothing the diff touched needs no change, so a code change does not require every doc to move.
+   Print `docs        current` or `docs        stale <n>` with one `Should-fix: <doc> (<what changed>)` line each.
+   For each stale doc, either fix it with `/document` from the diff, commit and rerun, or give the doc and why it stays on the Docs line of the PR body.
+   Never edit a doc only to show it moved.
+   A stale doc never changes `result`, never stops the run and never blocks.
 
 ## Classify
 
@@ -237,6 +245,8 @@ pr-check on 3f9c2ab (base 81d04e7)
   floor       pass   floor-guard.py --check
   documents   missing 1
               Should-fix: ARCHITECTURE.md (more than one module, service or deployable: workspaces in package.json)
+  docs        stale 1
+              Should-fix: README.md (the --dry flag the diff added is not in the usage section)
   mutation    killed src/gate.ts
   code review done   reviewer: 0 blocking, 2 important
   codex       done   codex: 3 important, 1 agreed, 1 disputed
@@ -271,4 +281,5 @@ When the script is missing (Codex ships only skills, or the plugin path is not s
 4. Draft the PR body.
 5. The Codex review is skipped: no script.
 6. Run `required-docs.py` from pro-quality when it can be found, and otherwise report "required documents: not checked".
-7. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.
+7. Check that docs changed where behavior changed, as in Setup step 4.
+8. Say "no stamp was written", because the stamp hooks run in Claude Code only and the script writes the stamp.
