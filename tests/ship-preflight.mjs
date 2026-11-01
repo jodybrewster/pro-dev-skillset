@@ -41,6 +41,9 @@ case "$1 $2" in
   "api repos/{owner}/{repo}/compare/"*) cat "$d/compare.txt" ;;
   "api repos/{owner}/{repo}/deployments?"*) cat "$d/deployments.json" ;;
   "api repos/{owner}/{repo}/deployments/"*) cat "$d/status-$(echo "$2" | sed 's|.*/deployments/\\([0-9]*\\)/.*|\\1|').json" ;;
+  "api repos/{owner}/{repo}/collaborators/"*)
+    u="\${2#repos/\\{owner\\}/\\{repo\\}/collaborators/}"; u="\${u%/permission}"
+    if [ -f "$d/perm-$u.txt" ]; then cat "$d/perm-$u.txt"; else echo read; fi ;;
   "api repos/{owner}/{repo}/commits/"*)
     s="\${2#repos/\\{owner\\}/\\{repo\\}/commits/}"; s="\${s%/pulls}"
     if [ -f "$d/pulls-$s.json" ]; then cat "$d/pulls-$s.json"; else echo "[]"; fi ;;
@@ -268,6 +271,10 @@ export function runShipPreflightCases() {
     covers("a PR by a member is covered", true, { author: { login: "mate" }, authorAssociation: "MEMBER" });
     covers("a PR by the owner is covered", true, { author: { login: "boss" }, authorAssociation: "OWNER" });
     covers("a PR with no author data covers nothing", false, { author: null, authorAssociation: undefined });
+    // Real \`gh pr list\` prints no authorAssociation, so the login's push permission decides.
+    covers("a PR by a login with write permission is covered", true, { author: { login: "mate2" }, authorAssociation: undefined }, { "perm-mate2.txt": "write" });
+    covers("a PR by a login with read permission covers nothing", false, { author: { login: "reader" }, authorAssociation: undefined }, { "perm-reader.txt": "read" });
+    covers("a PR by a bot login covers nothing", false, { author: { login: "app/dependabot" }, authorAssociation: undefined });
     covers("a PR with no cross-repository flag covers nothing", false, { isCrossRepository: undefined });
     covers("two markers in one body cover nothing", false, { body: marker(p1a) + marker(p1a) });
     covers("a pass marker followed by a forged second one covers nothing", false, { body: marker(p1a) + marker(p1a, "pass", "low") });

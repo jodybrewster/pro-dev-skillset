@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-31-ship-preflight/intent.md
 intent-status: accepted
-status: draft
+status: done
 created: 2026-10-31T22:17:44-0400
 author: the maintainer
 ---
@@ -9,7 +9,7 @@ author: the maintainer
 # Spec: `/ship` preflight with a go/no-go verdict
 
 Built from `intent.md` in this folder (commit e73cbf5).
-Status: draft.
+Status: done.
 Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `docs/pr-check-stamp.md`, ADR-0002, ADR-0003, ADR-0004, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, `docs/enforce-mode.md`, `plugins/pro-ship/scripts/merge-gate.py`, `plugins/pro-ship/scripts/pr-gate.py`, `plugins/pro-ship/skills/pr-check/` (SKILL.md, discovery.md, pr-body.md), `plugins/pro-security/scripts/push-gate.py`, `plugins/pro-ai-sdlc/scripts/production-gate.py`, `plugins/pro-legal/scripts/release-gate.py`, the `using-pro-dev` router, `../agent-skills/commands/ship.toml` and `skills/shipping-and-launch/SKILL.md` (MIT) and mieruka's `apps/web/src/service/spdd-evidence.ts`, `apps/web/src/lib/db.ts` and `apps/web/src/features/ship/DeployPanel.tsx`.
 No `DESIGN.md` or `SECURITY.md` exists in this repo; the installed `pro-security` skills were read for the hook rules REVIEW.md repeats.
 

@@ -1,7 +1,7 @@
 # Plan: `/ship` preflight with a go/no-go verdict
 
 Built from `spec.md` (as revised in #123) and `intent.md` in this folder.
-Status: approved.
+Status: implemented.
 Approver: the maintainer.
 It adds a hook to every repo that installs pro-ship, changes the merge gate and pro-legal's release gate and adds two pro-quality agents, so it does not suit auto mode.
 The blast radius stays small: the new gate starts in warn, reads one file, makes no network call and fails open.
@@ -127,13 +127,26 @@ claude plugin validate . --strict
 
 ## Done
 
-- Build commit:
-- Checks run:
-- AC1 to AC17:
-- Sign-off:
+- Build commits: builders A to E and the review fixes on `ship/build` (part-a `b23c311`, part-b, part-c `d344b20`, part-d `5d1bc4d`, part-e `e6ad8e8`, part-f `f15f1e6`), plus the integration commit with the version bumps.
+- Reviews: a fresh-context `security-architect` diff review (one medium finding, the forgeable PR body marker, plus two to verify) and a fresh-context `pro-ai-sdlc:reviewer` pass (two Important bugs, five nits); every finding was fixed in part-f except the deploy-scope legal limit, which is documented.
+- Checks run: `node tests/check.mjs` 40 checks, 0 failures, 12 warnings; `node tests/eval.mjs --dry` 98 cases; `node tests/route-lexical.mjs --min-rank1 70` rank-1 79 of 97; `node --test tests/unit/*.test.mjs` 167 pass, 0 fail; `tests/ship-preflight.mjs` 90 of 90; `tests/ship-hooks.mjs` 351 of 351; `tests/legal-hooks.mjs` 336 cases, 0 failures; `tests/ship-check.mjs` 189 of 189; `claude plugin validate . --strict` and all 21 plugins passed; `tests/check.mjs names` passed.
+- AC1 to AC12a, AC14 to AC17: pass, each covered by the test files above.
+- Live checks: `ship.py targets` on this repo returns the `marketplace` tag-release target from the new Ship block in `CLAUDE.md`; `ship.py scope` returns the range from the last `*--v*` tag; `ship.py coverage` over that range read 48 merged PRs through the real `gh` and reported every commit uncovered, as expected before any PR carries a marker.
+- AC13: open. In mieruka `ship.py targets` reports a `publish` target for `apps/web`, because mieruka has no Ship block yet; its `.mieruka/evidence/` is git-ignored, so the drop will land. The Ship block and the first live run belong to the mieruka-side intent.
+- Sign-off: the maintainer, 2026-11-01, by asking for the ship command to be finished.
 
 The sign-off moves the intent and the spec to `done` and ADR-0022 to `accepted`.
 
 ## Departures from plan
 
-None yet.
+- Both new pro-quality agents are read-only (`Read, Grep, Glob, Bash`, Codex `sandbox_mode = "read-only"`); upstream's test-engineer writes tests, while a ship-time reviewer reports the tests that would close each gap.
+- The web-performance-auditor takes Lighthouse or PageSpeed JSON that the skill captures, because a subagent with a fixed tool list cannot call the Chrome DevTools MCP.
+- Coverage counts a marker only when the PR is not from a fork and its author is the current gh user or can push to the repo (security review finding 1). `gh pr list` cannot print `authorAssociation`, so push permission is read from `repos/{owner}/{repo}/collaborators/<login>/permission`, once per login and only for PRs that carry a marker. A body with two markers counts as none.
+- The legal skip also requires `legal.head` to equal the record's `head`.
+  `ship.py record` refuses a done legal review of another commit.
+- Tag detection accepts any tag holding a semver version.
+  The Ship block's `tag_pattern` overrides it; this repo's `CLAUDE.md` gained a Ship block for its `<plugin>--vX.Y.Z` tags.
+- `record` also refuses a GO with no targets, a report whose `head` is not the current HEAD and a report with no `report_md`.
+- `ship-gate.py` keeps its state under its own keys in the session state file pr-gate uses.
+  It checks every shipping command in a compound command.
+- For a deploy target scoped from a GitHub deployment, pro-legal's gate still asks once, because its base is the last tag; this is recorded as a known limit in `docs/ship-preflight.md` and the spec.

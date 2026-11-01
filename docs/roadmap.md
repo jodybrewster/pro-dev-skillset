@@ -15,21 +15,19 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 [intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md) shipped on 2026-11-01: no maintainer name or chat quotes in tracked files and the upstream named agent-skills outside its license lines, held by the `names` check in `tests/check.mjs`.
 
-### Next: item 15, `/ship` preflight
+### Done: item 15, `/ship` preflight
 
-All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
-Intent accepted and [spec](../intent/2026-10-31-ship-preflight/spec.md) written on 2026-10-31, with [ADR-0022](./decisions/0022-ship-preflight-record.md) proposed.
-On 2026-11-01 the spec took in the rest of agent-skills' shipping material (the review fan-out with `test-engineer`, the six-section pre-launch checklist, rollout plan, post-launch verification, the error-budget gate and a `web-performance-auditor` pass), with a table of what was kept, replaced or dropped and why.
-The build merges when it is green: the neutral-repo PRs already bumped pro-ship twice on 2026-11-01, so the warn-mode week is counted per gate script, and only the merge gate's script changes here.
-The spec's three recommendations are taken: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
-mieruka's web app and CLI run only locally and nothing is published, so mieruka is a tag-and-release project for now.
-It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read.
+`/pro-ship:ship` shipped on 2026-11-01 ([intent](../intent/2026-10-31-ship-preflight/intent.md), [spec](../intent/2026-10-31-ship-preflight/spec.md), [plan](../intent/2026-10-31-ship-preflight/plan.md), [ADR-0022](./decisions/0022-ship-preflight-record.md) accepted).
+It reads how a project ships, reviews only the commits no trusted pr-check marker covers, runs agent-skills' full pre-launch checklist with the test-engineer and web-performance-auditor agents and the legal review and writes a GO or NO-GO record the merge gate, the new `ship-gate` and pro-legal's gate read.
+`ship-gate` starts in warn and its evidence period starts with this release.
+Left: a Ship block and the first live run in mieruka (AC13), which go with the mieruka-side intent that also shows the record on its Ship page.
 
-Waiting on the maintainer, none of which blocks item 15:
+### Waiting on the maintainer
 
-- ADRs 0016 to 0020 are proposed and wait for acceptance.
-- The warn-mode evidence week for the floor guard, pr-gate and merge gate in two repos, with the decision record due 2026-11-13 ([docs/enforce-mode.md](./enforce-mode.md)).
+- ADRs 0016 to 0021 are proposed and wait for acceptance.
+- The warn-mode evidence week for the floor guard, pr-gate and merge gate in two repos, with the decision record due 2026-11-13 ([docs/enforce-mode.md](./enforce-mode.md)); the merge gate's script changed on 2026-11-01, so its own period restarts that day.
 - The four intents under [Housekeeping](#housekeeping): finish the remainder or mark them `done`.
+- The twelve-factor-skill build still sits uncommitted in another session's worktree, while the brainstorm moved twelve-factor into the architecture review (item 17); it needs a call before it is committed.
 
 ### Since P1 (2026-10-30 and 2026-10-31)
 

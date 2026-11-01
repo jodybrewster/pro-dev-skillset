@@ -49,6 +49,10 @@ MARKER = re.compile(
     r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)\s*-->")
 SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
 TRUSTED_ASSOCIATIONS = ("OWNER", "MEMBER", "COLLABORATOR")
+# `gh pr list` cannot print authorAssociation, so a login is checked against the repo's
+# collaborator permission instead; these levels can push to the repo.
+TRUSTED_PERMISSIONS = ("admin", "maintain", "write")
+LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
 DEPLOY_WORDS = re.compile(r"\b(deploy|vercel|netlify|fly|flyctl|wrangler)\b", re.I)
 LEGAL_STATUS = ("done", "not-installed", "could-not-run")
 SKIP_DIRS = {"node_modules", ".git", ".pro-dev"}
@@ -624,14 +628,30 @@ def current_user(root: str) -> str | None:
     return out or None
 
 
-def trusted_author(p: dict, me: str | None) -> bool:
+def can_push(root: str, login: str, cache: dict) -> bool:
+    """Whether a login can push to this repo, read once per login; any failure means no."""
+    if login not in cache:
+        try:
+            perm = gh_run(root, ["api", f"repos/{{owner}}/{{repo}}/collaborators/{login}/permission",
+                                 "--jq", ".permission"], f"reading the permission of {login}").strip()
+        except Refuse:
+            perm = ""
+        cache[login] = perm in TRUSTED_PERMISSIONS
+    return cache[login]
+
+
+def trusted_author(p: dict, me: str | None, root: str | None = None, cache: dict | None = None) -> bool:
     """A marker is the author's word, so it counts only from someone who can write to this repo."""
     if p.get("cross") is not False:
         return False
     login = p.get("author")
     if me and isinstance(login, str) and login == me:
         return True
-    return p.get("assoc") in TRUSTED_ASSOCIATIONS
+    if p.get("assoc") in TRUSTED_ASSOCIATIONS:
+        return True
+    if root is None or cache is None or not isinstance(login, str) or not LOGIN.match(login):
+        return False
+    return can_push(root, login, cache)
 
 
 def cmd_coverage(root: str, args: list[str]) -> dict:
@@ -643,7 +663,7 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     commits = git_lines(root, "rev-list", "--reverse", f"{base}..{head}")
     cset = set(commits)
     listed = gh_json(root, ["pr", "list", "--state", "merged", "--limit", "500",
-                            "--json", "number,headRefOid,mergeCommit,body,author,authorAssociation,isCrossRepository"], "listing merged PRs")
+                            "--json", "number,headRefOid,mergeCommit,body,author,isCrossRepository"], "listing merged PRs")
     if not isinstance(listed, list):
         raise Refuse("ship: coverage: gh pr list did not print a list")
     me = current_user(root)
@@ -700,9 +720,15 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     if len(unmapped) > PULLS_LOOKUP_CAP:
         errors.append(f"ship: coverage: looked up {PULLS_LOOKUP_CAP} of {len(unmapped)} unmapped commits; the rest stay uncovered")
 
+    perm_cache: dict[str, bool] = {}
+
+    def trusted(p: dict) -> bool:
+        # Only a PR with a marker needs its author checked, so most PRs cost no lookup.
+        return parse_marker(p["body"]) is not None and trusted_author(p, me, root, perm_cache)
+
     def member_covered(n: int, sha: str) -> bool:
         p = prs[n]
-        m = parse_marker(p["body"]) if trusted_author(p, me) else None
+        m = parse_marker(p["body"]) if trusted(p) else None
         tip = p["head"]
         if not (m and m["result"] == "pass" and isinstance(tip, str) and SHA.match(tip)):
             return False
@@ -719,7 +745,7 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     for n in sorted(prs):
         if not prs[n]["members"]:
             continue
-        out_prs.append({"number": n, "head": prs[n]["head"], "trusted": trusted_author(prs[n], me),
+        out_prs.append({"number": n, "head": prs[n]["head"], "trusted": trusted(prs[n]),
                         "marker": parse_marker(prs[n]["body"]),
                         "covered": all(member_covered(n, c) for c in prs[n]["members"])})
     out = {"prs": out_prs, "uncovered": [c for c in commits if c not in covered_set],
