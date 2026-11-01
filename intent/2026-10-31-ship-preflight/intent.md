@@ -100,14 +100,31 @@ The desktop section's rollback plan is publishing the previous version.
 A release action with no fresh GO for HEAD prints one warning.
 mieruka can show the verdict, blockers and rollback plan from the record alone.
 
+## Decisions
+
+Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations").
+
+1. Scenarios in v1: deploy on merge, tag and release, manual deploy and desktop app.
+   Package publish is a check that can only add Blockers (version, provenance, a dry run of the publish), because a publish cannot be taken back.
+2. The record is `.pro-dev/ship/preflight.json` beside `preflight.md`, bound to HEAD, with a contract page like [docs/pr-check-stamp.md](../../docs/pr-check-stamp.md).
+3. The gates:
+   - Deploy on merge: pro-ship's existing merge gate reads the record. Its medium and high message gains the verdict, or "no fresh GO for this PR". Low stays silent. No new prompt, since the merge gate already asks.
+   - Tag, release, manual deploy and publish: a new `ship-gate.py` registered in pro-ship's existing `hooks/hooks.json`.
+     In warn mode it prints one line when there is no fresh GO for HEAD.
+     In enforce mode it denies once per HEAD and lets the identical retry through, the push gate's pattern, so it never adds a prompt of its own.
+     `production-gate` (pro-ai-sdlc, opt-in) keeps its production ask unchanged and pro-legal's gate keeps its legal-surface check, so a release meets at most one prompt.
+   - This replaces the brainstorm's "no new hook". That assumed `production-gate` was always installed; pro-ai-sdlc became opt-in, so a starter repo has nothing on `git tag` or `gh release create` without it.
+4. The last production deploy is found in this order: the GitHub Deployments API for the production environment (`gh api repos/{owner}/{repo}/deployments`, which Vercel and many CI setups write to), then the newest release tag, then asking the person.
+   The repo config can name the source.
+5. The record carries, per target, the fields mieruka's deploy records use (URL, environment, commit), so mieruka can pair a deploy with the preflight that cleared it.
+   The pro-ship contract is the stable side; the mieruka intent adapts to it.
+6. One ADR for the preflight record contract, written with the spec.
+
 ## Open questions
 
-- Which shipping scenarios v1 covers: deploy on merge, tag and release, manual deploy, desktop app and package publish are the candidates; recommended: the first three plus desktop for mieruka, with package publish as a Blocker-only check.
-- Where the record lives and its name: recommended `.pro-dev/ship/preflight.json` beside `preflight.md`, with a contract page like `docs/pr-check-stamp.md`.
-- Which gate carries the warning when pro-ai-sdlc is not installed: the pro-ship merge gate for deploy on merge and a pro-ship check on tag, release and deploy commands otherwise, with `production-gate` reading the same record when it is installed.
-- How "the last production deploy" is found: a deploy record, the platform's CLI or the last release tag.
-- Whether mieruka's existing deploy records (`spdd_record_deploy`) and this record should share a shape; to settle with the mieruka intent.
-- Likely needs an ADR for the record contract, as the stamp did (ADR-0014).
+- Is mieruka's web app hosted anywhere, or does it only run locally from a tagged release? This decides whether mieruka's web target is a deploy or only part of the tag (Jody).
+- Is mieruka's CLI published to npm? `apps/web/package.json` is not marked private (Jody).
+- mieruka's desktop app has no installer yet (release 5, M4), so its rollback today is checking out the previous tag; the installer case waits until packaging exists.
 
 ## Evidence
 
