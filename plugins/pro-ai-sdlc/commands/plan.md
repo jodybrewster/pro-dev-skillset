@@ -89,4 +89,4 @@ When the build strays from the plan, record that under Departures in the same co
 
 The path, the commit hash, the riskiest step and the approver if one is needed.
 
-Sizes, split triggers, checkpoints and self-review adapted from addyosmani/agent-skills (skills/planning-and-task-breakdown/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Sizes, split triggers, checkpoints and self-review adapted from agent-skills (skills/planning-and-task-breakdown/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

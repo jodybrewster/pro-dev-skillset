@@ -88,4 +88,4 @@ Fix as you go when the change is unambiguous. Flag as a question when there's a 
 
 ---
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

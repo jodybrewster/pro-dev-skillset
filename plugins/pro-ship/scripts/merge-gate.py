@@ -42,7 +42,7 @@ import time
 
 HOOK = "merge-gate"
 # permission_mode values in which a hook "ask" is not known to prompt; in enforce these deny.
-# Fail closed: the set shrinks only after an interactive ask check per mode (Jody, 2026-10-30).
+# Fail closed: the set shrinks only after an interactive ask check per mode.
 # Evidence, probed headless on 2026-10-30, Claude Code 2.1.314: `claude -p` with --permission-prompts none
 # under each --permission-mode, a PreToolUse hook answering "ask" for one echo command. The ask
 # denied the command in every mode (the hook logged these permission_mode values): auto, default

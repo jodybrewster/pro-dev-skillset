@@ -202,4 +202,4 @@ They compose: use `motion` for the rules, use `hyperframes` for the execution.
 
 ---
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

@@ -1,9 +1,8 @@
 {
   "name": "pro-speckit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Glue for GitHub's spec-kit: a bridge skill for its constitution, specify, plan, tasks and implement flow plus a remove command that takes it out of a repo. spec-kit and its specify CLI are installed by /pro-dev install or /pro-speckit:install, which needs pro-core installed.",
   "author": {
-    "name": "Jody Brewster",
-    "email": "jodybrewster@gmail.com"
+    "name": "pro-dev-skillset"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "pro-speckit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Glue for GitHub's spec-kit: a bridge skill for its constitution, specify, plan, tasks and implement flow. Codex users install the specify CLI with the bridge's own lines; /pro-speckit:install and /pro-speckit:remove are Claude Code commands.",
   "skills": "./skills/"
 }

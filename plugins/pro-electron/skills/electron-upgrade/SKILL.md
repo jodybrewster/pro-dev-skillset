@@ -97,4 +97,4 @@ If the app signs or notarizes builds, say that a signed test build is still need
 
 _Written from the official Electron documentation (electronjs.org), checked 2026-10-30._
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

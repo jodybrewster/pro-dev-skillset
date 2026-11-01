@@ -13,7 +13,7 @@
 #
 # The constraints skill, the CONSTRAINTS.md template, the rule list in
 # scripts/floor-guard.py and the code-reviewer agent (agents/code-reviewer.md
-# and its Codex twin) adapt content from addyosmani/agent-skills
+# and its Codex twin) adapt content from agent-skills
 # (https://github.com/addyosmani/agent-skills), also MIT licensed:
 #   addyosmani/agent-skills: Copyright (c) 2025 Addy Osmani
 # The text, the agent prompt and the guard code were rewritten for this marketplace.
