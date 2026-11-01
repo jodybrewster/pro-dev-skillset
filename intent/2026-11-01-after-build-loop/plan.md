@@ -1,7 +1,7 @@
 # Plan: carry the loop past the build
 
 Built from `spec.md` and `intent.md` in this folder.
-Status: approved.
+Status: implemented.
 Approver: the maintainer; the format hook and the verifier rule touch gates, so a security-architect challenge of this plan runs before the build (see Security challenge).
 Dated: 2026-11-01.
 
@@ -250,7 +250,7 @@ All pass, with the new test files counted inside `tests/check.mjs`.
 - AC8: pass, `tests/mieruka-sync.mjs` against the mieruka checkout.
 - AC9: not run. The hand runs of `/incident`, `/review` with a repeat, `/pro-ship:deployed` and `/execute` with a mock need a session on the released plugins; they are left for the first real use and noted in the PR.
 - AC10: pass, the commands above.
-- Sign-off:
+- Sign-off: approved by the maintainer on 2026-11-01; AC9's hand runs stay open for the first real use.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0023 from `proposed` to `accepted`.
