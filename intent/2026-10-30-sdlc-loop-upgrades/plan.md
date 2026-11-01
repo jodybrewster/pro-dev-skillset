@@ -2,10 +2,10 @@
 
 Built from `spec.md` (accepted 2026-10-30, committed with this plan) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-30.
 
-Jody approved the batch on 2026-10-30 and asked that it go through spec, plan and execute.
+The batch was approved on 2026-10-30 to go through spec, plan and execute.
 He is named as approver because the batch changes `/execute` (the stage that builds unattended) and sets two rules other work follows (ADR-0017).
 The intent is risk medium.
 The prose of the commands is the product, so the trials in step 22 need a person to read their output.
@@ -30,7 +30,7 @@ In `plugins/pro-ai-sdlc` (modified):
 - `templates/adr.md`: `deprecated` in the status line (R24).
 - `agents/verifier.md` and `.codex-plugin/agents/verifier.toml`: the test lens, the `Tests` report line and the verdict rule (R21, R22, R26).
 - `agents/simplifier.md` and `.codex-plugin/agents/simplifier.toml`: `git blame`, the callers-and-history check and the balance rule (R25, R26).
-- `LICENSE`: the attribution notice and the Addy Osmani copyright line (R27).
+- `LICENSE`: the attribution notice and the agent-skills copyright line (R27).
 - `README.md`: name `references/definition-of-done.md` beside the templates and the new `/execute` stop list.
 - `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`: version and description (R30).
 
@@ -111,7 +111,7 @@ Every step ends with its own commit that stages only the files it names, by path
 8. Write `plugins/pro-ai-sdlc/references/definition-of-done.md`. (XS; R19, R27; track P)
    - A title, one line on precedence (a repo's `CONSTRAINTS.md` or `REVIEW.md` wins where it says more) and one line on use (the plan's `## Done` cites this file in one line and names the items not met).
    - The items, one per line: the verify command passes; every acceptance criterion was observed; new behavior has tests that fail without the change and cover the scenarios that apply; no new warnings, debug output or commented-out code; no secrets or env values in code, logs, commits or the PR; docs changed where behavior changed (README, agent file, an ADR when a rule changed); version and changelog rules of the repo followed; departures and noticed items recorded in the plan; the verifier ran and its verdict is recorded.
-   - Harness-neutral prose, under 30 lines, ending with the footer `Adapted from addyosmani/agent-skills (references/definition-of-done.md), MIT, Copyright (c) 2025 Addy Osmani.`
+   - Harness-neutral prose, under 30 lines, ending with the footer `Adapted from agent-skills (references/definition-of-done.md), MIT, Copyright (c) 2025 Addy Osmani.`
 9. Edit `plugins/pro-ai-sdlc/templates/plan.md`. (XS; R20, N2; track P)
    - Change the `## Order of work` example to `1. <a step small enough to check by itself> (size XS or S; R1, AC1)` and add a second line `   Checkpoint: <the commands to run and what to confirm>`.
    - In `## Done`, after `- Checks run:`, add `- Definition of done: <met, or the items not met> (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)`.
@@ -163,7 +163,7 @@ Every step ends with its own commit that stages only the files it names, by path
     - Report: add item `6. Tests: the scenarios missing for new behavior and any test that cannot fail, or "right tests"`.
     - Verdict: missing scenarios for new behavior make it at best `VERDICT: incomplete`; a test that cannot fail makes it `VERDICT: fail`.
     - Description: add "and checks that the tests it added are the right tests" without dropping any existing words.
-    - End with the footer `Test lens adapted from addyosmani/agent-skills (agents/test-engineer.md), MIT, Copyright (c) 2025 Addy Osmani.`
+    - End with the footer `Test lens adapted from agent-skills (agents/test-engineer.md), MIT, Copyright (c) 2025 Addy Osmani.`
     - Run `node tests/route-lexical.mjs --min-rank1 70` and confirm the verifier case at `tests/cases/routing.jsonl` line 84 still ranks it first.
 16. Mirror the verifier into `.codex-plugin/agents/verifier.toml`. (XS; R26, AC11; track V, after step 15)
     - Copy the step 15 body into `developer_instructions` and the new description into `description`.
@@ -172,7 +172,7 @@ Every step ends with its own commit that stages only the files it names, by path
     - Bash line: "Use Bash only for `git status`, `git diff`, `git log`, `git blame` and the verify command."
     - New section `## 2b. Before removing anything` after `## 2. What to remove`: Grep for every caller; read `git log -S<symbol>` and `git blame` on the lines; leave it and report it when the history gives a reason, such as a bug fix or a workaround.
     - Add to "Leave alone": a helper that names a concept, even with one caller; an inline that makes the caller longer or harder to read; merging two things that only look alike.
-    - Footer: `Callers-and-history check and balance rule adapted from addyosmani/agent-skills (skills/code-simplification/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.`
+    - Footer: `Callers-and-history check and balance rule adapted from agent-skills (skills/code-simplification/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.`
     - Copy the body into the `.toml` and diff the two as in step 16.
 18. Edit `commands/adr.md` and `templates/adr.md`. (S; R23, R24, AC12; track A)
     - Context: extend "ADR folders present" to `docs/adr docs/decisions doc/adr adr docs/architecture/decisions decisions`.
@@ -180,14 +180,14 @@ Every step ends with its own commit that stages only the files it names, by path
     - Step 1: ask whether the decision replaces or retires an earlier ADR.
     - Step 4: an ADR retired with no replacement gets status `deprecated` with the date and its index row updated; add `Never delete an old ADR; mark it superseded or deprecated.`
     - `templates/adr.md`: the status line becomes `Status: proposed | accepted | deprecated | superseded by <NNNN>`.
-    - Footer on `commands/adr.md`: `Convention check and deprecated status adapted from addyosmani/agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.`
+    - Footer on `commands/adr.md`: `Convention check and deprecated status adapted from agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.`
 
     Checkpoint E: `node tests/check.mjs` passes with 0 failures; `node tests/route-lexical.mjs --min-rank1 70` passes.
 
 19. Attribution. (XS; R27, AC14)
     - Footers on `commands/execute.md` (after the never-merge line), `commands/spec.md` and `commands/plan.md`, naming the upstream files from the intent's Evidence: `commands/build.toml`, `skills/incremental-implementation/SKILL.md` and `skills/git-workflow-and-versioning/SKILL.md` for execute; `skills/spec-driven-development/SKILL.md` for spec; `skills/planning-and-task-breakdown/SKILL.md` for plan; each with "MIT, Copyright (c) 2025 Addy Osmani".
     - `plugins/pro-ai-sdlc/LICENSE`: add a `#` notice block at the top in the form of `plugins/pro-quality/LICENSE` naming `templates/REVIEW.md`, the loop text in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md`; add `Copyright (c) 2025 Addy Osmani` under the existing copyright line.
-    - `docs/licenses.md`: add a pro-ai-sdlc row after line 65 for "loop guardrails in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md`", upstream addyosmani/agent-skills, MIT, Copyright (c) 2025 Addy Osmani, adapted.
+    - `docs/licenses.md`: add a pro-ai-sdlc row after line 65 for "loop guardrails in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md`", upstream agent-skills, MIT, Copyright (c) 2025 Addy Osmani, adapted.
 20. READMEs. (XS)
     - `plugins/pro-ai-sdlc/README.md`: add `references/definition-of-done.md` after the templates list with one line on what cites it plus one line on the `/execute` stop list.
     - Root `README.md` pro-ai-sdlc line near 239: add "a standing definition of done every plan cites" and "a stop list that pauses `/execute` before risky steps".
@@ -213,7 +213,7 @@ Every step ends with its own commit that stages only the files it names, by path
 - `node tests/check.mjs` (the version-bump and manifest checks) covers AC15.
 - The trials in step 22 cover AC4, AC8 and AC10 and need a person to read the output.
 - `grep -n "0017" docs/decisions/README.md` and the ADR's status line cover AC16.
-- `grep -n "Addy Osmani" plugins/pro-ai-sdlc/LICENSE docs/licenses.md` and a grep for "agent-skills" over the edited commands and agents cover AC14.
+- `grep -n "Copyright (c) 2025 Addy Osmani" plugins/pro-ai-sdlc/LICENSE docs/licenses.md` and a grep for "agent-skills" over the edited commands and agents cover AC14.
 
 ## Risks
 
@@ -272,14 +272,14 @@ Filled in when the build is finished, before sign-off.
 - Definition of done: not met on one item: the verifier agent was not dispatched in this build, so its verdict is not recorded (pro-ai-sdlc `references/definition-of-done.md`, shipped by this plan). All other items met.
 - AC1: pass (the commands above).
 - AC2: pass after a fix. Deleting the `## Scope discipline` heading line first still passed, because step 5 names the heading inline. The check now also requires `## Stop list` and `## Scope discipline` as their own lines; deleting the heading then failed `sdlc-contract` and `git checkout` restored it. The other anchors were not each deleted by hand.
-- AC3: not run, needs Jody (live `claude plugin eval` spends API tokens). The case passes `node tests/check.mjs evals`.
-- AC4: not run, needs Jody (headless `/execute` run).
+- AC3: not run, needs the maintainer (live `claude plugin eval` spends API tokens). The case passes `node tests/check.mjs evals`.
+- AC4: not run, needs the maintainer (headless `/execute` run).
 - AC5: pass (sdlc-contract anchors; `execute-gate.py` has no diff).
-- AC6: pass for the text (anchors in `/spec` and `templates/spec.md`); the unattended `spec-from-intent` eval was not run, needs Jody.
+- AC6: pass for the text (anchors in `/spec` and `templates/spec.md`); the unattended `spec-from-intent` eval was not run, needs the maintainer.
 - AC7: pass (anchors in `/plan` and `templates/plan.md`, `- Build commit:` unchanged).
-- AC8: not run, needs Jody (fresh subagent trial).
+- AC8: not run, needs the maintainer (fresh subagent trial).
 - AC9: pass (file exists, states the precedence, cited by `/plan`, `/execute` and `templates/plan.md`).
-- AC10: not run, needs Jody (verifier trial on the verifier-after-build scaffold).
+- AC10: not run, needs the maintainer (verifier trial on the verifier-after-build scaffold).
 - AC11: pass (body diffs of verifier and simplifier against their `.toml` twins are empty; both still `model: sonnet`; `check.mjs agents` and `codex-parity` pass).
 - AC12: pass (anchors in `/adr` and `templates/adr.md`; `/spec` points to `/adr` step 2).
 - AC13: pass (anchors in both simplifier twins).
@@ -314,4 +314,4 @@ An empty section tells the reviewer the diff follows the plan.
 
 ## Noticed but not touched
 
-- `plugins/pro-ai-sdlc/LICENSE` was already missing the Addy Osmani line for `templates/REVIEW.md`; step 19 fixes it because this batch touches the same file.
+- `plugins/pro-ai-sdlc/LICENSE` was already missing the agent-skills copyright line for `templates/REVIEW.md`; step 19 fixes it because this batch touches the same file.

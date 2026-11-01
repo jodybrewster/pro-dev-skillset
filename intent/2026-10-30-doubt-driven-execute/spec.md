@@ -3,7 +3,7 @@ intent: intent/2026-10-30-doubt-driven-execute/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T11:47:14-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: doubt-driven step in /execute
@@ -32,7 +32,7 @@ A non-interactive run skips Codex and says so.
 `/plan` can mark a step irreversible in the same field style as its size marker.
 The plan's Done section gets one line per doubted step.
 A check in `tests/check.mjs` proves the reviewer's prompt has no slot for a claim and that the two runner copies match.
-It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
+It reaches the maintainer and any session that runs `/execute` with pro-ai-sdlc installed.
 
 ## Requirements
 
@@ -50,7 +50,7 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   When nothing is found after a thorough read it says so plainly.
   It also says to read the diff and the brief and policy files itself, never to open, read or quote env files and to report each finding with file, line and a failure scenario.
   It has no placeholder of any kind. (Intent: Proposed outcome, Constraints.)
-- R6. `skills/doubt-driven-development/handoff.md` is pro-ai-sdlc's own copy of the four-field template (the accepted exception to ADR-0012, Jody 2026-10-30) and holds the four fields of ADR-0012 under a `## Fields` heading, in this order: `range`, `brief`, `policy` and `risk`, each with what goes in it and what never does.
+- R6. `skills/doubt-driven-development/handoff.md` is pro-ai-sdlc's own copy of the four-field template (the accepted exception to ADR-0012) and holds the four fields of ADR-0012 under a `## Fields` heading, in this order: `range`, `brief`, `policy` and `risk`, each with what goes in it and what never does.
   `range` is `<sha before the step>..<head of the step>`.
   `brief` is the paths to the plan (with the step number), the spec and the intent.
   `policy` is the paths to `REVIEW.md`, the agent file and `CONSTRAINTS.md` when each exists.
@@ -67,7 +67,7 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   It also stops when the person says to go on.
   A round is never run on an unchanged diff, except a re-run after a brief or policy gap.
   After three rounds with substantive findings still open, an interactive run stops at that step, prints the open findings in its own words and waits for the person.
-  An unattended run finishes the build, opens the pull request as a draft (`gh pr create --draft`) and lists the open findings under "Potential concerns" in the PR body; it does not stop the build (Jody, 2026-10-30).
+  An unattended run finishes the build, opens the pull request as a draft (`gh pr create --draft`) and lists the open findings under "Potential concerns" in the PR body; it does not stop the build.
   A large step is split, never given a fourth round. (Intent: Constraints; ADR-0011.)
 - R12. When two rounds in a row raise substantive findings and the session classes none of them as actionable, the skill treats that as validating instead of doubting and stops to ask the person in an interactive run.
   An unattended run treats those findings as open, finishes the build and opens the pull request with `--draft`, listing them under "Potential concerns" as R11 does. (Intent: Evidence, upstream red flag.)
@@ -121,8 +121,8 @@ It reaches Jody and any session that runs `/execute` with pro-ai-sdlc installed.
   The skill prose is harness-neutral and names the Codex fallback for the dispatch. (ADR-0004.)
 - R27. `tests/cases/routing.jsonl` gains one case that expects `doubt-driven-development` and has `egm-bridge` and `requesting-code-review` as `notOneOf`.
   `tests/cases/components-uncovered.json` gains `pro-ai-sdlc/skill:doubt-driven-development` with a reason, since a behavioral eval needs a live build with a subagent. (Test coverage rules.)
-- R28. `SKILL.md` and `doubt-instructions.md` end with the footer "Adapted from addyosmani/agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19), MIT, Copyright (c) 2025 Addy Osmani."
-  `docs/licenses.md` gains a pro-ai-sdlc row for the skill and `plugins/pro-ai-sdlc/LICENSE` carries the Addy Osmani copyright line. (Intent: Constraints.)
+- R28. `SKILL.md` and `doubt-instructions.md` end with the footer "Adapted from agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19), MIT, Copyright (c) 2025 Addy Osmani."
+  `docs/licenses.md` gains a pro-ai-sdlc row for the skill and `plugins/pro-ai-sdlc/LICENSE` carries the agent-skills copyright line. (Intent: Constraints.)
 
 ### Non-functional
 
@@ -188,7 +188,7 @@ Step-scoped staging from sdlc-loop-upgrades makes the step's commit hold only it
 
 - Dispatch pro-quality's `code-reviewer`: its prompt ignores any text outside the four fields (code-reviewer spec R3), so the adversarial wording would be dropped; pro-ai-sdlc also cannot depend on pro-quality.
 - Doubt the uncommitted diff: the session keeps editing while the reviewer reads, the classifier cannot read a working tree and a fix would have no clean range.
-- Doubt a step on a strong signal at medium tier: a strong medium signal such as a new dependency says nothing about reversibility (Jody, 2026-10-30).
+- Doubt a step on a strong signal at medium tier: a strong medium signal such as a new dependency says nothing about reversibility.
 - Pre-approve `codex-run.py` in `/execute`'s allowed tools: it would turn the per-run confirmation into a one-time grant.
 - Put the runner in pro-core: pro-ai-sdlc would still need to find it in another plugin's folder; a checked copy has no lookup.
 - Let a non-interactive run skip doubt on classifier-raised steps: an unattended run is where an unreviewed risky step costs most; the single-model round sends nothing off the machine.
@@ -201,12 +201,12 @@ ADR needed: yes, a hard-to-undo step in `/execute` gets a fresh-context adversar
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | ADR-0012 says there is one handoff template that callers reference and never copy, but pro-ai-sdlc cannot depend on pro-quality (ADR-0013). | ADR-0012, ADR-0013; Jody | resolved (Jody's approval of the recommendations, 2026-10-30): the skill keeps its own `handoff.md` with the same four fields, held by the same `handoff` check (R6, R25); ADR-0019 records the exception |
+| 1 | ADR-0012 says there is one handoff template that callers reference and never copy, but pro-ai-sdlc cannot depend on pro-quality (ADR-0013). | ADR-0012, ADR-0013 | resolved (the recommendations were approved on 2026-10-30): the skill keeps its own `handoff.md` with the same four fields, held by the same `handoff` check (R6, R25); ADR-0019 records the exception |
 | 2 | The intent recommends the `code-reviewer` agent or a plain subagent, but `code-reviewer` ignores text outside the four fields and so would drop the adversarial wording. | code-reviewer spec R3 | resolved: a plain fresh subagent on Opus (R8); a departure from the first half of the recommendation |
 | 3 | `/execute` says to copy its Secrets section into every subagent prompt, while ADR-0012 bars any text beyond the four fields. | `commands/execute.md` Secrets; ADR-0012 | resolved: `doubt-instructions.md` carries the env-file rule as fixed text that never varies with the change (R5) |
 | 4 | Two copies of `codex-run.py` can drift. | codex-second-reviewer; ADR-0013 | resolved: the `doubt` check fails on any byte difference (R24); a runner change edits both copies in one commit |
-| 5 | A Codex run sends the step's diff to a second vendor. | N2; Jody | resolved: per-run yes that shows the command and names the vendor (R13); never in a non-interactive run (R16) |
-| 6 | Stopping a non-interactive build after three open rounds breaks `/execute`'s run-to-PR promise. | `commands/execute.md`; ADR-0011 | resolved (Jody, 2026-10-30): an unattended run finishes the build and opens a draft PR with the open findings under "Potential concerns"; only an interactive run stops (R11) |
+| 5 | A Codex run sends the step's diff to a second vendor. | N2 | resolved: per-run yes that shows the command and names the vendor (R13); never in a non-interactive run (R16) |
+| 6 | Stopping a non-interactive build after three open rounds breaks `/execute`'s run-to-PR promise. | `commands/execute.md`; ADR-0011 | resolved (2026-10-30): an unattended run finishes the build and opens a draft PR with the open findings under "Potential concerns"; only an interactive run stops (R11) |
 | 7 | sdlc-loop-upgrades, untrusted-input-safety and required-documents may also bump pro-ai-sdlc and `metadata.version`. | ADR-0002 | resolved: take the next minor over `main` at build time and rebase first |
 | 8 | The doubt section's place and the plan marker's syntax depend on sdlc-loop-upgrades, which is not merged. | sdlc-loop-upgrades | resolved: the plan names sections by heading and reads the marker style after a rebase; it stops if the sections are missing |
 

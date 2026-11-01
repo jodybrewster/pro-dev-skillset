@@ -3,7 +3,7 @@ intent: intent/2026-10-30-codex-second-reviewer/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T11:50:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: Codex as a second reviewer on high-risk PRs
@@ -259,9 +259,9 @@ ADR needed: yes, a second reviewer from another vendor that is advisory in the g
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | Codex loads `AGENTS.md` on its own, from the repo and from the person's Codex home, so the reviewer sees more than the four fields. | ADR-0012; Jody | resolved: the repo's `AGENTS.md` is a policy file the handoff already names and the person's own Codex file matches the user `CLAUDE.md` a Claude subagent loads, so no session text leaks; recorded in ADR-0018 |
-| 2 | ADR-0006 says every row has install and update argv and every row owner ships `/<plugin>:install`; the `manual-cli` kind has neither and pro-core owns the row with `/pro-dev` as its installer. | ADR-0006 | resolved: ADR-0018 records both and ADR-0006 gets one amended line; Jody accepts at sign-off |
-| 3 | The consent answer lives in the committed `.claude/pro-dev.json`, so one person's yes sends diffs to OpenAI for every teammate who has Codex logged in. | intent Constraints; Jody | open: keep consent per repo as the unit for vendor exposure that fits a solo repo today (recommended) or add a per-person answer when the scaling block lands |
+| 1 | Codex loads `AGENTS.md` on its own, from the repo and from the person's Codex home, so the reviewer sees more than the four fields. | ADR-0012 | resolved: the repo's `AGENTS.md` is a policy file the handoff already names and the person's own Codex file matches the user `CLAUDE.md` a Claude subagent loads, so no session text leaks; recorded in ADR-0018 |
+| 2 | ADR-0006 says every row has install and update argv and every row owner ships `/<plugin>:install`; the `manual-cli` kind has neither and pro-core owns the row with `/pro-dev` as its installer. | ADR-0006 | resolved: ADR-0018 records both and ADR-0006 gets one amended line; the maintainer accepts at sign-off |
+| 3 | The consent answer lives in the committed `.claude/pro-dev.json`, so one person's yes sends diffs to OpenAI for every teammate who has Codex logged in. | intent Constraints | open: keep consent per repo as the unit for vendor exposure that fits a solo repo today (recommended) or add a per-person answer when the scaling block lands |
 | 4 | The intent says overlapping line ranges; exact overlap misses a bug cited two lines apart, so R19 widens each range by five lines. | intent Open questions | resolved: the window is a named constant `NEAR = 5` in `pr-check.py`, recorded in ADR-0018 and tunable after the first high-tier PRs |
 | 5 | `docs/pr-check-stamp.md` says `reviewers` holds exactly `code` and `security`. | ADR-0014 | resolved: the page now allows an optional `codex`; both readers already ignore unknown keys, a fixture proves it and no reader rule changes |
 | 6 | The Codex twin says "nothing you run sends the diff anywhere" while the run itself sends the diff to OpenAI. | `code-reviewer.toml`; intent Constraints | resolved: the sentence covers the agent's own commands and the opt-in answer is the consent for the vendor; the twin text stays equal to the `.md` |

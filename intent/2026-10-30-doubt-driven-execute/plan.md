@@ -2,11 +2,11 @@
 
 Built from `spec.md` and `intent.md` in this folder, committed together with this plan.
 Status: approved.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-30.
 
-Jody approved the plan with the batch on 2026-10-30 and named the changes in the Departures section.
-Jody is named as approver because the change adds a rule every `/execute` build follows (ADR-0019) and lets a session send code to a second vendor on a yes.
+The plan was approved with the batch on 2026-10-30 and the changes are named in the Departures section.
+The maintainer is named as approver because the change adds a rule every `/execute` build follows (ADR-0019) and lets a session send code to a second vendor on a yes.
 The skill's prose is the product and AC6 and AC7 need a person to watch one real run.
 It does not suit auto mode.
 
@@ -29,7 +29,7 @@ In pro-ai-sdlc (modified):
 - `plugins/pro-ai-sdlc/commands/execute.md`: a `## Doubt` section beside the stop list section, a pointer from step 5, a stage line and the report line (R18 to R20).
 - `plugins/pro-ai-sdlc/commands/plan.md`: when to mark a step irreversible (R21).
 - `plugins/pro-ai-sdlc/templates/plan.md`: the `irreversible` marker and the `Doubt:` line under Done (R21, R22).
-- `plugins/pro-ai-sdlc/LICENSE`: the Addy Osmani attribution, unless sdlc-loop-upgrades already added it (R28).
+- `plugins/pro-ai-sdlc/LICENSE`: the agent-skills attribution, unless sdlc-loop-upgrades already added it (R28).
 - `plugins/pro-ai-sdlc/.claude-plugin/plugin.json`: minor version bump; the description names the skill.
 - `plugins/pro-ai-sdlc/.codex-plugin/plugin.json`: the same version and description plus `"skills": "./skills/"` (R26).
 
@@ -87,7 +87,7 @@ Checkpoint A: `node tests/check.mjs doubt` fails only on the skill files and the
 Change one byte in the copy, see the `doubt` check name the runner, then restore it with `git checkout -- plugins/pro-ai-sdlc/scripts/codex-run.py` (AC4).
 
 4. (XS) Write `doubt-instructions.md`. (R5, R28, N4; parallel)
-   - Adapt the upstream adversarial prompt from `skills/doubt-driven-development/SKILL.md` in addyosmani/agent-skills (Step 3, the fenced block) into plain sentences, one per line.
+   - Adapt the upstream adversarial prompt from `skills/doubt-driven-development/SKILL.md` in agent-skills (Step 3, the fenced block) into plain sentences, one per line.
    - It says: this is an adversarial review; find what is wrong with the change in the range; assume the author is overconfident; look for unstated assumptions, edge cases not handled, hidden coupling or shared state, ways the brief could be violated, conventions in the policy files it breaks and failure under unexpected input.
    - It says "Do not validate." and "Do not summarize." as two lines, then: find problems or say plainly that you found none after a thorough read.
    - It says how to work: run `git diff` on the range, read the code around each hunk, read every brief and policy path yourself, run nothing that writes, never open, read or quote env files (`.env` and its variants).
@@ -152,7 +152,7 @@ Checkpoint C: `node tests/check.mjs` reports 0 failures apart from any version-b
    - Run `node tests/eval.mjs --dry` and `node tests/route-lexical.mjs --min-rank1 70`; rank-1 stays at or above 70.
    - If the new case is not rank-1 lexically, leave it; the gate is the overall rate and the model router decides the rest.
 10. (XS) Attribution and docs. (R28, AC10; parallel with step 9)
-    - `docs/licenses.md`: add after the pro-ai-sdlc rows `| pro-ai-sdlc | doubt-driven-development | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |`.
+    - `docs/licenses.md`: add after the pro-ai-sdlc rows `| pro-ai-sdlc | doubt-driven-development | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |`.
     - `plugins/pro-ai-sdlc/LICENSE`: if it has no Addy Osmani line yet, add a short attribution notice at the top in the style of `plugins/pro-quality/LICENSE` naming the skill and "Copyright (c) 2025 Addy Osmani".
     - `README.md`: in the pro-ai-sdlc bullet of the plugin list, name the `doubt-driven-development` skill that `/execute` runs on irreversible steps.
     - `docs/roadmap.md`: mark item 12 built, in the style the roadmap uses for built items.
@@ -167,7 +167,7 @@ Checkpoint C: `node tests/check.mjs` reports 0 failures apart from any version-b
 
 Checkpoint D: run the full proof of done below.
 
-12. (S) Manual trials for AC6 and AC7, run by Jody or with Jody watching.
+12. (S) Manual trials for AC6 and AC7, run by the maintainer or with the maintainer watching.
     - In a scratch repo with pro-ai-sdlc installed from this branch, commit an approved plan with three steps, the second marked irreversible: a migration that drops a column which one function still reads.
     - Run `/execute` on it; expect a doubt round on step 2 only, a finding about the column still read and a `Doubt:` line under Done.
     - Ask the session to print the exact text it dispatched; confirm it is the instruction text plus four fields and has no claim.
@@ -183,7 +183,7 @@ Checkpoint D: run the full proof of done below.
 - `node tests/check.mjs codex-manifests` and `node tests/check.mjs codex-parity` cover AC8 and R26.
 - `node tests/eval.mjs --dry` and `node tests/route-lexical.mjs --min-rank1 70` cover AC9.
 - `node tests/check.mjs component-coverage` passes with the new uncovered entry.
-- `grep -n "Addy Osmani" docs/licenses.md plugins/pro-ai-sdlc/LICENSE` and `grep -n "Adapted from addyosmani/agent-skills" plugins/pro-ai-sdlc/skills/doubt-driven-development/*.md` cover AC10.
+- `grep -n "Copyright (c) 2025 Addy Osmani" docs/licenses.md plugins/pro-ai-sdlc/LICENSE` and `grep -n "Adapted from agent-skills" plugins/pro-ai-sdlc/skills/doubt-driven-development/*.md` cover AC10.
 - `node tests/check.mjs` covers AC11 through the version-bump check.
 - `git ls-files plugins/pro-ai-sdlc/skills/doubt-driven-development plugins/pro-ai-sdlc/scripts/codex-run.py` covers AC2.
 - Step 12 covers AC6 and AC7.
@@ -255,13 +255,13 @@ Filled in when the build is finished, before sign-off.
 - AC3: pass, `{claim}` and `<claim>` in the instruction text failed `doubt` and a `claim` bullet in the skill's `handoff.md` failed `handoff`; both passed once restored.
 - AC4: pass, a one-byte change to the pro-ai-sdlc runner copy made `doubt` name the runner; it passed once restored.
 - AC5: pass, `execute.md` has `## Doubt` with the plan marker, the high-tier classifier backstop, the three-round stop and the draft PR rule; `templates/plan.md` shows the `irreversible` marker and the `Doubt:` line; `commands/plan.md` tells the planner when to mark a step.
-- AC6: not run, needs Jody (a hand trial of `/execute` on a throwaway repo).
-- AC7: not run, needs Jody (the Codex yes path and the `codex`-off-PATH path; the real `codex` was not run).
+- AC6: not run, needs the maintainer (a hand trial of `/execute` on a throwaway repo).
+- AC7: not run, needs the maintainer (the Codex yes path and the `codex`-off-PATH path; the real `codex` was not run).
 - AC8: pass, the Codex manifest has `"skills": "./skills/"` and `codex-manifests` passes.
 - AC9: pass, the routing case is in `routing.jsonl` and `eval.mjs --dry` counts 89 cases.
 - AC10: pass, the `docs/licenses.md` row, the LICENSE notice and the footer on both skill files are in place.
 - AC11: pass, pro-ai-sdlc is 0.11.0 in both manifests and its marketplace entry and `metadata.version` is 1.69.0, bumped once (1.68.0 at build time; PR 101 took 1.68.0 first).
-- AC12: pass, ADR-0019 and its row exist (written at the spec stage and updated for Jody's decisions).
+- AC12: pass, ADR-0019 and its row exist (written at the spec stage and updated for the maintainer's decisions).
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -272,7 +272,7 @@ It also moves ADR-0019 from `proposed` to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
-- Jody's decisions of 2026-10-30 changed the spec, plan and ADR-0019 before the build: an unattended run with open findings after three rounds finishes and opens a draft PR with the findings under "Potential concerns"; the trigger is the plan marker plus a high-tier classifier result with no medium-tier signal trigger; the skill's `handoff.md` is its own copy held by the `doubt` check (commit bbb469f).
+- The decisions of 2026-10-30 changed the spec, plan and ADR-0019 before the build: an unattended run with open findings after three rounds finishes and opens a draft PR with the findings under "Potential concerns"; the trigger is the plan marker plus a high-tier classifier result with no medium-tier signal trigger; the skill's `handoff.md` is its own copy held by the `doubt` check (commit bbb469f).
 - Step 2: the check compares the doubt `handoff.md` with pro-quality's by the four field names in order and the closing "Nothing else goes in any field" line, not byte for byte, because the `range`, `brief` and `risk` wording differs by design.
 - Step 7: the stop list sits in its own `## Stop list` section followed by `## Scope discipline`, so `## Doubt` is placed after `## Scope discipline` and before `## Your task`.
 - Step 7: the stop list section does not find `risk-classify.py` itself; step 5 of `/execute` uses pro-ship's `risk-tiers` skill, so `## Doubt` classifies through that skill with `--base`, `--head` and `--json` instead of a script path.

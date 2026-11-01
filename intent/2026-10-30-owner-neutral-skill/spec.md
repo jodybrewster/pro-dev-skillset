@@ -2,7 +2,7 @@
 intent: intent/2026-10-30-owner-neutral-skill/intent.md
 status: accepted
 created: 2026-10-30T11:10:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: an owner-neutral skill
@@ -56,5 +56,5 @@ Policies consulted: `CLAUDE.md`, `REVIEW.md`, ADR-0002, ADR-0004, ADR-0013 and `
 - AC1. `node tests/check.mjs && node tests/eval.mjs --dry` passes.
 - AC2. `node tests/route-lexical.mjs --min-rank1 70 && node --test tests/unit/*.test.mjs` passes and both new cases rank `owner-neutral` first, with no existing case losing rank 1.
 - AC3. `claude plugin validate . --strict` and the per-plugin loop pass.
-- AC4. `grep -rn "Jody" plugins/pro-quality/skills/owner-neutral` returns nothing.
+- AC4. `grep -rn "<maintainer name>" plugins/pro-quality/skills/owner-neutral` returns nothing.
 - AC5. No em dash, curly quote or the comma-and sequence in the new files.

@@ -4,13 +4,13 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-30T09:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: SDLC loop upgrades
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, the "loop batch" of the ranked list in [docs/roadmap.md](../../docs/roadmap.md): items 7, 8, 9 and 10, with 24, 25 and 29 riding along, from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
+Author: the maintainer.
+Source: idea, the "loop batch" of the ranked list in [docs/roadmap.md](../../docs/roadmap.md): items 7, 8, 9 and 10, with 24, 25 and 29 riding along, from the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
 Status: done; shipped in #98.
 Created: 2026-10-30.
 
@@ -85,7 +85,7 @@ The simplifier checks callers and history before it removes anything and leaves 
 
 ## Affected users and systems
 
-Jody and any agent session that runs the loop: this repo and any repo with pro-ai-sdlc installed (opt-in, not part of `pro-dev-starter`).
+The maintainer and any agent session that runs the loop: this repo and any repo with pro-ai-sdlc installed (opt-in, not part of `pro-dev-starter`).
 pro-ai-sdlc: `commands/execute.md`, `commands/spec.md`, `commands/plan.md`, `commands/adr.md`, `templates/spec.md`, `templates/plan.md`, `templates/adr.md`, `agents/verifier.md` and `agents/simplifier.md`, a new `references/` folder, the Codex counterparts of the two agents, the manifests and the marketplace entry (pro-ai-sdlc is at 0.9.0, marketplace `metadata.version` 1.64.0).
 `docs/licenses.md`, because the text is adapted from agent-skills.
 Routing cases and `tests/check.mjs`, which read the templates and frontmatter.
@@ -109,7 +109,7 @@ The stop list is a pause for a person.
 It never blocks silently and it is not a hook in this batch.
 Template edits keep the section names and order that tools read; additions go in as new sections or lines.
 Adapted text keeps its upstream footer and a row in `docs/licenses.md` (MIT, Copyright (c) 2025 Addy Osmani).
-Jody's rule that Opus orchestrates, Sonnet builds and Haiku reads is unchanged: the verifier and simplifier stay on Sonnet.
+The rule that Opus orchestrates, Sonnet builds and Haiku reads is unchanged: the verifier and simplifier stay on Sonnet.
 
 ## Out of scope
 

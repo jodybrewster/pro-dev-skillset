@@ -3,7 +3,7 @@ intent: intent/2026-10-30-pro-electron/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T15:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: pro-electron, a stack plugin for Electron apps
@@ -23,7 +23,7 @@ Repos that do not install the plugin see no change.
 
 ## Assumptions
 
-Unconfirmed: Jody approved going ahead on 2026-10-30 with the intent's recommendations, so these are written down rather than asked.
+Unconfirmed: going ahead was approved on 2026-10-30 with the intent's recommendations, so these are written down rather than asked.
 
 1. Target apps are TypeScript or JavaScript Electron apps built with electron-vite, Electron Forge or electron-builder.
 2. Electron 45.2.0 is the stable release, 45.0.0 shipped on 2026-10-21 and 46 is in alpha (`npm view electron dist-tags`, 2026-10-30), so 43, 44 and 45 are the supported majors.
@@ -116,7 +116,7 @@ ADR needed: no, a stack plugin following ADR-0006 and ADR-0013 sets no new rule.
 
 ## Open questions
 
-- Default row for jwynia: answered yes, bridged and pinned (Jody approved the recommendations, 2026-10-30).
+- Default row for jwynia: answered yes, bridged and pinned (the recommendations were approved on 2026-10-30).
 - Default MCP server: answered, Playwright MCP over CDP, set up by hand.
 - MCP security challenge: answered by concern 3.
 - PR split: answered, one PR.

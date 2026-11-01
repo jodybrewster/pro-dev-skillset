@@ -3,14 +3,14 @@ intent: intent/2026-10-30-untrusted-input-safety/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T11:46:32-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: untrusted-input rules and the safety batch
 
 Built from `intent.md` in this folder (commit f021c20).
 Status: draft.
-Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `RELEASING.md`, ADR-0002 (version-bump law), ADR-0003 (hook loading), ADR-0004 (Codex parity) and ADR-0009 (three eval tiers) in `docs/decisions/`, `docs/version-bump-law.md`, `docs/licenses.md`, `docs/evals.md`, `docs/roadmap.md` (items 11, 26 and 27), `tests/check.mjs` (the `references` and `versions` checks), `tests/behavioral.mjs`, `tests/lib/trace.mjs`, `tests/unit/behavioral.test.mjs`, `evals/cases/systematic-debugging.json`, `plugins/pro-execution/evals/systematic-debugging-*`, the three skills and their sidecars, the three plugin `LICENSE` files and the upstream text in addyosmani/agent-skills at `eb07f19` (`skills/browser-testing-with-devtools/SKILL.md` lines 60-107, `skills/debugging-and-error-recovery/SKILL.md` lines 53-73, 101-109 and 272-279, `references/accessibility-checklist.md`).
+Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `RELEASING.md`, ADR-0002 (version-bump law), ADR-0003 (hook loading), ADR-0004 (Codex parity) and ADR-0009 (three eval tiers) in `docs/decisions/`, `docs/version-bump-law.md`, `docs/licenses.md`, `docs/evals.md`, `docs/roadmap.md` (items 11, 26 and 27), `tests/check.mjs` (the `references` and `versions` checks), `tests/behavioral.mjs`, `tests/lib/trace.mjs`, `tests/unit/behavioral.test.mjs`, `evals/cases/systematic-debugging.json`, `plugins/pro-execution/evals/systematic-debugging-*`, the three skills and their sidecars, the three plugin `LICENSE` files and the upstream text in agent-skills at `eb07f19` (`skills/browser-testing-with-devtools/SKILL.md` lines 60-107, `skills/debugging-and-error-recovery/SKILL.md` lines 53-73, 101-109 and 272-279, `references/accessibility-checklist.md`).
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 
 ## Summary
@@ -66,11 +66,11 @@ accessibility-audit (pro-design):
 
 Attribution:
 
-- R19. Each touched upstream file ends with its current footer plus a second footer line: "Adapted in part from addyosmani/agent-skills (<file>) - MIT, Copyright (c) 2025 Addy Osmani", naming the upstream file.
+- R19. Each touched upstream file ends with its current footer plus a second footer line: "Adapted in part from agent-skills (<file>) - MIT, Copyright (c) 2025 Addy Osmani", naming the upstream file.
   This covers `agent-browser/SKILL.md`, `systematic-debugging/SKILL.md`, `accessibility-audit/SKILL.md` and the two new files, which carry only the agent-skills footer. (Intent: Constraints.)
-- R20. `plugins/pro-testing/LICENSE`, `plugins/pro-execution/LICENSE` and `plugins/pro-design/LICENSE` each name addyosmani/agent-skills, what was adapted and "Copyright (c) 2025 Addy Osmani".
+- R20. `plugins/pro-testing/LICENSE`, `plugins/pro-execution/LICENSE` and `plugins/pro-design/LICENSE` each name agent-skills, what was adapted and "Copyright (c) 2025 Addy Osmani".
   In pro-testing the entry goes in the MIT notice at the top, not the Apache section. (Intent: Constraints.)
-- R21. `docs/licenses.md` gains three new rows, one per plugin, naming the adapted part (the Security boundaries section of `agent-browser`, the untrusted-output section and `non-reproducible-bugs.md` of `systematic-debugging`, `references/accessibility-checklist.md` of `accessibility-audit`), addyosmani/agent-skills, MIT, "Copyright (c) 2025 Addy Osmani" and "adapted".
+- R21. `docs/licenses.md` gains three new rows, one per plugin, naming the adapted part (the Security boundaries section of `agent-browser`, the untrusted-output section and `non-reproducible-bugs.md` of `systematic-debugging`, `references/accessibility-checklist.md` of `accessibility-audit`), agent-skills, MIT, "Copyright (c) 2025 Addy Osmani" and "adapted".
   The existing forked rows stay as they are. (Intent: Constraints.)
 
 Evals:
@@ -154,10 +154,10 @@ ADR needed: no, the change adds rules to existing skills and sets no cross-plugi
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The intent puts any change to the Four Phases out of scope, but the problem it names is the Phase 1 line "They often contain the exact solution" and its own recommendation puts a pointer in Phase 1 step 2. | intent, Out of scope; Jody | resolved by the intent's recommendation: R12 rewrites that one bullet and R13 adds a pointer; the phase structure, the Iron Law and every other line stay |
-| 2 | ADR-0002 says any bump of a plugin the starter meta-plugin depends on also bumps the meta-plugin, but the last two PRs that bumped pro-execution (#77 and #87) did not bump `pro-dev-starter`, whose dependencies use `"*"`. | ADR-0002; Jody | open: follow recent practice and leave `pro-dev-starter` alone (recommended, since `/pro-dev update` updates each plugin), or patch-bump `pro-dev-starter` in the same commit as the ADR text says |
+| 1 | The intent puts any change to the Four Phases out of scope, but the problem it names is the Phase 1 line "They often contain the exact solution" and its own recommendation puts a pointer in Phase 1 step 2. | intent, Out of scope | resolved by the intent's recommendation: R12 rewrites that one bullet and R13 adds a pointer; the phase structure, the Iron Law and every other line stay |
+| 2 | ADR-0002 says any bump of a plugin the starter meta-plugin depends on also bumps the meta-plugin, but the last two PRs that bumped pro-execution (#77 and #87) did not bump `pro-dev-starter`, whose dependencies use `"*"`. | ADR-0002 | open: follow recent practice and leave `pro-dev-starter` alone (recommended, since `/pro-dev update` updates each plugin), or patch-bump `pro-dev-starter` in the same commit as the ADR text says |
 | 3 | The intent says `accessibility-audit` already names target size, focus appearance and consistent help; it names only "WCAG 2.2" and the POUR principles. Focus Appearance (2.4.13) is AAA, not AA. | intent, Open questions 6 | resolved: R17 adds every 2.2 A and AA criterion with its number and marks 2.4.13 AAA |
-| 4 | The intent's success line says the debugging skill "fires on a real failure", but the 2026-10-29 baseline in `docs/evals.md` measured 0 of 3 fires with the reply grader at 3 of 3 in both arms. | `docs/evals.md`; Jody | resolved: AC11 asks for no regression from that baseline, not for a fire rate the skill did not have |
+| 4 | The intent's success line says the debugging skill "fires on a real failure", but the 2026-10-29 baseline in `docs/evals.md` measured 0 of 3 fires with the reply grader at 3 of 3 in both arms. | `docs/evals.md` | resolved: AC11 asks for no regression from that baseline, not for a fire rate the skill did not have |
 | 5 | Rule 3 covers the CLI's `cookies` and `storage local` read commands as well as `eval`, a little wider than the intent's recommendation (which names `eval`). | intent, Open questions 4 | resolved: those commands read the same material the outcome says is never read; the login commands stay sanctioned as recommended |
 
 ## Open questions
@@ -182,7 +182,7 @@ ADR needed: no, the change adds rules to existing skills and sets no cross-plugi
 - AC4. `systematic-debugging/SKILL.md` has `## Untrusted error output` before `## Red Flags`, the Phase 1 step 1 bullet of R12 and the pointer of R13; `git diff` of the file shows no change to the Iron Law block or any phase heading.
 - AC5. `git ls-files plugins/pro-execution/skills/systematic-debugging/non-reproducible-bugs.md` lists the file and it contains "Timing", "Environment", "State", "random", "git bisect run" and "git bisect reset".
 - AC6. `git ls-files plugins/pro-design/skills/accessibility-audit/references/accessibility-checklist.md` lists the file; its five group headings appear in the order of R16; it contains 2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8 and 2.4.13 marked AAA; `accessibility-audit/SKILL.md` links it.
-- AC7. `grep -l "Addy Osmani"` finds the three plugin `LICENSE` files and the five touched or new skill files; `docs/licenses.md` has the three new rows of R21.
+- AC7. `grep -l "Copyright (c) 2025 Addy Osmani"` finds the three plugin `LICENSE` files and the five touched or new skill files; `docs/licenses.md` has the three new rows of R21.
 - AC8. Each plugin's version agrees across its two manifests and its marketplace entry, each is one minor above `main` and `metadata.version` is one minor above `main`.
 - AC9. `node tests/behavioral.mjs --dry-run` prints "dry run ok" with 4 case files and lists `agent-browser #1` and `systematic-debugging #2`; `grep -rn "example.invalid" evals/fixtures` finds the planted URLs and `grep -rnE "https?://[^ ]*" evals/fixtures/*-untrusted` finds no host outside `.invalid`, `localhost` and `127.0.0.1`.
 - AC10. One live run of `node tests/behavioral.mjs agent-browser systematic-debugging --baseline --model sonnet`: in the skill arm of both new cases the "not followed" and "surfaced to the user" expectations pass; the numbers for both arms are pasted in the PR.

@@ -4,13 +4,13 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-30T12:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: pro-electron, a stack plugin for Electron apps
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: research, "Electron Skills for AI Coding Agents: A Ranked Survey (October 2026)", brought by Jody on 2026-10-30.
+Author: the maintainer.
+Source: research, "Electron Skills for AI Coding Agents: A Ranked Survey (October 2026)", brought on 2026-10-30.
 Status: done; shipped in #105.
 Created: 2026-10-30.
 

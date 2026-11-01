@@ -4,13 +4,13 @@ kind: idea
 status: done
 risk: medium
 created: 2026-10-30T09:20:53-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: doubt-driven step in /execute
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, item 12 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `doubt-driven-development` (MIT).
+Author: the maintainer.
+Source: idea, item 12 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) `doubt-driven-development` (MIT).
 Status: done; shipped in #102.
 Created: 2026-10-30.
 
@@ -39,7 +39,7 @@ The step then continues and the plan records which steps were doubted and what c
 
 ## Affected users and systems
 
-Jody and any agent session that runs `/execute` in a repo with pro-ai-sdlc installed.
+The maintainer and any agent session that runs `/execute` in a repo with pro-ai-sdlc installed.
 pro-ai-sdlc: a new skill, a short offer step in `commands/execute.md`, Codex parity files, manifests and marketplace entry.
 The four-field handoff in pro-quality (`skills/requesting-code-review/handoff.md`, ADR-0012), which this reuses as its contract.
 `plugins/pro-ship/scripts/risk-classify.py`, if it decides which steps count as hard to undo.
@@ -82,7 +82,7 @@ A hook that blocks a commit until a doubt round has run.
 
 On a plan with a risky step, `/execute` stops before that step stands and shows what the fresh reviewer found.
 The plan's Done section lists the steps that were doubted, the rounds used and how each finding was settled.
-In a few weeks of real runs Jody can point to at least one change that a doubt round caught before it was built on.
+In a few weeks of real runs the maintainer can point to at least one change that a doubt round caught before it was built on.
 Steps that are not hard to undo run with no extra pause.
 The reviewer's prompt never contains the author's claim, which a check can confirm by reading the skill.
 
@@ -93,7 +93,7 @@ The upstream skill lists branching logic, a module boundary, an unverifiable pro
 Recommendation: let `/plan` mark steps as irreversible in the plan.
 Let `/execute` also run `risk-classify.py` on the staged diff and offer doubt on a high tier or a strong signal.
 The plan marker is the person's call and the classifier is the backstop.
-Jody to confirm.
+To be confirmed by the maintainer.
 - Offer or automatic.
 The roadmap says `/execute` "offers" the step.
 `/execute` runs with no pause by design.

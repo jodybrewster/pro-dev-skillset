@@ -59,4 +59,4 @@ Each range is the run of whole-number values around the default that moves no PR
 `no_test_lines` counts source lines added in PRs that change no test file, which is why #77 (56 such lines) sets its upper end and not its 64 total lines.
 `areas_medium` is the only constant the data pins to one value: 2 moves #63 up to medium and 4 moves #67 and #73 down to low.
 
-Rows for Jody to judge: #78 (39 files, 2747 lines, declared low) is high on size alone and drops to medium only if both `files_high` and `lines_high` rise past it; #67 and #73 are medium on areas alone (small fixes across two plugins plus the marketplace file).
+Rows for the maintainer to judge: #78 (39 files, 2747 lines, declared low) is high on size alone and drops to medium only if both `files_high` and `lines_high` rise past it; #67 and #73 are medium on areas alone (small fixes across two plugins plus the marketplace file).

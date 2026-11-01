@@ -4,13 +4,13 @@ kind: change
 status: done
 risk: low
 created: 2026-10-30T09:20:43-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: untrusted-input rules and the safety batch
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, ranked item 11 of [docs/roadmap.md](../../docs/roadmap.md) with items 26 and 27 riding along, from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
+Author: the maintainer.
+Source: idea, ranked item 11 of [docs/roadmap.md](../../docs/roadmap.md) with items 26 and 27 riding along, from the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
 Status: done; shipped in #97.
 Created: 2026-10-30.
 
@@ -47,7 +47,7 @@ A reviewer can open each skill and find the rule in a section with a plain name.
 
 ## Affected users and systems
 
-Jody and any agent session that uses `agent-browser`, `systematic-debugging` or `accessibility-audit`.
+The maintainer and any agent session that uses `agent-browser`, `systematic-debugging` or `accessibility-audit`.
 These skills change:
 
 - `plugins/pro-testing/skills/agent-browser/SKILL.md` (223 lines) gets a security-boundaries section plus a pointer from the credential rows in `references/commands.md` if the wording needs one.

@@ -4,28 +4,28 @@ kind: change
 status: accepted
 risk: low
 created: 2026-10-30T11:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: an owner-neutral skill
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, Jody on 2026-10-30, after the twelve-factor skill.
-Status: accepted (Jody, 2026-10-30, by asking for it).
+Author: the maintainer.
+Source: idea, 2026-10-30, after the twelve-factor skill.
+Status: accepted (by asking for it).
 Created: 2026-10-30.
 
 ## Problem
 
 Agents write the owner into the work.
-Jody: the AI puts "Jody wants", "Jody's preferences" and Jody's data into the prompts and the code.
-The apps Jody builds, such as the job finder, are meant for other people to pick up and use.
-Today another person who clones one inherits Jody's name, taste, criteria and personal data, and has to hunt through code and prompts to take them out.
-This marketplace shows the same leak: 34 files under `plugins/` name Jody.
+The AI puts "the owner wants", "the owner's preferences" and the owner's data into the prompts and the code.
+The apps the maintainer builds, such as the job finder, are meant for other people to pick up and use.
+Today another person who clones one inherits the owner's name, taste, criteria and personal data, and has to hunt through code and prompts to take them out.
+This marketplace shows the same leak: 34 files under `plugins/` name the maintainer.
 Most are authorship footers, which are fine.
-Some change behavior for everyone who installs them, such as `plugins/pro-ai-sdlc/commands/pr-babysit.md:73` ("ask Jody to reconsider") and the `pro-dev-starter` description ("Installs Jody's default pro dev stack").
+Some change behavior for everyone who installs them, such as `plugins/pro-ai-sdlc/commands/pr-babysit.md:73` ("ask the maintainer to reconsider") and the `pro-dev-starter` description ("Installs the maintainer's default pro dev stack").
 Twelve-factor factor III says config lives outside the code; nothing applies that to the person.
-Jody asked for a separate skill, not a factor inside `twelve-factor`.
-Jody also has apps that started as tools for himself and drifted this way; he wants to open-source them and wants strict principles, especially for the AI parts.
+This is a separate skill, not a factor inside `twelve-factor`.
+Some apps start as tools for their author and drift this way. The aim is to open-source them with strict principles, especially for the AI parts.
 AI apps leak the owner in places plain code does not: prompts, agent instruction files, few-shot examples, eval fixtures, memory files, embeddings, caches and transcripts.
 
 ## Proposed outcome
@@ -64,10 +64,10 @@ A shared profile format across apps or a profile service.
 
 ## Success looks like
 
-Asked to add "Jody prefers remote jobs over 150k" to a job-finder prompt, build mode puts `remote` and `min_salary` in the example profile and the loader and writes the prompt from the profile values.
+Asked to add "the owner prefers remote jobs over 150k" to a job-finder prompt, build mode puts `remote` and `min_salary` in the example profile and the loader and writes the prompt from the profile values.
 Asked to audit this marketplace, audit mode reports `pr-babysit.md:73` as a behavior leak and leaves the license footers alone.
 `node tests/check.mjs`, `node tests/eval.mjs --dry`, the lexical routing gate and `claude plugin validate --strict` pass.
 
 ## Evidence
 
-`grep -rlI Jody plugins` returns 34 files (2026-10-30), most of them footers.
+`grep -rlI <maintainer name> plugins` returned 34 files (2026-10-30), most of them footers.

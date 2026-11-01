@@ -3,13 +3,13 @@ intent: intent/2026-10-30-sdlc-loop-upgrades/intent.md
 intent-status: draft
 status: accepted
 created: 2026-10-30T11:46:40-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: SDLC loop upgrades
 
 Built from `intent.md` in this folder (commit 0821453).
-Status: accepted (Jody approved the batch on 2026-10-30 and asked that it go through spec, plan and execute).
+Status: accepted (the batch was approved on 2026-10-30 to go through spec, plan and execute).
 Policies and skills consulted: `CLAUDE.md` (the three laws and the layering rule), `REVIEW.md`, `docs/decisions/` (ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0013 and ADR-0015), `docs/licenses.md`, `docs/roadmap.md` (items 7 to 10, 24, 25 and 29), `plugins/pro-ai-sdlc/commands/` (`execute.md`, `spec.md`, `plan.md` and `adr.md`), `plugins/pro-ai-sdlc/templates/` (`spec.md`, `plan.md` and `adr.md`), `plugins/pro-ai-sdlc/agents/verifier.md`, `plugins/pro-ai-sdlc/agents/simplifier.md` and their `.toml` twins, `plugins/pro-ai-sdlc/scripts/execute-gate.py`, `plugins/pro-ship/scripts/risk-classify.py`, `plugins/pro-ship/skills/risk-tiers/SKILL.md`, `plugins/pro-quality/agents/code-reviewer.md` and `tests/check.mjs` (the `sdlc-contract` check).
 No security plugin skill applies; nothing here handles user data or credentials beyond the existing env-file rule, which this spec keeps.
 
@@ -23,7 +23,7 @@ Every plan's `Done` block cites one standing definition of done shipped as `plug
 The verifier checks that the tests a change added are the right tests and its verdict can fall on that.
 `/adr` follows a repo's own ADR convention and gains a deprecated status.
 The simplifier checks callers and history before it removes anything.
-Jody gets it first and any repo with pro-ai-sdlc installed gets it on update.
+The maintainer gets it first and any repo with pro-ai-sdlc installed gets it on update.
 
 ## Requirements
 
@@ -110,7 +110,7 @@ The P3 riders (items 24 and 25):
 Parity, attribution, checks and release:
 
 - R26. `.codex-plugin/agents/verifier.toml` and `.codex-plugin/agents/simplifier.toml` carry the same body as their `.md` twins; the agents stay on `model: sonnet`.
-- R27. Adapted text keeps attribution: a footer naming addyosmani/agent-skills (MIT, Copyright (c) 2025 Addy Osmani) on each adapted command, agent and reference file, a pro-ai-sdlc row in `docs/licenses.md` and the Addy Osmani line in `plugins/pro-ai-sdlc/LICENSE`.
+- R27. Adapted text keeps attribution: a footer naming agent-skills (MIT, Copyright (c) 2025 Addy Osmani) on each adapted command, agent and reference file, a pro-ai-sdlc row in `docs/licenses.md` and the agent-skills copyright line in `plugins/pro-ai-sdlc/LICENSE`.
 - R28. `tests/check.mjs` `sdlc-contract` asserts the new anchors: the two `/execute` sections and their key lines, the plan template's new section and definition-of-done line, the reference file, the spec template's two blocks, the verifier's and simplifier's new rules in both twins and the ADR deprecated status.
 - R29. A plugin eval case `execute-pauses-on-migration` scaffolds an approved plan whose step writes a migration not named in Risks and grades that `/execute` pauses, names migrations and opens no PR.
 - R30. pro-ai-sdlc takes one minor version bump in both manifests and its marketplace entry, plus one `metadata.version` bump, in one commit.
@@ -186,8 +186,8 @@ Drafted as [ADR-0017](../../docs/decisions/0017-loop-guardrails.md), status prop
 | 2 | A `/spec` that waits for answers could stall unattended runs such as the `spec-from-intent` eval, which expects a commit within 20 turns. | `plugins/pro-ai-sdlc/evals/spec-from-intent` | resolved: with no one to answer, assumptions are written as `unconfirmed` and the run carries on (R11); the plan runs that eval once. |
 | 3 | Module plans named `plan-<module-id>.md` share one branch name, because `execute-gate.py` takes the slug from the folder; the `plan-sync` hook only counts files named `plan.md`. | `scripts/execute-gate.py`, `scripts/plan-sync.py` | resolved for this batch: modules build one at a time in build order and `/spec` says so; if capability maps get real use, split item 29 out and fix both scripts there. |
 | 4 | The doubt-driven-execute intent will also edit `commands/execute.md`. | `intent/2026-10-30-doubt-driven-execute` | resolved: this batch adds two named sections and one-line pointers only (R10). |
-| 5 | `plugins/pro-ai-sdlc/LICENSE` lacks the Addy Osmani line although `templates/REVIEW.md` is already adapted from agent-skills. | `docs/licenses.md` | resolved: R27 adds it. |
-| 6 | The plan's `Status: approved` rests on Jody's approval of the batch, not on a read of this plan. | Jody | open: Jody may want to read the plan before `/execute` runs. |
+| 5 | `plugins/pro-ai-sdlc/LICENSE` lacks the agent-skills copyright line although `templates/REVIEW.md` is already adapted from agent-skills. | `docs/licenses.md` | resolved: R27 adds it. |
+| 6 | The plan's `Status: approved` rests on the approval of the batch, not on a read of this plan. | the maintainer | open: the maintainer may want to read the plan before `/execute` runs. |
 
 ## Open questions
 
@@ -224,7 +224,7 @@ No question blocks planning.
 - AC11. The verifier and simplifier `.toml` bodies match their `.md` bodies apart from the wrapper and both agents still say `model: sonnet`.
 - AC12. `/adr` holds the convention check, the `deprecated` status and the never-delete rule; `templates/adr.md` lists `deprecated`; `/spec`'s ADR step finds the folder the same way.
 - AC13. The simplifier allows `git blame` and `git log`, checks callers and history before removal and keeps a helper that names a concept.
-- AC14. The adapted files carry the agent-skills footer, `docs/licenses.md` has the pro-ai-sdlc row and `plugins/pro-ai-sdlc/LICENSE` has the Addy Osmani line.
+- AC14. The adapted files carry the agent-skills footer, `docs/licenses.md` has the pro-ai-sdlc row and `plugins/pro-ai-sdlc/LICENSE` has the agent-skills copyright line.
 - AC15. pro-ai-sdlc's version agrees across both manifests and the marketplace entry, one minor above `main`; `metadata.version` moved once.
 - AC16. ADR-0017 exists with status proposed and a row in `docs/decisions/README.md`.
 
