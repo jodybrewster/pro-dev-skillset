@@ -3,13 +3,13 @@ intent: intent/2026-10-29-sdlc-egm-evals/intent.md
 intent-status: accepted
 status: accepted
 created: 2026-10-29T15:40:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: evals for pro-ai-sdlc and pro-egm
 
 Built from `intent.md` in this folder.
-Status: accepted by Jody on 2026-10-29 ("yes have evals for this and the EGM plugin").
+Status: accepted on 2026-10-29.
 Read: `plugins/pro-ai-sdlc/` (the seven commands, four agents, templates and README), `plugins/pro-egm/` (the `goldfish` and `install` commands, `egm-bridge`, `goldfish-reviewer`, `scripts/goldfish.py`), `docs/evals.md`, the scaffolded verification case in `plugins/pro-quality/evals/` and the plugin eval docs (graders `tool_used`, `regex`, `llm` with `focus` of `last_message`, `trace`, `files` or one file; `scaffold_script` in `case.yaml`).
 Stacked on PR 77, since all of them move the marketplace version.
 
@@ -49,7 +49,7 @@ Stacked on PR 77, since all of them move the marketplace version.
 
 ### Component coverage and the runner
 
-Added 2026-10-29 at Jody's request: "can we have it so we run each sdlc plugin to make sure that agents, skills, commands, hooks, etc are all firing appropriately?" and "and have a runner to run through each sdlc?".
+Added 2026-10-29: run each sdlc plugin to make sure agents, skills, commands and hooks all fire appropriately, with a runner that goes through each sdlc.
 
 - R20. Every plugin eval case declares what it covers in `prompt.md` frontmatter as `tags`, each `<kind>:<name>` with kind `skill`, `command`, `agent` or `hook`; a stays-quiet case prefixes `quiet:`.
 - R21. pro-ai-sdlc gains `hook-production-gate`, `hook-protect-tests` and `hook-plan-sync`, each triggering its hook in the scaffold repo and grading the effect.

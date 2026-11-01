@@ -6,7 +6,7 @@ risk: low
 outcome: O6
 opportunity: the independent review of the merged PR 51 found a release that re-resolves nothing, a verify loop that passes on failure, an Apache-2.0 obligation unmet and a handful of nits
 created: 2026-10-16T18:00:00-04:00
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: land the findings from the review of PR 51
@@ -39,7 +39,7 @@ Anyone who installed `pro-starter` before PR 51; anyone pasting the verify loop;
 
 ## Constraints
 
-Nothing merged, tagged or published by anyone but Jody.
+Nothing merged, tagged or published by anyone but the maintainer.
 `pro-nextjs` is out of scope (the `next-bridge` branch is reworking it) and so are footers on the pro-spdd skills.
 The version-bump law applies to every content change under `plugins/`.
 

@@ -3,13 +3,13 @@ intent: intent/2026-10-29-evals-three-tiers/intent.md
 intent-status: accepted
 status: accepted
 created: 2026-10-29T10:20:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: behavioral, plugin and CI evals
 
 Built from `intent.md` in this folder.
-Status: accepted by Jody on 2026-10-29 ("Yes please").
+Status: accepted on 2026-10-29.
 Prior art read on 2026-10-29 in a local clone of agent-skills (commit eb07f19): `evals/README.md`, `evals/cases/*.json`, `evals/plugin/*`, `scripts/run-evals.js`, `scripts/lib/execution-status.js` and `.github/workflows/test-plugin-install.yml`.
 Code read here: `tests/eval.mjs`, `tests/check.mjs`, `tests/README.md`, `tests/cases/routing.jsonl` and `.github/workflows/validate.yml`.
 Verified locally: Claude Code 2.1.312 has `claude plugin eval`; a plugin manifest with `"experimental": {"evals": "evals"}` passes `claude plugin validate --strict`; `claude --bare` skips user plugins, hooks and CLAUDE.md and authenticates only with `ANTHROPIC_API_KEY`.

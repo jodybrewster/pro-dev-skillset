@@ -20,4 +20,4 @@ An Opus session runs this plan in the worktree `pro-dev-skillset.next-bridge` on
    pro-starter depends on both with `*`, so no constraint changes and it is not bumped.
    Add the rows to `docs/releases.md`.
 10. Run the gate: `node tests/check.mjs`, `node tests/eval.mjs --dry`, `claude plugin validate . --strict`, `claude plugin validate plugins/pro-nextjs --strict`, `claude plugin validate plugins/pro-core --strict` and `node tests/bridge-install-smoke.mjs`.
-11. Open the PR against `main` with the evidence, the removed lines, the cited doc pages, the gate output and the tag commands for Jody.
+11. Open the PR against `main` with the evidence, the removed lines, the cited doc pages, the gate output and the tag commands for the maintainer.

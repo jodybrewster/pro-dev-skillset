@@ -4,28 +4,28 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-29T19:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: a detailed code-reviewer agent
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, item 3 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md).
-It comes from Jody's asks in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `agents/code-reviewer.md` (MIT).
+It comes from the maintainer's asks in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and from the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) `agents/code-reviewer.md` (MIT).
 The `code-reviewer` row of the [specialist agents intent](../2026-10-28-specialist-agents/intent.md) moves into this intent; that intent keeps the other agents.
 Status: done; shipped in #87.
 Created: 2026-10-29.
 
 ## Problem
 
-Jody asked for "maybe a detailed code reviewer? I know we have a security review".
+A detailed code reviewer is wanted, beside the existing security review.
 Neither reviewer in the marketplace is one.
 `pro-ai-sdlc:reviewer` is a narrow policy gate: bugs, security and compliance against `REVIEW.md`.
 It drops anything without a failure scenario.
 Readability, architecture and test-quality problems pass it.
 pro-quality's `requesting-code-review/code-reviewer.md` is closer, but it is a prompt template for a general-purpose agent with no agent file, no model and no stable output.
 A new Claude Code subagent starts with an empty context, but that template has a `{DESCRIPTION}` field for "what you built", which is where the author's reasoning leaks in.
-Jody's rule is "I need the code reviewer to have fresh context as well".
+The rule is that the code reviewer has fresh context as well.
 The template breaks it.
 The roadmap ranks this P0: every PR that goes through the gate will meet this reviewer, so a missing lens means a class of defect ships in every repo that installs the starter.
 The problem shows up on every PR, in every repo with the plugin.
@@ -47,7 +47,7 @@ It has a Codex twin so the same reviewer can run under Codex.
 
 ## Affected users and systems
 
-Jody and any session in a repo that installs pro-quality, which is in the starter.
+The maintainer and any session in a repo that installs pro-quality, which is in the starter.
 pro-quality: a new agent, its `.codex-plugin/agents/code-reviewer.toml`, the `requesting-code-review` skill (its `code-reviewer.md` template goes), `LICENSE`, both manifests and its marketplace entry.
 The sibling intents being drafted now that call or feed the agent: `pr-gate` (dispatches it), `risk-tiers` (produces the tier in the handoff) and `review-policy` (the `REVIEW.md` template and the convergence rules it reads).
 `docs/licenses.md`, `tests/check.mjs`, the routing cases and the root `.claude-plugin/marketplace.json`.
@@ -60,7 +60,7 @@ Fresh context is a hard requirement: the handoff has four fields, no author-writ
 The brief is allowed because it states what was asked for, not how the author reasoned.
 The agent never runs as a fork of the session, since a fork inherits the whole context.
 The agent's prompt holds only the generic lenses.
-Everything specific to a project, such as its laws, its Important bar, its nit cap and its do-not-report list, comes from `REVIEW.md` (Jody, 2026-10-28: the reviewer "needs to look at a REVIEW.md file for project specific reviewing").
+Everything specific to a project, such as its laws, its Important bar, its nit cap and its do-not-report list, comes from `REVIEW.md` (decided 2026-10-28: the reviewer looks at the project's REVIEW.md for project-specific review).
 The agent only reads `CONSTRAINTS.md`; the constraint-floor intent owns that file.
 No agent invokes another agent.
 Adapted text keeps an MIT footer, a row in `docs/licenses.md` and the copyright line in `plugins/pro-quality/LICENSE` (Copyright (c) 2025 Addy Osmani).
@@ -77,7 +77,7 @@ Codex as a second reviewer run in parallel (roadmap item 13), reviewer evals fro
 Changing `pro-ai-sdlc:reviewer`, which stays as `/review`'s narrow policy gate.
 The security finder, the web-performance auditor and the other agents in the specialist agents intent.
 Writing `CONSTRAINTS.md`.
-Change-size bands and "a refactor and a feature are two PRs" from the roadmap's optional line, unless Jody asks for them.
+Change-size bands and "a refactor and a feature are two PRs" from the roadmap's optional line, unless the maintainer asks for them.
 
 ## Success looks like
 

@@ -3,13 +3,13 @@ intent: intent/2026-10-29-pr-gate/intent.md
 intent-status: draft
 status: accepted
 created: 2026-10-29T19:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: the PR gate
 
 Built from `intent.md` in this folder (not yet committed).
-Status: accepted (Jody, 2026-10-30).
+Status: accepted.
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0002, 0003, 0004 and 0006 bear on this change), `docs/hook-loading.md`, `plugins/pro-quality/scripts/pr-quality-gate.py` and its `hooks/hooks.json`, `plugins/pro-security/scripts/push-gate.py` and `security_surface.py`, `plugins/pro-security/agents/security-architect.md`, `plugins/pro-ai-sdlc/scripts/production-gate.py` and `guard.py`, `plugins/pro-ai-sdlc/agents/verifier.md` and `reviewer.md`, `plugins/pro-ship/`, `tests/quality-hooks.mjs`, `tests/security-hooks.mjs`, `intent/2026-10-28-pro-ship-scope/brainstorm.md` and `intent/2026-10-29-constraint-floor/spec.md`.
 The sibling intents `code-reviewer`, `risk-tiers` and `review-policy` were drafted at the same time; R7 was aligned with code-reviewer's handoff afterwards and concerns 6 and 7 still need a re-check once those specs are accepted.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
@@ -86,7 +86,7 @@ Everyone who installs pro-ship gets it on the next update; repos on the starter 
   It records `mutation` in the stamp as `survived` (the related tests still pass), `killed` (a test failed), `skipped` with a reason (low tier, test-only diff, no condition found or no related tests) or `could-not-run`.
   A `survived` result makes `result` `incomplete` until the person confirms.
   A `could-not-run` result makes it `incomplete` like any other could-not-run (R13).
-  The `code-reviewer` agent reads this value when the stamp path is in its `risk` field and treats `survived` as an Important finding (code-reviewer spec R9). (Jody, 2026-10-29.)
+  The `code-reviewer` agent reads this value when the stamp path is in its `risk` field and treats `survived` as an Important finding (code-reviewer spec R9). (2026-10-29.)
 
 ### Non-functional
 
@@ -113,7 +113,7 @@ Everyone who installs pro-ship gets it on the next update; repos on the starter 
 
 ### User experience
 
-Jody finishes a change and, before opening the PR, says "check this" or runs `/pro-ship:pr-check`.
+The maintainer finishes a change and, before opening the PR, says "check this" or runs `/pro-ship:pr-check`.
 The skill reports in the order it ran things.
 For example:
 
@@ -170,7 +170,7 @@ The stamp is a single JSON file with one writer.
 - A command rather than a skill: other skills could not chain it and Codex would not load it (brainstorm, "Skills, not commands").
 - Deny every retry until the stamp is valid, as the floor guard does in enforce mode: this local hook is a guardrail and the required CI check is the enforcement; denying once matches pro-security's push gate and avoids a stuck session when the checks cannot run on a machine.
 - Bind the stamp to a diff hash as the push gate does: the PR is made of commits, so the HEAD sha is the simplest value that cannot go stale unnoticed; a rebase changes it and correctly invalidates the stamp.
-- Gate `mcp__github__create_pull_request` as well: Jody uses `gh` for everything on GitHub, so that path is not gated and the old gate's matcher for it goes with the old gate.
+- Gate `mcp__github__create_pull_request` as well: the maintainer uses `gh` for everything on GitHub, so that path is not gated and the old gate's matcher for it goes with the old gate.
 - Reviewers through `claude -p`: a second process with its own cost and login path; recommended for CI later (Open question 1).
 
 ## Flagged concerns
@@ -182,31 +182,31 @@ ADR needed: yes, a stamp under `.pro-dev/ship/` that three gates read (pr-gate, 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | Removing `pr-quality-gate.py` drops two things the old gate did: the PR description length check (more than 50 characters) and a hook-run lint and test on repos that never run pr-check. | Jody; REVIEW.md, pass 1 (regressions) | open: accept, since the drafted body replaces the length check and the stamp hook names the missing check (recommended) |
-| 2 | pro-ship is opt-in and not in `pro-dev-starter`; removing pro-quality's gate would leave starter-only repos with no PR check at all. | Brainstorm ("Join pro-dev-starter when v0.1 lands, not now"); Jody | open: add pro-ship to the starter in this release (recommended) or keep a thin copy of the stamp hook in pro-quality |
-| 3 | The hook follows the mode file but denies once, while `production-gate` asks and the floor guard denies every retry, so three gates behave three ways. | `guard.py`; `push-gate.py`; Jody | open: as specced, because this hook is a guardrail and CI is the enforcement (recommended); revisit when `pipeline` lands |
-| 4 | The stamp contract is read by two plugins (pro-ship, pro-security) that cannot import each other, so two copies of the validity rule can drift. | ADR-0003 (plugins stand alone); Jody | open: copy it and hold both with one shared fixture set and a check in `tests/check.mjs` (R27, recommended) or move the stamp reader into pro-core and add a dependency, which `CLAUDE.md` warns against |
-| 5 | The stamp is a plain file the session itself can write, so an agent can forge a passing stamp to get past the hook. | Jody; REVIEW.md, pass 2 | open: accept for a local guardrail and rely on the required CI check (recommended) or sign the stamp with a key outside the repo, which a session could also reach |
+| 1 | Removing `pr-quality-gate.py` drops two things the old gate did: the PR description length check (more than 50 characters) and a hook-run lint and test on repos that never run pr-check. | The maintainer; REVIEW.md, pass 1 (regressions) | open: accept, since the drafted body replaces the length check and the stamp hook names the missing check (recommended) |
+| 2 | pro-ship is opt-in and not in `pro-dev-starter`; removing pro-quality's gate would leave starter-only repos with no PR check at all. | Brainstorm ("Join pro-dev-starter when v0.1 lands, not now") | open: add pro-ship to the starter in this release (recommended) or keep a thin copy of the stamp hook in pro-quality |
+| 3 | The hook follows the mode file but denies once, while `production-gate` asks and the floor guard denies every retry, so three gates behave three ways. | `guard.py`; `push-gate.py` | open: as specced, because this hook is a guardrail and CI is the enforcement (recommended); revisit when `pipeline` lands |
+| 4 | The stamp contract is read by two plugins (pro-ship, pro-security) that cannot import each other, so two copies of the validity rule can drift. | ADR-0003 (plugins stand alone) | open: copy it and hold both with one shared fixture set and a check in `tests/check.mjs` (R27, recommended) or move the stamp reader into pro-core and add a dependency, which `CLAUDE.md` warns against |
+| 5 | The stamp is a plain file the session itself can write, so an agent can forge a passing stamp to get past the hook. | The maintainer; REVIEW.md, pass 2 | open: accept for a local guardrail and rely on the required CI check (recommended) or sign the stamp with a key outside the repo, which a session could also reach |
 | 6 | The skill must read the four-field handoff and the finding format from `code-reviewer`; the convergence rules from `review-policy`, both unwritten; if they change, R7, R10 and R13 change. | `intent/2026-10-29-code-reviewer`; `intent/2026-10-29-review-policy` | open: land code-reviewer's spec first and re-check this one (recommended); the deterministic half (R2 to R5, R14 to R28) does not depend on them |
-| 7 | pro-security's `security-architect` already returns a verdict for a diff; the stamp's Blocking count depends on its output format, which this spec has not pinned. | pro-security owner (Jody) | open: pin the tally line in the stamp contract page and count Blocking from it (recommended) |
-| 8 | Sibling scripts (the floor guard, `security_surface.py`) are found by path in a cache layout that Claude Code can change. | ADR-0006 (registry detection); Jody | open: look in the three places in the Design and record `not-installed` on a miss (recommended) or have each plugin publish its script path in a small registry file |
+| 7 | pro-security's `security-architect` already returns a verdict for a diff; the stamp's Blocking count depends on its output format, which this spec has not pinned. | pro-security owner | open: pin the tally line in the stamp contract page and count Blocking from it (recommended) |
+| 8 | Sibling scripts (the floor guard, `security_surface.py`) are found by path in a cache layout that Claude Code can change. | ADR-0006 (registry detection) | open: look in the three places in the Design and record `not-installed` on a miss (recommended) or have each plugin publish its script path in a small registry file |
 
 ## Open questions
 
 1. Fixed handoff to a subagent versus `claude -p`: answered, a subagent with the fixed handoff (R7); `claude -p` stays a later option for CI.
 2. Where the hook lives: answered, pro-ship (R17), with the starter question in Flagged concern 2.
-3. Whether pro-ship joins `pro-dev-starter`: decided on 2026-10-30 under Jody's approval, yes, in the same release (Flagged concern 2).
-4. How pr-check finds a sibling script: decided on 2026-10-30 under Jody's approval, by the documented install record (`installed_plugins.json`) after the in-place layout, as verified in `plan.md` ("Sibling lookup"); the `${CLAUDE_PLUGIN_ROOT}/../<plugin>/` path in Design, System only works for plugins loaded in place (Flagged concern 8).
-5. The per-command timeout: decided on 2026-10-30 under Jody's approval, 300 seconds with a repo override (N5).
+3. Whether pro-ship joins `pro-dev-starter`: decided on 2026-10-30 under the maintainer's approval, yes, in the same release (Flagged concern 2).
+4. How pr-check finds a sibling script: decided on 2026-10-30 under the maintainer's approval, by the documented install record (`installed_plugins.json`) after the in-place layout, as verified in `plan.md` ("Sibling lookup"); the `${CLAUDE_PLUGIN_ROOT}/../<plugin>/` path in Design, System only works for plugins loaded in place (Flagged concern 8).
+5. The per-command timeout: decided on 2026-10-30 under the maintainer's approval, 300 seconds with a repo override (N5).
 6. The default mode: answered, warn (R23); a later change moves it to enforce after clean logs, not this PR.
-7. Whether a draft PR needs the stamp: decided on 2026-10-30 under Jody's approval, no; `gh pr create --draft` or `-d` passes with no output.
+7. Whether a draft PR needs the stamp: decided on 2026-10-30 under the maintainer's approval, no; `gh pr create --draft` or `-d` passes with no output.
 8. The tier before the classifier exists: answered, the fixed value `unclassified` (R12).
 9. How the security review decides it is needed: answered, only on security surface (R8).
 10. Likely needs an ADR: answered, yes (Flagged concerns, `ADR needed`).
 
-The flagged concerns above are decided in `plan.md` ("Decisions taken under the approval") on 2026-10-30 under Jody's approval.
+The flagged concerns above are decided in `plan.md` ("Decisions taken under the approval") on 2026-10-30 under the maintainer's approval.
 
-Changed on 2026-10-29 after planning (Jody): the mutation check moves from the code-reviewer agent into pr-check (R29) and the stamp gains a `mutation` field.
+Changed on 2026-10-29 after planning: the mutation check moves from the code-reviewer agent into pr-check (R29) and the stamp gains a `mutation` field.
 
 ## Acceptance criteria
 
@@ -230,7 +230,7 @@ Changed on 2026-10-29 after planning (Jody): the mutation check moves from the c
 - AC10. The skill, run on this repo after the change, produces a stamp and a `pr-body.md` whose three sections are filled from that stamp; the run is shown in the PR.
 - AC11. With the skill's sibling plugins uninstalled in a throwaway Claude Code profile, the skill still runs, records each missing sibling as `not-installed` and the result is `incomplete`; pr-gate and the push gate still load.
 - AC12. `routing.jsonl` has a case for `pr-check` and `node tests/route-lexical.mjs --min-rank1 70` still passes.
-- AC13. After a week of normal work in warn mode in at least two of Jody's repos, `grep pr-gate ~/.claude/hooks/warn.log` shows no stop Jody disagrees with (checked after merge; it gates the later switch to enforce, not this PR).
+- AC13. After a week of normal work in warn mode in at least two of the maintainer's repos, `grep pr-gate ~/.claude/hooks/warn.log` shows no stop the maintainer disagrees with (checked after merge; it gates the later switch to enforce, not this PR).
 - AC14. `pr-check.py` on a throwaway repo with a diff that adds an untested condition records `mutation: survived`; with a test that covers it records `killed`; with a test-only diff or tier `low` records `skipped` with a reason; with no runnable test command records `could-not-run`.
 - AC15. In each AC14 case and when the test command is killed mid-run, `git status --short` is empty afterwards and the changed file is byte-identical to its committed content.
 - AC16. A stamp with `mutation: survived` or `could-not-run` comes out `incomplete`, never `pass`.

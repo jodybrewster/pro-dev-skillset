@@ -4,13 +4,13 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-29T19:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: review policy and convergence rules
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, items 5 and 6 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the "REVIEW.md template changes" and "Convergence" sections of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
+Author: the maintainer.
+Source: idea, items 5 and 6 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the "REVIEW.md template changes" and "Convergence" sections of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
 Status: done; shipped in #82.
 Created: 2026-10-29.
 
@@ -43,12 +43,12 @@ Review rounds converge.
 After the first full review, later rounds look only at the new commits.
 A finding is never raised twice and a class of bug is named once with every instance listed, so one round fixes them all.
 Pre-existing findings are listed but do not block.
-`/pr-babysit` stops after three rounds and asks Jody to reconsider the approach.
+`/pr-babysit` stops after three rounds and asks the maintainer to reconsider the approach.
 The same rules sit in the `reviewer` agent, `/review` and `/pr-babysit` themselves, so they hold in repos whose `REVIEW.md` predates this change.
 
 ## Affected users and systems
 
-Jody and any agent session in a repo that installs pro-ai-sdlc: JJ, mieruka, personal-site, gemini-live and this repo.
+The maintainer and any agent session in a repo that installs pro-ai-sdlc: JJ, mieruka, personal-site, gemini-live and this repo.
 pro-ai-sdlc: `templates/REVIEW.md`, `agents/reviewer.md` and its Codex twin `.codex-plugin/agents/reviewer.toml`, `commands/review.md`, `commands/pr-babysit.md`, both manifests and the marketplace entry.
 Repos that already have a `REVIEW.md` written from the old template keep it until they update it by hand.
 Later, the sibling intents that read these rules: the `code-reviewer` agent, `/pro-ship:pr-check` with its stamp and the risk tiers.
@@ -63,7 +63,7 @@ The template already caps nits and has a do-not-report list; those stay.
 Template section names the checks read stay as they are.
 The design-smell list and the presumptive blockers are optional rows and are never required by default.
 Forked or adapted text from agent-skills keeps its footer and a row in `docs/licenses.md`.
-Nothing here may invent a number: the round cap of three is the brainstorm's proposal and goes to Jody as an open question.
+Nothing here may invent a number: the round cap of three is the brainstorm's proposal and goes to the maintainer as an open question.
 
 ## Out of scope
 
@@ -88,7 +88,7 @@ A second `/review` round on the same PR, run with the previous head as its start
 A bug found in five places is reported once as a class with five locations.
 A finding on a line the PR did not add is tagged Pre-existing and does not appear in the important count.
 `/pr-babysit` on a PR that will not converge stops at round three and says so.
-Over a couple of weeks of normal PRs, Jody does not see the same finding twice or a Pre-existing finding blocking a merge.
+Over a couple of weeks of normal PRs, the maintainer does not see the same finding twice or a Pre-existing finding blocking a merge.
 
 ## Open questions
 

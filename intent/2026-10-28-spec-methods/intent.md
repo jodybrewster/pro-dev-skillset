@@ -4,27 +4,27 @@ kind: change
 status: proposed
 risk: medium
 created: 2026-10-28T07:35:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: swappable spec methods, starting with Elephant-Goldfish
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, intent C of the [pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md), item 7 apart from spec-kit (intent E).
 Status: proposed.
 Created: 2026-10-28.
 
 ## Problem
 
-Jody wants to try several spec-driven methods side by side: pro-ai-sdlc (intent, spec, plan), pro-spdd, GitHub spec-kit and Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (EGM, Apache-2.0).
-Jody: "Having four different spec driven methods means I can try them out easily by installing and uninstalling the plugins but I can control how they work together as well."
+The maintainer wants to try several spec-driven methods side by side: pro-ai-sdlc (intent, spec, plan), pro-spdd, GitHub spec-kit and Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (EGM, Apache-2.0).
+Having four different spec-driven methods means each can be tried easily by installing and uninstalling its plugin, while the plugins still control how they work together.
 Today nothing says how the methods relate, so with two installed a session can start the same feature in two places.
 EGM is already a Claude Code plugin in its own marketplace (`egm@egm`): a context-rich "elephant" session drafts a design, and "goldfish" subagents with no conversation history review it before any code is written.
 It writes `concepts_brief.md` and `design_draft.md` and saves approved designs under `docs/designs/`.
 
 ## Proposed outcome
 
-Each method is its own opt-in plugin, so installing or uninstalling one is how Jody tries it.
+Each method is its own opt-in plugin, so installing or uninstalling one is how the maintainer tries it.
 pro-ai-sdlc stays the default loop and becomes the coordinator: it checks which methods are installed and routes to them at defined points, with no edits needed when one is added or removed.
 A new `pro-egm` bridge plugin carries a thin skill on when to use EGM and how it fits the loop, and a registry row so `/pro-dev install` installs `egm@egm` when asked.
 The proposed hand-offs:

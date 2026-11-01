@@ -14,35 +14,35 @@ Every feature proposed so far, grouped by the intent it would land in, each link
 1. `/pro-ship:pr-check`: runs build, lint, typecheck and unit tests, plus any `check:*` scripts that installed skills add, then dispatches the reviewers and writes a stamp for HEAD. [The pre-PR gate](#the-pre-pr-gate-proposal)
 2. A hook on `gh pr create` that only checks the stamp and denies once when it is missing; replaces pro-quality's `pr-quality-gate.py`, which never fires. [Shape](#shape)
 3. `code-reviewer`, a detailed reviewer agent in pro-quality: correctness, tests, design, performance and compliance, with file and line evidence. [A detailed code reviewer](#a-detailed-code-reviewer)
-4. Fresh context for every reviewer through a fixed four-field handoff, held by a check in `tests/check.mjs`. [Fresh context](#fresh-context-is-a-hard-requirement-jody-2026-10-28)
-5. Codex as a second reviewer running the same agent; findings both models raise count as stronger. [Codex](#codex-as-a-second-reviewer-jody-2026-10-28)
+4. Fresh context for every reviewer through a fixed four-field handoff, held by a check in `tests/check.mjs`. [Fresh context](#fresh-context-is-a-hard-requirement)
+5. Codex as a second reviewer running the same agent; findings both models raise count as stronger. [Codex](#codex-as-a-second-reviewer)
 6. The security review joins the gate: pro-security's push gate accepts the stamp so it runs once per PR. [Shape](#shape)
 7. A risk classifier that sorts each diff into low, medium or high and sets the review depth and approval. [Risk gate](#risk-based-approval-gate-with-a-classifier)
-8. Approval tiers at one-person scale: low merges on green, medium and high need Jody, an agent's approval never counts and approval covers one commit. [Approval](#approval-at-one-person-scale)
+8. Approval tiers at one-person scale: low merges on green, medium and high need the maintainer, an agent's approval never counts and approval covers one commit. [Approval](#approval-at-one-person-scale)
 9. Round limits for agent loops: three rounds, then only new commits, no repeated findings, Pre-existing tag. [Convergence](#convergence-the-lesson-that-matters-most-for-agents)
 10. REVIEW.md as the only project review policy, with an improved template. [REVIEW.md](#reviewmd-is-the-reviewers-only-project-policy), [template](#reviewmd-template-changes)
 11. Installed skills bring runnable checks, not review checklists. [Runnable checks](#installable-skills-carry-build-knowledge-and-runnable-checks)
 12. A test set for the reviewer built from this repo's past bugs, rerun when the reviewer changes. [Evals](#improving-the-reviewer-past-bugs-become-evals)
-13. Settings in a REVIEW.md block so the same gate scales from solo to a team; the reviewers also run in GitHub Actions. [Scaling](#built-to-scale-up-jody-2026-10-28)
+13. Settings in a REVIEW.md block so the same gate scales from solo to a team; the reviewers also run in GitHub Actions. [Scaling](#built-to-scale-up)
 
 ### Intent C: docs and architecture review
 
 14. A required set of documents that depends on the project: README, CLAUDE.md, AGENTS.md, REVIEW.md and ADRs always; ARCHITECTURE, PRODUCT and DESIGN when they apply. [Doc set](#the-doc-set-proposal)
 15. New templates for README, ARCHITECTURE and PRODUCT; `/pro-dev install` writes missing documents from the code. [Doc set](#the-doc-set-proposal)
 16. pr-check lists missing documents and the reviewer flags lines a diff makes untrue. [Doc set](#the-doc-set-proposal)
-17. An architecture review with twelve-factor as its checklist: challenges a spec or plan, reviews high-risk diffs that change the architecture and audits a whole repo on demand; ARCHITECTURE.md records how the app meets each factor. [Architecture review](#twelve-factor-is-part-of-the-architecture-review-jody-2026-10-28)
+17. An architecture review with twelve-factor as its checklist: challenges a spec or plan, reviews high-risk diffs that change the architecture and audits a whole repo on demand; ARCHITECTURE.md records how the app meets each factor. [Architecture review](#twelve-factor-is-part-of-the-architecture-review)
 
 ### Intent B: the rest of pro-ship v0.1
 
 18. `/pro-ship:ship`, the preflight report (Blocking, Should-fix, OK), with no new release hook. [Release gate](#release-gate-no-new-hook)
 19. `/pro-ship:pipeline`, which generates or audits GitHub Actions, including the CI version of the gate. See [intent.md](intent.md).
-20. `/pro-ship:repo-hygiene`, which writes rulesets, CODEOWNERS and Dependabot from the REVIEW.md settings; recommended over `release` for v0.1. [Scope pushback](#scope-pushback-still-open), [Scaling](#built-to-scale-up-jody-2026-10-28)
+20. `/pro-ship:repo-hygiene`, which writes rulesets, CODEOWNERS and Dependabot from the REVIEW.md settings; recommended over `release` for v0.1. [Scope pushback](#scope-pushback-still-open), [Scaling](#built-to-scale-up)
 
 ### Later
 
-`release`, two-person approval, a merge queue, feature flags, staged releases, rollback and tracking revert rate and review rounds per PR. [Scaling](#built-to-scale-up-jody-2026-10-28), [intent.md](intent.md)
+`release`, two-person approval, a merge queue, feature flags, staged releases, rollback and tracking revert rate and review rounds per PR. [Scaling](#built-to-scale-up), [intent.md](intent.md)
 
-## Jody's asks in this brainstorm
+## The maintainer's asks in this brainstorm
 
 In the order he raised them on 2026-10-28, in his words, with where each is answered below.
 
@@ -84,7 +84,7 @@ Skills also load under Codex, so parity comes for free.
 
 Today pro-ship holds only the opt-in Vercel bridge, so adding it to every install gives nothing.
 
-### addyosmani forks as sidecars
+### agent-skills forks as sidecars
 
 `shipping-and-launch` becomes reference material under `ship` and `ci-cd-and-automation` under `pipeline`.
 Neither becomes a standalone skill, which would make routing ambiguous.
@@ -96,19 +96,19 @@ On Next.js deployed to Vercel, port binding, concurrency, disposability and admi
 Pass or fail on them is noise.
 
 `release` may be the wrong fourth v0.1 piece.
-Most of Jody's apps deploy on merge, so semver releases matter less.
+Most of the maintainer's apps deploy on merge, so semver releases matter less.
 release-please setup also overlaps `pipeline generate`.
-Jody's own ask was GitHub practices (rulesets, CODEOWNERS, Dependabot, branch and PR hygiene), which is `repo-hygiene`, deferred by the research.
-Swapping them departs from the research's priority order, so this is Jody's call.
+The maintainer's own ask was GitHub practices (rulesets, CODEOWNERS, Dependabot, branch and PR hygiene), which is `repo-hygiene`, deferred by the research.
+Swapping them departs from the research's priority order, so this is the maintainer's call.
 
 ## The pre-PR gate (proposal)
 
-Jody's ask: build, lint, typecheck, unit tests and fresh-context AI review before a pull request, at a minimum, maybe as a hook.
+The maintainer's ask: build, lint, typecheck, unit tests and fresh-context AI review before a pull request, at a minimum, maybe as a hook.
 
 ### What exists and why it never runs
 
 pro-quality's `scripts/pr-quality-gate.py` runs npm `lint` and `test` and tells the session to dispatch a code reviewer.
-It is wired to `mcp__github__create_pull_request`, which Jody never uses (he uses `gh pr create`), so it has never fired.
+It is wired to `mcp__github__create_pull_request`, which the maintainer never uses (he uses `gh pr create`), so it has never fired.
 It is PostToolUse, so it runs after the PR exists.
 It has no build or typecheck step and no Python support.
 Replace it rather than add beside it.
@@ -143,7 +143,7 @@ Lenses in order: correctness, tests (cover the change, right-sized, assert real 
 Each finding gives file and line, a severity (Important or nit) and a failure scenario.
 Nits are capped.
 
-#### Fresh context is a hard requirement (Jody, 2026-10-28)
+#### Fresh context is a hard requirement
 
 Both reviewers start with no knowledge of the session that wrote the code.
 A new subagent already starts with an empty context, but the dispatch prompt is where the author's reasoning leaks in ("I changed X because Y", a summary of what was built).
@@ -166,7 +166,7 @@ The strongest form is a separate process: `claude -p` with the reviewer agent an
 That is also how the same review would run in GitHub Actions, so the local and CI reviews behave alike.
 Open: whether v0.1 uses a subagent with the fixed handoff (simpler, shows progress in the session) or `claude -p` from the start.
 
-#### Codex as a second reviewer (Jody, 2026-10-28)
+#### Codex as a second reviewer
 
 A second review by Codex gives a different model family's read on the same diff, which catches what one model's blind spots miss.
 It is fresh context by construction because it runs as a separate process.
@@ -177,13 +177,13 @@ It is fresh context by construction because it runs as a separate process.
 - Merging: pr-check lists findings per reviewer, marks a finding both raised as higher confidence and shows disagreements as they are, never settled by one side.
 - Optional engine: Codex needs its own install and login, so it is an opt-in row in the engine registry that `/pro-dev install` asks about.
   When the CLI is missing or not logged in, pr-check says the Codex review was skipped and carries on.
-- Alternative on GitHub: Codex's own PR review integration, if Jody's plan includes it, reviews in CI without the local CLI; it would read the same REVIEW.md through AGENTS.md.
+- Alternative on GitHub: Codex's own PR review integration, if the maintainer's plan includes it, reviews in CI without the local CLI; it would read the same REVIEW.md through AGENTS.md.
 
 The Codex CLI was not on `PATH` in the shell that wrote these notes, although `~/.codex/` exists, so the spec has to find out how it is installed.
 
 pr-check dispatches `pro-quality:code-reviewer` and `pro-security:security-architect` (diff mode) in parallel.
 The stamp records both.
-pro-security's push gate accepts it so one security review runs per PR, scoped to the diff (Jody, 2026-10-25).
+pro-security's push gate accepts it so one security review runs per PR, scoped to the diff.
 `pro-ai-sdlc:reviewer` stays as `/review`'s policy gate for now.
 
 Optional later: a skeptic pass where a second agent tries to refute each Important finding.
@@ -191,7 +191,7 @@ It cuts false positives and roughly doubles the cost per PR, so it waits until t
 
 ### Risk-based approval gate with a classifier
 
-Jody's ask, same day: a risk-based approval gate with a classifier.
+The maintainer's ask, same day: a risk-based approval gate with a classifier.
 
 The classifier sorts the diff into low, medium or high and the tier decides what the gate demands.
 It is deterministic first: the hook must be fast and explainable.
@@ -221,9 +221,9 @@ An LLM classifier (Haiku) can break ties inside the skill but never inside the h
 Open: whether a person can override the tier down and where that override is recorded (PR body or stamp).
 Open: whether the tier table lives in REVIEW.md per repo, with the table above as the default.
 
-## Where review rules live (Jody, 2026-10-28)
+## Where review rules live
 
-Jody's rule: the reviewer looks at the project's REVIEW.md for project-specific review.
+The maintainer's rule: the reviewer looks at the project's REVIEW.md for project-specific review.
 Installable skills bring in runnable coding concepts, not review work.
 
 ### REVIEW.md is the reviewer's only project policy
@@ -249,9 +249,9 @@ Follow-up, not this intent: several installed skills are review work today (`int
 
 ## Mapped against "Solving code review at Anthropic"
 
-Source: https://claude.dev/blog/solving-code-review-at-anthropic/ (Jody, 2026-10-28).
+Source: https://claude.dev/blog/solving-code-review-at-anthropic/.
 Its goal: the least human review time that does not raise reverts or incidents.
-Jody's scale is one person directing agents across several repos, so each stage below says what we keep, what we shrink and what we skip.
+The maintainer's scale is one person directing agents across several repos, so each stage below says what we keep, what we shrink and what we skip.
 
 | Article stage | What it does there | For us |
 |---|---|---|
@@ -259,7 +259,7 @@ Jody's scale is one person directing agents across several repos, so each stage 
 | 1. Project rules | Short `CLAUDE.md`; a `REVIEW.md` per area; recurring findings fixed at the source in a skill, a lint rule or these files | Keep. Matches the REVIEW.md and runnable-checks rules above. Improve the REVIEW.md template (below) |
 | 2. AI review on every PR | Parallel bug hunters, a separate group votes and only agreed findings post; tags Important, Nit and Pre-existing; depth Quick, Standard or Deep per repo; every finding answered | Keep, shrunk. Claude plus Codex are two independent hunters and agreement stands in for the vote. Risk tier sets depth. Add the Pre-existing tag |
 | 3. Security review | Separate pass that can block | Already have it: pro-security's push gate, sharing the pr-check stamp |
-| 4. Required CI | Lint, types, tests, build; PR template asks how it was tested and how to undo it | Keep. `pipeline` generates the workflow; pr-check drafts the Testing, Risk and How to revert sections of the PR body for Jody to sign off |
+| 4. Required CI | Lint, types, tests, build; PR template asks how it was tested and how to undo it | Keep. `pipeline` generates the workflow; pr-check drafts the Testing, Risk and How to revert sections of the PR body for the maintainer to sign off |
 | 5. Risk-scaled human approval | Classifier picks the tier from the change, not the author; sensitive paths and CI workflow files always need a person; an agent's approval never counts; approval covers one commit | Keep the rules, shrink the numbers (below) |
 | 6. Merge queue, flags, staged release | Checks rerun against main with the change applied; flags; `latest` before `stable` | Mostly skip. Cheap equivalent: a ruleset that requires branches to be up to date before merge, which also catches the stacked version-bump conflicts this repo hits |
 | 7. Detection and rollback | Flags off without a deploy; on-call; incident reviews ask which layer should have caught it | Later (`rollback` in v0.2). Keep the question "which layer should have caught it" for every revert |
@@ -267,13 +267,13 @@ Jody's scale is one person directing agents across several repos, so each stage 
 ### Approval at one-person scale
 
 The article's tiers are none, one person and two people.
-Jody is the only person, so two people cannot happen and the tiers become:
+The maintainer is the only person, so two people cannot happen and the tiers become:
 
 - Low: no human approval once checks, review and security are green; `/merge-pr` may merge on its own.
-- Medium: Jody approves; the article counts the person directing the agent as that reviewer. Approval means reading the evidence (check output, findings, risk signals), so `/merge-pr` shows it and asks.
-- High: Jody approves after the deep review (Claude and Codex both, plus security); the second human becomes a second model plus the evidence. Sensitive paths and any `.github/workflows/` file land here or in medium at least, always with Jody.
+- Medium: the maintainer approves; the article counts the person directing the agent as that reviewer. Approval means reading the evidence (check output, findings, risk signals), so `/merge-pr` shows it and asks.
+- High: the maintainer approves after the deep review (Claude and Codex both, plus security); the second human becomes a second model plus the evidence. Sensitive paths and any `.github/workflows/` file land here or in medium at least, always with the maintainer.
 
-Rules taken as they are: the change sets the tier and the author's declared `risk:` can only raise it; an agent's approval never counts as Jody's; an approval covers one HEAD sha and a new commit needs it again.
+Rules taken as they are: the change sets the tier and the author's declared `risk:` can only raise it; an agent's approval never counts as the maintainer's; an approval covers one HEAD sha and a new commit needs it again.
 
 ### Convergence, the lesson that matters most for agents
 
@@ -281,7 +281,7 @@ The article's worst case was an agent author and an agent reviewer going more th
 Noise costs more with agent authors because each nit becomes another commit and another round.
 `/pr-babysit` is exactly that loop, so:
 
-- Cap review rounds at three; after that pr-check stops and asks Jody to reconsider the approach.
+- Cap review rounds at three; after that pr-check stops and asks the maintainer to reconsider the approach.
 - After the first full review, later rounds review only the new commits.
 - Never repeat a finding already raised. The reviewer stays fresh; pr-check dedupes its output against the earlier stamp afterwards, so the reviewer never sees earlier findings.
 - When a finding is a class of bug, say so, so every instance is fixed in one round.
@@ -299,9 +299,9 @@ This repo already has the incident list: "Things Claude gets wrong" in `CLAUDE.m
 Turn the commits that introduced those into a small eval set beside `tests/eval.mjs` and rescore whenever `code-reviewer` changes.
 Also run it against a few known-clean PRs to measure noise.
 
-### Built to scale up (Jody, 2026-10-28)
+### Built to scale up
 
-Jody's rule: the plugins must scale up when needed, not to Anthropic's size but past one person.
+The maintainer's rule: the plugins must scale up when needed, not to Anthropic's size but past one person.
 So nothing above is hard-coded to one person.
 The gate is one mechanism with dials.
 Solo is just the starting setting.
@@ -327,7 +327,7 @@ Two things change as it scales and the design has to allow for them now:
   A local hook binds only the person whose session runs it, so once there is a second person, rulesets, required checks and CODEOWNERS do the enforcing and the hook only saves a round trip.
   `repo-hygiene` (or `pipeline`) writes those rulesets from the same REVIEW.md block, so turning the dial up is one edit plus one command.
 - The review has to run without the author's machine.
-  The same `code-reviewer` (Claude) and its Codex twin run in GitHub Actions on every PR with the same four-field handoff, so a teammate's PR gets the same review as Jody's.
+  The same `code-reviewer` (Claude) and its Codex twin run in GitHub Actions on every PR with the same four-field handoff, so a teammate's PR gets the same review as the maintainer's.
   This is why the reviewer must never depend on session state or locally installed skills.
 
 Off at solo, ready to turn on later: two-person approval, trusted-author paths, merge queue, feature flags, staged releases, nightly reviews of existing code and tracking revert rate and review rounds per PR (the article's guardrail metrics, with DORA in v0.4).
@@ -335,9 +335,9 @@ On-call and human-time dashboards stay out of scope.
 
 Open: the format of the REVIEW.md block (a fenced YAML block under a fixed heading is the simplest that people and scripts can both read).
 
-## Every project has its required documents (Jody, 2026-10-28)
+## Every project has its required documents
 
-Jody's ask: each project has the documents it needs: REVIEW.md, ARCHITECTURE.md, CLAUDE.md, README.md, PRODUCT.md, DESIGN.md and so on.
+The maintainer's ask: each project has the documents it needs: REVIEW.md, ARCHITECTURE.md, CLAUDE.md, README.md, PRODUCT.md, DESIGN.md and so on.
 They matter more now because the reviewer, the classifier and CI all read them.
 
 ### What exists today
@@ -381,16 +381,16 @@ Open: whether AGENTS.md stays a full copy of CLAUDE.md, as in this repo, or beco
 
 This touches pro-core (`/pro-dev install`), pro-ai-sdlc (templates) and pro-quality (`documentation-engineer`), so it is its own intent, C; pr-check only consumes it.
 
-## Twelve-factor is part of the architecture review (Jody, 2026-10-28)
+## Twelve-factor is part of the architecture review
 
-Jody's call: twelve-factor belongs in the architecture review, not in a standalone pro-ship audit.
+The maintainer's call: twelve-factor belongs in the architecture review, not in a standalone pro-ship audit.
 This replaces `/pro-ship:twelve-factor` from the research and intent.md.
 
 ### There is no architecture review today
 
 pro-security has `security-architect`, which challenges a plan before code exists and reviews a diff before push.
 Nothing does the same for architecture; the code reviewer's design lens covers fit with surrounding code, not the shape of the system.
-Jody asked on 2026-10-25 for technical and solution architects in the starter, so this fills a known gap.
+The maintainer asked on 2026-10-25 for technical and solution architects in the starter, so this fills a known gap.
 
 ### Shape (proposal)
 
@@ -409,7 +409,7 @@ It follows the same rules as the other reviewers: fresh context, the four-field 
 
 - ARCHITECTURE.md gains a twelve-factor section: how this app meets each factor and which ones the platform owns.
   The audit writes it the first time and the reviewer flags a diff that makes it untrue, so the doc and the review share one source.
-- Mechanical factors run in pr-check, per Jody's runnable-checks rule: a committed lockfile (dependencies), config read from env with an `.env.example` and no hard-coded URLs or secrets (config), logs to stdout (logs), one build command (build, release, run).
+- Mechanical factors run in pr-check, per the maintainer's runnable-checks rule: a committed lockfile (dependencies), config read from env with an `.env.example` and no hard-coded URLs or secrets (config), logs to stdout (logs), one build command (build, release, run).
   Judgment factors (backing services, processes, disposability, dev/prod parity) go to the architect.
 - The classifier's architecture signals are a new row in its risky-path list.
 

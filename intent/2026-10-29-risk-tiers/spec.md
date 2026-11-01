@@ -3,13 +3,13 @@ intent: intent/2026-10-29-risk-tiers/intent.md
 intent-status: draft
 status: accepted
 created: 2026-10-29T19:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: risk classifier and approval tiers
 
 Built from `intent.md` in this folder (not yet committed).
-Status: accepted (Jody, 2026-10-30).
+Status: accepted.
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0003 and 0004 bear on this change), `docs/roadmap.md` item 4, the pro-ship brainstorm sections on the risk gate, approval at one-person scale, "Built to scale up" and the twelve-factor signals, `plugins/pro-security/scripts/security_surface.py`, `plugins/pro-legal/scripts/legal_surface.py`, `plugins/pro-ai-sdlc/templates/intent.md` (its `risk:` line), `plugins/pro-ai-sdlc/scripts/guard.py` and `production-gate.py` (mode handling), `plugins/pro-ai-sdlc/commands/intent.md` and `spec.md`, `plugins/pro-ship/` as it stands and the user-level `merge-pr.md` command.
 `/merge-pr` lives in the user-level commands folder (`~/.claude/commands/merge-pr.md`), outside this repo.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
@@ -19,7 +19,7 @@ No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/s
 pro-ship gains a deterministic risk classifier, a `risk-tiers` skill that explains it and a merge gate hook.
 The classifier is a Python script that reads the diff from the branch point and sorts it into low, medium or high from path signals, security and legal surface hits, dependency manifest changes, weakened tests, size, area count and the intent's declared risk.
 It prints every signal that set the tier and a `demands` block (checks, reviewers, approval, local decision, label) that the PR gate's `pr-check` records in its stamp and hands to the code reviewer.
-The merge gate hook on `gh pr merge` lets low through and returns `ask` for medium and high, so only Jody can answer it.
+The merge gate hook on `gh pr merge` lets low through and returns `ask` for medium and high, so only the maintainer can answer it.
 It requires the merge to be pinned to the commit it showed him.
 A repo can override the tier table, the risky paths and the size thresholds in an optional `Risk tiers` section of `REVIEW.md`.
 Everyone who installs pro-ship gets the classifier on the next update; the hook starts in warn mode.
@@ -88,10 +88,10 @@ Classifier:
   | Tier | Checks | Reviewers | Approval | Local decision | Label |
   |---|---|---|---|---|---|
   | low | build, lint, typecheck, tests | none, or the code reviewer on Sonnet | none | allow | none |
-  | medium | all | code-reviewer | Jody | ask | none |
-  | high | all | code-reviewer and security-architect | Jody | ask | `risk:high` |
+  | medium | all | code-reviewer | maintainer | ask | none |
+  | high | all | code-reviewer and security-architect | maintainer | ask | `risk:high` |
 
-  The brainstorm's table has "none beyond green checks" for medium approval; the one-person section of the same brainstorm and the roadmap require Jody, so this spec follows those (Flagged concerns 1).
+  The brainstorm's table has "none beyond green checks" for medium approval; the one-person section of the same brainstorm and the roadmap require the maintainer, so this spec follows those (Flagged concerns 1).
   (Intent: Proposed outcome, fifth line.)
 
 Overrides:
@@ -135,7 +135,7 @@ Skill and template:
   It tells the session to settle a tie by reading the evidence, to choose between the two tiers the classifier named and never above the top one; to record the choice and its reason next to the tier.
   It is the only place a model judges a tier.
   (Intent: Constraints, second line.)
-- R27. The skill says how `/merge-pr` should use the classifier: run it, show the signals and the HEAD sha and ask Jody before `gh pr merge --match-head-commit <sha>`.
+- R27. The skill says how `/merge-pr` should use the classifier: run it, show the signals and the HEAD sha and ask the maintainer before `gh pr merge --match-head-commit <sha>`.
   `/merge-pr` itself is not edited by this change (Flagged concerns 5).
 - R28. `plugins/pro-ai-sdlc/templates/review.md` (the REVIEW.md template) gains an optional, commented `## Risk tiers` section with the block of R16 and its defaults.
   Whether the template change lands here or in the review-policy intent is settled in Flagged concerns 2.
@@ -191,7 +191,7 @@ risk: high
   hook-scripts     high   strong  plugins/pro-ship/hooks/hooks.json  a hook registration changed
   declared-risk    low    -       intent/2026-10-29-x/intent.md
 finding: risk-underdeclared  declared low, computed high (workflows, hook-scripts)
-demands: all checks; code-reviewer and security-architect; approval Jody; label risk:high
+demands: all checks; code-reviewer and security-architect; approval maintainer; label risk:high
 ```
 
 In warn mode the merge runs and the session is told the tier.
@@ -228,36 +228,36 @@ The mode handling follows `production-gate.py`, which already returns `ask` in e
 Sources read: the policies listed at the top.
 
 ADR needed: yes, the tier model, the rule that an agent's approval never counts and the home of the tier table are rules every gate and reviewer here will share.
-Decided on 2026-10-30 under Jody's approval: it ships in this PR as `docs/decisions/0015-risk-tiers.md` (0012 is the reviewer handoff and 0013 the gate stamp).
+Decided on 2026-10-30 under the maintainer's approval: it ships in this PR as `docs/decisions/0015-risk-tiers.md` (0012 is the reviewer handoff and 0013 the gate stamp).
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The brainstorm's tier table says medium needs "none beyond green checks" while its one-person section and the roadmap say medium needs Jody. | brainstorm; `docs/roadmap.md`; Jody | Decided on 2026-10-30 under Jody's approval: medium asks, following the one-person section and the roadmap (R15) |
-| 2 | The REVIEW.md template change is owned by the review-policy intent; this intent also adds a `## Risk tiers` section to the same file; the PR gate and the scaling block will want the same fenced block format. | review-policy intent; PR gate intent; Jody | Decided on 2026-10-30 under Jody's approval: R28 lands here, because review-policy shipped in #82 without the section; the template is `plugins/pro-ai-sdlc/templates/REVIEW.md` and the one restricted-YAML block format is shared with the PR gate and the later scaling block |
-| 3 | `ask` may not prompt when the session runs with permission checks bypassed, in which case the gate would be a no-op. | Claude Code behavior, to verify; Jody | Decided on 2026-10-30 under Jody's approval: the build verifies it against a live session (plan step 15); medium and high are denied in every `permission_mode` the check shows cannot prompt; when the check cannot be run, `bypassPermissions` is denied (R24) |
-| 4 | An `ask` hook binds only the session that runs it; once a second person or CI merges, rulesets and CODEOWNERS must enforce; nothing here does. | brainstorm "Built to scale up"; roadmap items 21 and 31 | Decided on 2026-10-30 under Jody's approval: accepted at one-person scale, with the `risk:high` label and `--match-head-commit` as the hooks for rulesets and CODEOWNERS later |
-| 5 | `/merge-pr` lives in the user-level commands folder, so the repo cannot version it and the hook is the only repo-side guard. | Jody | Decided on 2026-10-30 under Jody's approval: `/merge-pr` is left alone and the gate does the work; a pro-ship merge command is later work |
-| 6 | The `risk:high` label can only be applied after the PR exists, but the `gh pr create` hook runs before it. | PR gate intent | Decided on 2026-10-30 under Jody's approval: the `pr-check` skill applies it right after `gh pr create` succeeds; a PostToolUse step for PRs opened outside the skill is later work |
-| 7 | `risk-classify.py` finds `security_surface.py` and `legal_surface.py` by directory conventions (R11) that depend on how Claude Code lays out the plugin cache and may change. | Claude Code plugin layout; Jody | Decided on 2026-10-30 under Jody's approval: R11 ships with the `PRO_SHIP_SURFACE_DIR` escape and the `surface-unavailable` note; no shared home in pro-core |
-| 8 | pro-ship is opt-in and not in the starter, so repos without it get no tiers. | brainstorm, "Join pro-dev-starter when v0.1 lands"; Jody | Decided on 2026-10-30 under Jody's approval: ships in pro-ship; pro-ship joins the starter in the PR gate's release, which lands first |
-| 9 | Tying the approval to a commit relies on `gh pr merge --match-head-commit`, which blocks the merge when the remote head differs but does nothing for a merge made with the GitHub UI. | `gh` behavior; roadmap item 31 | Decided on 2026-10-30 under Jody's approval: accepted; the UI path is closed by rulesets later |
-| 10 | The size thresholds are not in the brainstorm and would be invented here. | Jody | Decided on 2026-10-30 under Jody's approval: placeholder named constants marked unmeasured until the calibration run over merged PRs (AC9); Jody fixes the numbers from that run |
-| 11 | The classifier's hook-script signal also treats a script run from `hooks.json` as a hook script, which makes this repo's `plugins/*/scripts/*.py` hook runners high but not its other scripts. | REVIEW.md pass 2; Jody | Decided on 2026-10-30 under Jody's approval: accepted as specced, since a hook runner runs in every consumer's session |
-| 12 | Every sibling plugin version in this spec (pro-ship 0.3.0, pro-ai-sdlc next minor) will collide with the other intents drafted today. | ADR-0002; Jody | Decided on 2026-10-30 under Jody's approval: take the next number over main at build time and stack the PRs, per `docs/version-bump-law.md` |
+| 1 | The brainstorm's tier table says medium needs "none beyond green checks" while its one-person section and the roadmap say medium needs the maintainer. | brainstorm; `docs/roadmap.md` | Decided on 2026-10-30 under the maintainer's approval: medium asks, following the one-person section and the roadmap (R15) |
+| 2 | The REVIEW.md template change is owned by the review-policy intent; this intent also adds a `## Risk tiers` section to the same file; the PR gate and the scaling block will want the same fenced block format. | review-policy intent; PR gate intent | Decided on 2026-10-30 under the maintainer's approval: R28 lands here, because review-policy shipped in #82 without the section; the template is `plugins/pro-ai-sdlc/templates/REVIEW.md` and the one restricted-YAML block format is shared with the PR gate and the later scaling block |
+| 3 | `ask` may not prompt when the session runs with permission checks bypassed, in which case the gate would be a no-op. | Claude Code behavior, to verify | Decided on 2026-10-30 under the maintainer's approval: the build verifies it against a live session (plan step 15); medium and high are denied in every `permission_mode` the check shows cannot prompt; when the check cannot be run, `bypassPermissions` is denied (R24) |
+| 4 | An `ask` hook binds only the session that runs it; once a second person or CI merges, rulesets and CODEOWNERS must enforce; nothing here does. | brainstorm "Built to scale up"; roadmap items 21 and 31 | Decided on 2026-10-30 under the maintainer's approval: accepted at one-person scale, with the `risk:high` label and `--match-head-commit` as the hooks for rulesets and CODEOWNERS later |
+| 5 | `/merge-pr` lives in the user-level commands folder, so the repo cannot version it and the hook is the only repo-side guard. | The maintainer | Decided on 2026-10-30 under the maintainer's approval: `/merge-pr` is left alone and the gate does the work; a pro-ship merge command is later work |
+| 6 | The `risk:high` label can only be applied after the PR exists, but the `gh pr create` hook runs before it. | PR gate intent | Decided on 2026-10-30 under the maintainer's approval: the `pr-check` skill applies it right after `gh pr create` succeeds; a PostToolUse step for PRs opened outside the skill is later work |
+| 7 | `risk-classify.py` finds `security_surface.py` and `legal_surface.py` by directory conventions (R11) that depend on how Claude Code lays out the plugin cache and may change. | Claude Code plugin layout | Decided on 2026-10-30 under the maintainer's approval: R11 ships with the `PRO_SHIP_SURFACE_DIR` escape and the `surface-unavailable` note; no shared home in pro-core |
+| 8 | pro-ship is opt-in and not in the starter, so repos without it get no tiers. | brainstorm, "Join pro-dev-starter when v0.1 lands" | Decided on 2026-10-30 under the maintainer's approval: ships in pro-ship; pro-ship joins the starter in the PR gate's release, which lands first |
+| 9 | Tying the approval to a commit relies on `gh pr merge --match-head-commit`, which blocks the merge when the remote head differs but does nothing for a merge made with the GitHub UI. | `gh` behavior; roadmap item 31 | Decided on 2026-10-30 under the maintainer's approval: accepted; the UI path is closed by rulesets later |
+| 10 | The size thresholds are not in the brainstorm and would be invented here. | The maintainer | Decided on 2026-10-30 under the maintainer's approval: placeholder named constants marked unmeasured until the calibration run over merged PRs (AC9); the maintainer fixes the numbers from that run |
+| 11 | The classifier's hook-script signal also treats a script run from `hooks.json` as a hook script, which makes this repo's `plugins/*/scripts/*.py` hook runners high but not its other scripts. | REVIEW.md pass 2 | Decided on 2026-10-30 under the maintainer's approval: accepted as specced, since a hook runner runs in every consumer's session |
+| 12 | Every sibling plugin version in this spec (pro-ship 0.3.0, pro-ai-sdlc next minor) will collide with the other intents drafted today. | ADR-0002 | Decided on 2026-10-30 under the maintainer's approval: take the next number over main at build time and stack the PRs, per `docs/version-bump-law.md` |
 
 ## Open questions
 
 1. Which plugin owns the classifier: answered.
-   Decided on 2026-10-30 under Jody's approval: pro-ship, with an optional read of the two existing classifiers (R11, Flagged concerns 7).
+   Decided on 2026-10-30 under the maintainer's approval: pro-ship, with an optional read of the two existing classifiers (R11, Flagged concerns 7).
 2. Whether a person can override the tier down and where it is recorded: answered.
-   Decided on 2026-10-30 under Jody's approval: only Jody can override a tier down, recorded in the stamp against one HEAD sha, echoed in the PR body and never by an agent; an override changes reviewer depth and cannot remove the `ask` for a medium or high diff.
+   Decided on 2026-10-30 under the maintainer's approval: only the maintainer can override a tier down, recorded in the stamp against one HEAD sha, echoed in the PR body and never by an agent; an override changes reviewer depth and cannot remove the `ask` for a medium or high diff.
    It is later work, allowed by the spec's Out of scope: a later change adds `--accept-tier`.
 3. Whether the tier table lives in `REVIEW.md`: answered, yes, as an optional section with the defaults of R15 (R16, R17), with the approval column fixed until the scaling block exists.
 4. The size thresholds: answered.
-   Decided on 2026-10-30 under Jody's approval: placeholder named constants marked unmeasured until the calibration run over merged PRs (AC9, R18).
+   Decided on 2026-10-30 under the maintainer's approval: placeholder named constants marked unmeasured until the calibration run over merged PRs (AC9, R18).
 5. How medium gets local approval: answered, the gate's `ask` for the step an agent cannot answer (R21) and `/merge-pr` showing the evidence (R27).
 6. Whether `ask` prompts under a bypass: answered as a build step.
-   Decided on 2026-10-30 under Jody's approval: the build checks it against a live session (plan step 15) and the gate denies medium and high in any mode that cannot prompt; if the check cannot be run, `bypassPermissions` is denied (R24, Flagged concerns 3).
+   Decided on 2026-10-30 under the maintainer's approval: the build checks it against a live session (plan step 15) and the gate denies medium and high in any mode that cannot prompt; if the check cannot be run, `bypassPermissions` is denied (R24, Flagged concerns 3).
 7. Likely needs an ADR: answered, yes (Flagged concerns).
 
 ## Acceptance criteria
@@ -274,11 +274,11 @@ Decided on 2026-10-30 under Jody's approval: it ships in this PR as `docs/decisi
 - AC6. With a `## Risk tiers` block in a fixture `REVIEW.md` that adds a path to `paths.high`, that path lands high; with a malformed block the output says `policy: unreadable` and gives the default tier; a block that tries to set `paths.low` on `.github/workflows/` leaves it high; no block prints `policy: defaults`.
 - AC7. With `security_surface.py` and `legal_surface.py` hidden from the lookup the classifier prints `surface-unavailable` for each and still tiers the AC3 path fixtures correctly.
 - AC8. Running the classifier twice on the same fixture gives byte-identical output; a run with the network disabled gives the same output (N1).
-- AC9. A calibration run over this repo's last merged PRs (the list and their tiers printed in the PR, not committed) shows each PR's tier and signals; Jody reviews it and the size constants are fixed from it.
+- AC9. A calibration run over this repo's last merged PRs (the list and their tiers printed in the PR, not committed) shows each PR's tier and signals; the maintainer reviews it and the size constants are fixed from it.
   It gates fixing the thresholds, not this PR's merge.
 - AC10. The PR's own diff, classified by the script, prints tier high with a `hook-scripts` signal (the PR adds `hooks/hooks.json`); the run is pasted in the PR body.
 - AC11. A line in the skill and the output tells a session that a tie is the only case where a model may choose; the gate's source contains no model or network call (`grep -c -E "urllib|requests|anthropic|http" plugins/pro-ship/scripts/merge-gate.py` prints 0).
-- AC12. After two weeks of normal work in warn mode in at least two of Jody's repos, `grep merge-gate ~/.claude/hooks/warn.log` shows no prompt Jody thinks was wrong (checked after merge; it gates the later switch to enforce, not this PR).
+- AC12. After two weeks of normal work in warn mode in at least two of the maintainer's repos, `grep merge-gate ~/.claude/hooks/warn.log` shows no prompt the maintainer thinks was wrong (checked after merge; it gates the later switch to enforce, not this PR).
 
 ## Out of scope
 

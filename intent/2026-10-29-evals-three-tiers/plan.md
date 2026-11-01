@@ -2,7 +2,7 @@
 
 Built from `spec.md` and `intent.md` in this folder.
 Status: built on 2026-10-29.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-29.
 Branch: `feat/evals-three-tiers` off origin/main 50919a1, in the worktree `../pro-dev-skillset.evals`.
 

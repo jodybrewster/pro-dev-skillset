@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit bf4e61d) and `intent.md` in this folder.
 Status: draft.
-Approver: Jody Brewster; the change adds a third-party install path and a prompt channel, so it is not an auto-mode change.
+Approver: the maintainer; the change adds a third-party install path and a prompt channel, so it is not an auto-mode change.
 Dated: 2026-10-28.
 
 ## Files that change
@@ -40,14 +40,14 @@ Nothing is deleted.
 ## Order of work
 
 The build runs in a worktree on a branch from local `main` at bf4e61d, which is `origin/main` plus the four spec commits.
-Jody's uncommitted `; true` edits in `plugins/pro-ai-sdlc/commands/{adr,plan,review,spec}.md` stay in the main checkout and are not touched (see Risks).
+The maintainer's uncommitted `; true` edits in `plugins/pro-ai-sdlc/commands/{adr,plan,review,spec}.md` stay in the main checkout and are not touched (see Risks).
 
 0. Settle the blocking item of the security challenge before any pro-egm code.
    Upstream `docs/claude.md` says the synthesizer spawns "the plugin's registered reviewer types (for example `egm:egm-zoom-out`)", which are read-only, but it says nothing about a reviewer given as a path; a custom goldfish may run as a general-purpose agent with shell access.
    In a scratch repo with `egm@egm` installed, run `/egm:egm-review-loop` with one path reviewer and read the session transcript for the subagent type and tools it got.
    If it is a registered read-only type, record that here and go on.
    If it is general-purpose, pro-egm ships its own read-only adapter agent, `pro-egm:goldfish-reviewer` (`tools: [Read, Grep, Glob]`, `omitClaudeMd: true`); `/pro-egm:goldfish` runs path reviewers through it with direct dispatch, passing EGM's built-in reviewers to EGM as shortnames.
-   If that cannot work, path reviewers are dropped and Jody decides again.
+   If that cannot work, path reviewers are dropped and the maintainer decides again.
    Check: the finding is written under Departures before step 6 starts.
 1. Registry `marketplace` field.
    Add the `marketplace` validation to the `registry` check, then the step in `pro-dev.py`: read `known_marketplaces.json`; a missing name runs `claude plugin marketplace add <source>`; a registered name whose source is not `github` with the same `repo` (case-insensitive), or an unreadable file, prints both and fails the row; the file is read again after the add and before the install; the same check runs in `status` and before `update` (security change 9).
@@ -105,9 +105,9 @@ What this might break:
   N1 and N2 keep them unchanged when nothing is installed or `claude` fails; step 8's check proves it before the docs commit.
 - `/pro-dev install` for existing rows.
   The marketplace step runs only for rows that carry `marketplace`; the existing `tests/pro-dev.mjs` cases must stay green.
-- Jody's uncommitted `; true` edits sit in the same four command files.
+- The maintainer's uncommitted `; true` edits sit in the same four command files.
   The worktree never sees them; when he commits them after this merges, the Context lines may conflict.
-  The safer order is for Jody to commit those edits first, so the build branch starts from them.
+  The safer order is for the maintainer to commit those edits first, so the build branch starts from them.
 - `claude plugin marketplace add` is a user-wide write and stays after pro-egm is uninstalled; ADR-0007 accepts that and `/pro-dev` names it.
 - EGM's review loop asks the person to confirm its configuration and to approve fixes each round, so the `/spec` run takes several turns; this is EGM's design and the offer says it runs several subagents.
 
@@ -115,7 +115,7 @@ Nothing here is irreversible: no migration, no deleted file and every new path i
 
 Left out on purpose:
 
-- A `docs` goldfish and a security goldfish: Jody tries EGM through pro-egm first and tunes `.egm/goldfish.json` after first use (spec Open question 5).
+- A `docs` goldfish and a security goldfish: the maintainer tries EGM through pro-egm first and tunes `.egm/goldfish.json` after first use (spec Open question 5).
 - EGM's brainstorm, draft and drift-report flows in the loop (spec Out of scope).
 - Codex install through the registry (umbrella item G).
 - pro-speckit's `sdlc-method.json` (intent E).
@@ -184,9 +184,9 @@ Verdict: proceed with required changes; the blocking item is a check before step
 
 ### Accepted risks
 
-- `claude plugin marketplace add` is a user-wide write that stays after pro-egm is uninstalled (ADR-0007, Jody, 2026-10-28).
-- A row that names a marketplace may default to installed because installing the glue plugin is the opt-in (ADR-0007, Jody, 2026-10-28); this holds only with step 2's pin.
-- EGM's agents run on `model: inherit` for up to five rounds (Flagged concern 5, Jody, 2026-10-28).
+- `claude plugin marketplace add` is a user-wide write that stays after pro-egm is uninstalled (ADR-0007).
+- A row that names a marketplace may default to installed because installing the glue plugin is the opt-in (ADR-0007); this holds only with step 2's pin.
+- EGM's agents run on `model: inherit` for up to five rounds (Flagged concern 5).
 
 The challenge found no instructions in the plan or spec that tried to steer it.
 Upstream fact found while answering: `docs/claude.md` lets an `EGM artifact directory: <path>` line in `CLAUDE.md` or `AGENTS.md` choose where EGM writes its report.

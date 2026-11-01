@@ -3,7 +3,7 @@ intent: intent/2026-10-28-quiet-validation-hook/intent.md
 intent-status: accepted
 status: accepted
 created: 2026-10-28T06:50:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: quiet validation hook
@@ -70,7 +70,7 @@ A new `tests/quality-hooks.mjs` drives the script the way `tests/sdlc-hooks.mjs`
 
 ### Alternatives considered
 
-- Keep blocking and only fix the path filter: still forces a full handoff on every small edit, which is the part Jody calls too much.
+- Keep blocking and only fix the path filter: still forces a full handoff on every small edit, which is the part the maintainer calls too much.
 - Remove the hook and rely on `/validate`: loses the reminder after real work, and there would be no way back without a release.
 - A mode file such as `.pro-dev/validation/mode`: `.pro-dev/` is self-ignoring, so the setting could not be shared through the repo; the settings `env` block is the documented place for this and works per repo or per user.
 
@@ -80,13 +80,13 @@ ADR needed: no, the change is local to one hook, behind a setting and cheap to r
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The README promises the hook "blocks the stop once"; the default now only suggests. | `README.md`, Jody | resolved: the intent asks for this, and R11 updates the README and skill text. |
+| 1 | The README promises the hook "blocks the stop once"; the default now only suggests. | `README.md` | resolved: the intent asks for this, and R11 updates the README and skill text. |
 | 2 | `systemMessage` on a Stop hook is shown to the person, but no test here can see the UI. | `docs/hook-loading.md` | open: the tests check the JSON; the plan needs one live check in a real session. |
-| 3 | Sites that relied on the forced handoff lose it silently on update. | Jody | open: the release note names `PRO_DEV_VALIDATION=block`; Jody decides whether that is enough. |
+| 3 | Sites that relied on the forced handoff lose it silently on update. | The maintainer | open: the release note names `PRO_DEV_VALIDATION=block`; the maintainer decides whether that is enough. |
 
 ## Open questions
 
-- Should the default be the one-line nudge or fully off? Answered: nudge, the recommended default in the plan Jody approved on 2026-10-28.
+- Should the default be the one-line nudge or fully off? Answered: nudge, the recommended default in the plan the maintainer approved on 2026-10-28.
 
 ## Acceptance criteria
 

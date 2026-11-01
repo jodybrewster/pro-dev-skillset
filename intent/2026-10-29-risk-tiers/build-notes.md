@@ -45,7 +45,7 @@ Exit codes: 0 low, 3 medium, 4 high, 2 could not run, 64 usage.
   "findings": [str],                                          e.g. "risk-underdeclared: ..."
   "tie": [top, one_below] | null,
   "architecture": bool,
-  "demands": {"checks": [str], "reviewers": [str], "approval": "none"|"Jody",
+  "demands": {"checks": [str], "reviewers": [str], "approval": "none"|"maintainer",
               "local_decision": "allow"|"ask", "label": "none"|"risk:high"},
   "base": "<40-char sha of the merge base>",
   "head": "<40-char sha>",

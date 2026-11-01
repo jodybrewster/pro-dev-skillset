@@ -3,7 +3,7 @@ intent: intent/2026-10-28-plugin-installers/intent.md
 intent-status: proposed
 status: draft
 created: 2026-10-28T14:12:03-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: every plugin with engines ships its own installer
@@ -20,7 +20,7 @@ Each plugin that owns rows in `plugins/pro-core/registry/engines.json` ships one
 Today that is pro-design, pro-nextjs, pro-testing, pro-pdd, pro-egm and pro-ship, plus pro-speckit when it ships.
 The command runs a small identical script in its own plugin, `scripts/pro-dev-owner.py`, which finds pro-core's installed `pro-dev.py` in the Claude Code plugin cache, refuses any other location and calls it with `--owner <plugin>`, the plugin name read from the script's own manifest.
 `pro-dev.py` gains that `--owner` filter so status, answers and runs touch only the named owner's rows; every pin, surface check, `gitExclude`, marketplace check and saved answer stays in the one script.
-No owning plugin declares a dependency on pro-core, because installing a dependent silently re-enables a pro-core the person disabled (plan step 0; Jody, 2026-10-28). `/<plugin>:install` needs pro-core installed and enabled and otherwise prints one line saying so and stops.
+No owning plugin declares a dependency on pro-core, because installing a dependent silently re-enables a pro-core the person disabled (plan step 0). `/<plugin>:install` needs pro-core installed and enabled and otherwise prints one line saying so and stops.
 Before any run, both `/<plugin>:install` and `/pro-dev` list every row that will install, mark the answers that came from the committed `.claude/pro-dev.json` and wait for a yes in the conversation.
 Apart from that confirmation, `/pro-dev install`, `update` and `check` behave exactly as today and a site on `pro-dev-starter` still has one step.
 A person who installs only pro-nextjs runs `/pro-nextjs:install` and gets its engines and nothing else.
@@ -49,7 +49,7 @@ Codex users get no new command; their path stays the per-bridge manual commands.
   When `claude` is missing or fails, it does not read `installed_plugins.json` or guess; it prints `cannot read plugin installs: claude plugin list --json failed; run it to see why` and exits 2. (constraint: "A plugin's installer needs pro-core's script"; Security challenge items 1 and 2)
 - R14. `pro-dev-owner.py` runs the found `scripts/pro-dev.py` only when its real path is a regular file inside the real path of `<config dir>/plugins/cache/pro-dev-skillset/pro-core/` and outside the repo root; otherwise it prints the path it refused and why and exits 2. (constraint: "Engines still install only when a person runs a command"; security policy in `REVIEW.md` Pass 2)
 - R15. `pro-dev-owner.py` refuses a pro-core older than the first version that ships `--owner` (a constant in the script), printing `pro-core <found> is older than <min>; update it with /pro-dev update or claude plugin update pro-core@pro-dev-skillset` and exiting 2. (constraint: "A plugin's installer needs pro-core's script")
-- R16. When no pro-core entry covers the repo under R13, `pro-dev-owner.py` prints `pro-core is not installed for this repo; install it with claude plugin install pro-core@pro-dev-skillset` and exits 2. (Jody, 2026-10-28: "yes you don't need pro-core for pro-nextjs")
+- R16. When no pro-core entry covers the repo under R13, `pro-dev-owner.py` prints `pro-core is not installed for this repo; install it with claude plugin install pro-core@pro-dev-skillset` and exits 2. (decided 2026-10-28)
 - R17. `pro-dev-owner.py` runs `python3 <pro-dev.py> --owner <owner> <args>` as an argv list with no shell, passes stdin, stdout and exit code through and prints the pro-core path and version it chose on its first line. (intent: "pins, surface checks, `gitExclude`, marketplace checks and saved answers stay in one place")
 - R18. Each owning plugin ships `commands/install.md`, invoked as `/<plugin>:install`, taking an optional argument `update`; with no argument it installs, with `update` it updates. (intent: "ships one `/<plugin>:install` command"; Open question 2)
 - R19. `install.md`'s `allowed-tools` lists only the `status` and `answer` patterns of its own `pro-dev-owner.py`, quoted and unquoted, in the form `Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" status*)`; `run` is not pre-approved and prompts as `/pro-dev`'s `run` does. (constraint: "Each installer's `allowed-tools` holds only the exact `pro-dev.py` pattern it runs"; Flagged concerns 2 and 3)
@@ -58,7 +58,7 @@ Codex users get no new command; their path stays the per-bridge manual commands.
 - R22. `install.md` does not update plugins, swap the starter, remove stale installs or set the repo up for the loop; it ends by naming `/pro-dev check` for a full health check. (intent: "sets up only its own engines")
 - R23. pro-design, pro-nextjs, pro-testing, pro-pdd, pro-egm and pro-ship declare no pro-core dependency in `.claude-plugin/plugin.json`.
   Plan step 0 found that installing a plugin that depends on pro-core silently re-enables a disabled pro-core, with its `git-safe`, `memory-recall`, session-start and Stop hooks.
-  Jody decided 2026-10-28: "yes you don't need pro-core for pro-nextjs".
+  Decided 2026-10-28: pro-nextjs needs no pro-core dependency.
   Each description says `/<plugin>:install` sets up its engines when pro-core is installed. (Flagged concern 4)
 - R24. `tests/check.mjs` gains an `installers` check that fails when a registry `owner` has no `commands/install.md` or no `scripts/pro-dev-owner.py`, when that plugin's manifest lacks the pro-core dependency, when any `pro-dev-owner.py` differs from the others byte for byte or when a plugin ships `scripts/pro-dev-owner.py` but owns no row. (intent: "`tests/check.mjs` fails when a plugin owns a registry row but ships no installer")
 - R25. The `installers` check fails when an `install.md` `allowed-tools` entry is anything other than R19's patterns, when its body names `pro-dev.py` directly, passes `--owner` or names a `run <id>` whose id another plugin owns. (intent: "or when an installer runs rows it does not own")
@@ -142,14 +142,14 @@ The build adds why there is no dependency: a dependent re-enables a disabled pro
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The intent reverses ADR-0006's decision "No plugin ships its own engine install command", whose context was that per-plugin commands made setup take nine commands. | ADR-0006, Jody | settled 2026-10-28 (Jody): amend ADR-0006 in place; per-plugin installers are a subset of `/pro-dev install`, which stays the single step for starter sites (R8, R9, R30). |
-| 2 | The intent says each installer's `allowed-tools` holds the exact `pro-dev.py` pattern while a plugin command's `${CLAUDE_PLUGIN_ROOT}` is its own and cannot name pro-core's script path. | intent Constraints, Jody | settled 2026-10-28 (Jody): `allowed-tools` names the plugin's own `pro-dev-owner.py`, which finds pro-core under the trust rules of R13 to R15 and R32 (R19). |
-| 3 | The intent's allowed-tools line could be read as pre-approving the run, while `/pro-dev` deliberately leaves `run` unapproved so every install prompts. | `plugins/pro-core/commands/pro-dev.md`, ADR-0006 | settled 2026-10-28 (Jody): pre-approve only `status` and `answer`; `run` prompts each time, as in `/pro-dev` (R19). |
-| 4 | A pro-core dependency would load pro-core's hooks (Bash guard, memory recall, dream nudges, the `/pro-dev update` nudge) in every session of someone who installed only pro-nextjs, which they did not ask for. | intent Constraints, Jody | settled 2026-10-28 (Jody): no dependency, because step 0 showed it re-enables a disabled pro-core; the installer checks for pro-core instead (R23). |
-| 5 | Rows live in pro-core and a new row for pro-nextjs reaches `/pro-nextjs:install` only after pro-core updates too, while a person who updates pro-nextjs alone sees no new row and no error. | ADR-0006 Consequences | settled 2026-10-28 (Jody): rows stay in pro-core's registry for now; R15's minimum version covers the `--owner` release only; per-plugin registry files are deferred and stay ADR-0006's reversal fallback. |
-| 6 | pro-speckit's spec R26 says its installer runs `pro-dev.py run <id> install` per row with that exact script pattern in `allowed-tools`, which this spec replaces with `pro-dev-owner.py run all install`. | `intent/2026-10-28-pro-speckit/spec.md` R26, Jody | settled 2026-10-28 (Jody): pro-speckit's R26 to R28 follow this spec; its command runs its own `pro-dev-owner.py`, not `pro-dev.py` directly (R26). |
-| 7 | Installers are Claude Code commands while Codex parity asks that a rule in a Claude manifest have its Codex sibling; Codex has no command or dependency field for this and `owner_active` reads only Claude installs. | ADR-0004, `REVIEW.md` Pass 1 | settled 2026-10-28 (Jody): Codex users keep the manual install lines the bridge skills already carry (R29); no Codex installer. |
-| 8 | Seven plugins each ship a command named `install`: a bare `/install` is ambiguous and the commands show up for starter users who never need them. | intent Open question 1, Jody | settled 2026-10-28 (Jody): always `/<plugin>:install`, with an `update` argument; health stays in `/pro-dev check` (R18, R22). |
+| 1 | The intent reverses ADR-0006's decision "No plugin ships its own engine install command", whose context was that per-plugin commands made setup take nine commands. | ADR-0006 | settled 2026-10-28: amend ADR-0006 in place; per-plugin installers are a subset of `/pro-dev install`, which stays the single step for starter sites (R8, R9, R30). |
+| 2 | The intent says each installer's `allowed-tools` holds the exact `pro-dev.py` pattern while a plugin command's `${CLAUDE_PLUGIN_ROOT}` is its own and cannot name pro-core's script path. | intent Constraints | settled 2026-10-28: `allowed-tools` names the plugin's own `pro-dev-owner.py`, which finds pro-core under the trust rules of R13 to R15 and R32 (R19). |
+| 3 | The intent's allowed-tools line could be read as pre-approving the run, while `/pro-dev` deliberately leaves `run` unapproved so every install prompts. | `plugins/pro-core/commands/pro-dev.md`, ADR-0006 | settled 2026-10-28: pre-approve only `status` and `answer`; `run` prompts each time, as in `/pro-dev` (R19). |
+| 4 | A pro-core dependency would load pro-core's hooks (Bash guard, memory recall, dream nudges, the `/pro-dev update` nudge) in every session of someone who installed only pro-nextjs, which they did not ask for. | intent Constraints | settled 2026-10-28: no dependency, because step 0 showed it re-enables a disabled pro-core; the installer checks for pro-core instead (R23). |
+| 5 | Rows live in pro-core and a new row for pro-nextjs reaches `/pro-nextjs:install` only after pro-core updates too, while a person who updates pro-nextjs alone sees no new row and no error. | ADR-0006 Consequences | settled 2026-10-28: rows stay in pro-core's registry for now; R15's minimum version covers the `--owner` release only; per-plugin registry files are deferred and stay ADR-0006's reversal fallback. |
+| 6 | pro-speckit's spec R26 says its installer runs `pro-dev.py run <id> install` per row with that exact script pattern in `allowed-tools`, which this spec replaces with `pro-dev-owner.py run all install`. | `intent/2026-10-28-pro-speckit/spec.md` R26 | settled 2026-10-28: pro-speckit's R26 to R28 follow this spec; its command runs its own `pro-dev-owner.py`, not `pro-dev.py` directly (R26). |
+| 7 | Installers are Claude Code commands while Codex parity asks that a rule in a Claude manifest have its Codex sibling; Codex has no command or dependency field for this and `owner_active` reads only Claude installs. | ADR-0004, `REVIEW.md` Pass 1 | settled 2026-10-28: Codex users keep the manual install lines the bridge skills already carry (R29); no Codex installer. |
+| 8 | Seven plugins each ship a command named `install`: a bare `/install` is ambiguous and the commands show up for starter users who never need them. | intent Open question 1 | settled 2026-10-28: always `/<plugin>:install`, with an `update` argument; health stays in `/pro-dev check` (R18, R22). |
 
 ## Security challenge
 
@@ -172,15 +172,15 @@ The owner name comes from the cached manifest, never from argv or the environmen
 - R14 trusts any copy under `cache/pro-dev-skillset/pro-core/`, keyed by marketplace name only; should the owner script check `known_marketplaces.json` for the github source `jodybrewster/pro-dev-skillset`, as `methods.py` does?
   Answered by R32: yes, with the same case-insensitive match.
 - When pro-core is installed but disabled, does Claude Code refuse to load a plugin that depends on it, or does installing that plugin re-enable pro-core and with it the `git-safe`, `memory-recall` and Stop ledger hooks? The answer belongs in the ADR-0006 amendment and the plugin descriptions.
-  Answered by plan step 0: installing the dependent re-enables the disabled pro-core, so Jody dropped the dependency (R23, ADR-0006).
+  Answered by plan step 0: installing the dependent re-enables the disabled pro-core, so the maintainer dropped the dependency (R23, ADR-0006).
 
 ## Open questions
 
-- Command name, `/<plugin>:install` everywhere or something shorter: answered 2026-10-28 (Jody), `/<plugin>:install` (R18, Flagged concern 8).
-- Whether an installer also offers `update` and `check`: answered 2026-10-28 (Jody), install and update through one command with an `update` argument; check stays in `/pro-dev check` (R18, R22).
-- The ADR-0006 amendment: answered 2026-10-28 (Jody), amended in place (R30, `ADR needed` line).
-- Whether pro-core's own registry rows move into each plugin (Flagged concern 5): answered 2026-10-28 (Jody), rows stay in pro-core for now.
-- Whether installing a plugin that depends on pro-core re-enables a disabled pro-core: answered by the build (plan step 0), it does; Jody dropped the dependency 2026-10-28 (R23, ADR-0006).
+- Command name, `/<plugin>:install` everywhere or something shorter: answered 2026-10-28, `/<plugin>:install` (R18, Flagged concern 8).
+- Whether an installer also offers `update` and `check`: answered 2026-10-28, install and update through one command with an `update` argument; check stays in `/pro-dev check` (R18, R22).
+- The ADR-0006 amendment: answered 2026-10-28, amended in place (R30, `ADR needed` line).
+- Whether pro-core's own registry rows move into each plugin (Flagged concern 5): answered 2026-10-28, rows stay in pro-core for now.
+- Whether installing a plugin that depends on pro-core re-enables a disabled pro-core: answered by the build (plan step 0), it does; the maintainer dropped the dependency 2026-10-28 (R23, ADR-0006).
 
 ## Acceptance criteria
 

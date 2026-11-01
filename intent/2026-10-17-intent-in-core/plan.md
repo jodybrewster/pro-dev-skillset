@@ -31,14 +31,14 @@ Status: implemented.
 
 ## Risks
 
-- The user-scope commands and agents share names until Jody deletes them; the user-scope file wins on a bare name, so behaviour stays the same until then.
+- The user-scope commands and agents share names until the maintainer deletes them; the user-scope file wins on a bare name, so behaviour stays the same until then.
 - A `model:` in agent frontmatter pins the agent regardless of the session model.
 - Hooks read the same mode files as the user-scope ones, so a user with both installed gets two warnings per flagged call until the user-scope ones are removed.
 - Hooks run in every consumer session: a payload that cannot be parsed must allow.
 
 ## Options not taken
 
-- Put the commands in pro-core: Jody wants the SDLC as one plugin.
+- Put the commands in pro-core: the maintainer wants the SDLC as one plugin.
 - Port the bash hooks as they are: the repo's hooks are Python and need no `jq`.
 - Add `/incident` and `/review` triggers from the kit's CI: out of scope.
 

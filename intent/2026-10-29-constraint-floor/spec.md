@@ -3,13 +3,13 @@ intent: intent/2026-10-29-constraint-floor/intent.md
 intent-status: accepted
 status: draft
 created: 2026-10-29T18:40:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: constraint floor and CONSTRAINTS.md
 
 Built from `intent.md` in this folder (commit 8b78aa3).
-Status: accepted (Jody, 2026-10-30).
+Status: accepted.
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0003 and 0004 bear on this change), `docs/licenses.md`, `plugins/pro-quality/hooks/hooks.json`, `plugins/pro-quality/scripts/docs-before-push.py`, `plugins/pro-security/scripts/push-gate.py`, `plugins/pro-ai-sdlc/scripts/guard.py`, `plugins/pro-ai-sdlc/agents/reviewer.md`, `plugins/pro-ai-sdlc/commands/review.md` and upstream `skills/constraint-driven-development/` in agent-skills at `eb07f19`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 
@@ -111,7 +111,7 @@ The `CONSTRAINTS.md` direction rules (a minimum loosens downward, a maximum upwa
 
 ### Alternatives considered
 
-- Rust: a binary would have to be committed per platform or built on the user's machine; a reviewer cannot read it (Jody, 2026-10-29).
+- Rust: a binary would have to be committed per platform or built on the user's machine; a reviewer cannot read it.
 - Bash, as upstream ships: needs `jq`, behaves differently on macOS and Linux and is harder to test than the Python every other hook uses.
 - Firing on `git commit`: runs on every task commit in `/execute` and would repeat the same findings; push and PR creation are the points where the diff leaves the machine; they also match pro-security's push gate.
 - Firing on `Write` or `Edit`: judges half-finished edits and doubles the noise.
@@ -126,10 +126,10 @@ ADR needed: yes, the floor is a rule every gate and reviewer in the marketplace 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The mode lookup from `guard.py` is copied into pro-quality, so two plugins carry the same helper and can drift. | ADR-0003 (plugins stand alone); Jody | resolved: copy it into pro-quality (Jody took the recommendation, 2026-10-29) |
-| 2 | pro-quality's existing hooks (`docs-before-push.py`) block with no warn mode, while the guard follows the mode file, so one plugin behaves two ways. | Jody | resolved: accept for now; bringing `docs-before-push.py` under the mode file is a later change (Jody, 2026-10-29) |
-| 3 | In enforce mode the guard denies every retry until the findings are fixed or allowed, unlike pro-security's deny-once pattern. | `push-gate.py` convention; Jody | resolved: as specced, since a floor that clears on retry is not a floor (Jody, 2026-10-29) |
-| 4 | The intent says the verifier checks against the file too; this spec only wires the reviewer and `/review`, because running a repo's numbered checks from the verifier needs its own budget design. | intent, Proposed outcome; Jody | resolved: the verifier is a follow-up change (Jody, 2026-10-29) |
+| 1 | The mode lookup from `guard.py` is copied into pro-quality, so two plugins carry the same helper and can drift. | ADR-0003 (plugins stand alone) | resolved: copy it into pro-quality (the maintainer took the recommendation, 2026-10-29) |
+| 2 | pro-quality's existing hooks (`docs-before-push.py`) block with no warn mode, while the guard follows the mode file, so one plugin behaves two ways. | The maintainer | resolved: accept for now; bringing `docs-before-push.py` under the mode file is a later change |
+| 3 | In enforce mode the guard denies every retry until the findings are fixed or allowed, unlike pro-security's deny-once pattern. | `push-gate.py` convention | resolved: as specced, since a floor that clears on retry is not a floor |
+| 4 | The intent says the verifier checks against the file too; this spec only wires the reviewer and `/review`, because running a repo's numbered checks from the verifier needs its own budget design. | intent, Proposed outcome | resolved: the verifier is a follow-up change |
 | 5 | Upstream's floor includes "no secrets", which the guard does not scan. | pro-security push gate | resolved: the template lists secrets on the floor with pro-security's push gate and `gitleaks` as the checker |
 | 6 | `protect-tests` (pro-ai-sdlc) and the guard can both flag a test change during `/fix`. | pro-ai-sdlc | resolved: different events (edit time in fix mode versus push time) and each message names its own rule |
 
@@ -139,11 +139,11 @@ ADR needed: yes, the floor is a rule every gate and reviewer in the marketplace 
 2. Whether a repo with no `CONSTRAINTS.md` still gets the floor: answered, yes (R6).
 3. Whether a bare `TODO` counts: answered, no (R5).
 4. pro-quality or pro-core: answered, pro-quality.
-5. Whether `/pro-dev install` offers `/constraints`: still open, owner Jody; left out of this change so pro-core does not move.
+5. Whether `/pro-dev install` offers `/constraints`: still open, owner the maintainer; left out of this change so pro-core does not move.
 6. How the reviewer reads the file without breaking the fresh-context handoff: answered, as a policy path beside `REVIEW.md` (R18).
 7. Likely needs an ADR: answered, yes (ADR-0010).
 
-Changed on 2026-10-29 after planning (Jody): R3 base for gh pr create, Markdown skipped by the marker rules, AGENTS.md symlink.
+Changed on 2026-10-29 after planning: R3 base for gh pr create, Markdown skipped by the marker rules, AGENTS.md symlink.
 
 ## Acceptance criteria
 
@@ -154,15 +154,15 @@ Changed on 2026-10-29 after planning (Jody): R3 base for gh pr create, Markdown 
 - AC5. `python3 plugins/pro-quality/scripts/floor-guard.py --check` exits 0, 1 and 2 in the matching cases of AC3.
 - AC6. A finding on a line containing `ghp_` followed by 36 characters prints `[redacted]` in place of the token.
 - AC7. `/constraints` run on this repo writes a `CONSTRAINTS.md` whose every numbered row names a command that exits 0 here; it also adds the line once, to `CLAUDE.md`, because `AGENTS.md` is a symlink to it here and the command detects that; the run is shown in the PR and the file is not committed in this change.
-- AC8. `docs/licenses.md` has a pro-quality row for `constraints` naming addyosmani/agent-skills as adapted, `plugins/pro-quality/LICENSE` carries the Addy Osmani copyright line and the skill ends with the upstream footer.
-- AC9. After a week of normal work in warn mode in at least two of Jody's repos, `grep floor-guard ~/.claude/hooks/warn.log` shows no finding Jody disagrees with (checked after merge; it gates the later switch to enforce, not this PR).
+- AC8. `docs/licenses.md` has a pro-quality row for `constraints` naming agent-skills as adapted, `plugins/pro-quality/LICENSE` carries the agent-skills copyright line and the skill ends with the upstream footer.
+- AC9. After a week of normal work in warn mode in at least two of the maintainer's repos, `grep floor-guard ~/.claude/hooks/warn.log` shows no finding the maintainer disagrees with (checked after merge; it gates the later switch to enforce, not this PR).
 
 ## Out of scope
 
 Installing the tools behind numbered rows (semgrep, osv-scanner, Lighthouse, axe).
 Running the guard in CI.
 Switching the hook to enforce mode.
-Writing `CONSTRAINTS.md` into Jody's other repos.
+Writing `CONSTRAINTS.md` into the maintainer's other repos.
 Offering `/constraints` from `/pro-dev install`.
 The verifier reading `CONSTRAINTS.md` (flagged concern 4).
 `pr-check` and the PR gate; they will call `--check` when they exist.

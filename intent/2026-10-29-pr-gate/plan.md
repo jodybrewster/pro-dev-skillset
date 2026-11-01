@@ -2,40 +2,40 @@
 
 Built from `spec.md` (commit df45b5a, open questions recorded on 2026-10-30) and `intent.md` in this folder.
 Status: implemented.
-Approver: Jody Brewster (2026-10-30: "keep going and finish P0 you have my approval on all").
+Approver: the maintainer (2026-10-30, all P0 work approved).
 It ships a new hook on `gh pr create` to every repo that installs pro-ship, changes pro-security's push gate and removes a pro-quality hook, which is why an approver is named.
-No second approver is needed because Jody owns this marketplace and decided every open question and flagged concern below under that approval.
+No second approver is needed because the maintainer owns this marketplace and decided every open question and flagged concern below under that approval.
 The blast radius stays small: the hook starts in warn mode, reads one file, makes no network calls and fails open on any error.
 Dated: 2026-10-30.
 
 ## Decisions taken under the approval
 
 Each item was open in the spec or its flagged concerns.
-Each is decided on 2026-10-30 under Jody's approval, using the recommendation already written in the spec or in `docs/roadmap.md`.
+Each is decided on 2026-10-30 under the maintainer's approval, using the recommendation already written in the spec or in `docs/roadmap.md`.
 The spec's "Open questions" section records the same answers.
 
-- Open question 1, subagent or `claude -p`: decided on 2026-10-30 under Jody's approval, a subagent with the four-field handoff; `claude -p` stays a later option for CI.
-- Open question 2, where the hook lives: decided on 2026-10-30 under Jody's approval, pro-ship, with pro-quality's old gate removed outright.
-- Open question 3 and flagged concern 2, pro-ship in the starter: decided on 2026-10-30 under Jody's approval, pro-ship joins `pro-dev-starter` in this same release, so a starter-only repo never goes without a PR check.
-- Open question 4 and flagged concern 8, finding a sibling plugin's script: decided on 2026-10-30 under Jody's approval, by the method Claude Code documents, verified as described under "Sibling lookup" below.
-- Open question 5, the per-command timeout: decided on 2026-10-30 under Jody's approval, keep 300 seconds per command, raised by a line `pr-check timeout: <seconds>` in the repo's `CLAUDE.md` or `AGENTS.md`.
-- Open question 6, the default mode: decided on 2026-10-30 under Jody's approval, warn; enforce is a later change after clean logs (AC13).
-- Open question 7, draft PRs: decided on 2026-10-30 under Jody's approval, `gh pr create --draft` (or `-d`) does not need the stamp and passes with no output, since a draft is not yet asking for review.
-- Open question 8, the tier before the classifier: decided on 2026-10-30 under Jody's approval, the fixed value `unclassified`.
-- Open question 9, when the security review runs: decided on 2026-10-30 under Jody's approval, only when pro-security's classifier reports security surface for the diff.
-- Open question 10, the ADR: decided on 2026-10-30 under Jody's approval, it ships in this PR as `docs/decisions/0014-gate-stamp.md` with Status `proposed` (0012 is the review handoff ADR in #87).
-- Flagged concern 1, what the old gate did that goes away: decided on 2026-10-30 under Jody's approval, accept; the drafted PR body replaces the 50-character length check and the stamp hook names the missing check.
-- Flagged concern 3, three gates behave three ways: decided on 2026-10-30 under Jody's approval, keep deny once per HEAD; the local hook is a guardrail and CI is the enforcement; revisit when `pipeline` lands.
-- Flagged concern 4, two copies of the validity rule: decided on 2026-10-30 under Jody's approval, copy the rule into both plugins and hold them together with one fixture set and a `stamp-contract` check in `tests/check.mjs` (R27).
-- Flagged concern 5, a forged stamp: decided on 2026-10-30 under Jody's approval, accept for a local guardrail and rely on the required CI check later; the ADR says so.
-- Flagged concern 6, the sibling specs: decided on 2026-10-30 under Jody's approval, code-reviewer (#87) lands first; its spec was re-read for this plan and R7 matches its four fields.
+- Open question 1, subagent or `claude -p`: decided on 2026-10-30 under the maintainer's approval, a subagent with the four-field handoff; `claude -p` stays a later option for CI.
+- Open question 2, where the hook lives: decided on 2026-10-30 under the maintainer's approval, pro-ship, with pro-quality's old gate removed outright.
+- Open question 3 and flagged concern 2, pro-ship in the starter: decided on 2026-10-30 under the maintainer's approval, pro-ship joins `pro-dev-starter` in this same release, so a starter-only repo never goes without a PR check.
+- Open question 4 and flagged concern 8, finding a sibling plugin's script: decided on 2026-10-30 under the maintainer's approval, by the method Claude Code documents, verified as described under "Sibling lookup" below.
+- Open question 5, the per-command timeout: decided on 2026-10-30 under the maintainer's approval, keep 300 seconds per command, raised by a line `pr-check timeout: <seconds>` in the repo's `CLAUDE.md` or `AGENTS.md`.
+- Open question 6, the default mode: decided on 2026-10-30 under the maintainer's approval, warn; enforce is a later change after clean logs (AC13).
+- Open question 7, draft PRs: decided on 2026-10-30 under the maintainer's approval, `gh pr create --draft` (or `-d`) does not need the stamp and passes with no output, since a draft is not yet asking for review.
+- Open question 8, the tier before the classifier: decided on 2026-10-30 under the maintainer's approval, the fixed value `unclassified`.
+- Open question 9, when the security review runs: decided on 2026-10-30 under the maintainer's approval, only when pro-security's classifier reports security surface for the diff.
+- Open question 10, the ADR: decided on 2026-10-30 under the maintainer's approval, it ships in this PR as `docs/decisions/0014-gate-stamp.md` with Status `proposed` (0012 is the review handoff ADR in #87).
+- Flagged concern 1, what the old gate did that goes away: decided on 2026-10-30 under the maintainer's approval, accept; the drafted PR body replaces the 50-character length check and the stamp hook names the missing check.
+- Flagged concern 3, three gates behave three ways: decided on 2026-10-30 under the maintainer's approval, keep deny once per HEAD; the local hook is a guardrail and CI is the enforcement; revisit when `pipeline` lands.
+- Flagged concern 4, two copies of the validity rule: decided on 2026-10-30 under the maintainer's approval, copy the rule into both plugins and hold them together with one fixture set and a `stamp-contract` check in `tests/check.mjs` (R27).
+- Flagged concern 5, a forged stamp: decided on 2026-10-30 under the maintainer's approval, accept for a local guardrail and rely on the required CI check later; the ADR says so.
+- Flagged concern 6, the sibling specs: decided on 2026-10-30 under the maintainer's approval, code-reviewer (#87) lands first; its spec was re-read for this plan and R7 matches its four fields.
   One mismatch is resolved here: code-reviewer has two severities (`Important`, `nit`) and no "Blocking".
   For a code reviewer the stamp's `blocking` is the `important` count from its summary line, because `REVIEW.md` says Important findings block the merge and ADR-0011 keeps Pre-existing findings out of that count.
-- Flagged concern 7, the security reviewer's output: decided on 2026-10-30 under Jody's approval, pin a tally line.
+- Flagged concern 7, the security reviewer's output: decided on 2026-10-30 under the maintainer's approval, pin a tally line.
   `security-architect` today has no summary line in diff mode, only per-finding severities (`blocking`, `should-fix`, `note`) and a verdict.
   Its diff mode gains one last line, `blocking: <n>  should-fix: <n>  notes: <n>`, in the agent and its Codex `.toml`; the stamp's `blocking` reads from it and `important` takes `should-fix`.
 
-Two smaller choices the spec left to the plan, decided on 2026-10-30 under Jody's approval:
+Two smaller choices the spec left to the plan, decided on 2026-10-30 under the maintainer's approval:
 
 - A repo's verify block, when found, is the whole check list.
   The first fenced `bash` block under a heading that starts with "Verif" in `CLAUDE.md` or `AGENTS.md` wins (R3, AC3); each command line becomes a step named `verify:<n>` and package, Python and Makefile discovery is skipped.
@@ -106,7 +106,7 @@ Modified and new at the root:
 - `tests/cases/routing.jsonl` (modified): one case that expects `pr-check` (AC12).
 - `.claude-plugin/marketplace.json` (modified): pro-ship, pro-quality, pro-security and pro-dev-starter entries and `metadata.version` to the next minor (1.63.0 at earliest).
 - `README.md` (modified): the pro-ship and pro-dev-starter bullets, the "opt-in" line and the Ship row of the skills table.
-- `docs/roadmap.md` (modified): item 2 marked in progress, the pr-gate questions removed from "Questions waiting on Jody" and item 2's stale "never fired" sentence corrected.
+- `docs/roadmap.md` (modified): item 2 marked in progress, the pr-gate questions removed from "Questions waiting on the maintainer" and item 2's stale "never fired" sentence corrected.
 
 At sign-off only:
 
@@ -128,7 +128,7 @@ Not changed on purpose:
 Step 0 is a gate, step 1 is the shared contract and steps 2 to 15 run as five tracks on disjoint files.
 The orchestrator dispatches tracks A to E to five Sonnet subagents at once in one turn, each with a self-contained prompt that quotes its requirements, the contract page from step 1 and the decisions above.
 Steps 16 to 22 need the tracks to finish and run in order.
-Take the build off a worktree based on a fresh `origin/main`, because Jody merges in parallel.
+Take the build off a worktree based on a fresh `origin/main`, because the maintainer merges in parallel.
 
 0. Prerequisite. Run `git fetch origin` and confirm on `origin/main` that `plugins/pro-quality/agents/code-reviewer.md`, `plugins/pro-quality/skills/requesting-code-review/handoff.md` and `docs/decisions/0012-*.md` exist and that `handoff.md` names exactly `range`, `brief`, `policy` and `risk`.
    If #87 has not merged, tracks A, B, C and E still build (the deterministic half) and track D waits for it.
@@ -266,7 +266,7 @@ Join steps (serial, after the five tracks).
 - AC10: the dogfood run pasted into the PR (step 21).
 - AC11: the throwaway-profile run (step 21) and the `find` cases with no record (step 4).
 - AC12: the routing case and the lexical gate (step 13).
-- AC13: after merge, `grep pr-gate` over `warn.log` in the guard folder after a week in two of Jody's repos; it gates the later switch to enforce, not this PR.
+- AC13: after merge, `grep pr-gate` over `warn.log` in the guard folder after a week in two of the maintainer's repos; it gates the later switch to enforce, not this PR.
 - AC14 and AC15: `tests/ship-check.mjs` mutation cases with a byte comparison after each (step 5).
 - N1: the timing case (step 9).
 - N2 and N3: a read of both scripts in step 22 and a grep for `import` lines outside the standard library.
@@ -305,7 +305,7 @@ What was left out on purpose:
 
 - Teaching the router about `pr-check`, so pro-core does not move.
 - `production-gate` reading the stamp; the ADR allows it later.
-- A gate on `mcp__github__create_pull_request`, since Jody opens PRs with `gh`.
+- A gate on `mcp__github__create_pull_request`, since the maintainer opens PRs with `gh`.
 - Running reviewers through `claude -p`, kept for CI.
 - Deciding tiers; risk-tiers replaces `unclassified`.
 - Signing the stamp (flagged concern 5).
@@ -319,7 +319,7 @@ Nothing here is irreversible.
 There is no migration; reverting removes the hook and the skill on the next update, though the plugin cache keeps old versions for 14 days and stamps already written under `.pro-dev/` are inert files.
 
 Suits auto mode: yes for steps 0 to 19 under this approval, because each has a command that passes or fails.
-Steps 20 to 22 and the PR need Jody, since this ships a hook to every starter repo.
+Steps 20 to 22 and the PR need the maintainer, since this ships a hook to every starter repo.
 
 ## Options not taken
 
@@ -366,7 +366,7 @@ Filled in when the build is finished, before sign-off.
 - AC1 to AC12, AC14 to AC16: pass, by the cases above and the trial below.
 - AC10 and AC11: a trial of the skill on a clone of this branch ran the four verify steps, the floor guard and the mutation check, dispatched both reviewers and wrote a stamp that said `fail` (the reviewers found real problems, fixed below); pr-gate denied `gh pr create` on that HEAD with "does not say pass". With the siblings missing, `find` printed `not-installed` and the stamp said `incomplete`.
 - AC13: pending after merge.
-- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
+- Sign-off: the maintainer, 2026-10-30.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0014, Status `proposed` from this change, to `accepted`.

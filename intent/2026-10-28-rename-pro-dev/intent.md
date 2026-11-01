@@ -4,12 +4,12 @@ kind: change
 status: draft
 risk: high
 created: 2026-10-28T11:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: rename the pro-* plugins to pro-dev-*
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, raised while naming pro-egm in [intent C](../2026-10-28-spec-methods/spec.md).
 Status: draft; not for today.
 Created: 2026-10-28.
@@ -17,7 +17,7 @@ Created: 2026-10-28.
 ## Problem
 
 The marketplace is `pro-dev-skillset`, its setup command is `/pro-dev` and its meta-plugin is `pro-dev-starter`, while every other plugin is `pro-*`: `pro-core`, `pro-ai-sdlc`, `pro-design` and the rest.
-Jody: "everything is pro-* should we call them all pro-dev-* instead?"
+Every plugin is named pro-*; the question is whether to call them all pro-dev-* instead.
 The two prefixes make the family look like two families.
 
 ## Proposed outcome
@@ -27,7 +27,7 @@ Existing installs keep working through the change and move to the new names with
 
 ## Affected users and systems
 
-Every repo with any pro-* plugin installed, at user or project scope, including `demo/app` and Jody's own repos.
+Every repo with any pro-* plugin installed, at user or project scope, including `demo/app` and the maintainer's own repos.
 Every slash command and skill namespace (`/pro-ai-sdlc:spec` becomes `/pro-dev-ai-sdlc:spec`).
 `.claude-plugin/marketplace.json`, every plugin's two manifests, `dependencies` arrays, the engine registry `owner` fields, `tests/check.mjs` lists, routing cases, the Codex manifests and agent `.toml` files, tags, `docs/`, README, CLAUDE.md, AGENTS.md, RELEASING.md and `templates/`.
 Mieruka, which reads pro-ai-sdlc's templates and rules by path.

@@ -2,14 +2,14 @@
 
 Built from `spec.md` (commit 70b9e4d) and `intent.md` in this folder.
 Status: implemented.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-29.
 
-Jody is named as approver because this change sets a rule every reviewer and gate in the marketplace will follow (the ADR the spec calls for) and changes the policy file every installing repo receives.
+The maintainer is named as approver because this change sets a rule every reviewer and gate in the marketplace will follow (the ADR the spec calls for) and changes the policy file every installing repo receives.
 The blast radius is one plugin and the test is mostly prose, so it does not suit auto mode.
 The wording of the rules is the product and the manual runs in steps 11 and 12 need a person to read the output.
 
-The ADR ships in this PR (Jody, 2026-10-30: one PR per intent, as ADR-0010 ships in the constraint-floor PR).
+The ADR ships in this PR (2026-10-30: one PR per intent, as ADR-0010 ships in the constraint-floor PR).
 `docs/decisions/0011-review-convergence.md` (proposed) and its row in `docs/decisions/README.md` are written in step 8; the sign-off moves the ADR to accepted.
 
 ## Files that change
@@ -21,7 +21,7 @@ The ADR ships in this PR (Jody, 2026-10-30: one PR per intent, as ADR-0010 ships
 - `plugins/pro-ai-sdlc/commands/review.md` (modified): `--since <sha>`, the session's already-raised list, the dropped count, the Pre-existing group and the summary-first report (R15, R16).
 - `plugins/pro-ai-sdlc/commands/pr-babysit.md` (modified): the cap of three rounds in the heading, the Stop step and the Report step, Pre-existing threads skipped, a handled-threads list and one fix per class (R17 to R20).
 - `docs/decisions/0011-review-convergence.md` (new) and `docs/decisions/README.md` (modified): the ADR for the convergence rules, status proposed.
-- `docs/licenses.md` (modified): a pro-ai-sdlc row naming addyosmani/agent-skills as adapted for the optional lists.
+- `docs/licenses.md` (modified): a pro-ai-sdlc row naming agent-skills as adapted for the optional lists.
   The existing "original" row is reworded so it no longer says no third-party text is included (AC8).
 - `plugins/pro-ai-sdlc/.claude-plugin/plugin.json` (modified): version 0.6.1 to 0.7.0.
 - `plugins/pro-ai-sdlc/.codex-plugin/plugin.json` (modified): version 0.6.1 to 0.7.0, aligned with the Claude manifest.
@@ -131,9 +131,9 @@ The plugin cache serves 0.7.0 once published.
 
 Decisions:
 
-- Confirmed by Jody on 2026-10-30: the round cap is three and counts every `/pr-babysit` round, including rounds that fix failing checks and conflicts (spec open question 1, flagged concern 2).
-- Confirmed by Jody on 2026-10-30: the finding count moves to the top of the report as one summary line (spec open question 2).
-- Confirmed by Jody on 2026-10-30: `/pro-dev update` refreshing an older `REVIEW.md` is out of this change (spec open question 4, flagged concern 6).
+- Confirmed by the maintainer on 2026-10-30: the round cap is three and counts every `/pr-babysit` round, including rounds that fix failing checks and conflicts (spec open question 1, flagged concern 2).
+- Confirmed by the maintainer on 2026-10-30: the finding count moves to the top of the report as one summary line (spec open question 2).
+- Confirmed by the maintainer on 2026-10-30: `/pro-dev update` refreshing an older `REVIEW.md` is out of this change (spec open question 4, flagged concern 6).
 - Decided on 2026-10-30: the ADR ships in this PR, written in step 8.
 
 If any of these change, steps 1, 3, 5 and 6 are the ones to adjust.
@@ -172,7 +172,7 @@ Filled in when the build is finished, before sign-off.
 - AC7: pass, a `--since` run reviewed only the new commit and the command dropped one repeat and said so; a clean diff printed "Nothing to fix." after the summary line.
 - AC8 and AC10: pass, the licenses row, the template footer and no comma before "and" or em dash in the changed files.
 - AC9: pass, pro-ai-sdlc 0.8.0 and `metadata.version` 1.61.0, stacked on #81.
-- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
+- Sign-off: the maintainer, 2026-10-30.
 
 ## Departures from plan
 

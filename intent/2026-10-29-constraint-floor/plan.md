@@ -2,9 +2,9 @@
 
 Built from `spec.md` (commit b23f41c, amended 2026-10-29 before approval) and `intent.md` in this folder.
 Status: implemented.
-Approver: Jody Brewster.
+Approver: the maintainer.
 It adds a hook that runs on every Bash call in every repo that installs pro-quality, which is why an approver is named at all.
-No second approver is needed because Jody owns this marketplace and decided the spec, the four flagged concerns and ADR-0010 himself.
+No second approver is needed because the maintainer owns this marketplace and decided the spec, the four flagged concerns and ADR-0010 himself.
 The blast radius is also small: the hook starts in warn mode, makes no network calls, edits nothing and fails open on any error.
 The review pass in step 18 reads the script as a second pair of eyes.
 Dated: 2026-10-29.
@@ -36,7 +36,7 @@ Modified in pro-ai-sdlc:
 Modified at the root:
 
 - `.claude-plugin/marketplace.json` (modified): the pro-quality entry to 0.13.0 with a description that mentions the guard, the pro-ai-sdlc entry to 0.7.0 and `metadata.version` from 1.59.1 to 1.60.0.
-- `docs/licenses.md` (modified): a pro-quality row for `constraints` naming [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) as adapted and `constraints` added to the sentence about forked plugins that also hold original content if it applies (AC8).
+- `docs/licenses.md` (modified): a pro-quality row for `constraints` naming [agent-skills](https://github.com/addyosmani/agent-skills) as adapted and `constraints` added to the sentence about forked plugins that also hold original content if it applies (AC8).
 - `tests/quality-hooks.mjs` (modified): the guard's cases, written before the script (AC3, AC4, AC5, AC6).
 - `tests/cases/routing.jsonl` (modified): one routing case that expects `constraints`, so the skill is not added to `tests/cases/uncovered.json` (AC1).
 - `README.md` (modified): the pro-quality bullet and the verify and review rows in the skills table mention the floor guard and `/constraints`.
@@ -62,7 +62,7 @@ Steps 1 to 6 are one track (the guard and its tests).
 Steps 7 to 10, step 11 and step 12 are three more tracks.
 The four tracks touch disjoint files, so the orchestrator dispatches them to four Sonnet subagents at once in one turn, each with a self-contained prompt that quotes its requirements.
 Steps 13 to 18 need the tracks to finish and run in order.
-Take the build off a worktree based on a fresh `origin/main`, because Jody merges in parallel.
+Take the build off a worktree based on a fresh `origin/main`, because the maintainer merges in parallel.
 
 Track A: the guard (one subagent, steps in order, test first inside each step).
 
@@ -123,7 +123,7 @@ Track B: the pro-quality content (one subagent, steps in order, or three if the 
 8. `plugins/pro-quality/skills/constraints/SKILL.md`. Satisfies R15, AC8 (footer).
    Standard frontmatter with only `name` and `description`, tool-neutral prose, no Claude-only tool names and no sidecar it does not ship.
    The description is written to route (see step 10).
-   It ends with the upstream footer for addyosmani/agent-skills (MIT, Copyright (c) 2025 Addy Osmani) in the form other adapted skills use.
+   It ends with the upstream footer for agent-skills (MIT, Copyright (c) 2025 Addy Osmani) in the form other adapted skills use.
    Check: `node tests/check.mjs` frontmatter and codex-parity checks pass for it.
 
 9. `plugins/pro-quality/commands/constraints.md`. Satisfies R16, R17.
@@ -147,7 +147,7 @@ Track C: pro-ai-sdlc (one subagent).
 Track D: licenses and docs (one subagent).
 
 12. Attribution and README. Satisfies AC8.
-    Add the Addy Osmani copyright line to `plugins/pro-quality/LICENSE` and a sentence in its notice naming what was adapted.
+    Add the agent-skills copyright line to `plugins/pro-quality/LICENSE` and a sentence in its notice naming what was adapted.
     Add the `constraints` row to `docs/licenses.md` marked adapted and fix the sentence listing plugins with original and forked content if it needs it.
     Update the pro-quality bullet and the skills table rows in `README.md`.
     Check: `node tests/check.mjs` licenses check passes and a grep shows the copyright line and the row.
@@ -195,8 +195,8 @@ Join steps (serial, after the four tracks).
 - AC5: cases that run `python3 plugins/pro-quality/scripts/floor-guard.py --check` and assert exit 0, 1 and 2 (step 5).
 - AC6: a case that builds a `ghp_` token of 36 characters at run time and asserts `[redacted]` appears and the token does not (step 2).
 - AC7: the `/constraints` run on this repo, shown in the PR, with a loop that runs each numbered row's command and shows exit 0 (step 17).
-- AC8: `grep -n "Addy Osmani" plugins/pro-quality/LICENSE docs/licenses.md`, a look at the end of `plugins/pro-quality/skills/constraints/SKILL.md` for the footer and the licenses check in `node tests/check.mjs` (step 12).
-- AC9: after merge, `grep floor-guard` over `warn.log` in the guard directory after a week of use in two of Jody's repos.
+- AC8: `grep -n "agent-skills" plugins/pro-quality/LICENSE docs/licenses.md`, a look at the end of `plugins/pro-quality/skills/constraints/SKILL.md` for the footer and the licenses check in `node tests/check.mjs` (step 12).
+- AC9: after merge, `grep floor-guard` over `warn.log` in the guard directory after a week of use in two of the maintainer's repos.
   This gates the later switch to enforce mode and not the PR.
 - N1: the 1000-line timing case (step 6).
 - N2 to N4: a read of the script in step 18 and a case that asserts the repo is byte-identical before and after a run.
@@ -261,8 +261,8 @@ Nothing in this change is irreversible.
 There is no migration.
 Reverting the commit removes the hook on the consumers' next update, though the plugin cache keeps the old version until then.
 
-Suits auto mode: yes for steps 1 to 15 once Jody approves this plan, because every step has a command that passes or fails.
-Steps 16 to 18 and the PR need Jody, since this ships a hook to every consumer repo.
+Suits auto mode: yes for steps 1 to 15 once the maintainer approves this plan, because every step has a command that passes or fails.
+Steps 16 to 18 and the PR need the maintainer, since this ships a hook to every consumer repo.
 
 ## Options not taken
 
@@ -314,9 +314,9 @@ Filled in when the build is finished, before sign-off.
 - AC5: pass, cases f110 to f115 assert exits 0, 1 and 2.
 - AC6: pass, f70 to f72 build tokens at run time and assert `[redacted]`.
 - AC7: pass, `/constraints` on a clone of this repo wrote four numbered rows (static checks, routing, marketplace and per-plugin validate), each exiting 0; `AGENTS.md` is a symlink and the line went in once; the guard stayed clean on the new file. Nothing was committed here.
-- AC8: pass, the Addy Osmani line in `plugins/pro-quality/LICENSE`, the `docs/licenses.md` row and the skill footer.
+- AC8: pass, the agent-skills line in `plugins/pro-quality/LICENSE`, the `docs/licenses.md` row and the skill footer.
 - AC9: pending until a week of use after merge; it gates the switch to enforce mode, not this PR.
-- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
+- Sign-off: the maintainer, 2026-10-30.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0010, Status `proposed` from this change, to `accepted`.

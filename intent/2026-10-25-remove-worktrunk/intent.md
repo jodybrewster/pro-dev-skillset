@@ -4,7 +4,7 @@ kind: change
 status: accepted
 risk: low
 created: 2026-10-25T09:30:00-04:00
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: remove worktrunk from the stack

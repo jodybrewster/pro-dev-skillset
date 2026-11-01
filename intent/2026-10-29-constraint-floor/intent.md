@@ -4,13 +4,13 @@ kind: idea
 status: done
 risk: medium
 created: 2026-10-29T18:08:46-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: constraint floor and CONSTRAINTS.md
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, item 1 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `constraint-driven-development` (MIT).
+Author: the maintainer.
+Source: idea, item 1 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the comparison with [agent-skills](https://github.com/addyosmani/agent-skills) `constraint-driven-development` (MIT).
 Status: done; shipped in #81.
 Created: 2026-10-29.
 
@@ -36,7 +36,7 @@ The reviewer, the verifier and `/review` check against the same file, so "done" 
 
 ## Affected users and systems
 
-Jody and any agent session in a repo that installs pro-quality (it is in the starter): JJ, mieruka, personal-site, gemini-live and this repo.
+The maintainer and any agent session in a repo that installs pro-quality (it is in the starter): JJ, mieruka, personal-site, gemini-live and this repo.
 pro-quality (new skill, command and hook script, its `hooks/hooks.json`, Codex parity files, manifests and marketplace entry).
 `/pro-dev install` in pro-core, if it offers `/constraints`.
 pro-ai-sdlc's reviewer and verifier, which would read the file.
@@ -45,7 +45,7 @@ pro-ai-sdlc's reviewer and verifier, which would read the file.
 ## Constraints
 
 The version-bump law, the hook-loading law and Codex parity in this repo's `CLAUDE.md`.
-The hook script is Python, like every other hook here; Jody ruled out Rust on 2026-10-29 because a compiled binary would have to be committed per platform or built on the user's machine.
+The hook script is Python, like every other hook here; the maintainer ruled out Rust on 2026-10-29 because a compiled binary would have to be committed per platform or built on the user's machine.
 The hook starts in warn mode behind `~/.claude/hooks/mode`, like the other gates.
 It reads only the diff from the branch point plus untracked files, so it stays fast and never judges code the change did not touch.
 It reports the rule and the file and line, never a matched secret value.
@@ -59,13 +59,13 @@ Forked or adapted text keeps its upstream footer and a row in `docs/licenses.md`
 Installing the tools behind the numbered rows (semgrep, osv-scanner, Lighthouse, axe).
 Running the guard in CI; that is the `pipeline` item in the pro-ship brainstorm.
 Switching the hook to enforce mode.
-Writing `CONSTRAINTS.md` into Jody's other repos as part of this change; each repo gets one later by running `/constraints` itself.
+Writing `CONSTRAINTS.md` into the maintainer's other repos as part of this change; each repo gets one later by running `/constraints` itself.
 
 ## Success looks like
 
-In Jody's repos an agent can no longer add `@ts-ignore` or `eslint-disable`, skip or delete a test, leave a stub or loosen a threshold without the hook naming it before the commit or PR.
+In the maintainer's repos an agent can no longer add `@ts-ignore` or `eslint-disable`, skip or delete a test, leave a stub or loosen a threshold without the hook naming it before the commit or PR.
 A repo that runs `/constraints` ends up with a `CONSTRAINTS.md` where every number has a command behind it that runs today.
-In warn mode the guard raises no false alarms Jody disagrees with over a couple of weeks of normal work.
+In warn mode the guard raises no false alarms the maintainer disagrees with over a couple of weeks of normal work.
 
 ## Open questions
 

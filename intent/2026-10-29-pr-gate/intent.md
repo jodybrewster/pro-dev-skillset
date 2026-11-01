@@ -4,19 +4,19 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-29T19:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: the PR gate
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, item 2 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and "The pre-PR gate" in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md), from Jody's ask on 2026-10-28.
+Author: the maintainer.
+Source: idea, item 2 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and "The pre-PR gate" in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md), from the maintainer's ask on 2026-10-28.
 Status: done; shipped in #89.
 Created: 2026-10-29.
 
 ## Problem
 
-Jody's ask, in his words: "I would like to add buildchecks, linting checks, unit testing, typechecking, using ai agents to check code with a fresh context window before a pull request at a minimum maybe at a hook?"
+The ask is for build checks, lint checks, unit tests, typechecking and AI agents checking the code with a fresh context window before a pull request, at a minimum, maybe as a hook.
 
 Today nothing runs those checks before a PR opens, in any repo that installs the starter.
 Build and typecheck are never run by a hook.
@@ -39,13 +39,13 @@ The `gh pr create` step checks only that stamp.
 With no passing stamp for the current commit it stops once and says to run the check.
 It never runs a build or a test itself.
 The security review that the push gate would have run is recorded in the same stamp, so it runs once per PR and the push gate accepts it.
-The command also drafts the Testing, Risk and How to revert sections of the PR body from what it ran, for Jody to sign off.
+The command also drafts the Testing, Risk and How to revert sections of the PR body from what it ran, for the maintainer to sign off.
 Each piece still works when a sibling plugin or agent is not installed.
 Says what it skipped.
 
 ## Affected users and systems
 
-Jody and any agent session in a repo that installs pro-ship, pro-quality or pro-security: JJ, mieruka, personal-site, gemini-live and this repo.
+The maintainer and any agent session in a repo that installs pro-ship, pro-quality or pro-security: JJ, mieruka, personal-site, gemini-live and this repo.
 pro-ship (a new `pr-check` skill, its script and a `gh pr create` stamp hook, plus manifests, Codex parity files and the marketplace entry).
 pro-quality (`pr-quality-gate.py` and its two hook entries are removed).
 pro-security (`push-gate.py` accepts the stamp).
@@ -82,13 +82,13 @@ Creating the PR itself.
 
 ## Success looks like
 
-In Jody's repos a `gh pr create` on a commit that was never checked stops once and names `/pro-ship:pr-check`.
+In the maintainer's repos a `gh pr create` on a commit that was never checked stops once and names `/pro-ship:pr-check`.
 After the check passes the same command goes through with no second prompt.
 A commit with a failing build, lint, typecheck or test run gets a stamp that says so and the hook does not accept it.
 The stamp names which reviewers ran and which did not.
 A change that touches security surface gets one security review per PR instead of one at push time and one at PR time.
-The drafted Testing, Risk and How to revert sections are accurate enough that Jody edits them rather than writes them.
-In warn mode the gate raises no stop Jody disagrees with over a couple of weeks of normal work.
+The drafted Testing, Risk and How to revert sections are accurate enough that the maintainer edits them rather than writes them.
+In warn mode the gate raises no stop the maintainer disagrees with over a couple of weeks of normal work.
 
 ## Open questions
 

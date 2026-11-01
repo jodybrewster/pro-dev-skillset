@@ -4,7 +4,7 @@ kind: change
 status: accepted
 risk: medium
 created: 2026-10-25T10:15:00-04:00
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: one security gate, on push, scoped to the diff

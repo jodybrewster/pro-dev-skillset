@@ -4,12 +4,12 @@ kind: change
 status: proposed
 risk: medium
 created: 2026-10-27T22:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: simplify setup to /pro-dev and make the spec methods swappable
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, from a research session on design and Vercel skills on 2026-10-27.
 Status: proposed.
 Created: 2026-10-27.
@@ -22,8 +22,8 @@ It spans several changes, so each item below becomes its own intent when it is p
 Setting up a site takes too many commands.
 Engine setup is spread over `/pro-starter`, `/design-engine`, `/design-skills`, `/taste-skills`, `/next-skills`, `/lavish-engine`, `/qa-engine`, `/sdlc-init` and `/pro-dev-doctor`.
 A plugin update never installs the engines that new bridges need.
-Jody: "I need a simpler approach to all of this? I need a general slash command to init everything after I've installed all of the plugins I want, then an update command after I update the plugins."
-The validation Stop hook blocks the end of turns where nothing in the repo changed, and Jody finds it too much.
+The want is a simpler approach: a general slash command to init everything after the wanted plugins are installed, then an update command after the plugins are updated.
+The validation Stop hook blocks the end of turns where nothing in the repo changed. That is too much.
 pro-starter depends on pro-nextjs and pro-astro, though stack plugins are meant to be opt-in.
 
 ## Proposed outcome
@@ -31,7 +31,7 @@ pro-starter depends on pro-nextjs and pro-astro, though stack plugins are meant 
 One command in pro-core, `/pro-dev install|update|check`, driven by one engine registry, sets up and refreshes everything for the plugins a site has installed.
 The setup commands it replaces are deleted.
 Each spec-driven method is its own plugin, so it can be tried by installing and uninstalling it, while pro-ai-sdlc controls how the installed methods work together.
-Jody: "Having four different spec driven methods means I can try them out easily by installing and uninstalling the plugins but I can control how they work together as well."
+Having four different spec-driven methods means each can be tried easily by installing and uninstalling its plugin, while the plugins still control how they work together.
 
 ## Running list
 
@@ -65,7 +65,7 @@ The items ship as seven intents, in this order:
 9. todo - web-design-guidelines (vercel-labs/agent-skills): default engine row in pro-design; rules are fetched live and unpinned.
 10. todo - `vercel-skills-bridge` in pro-nextjs: react-best-practices, vercel-optimize, deploy-to-vercel, vercel-cli-with-tokens; tokens from the environment only.
 11. todo - stack-neutral React bridge, likely pro-design: composition-patterns, react-view-transitions.
-12. dropped - writing-guidelines (Vercel docs house style clashes with Jody's writing rules) and react-native-skills (no mobile work).
+12. dropped - writing-guidelines (Vercel docs house style clashes with the repo's writing rules) and react-native-skills (no mobile work).
 
 ## Affected users and systems
 
