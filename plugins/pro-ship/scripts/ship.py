@@ -820,7 +820,11 @@ def mieruka_copy(root: str, key: str, text: str) -> tuple[str | None, str]:
     rel = os.path.join(".mieruka", "evidence", key, "evidence.json")
     if git_lines(root, "ls-files", "--", os.path.join(".mieruka", "evidence", key)):
         return None, f".mieruka/evidence/{key}/ is tracked by git, so nothing was written there"
-    if sh(["git", "check-ignore", "-q", rel], root).returncode != 0:
+    probe = sh(["git", "check-ignore", "-q", rel], root)
+    if probe.returncode == 128:  # git refuses the path, for example beyond a symbolic link
+        why = (probe.stderr or "").strip().splitlines()
+        return None, f"git could not check {rel} ({why[-1] if why else 'exit 128'}), so nothing was written there"
+    if probe.returncode != 0:
         return None, ".mieruka/evidence/ is not ignored by git, so nothing was written there (add it to .gitignore to get the copy)"
     write_atomic(os.path.join(root, rel), text)
     return rel, ""

@@ -11,6 +11,7 @@
     "test:git-safe": "node tests/git-safe.mjs",
     "test:security-hooks": "node tests/security-hooks.mjs",
     "test:legal-hooks": "node tests/legal-hooks.mjs",
+    "test:mieruka-sync": "node tests/mieruka-sync.mjs",
     "test:bridge-smoke": "node tests/bridge-install-smoke.mjs",
     "test:doc-hooks": "node tests/doc-hooks.mjs",
     "test:handoff": "node tests/handoff.mjs",

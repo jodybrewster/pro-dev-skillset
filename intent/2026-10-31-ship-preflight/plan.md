@@ -135,11 +135,15 @@ claude plugin validate . --strict
 - AC13: pass, run on 2026-11-01 in mieruka at `75425fc`: `ship.py scope` found the tag-release range from the last tag.
   `ship.py record` wrote an honest NO-GO record and dropped the same manifest into `.mieruka/evidence/ship-preflight-75425fc11247/`.
   Mieruka's own `syncFromFilesystem` (through its vitest setup, on an in-memory database) loaded it with no error as kind `review`, artifact kind `ship-preflight`, listed by `listEvidence` under that artifact kind. The test record and the doc the sync generated were removed afterwards. Without a Ship block mieruka's `targets` still reports a `publish` target for `apps/web`; adding that block belongs to mieruka.
+  The run is repeatable: `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed on 2026-11-01 (`ship-preflight-b77ec847c2fb` loaded as review / ship-preflight) and leaves the checkout's files as they were.
 - Sign-off: the maintainer, 2026-11-01, by asking for the ship command to be finished.
 
 The sign-off moves the intent and the spec to `done` and ADR-0022 to `accepted`.
 
 ## Departures from plan
+
+- A record skip caused by git refusing the path (a symlinked `.mieruka/evidence/`) now says git could not check it instead of "not ignored"; the tracked-folder test asserts the exact "not ignored" message and a symlink test was added (security review follow-ups).
+- `tests/mieruka-sync.mjs` makes AC13 a repeatable on-demand check.
 
 - The mieruka drop checked whether anything under `.mieruka/evidence/` was tracked, which skipped mieruka itself (it ignores `.mieruka/` but force-adds a few screenshots there). It now checks the manifest's own path, so the copy lands whenever that path is ignored and untracked.
 

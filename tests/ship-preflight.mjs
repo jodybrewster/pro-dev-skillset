@@ -9,7 +9,7 @@
 // Also exported as runShipPreflightCases() for tests/check.mjs. Case ids for the record
 // fixtures are `check/<fixture file>` and `check/missing`; the preflight-contract check reads them.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, readdirSync, chmodSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, readdirSync, chmodSync, symlinkSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -487,8 +487,22 @@ export function runShipPreflightCases() {
     git(t.repo, "add", "-A"); git(t.repo, "commit", "-q", "-m", "tracked evidence");
     t.h = head(t.repo);
     r = rec(t.repo, report(t.h, t.b));
-    add("record/a tracked .mieruka/evidence/ gets nothing and the output says why", "no file there, skipped message says why",
-      r.status === 0 && !existsSync(join(t.repo, ".mieruka", "evidence", `ship-preflight-${t.h.slice(0, 12)}`)) && /tracked|not ignored/.test(JSON.stringify(r.json.skipped)), r.stdout + r.stderr);
+    // A tracked folder with no ignore rule: the manifest path is not ignored, so nothing is written.
+    // (A tracked file at the manifest's own key folder cannot exist ahead of time: the key is the HEAD sha.)
+    add("record/a tracked, unignored .mieruka/evidence/ gets nothing and the output says it is not ignored", "no file there, skipped says not ignored",
+      r.status === 0 && !existsSync(join(t.repo, ".mieruka", "evidence", `ship-preflight-${t.h.slice(0, 12)}`)) && /is not ignored by git/.test(JSON.stringify(r.json.skipped)), r.stdout + r.stderr);
+
+    // A symlinked evidence folder: git refuses the path, nothing is written outside the repo and the message says so.
+    t = mk();
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "ship-outside-")));
+    put(t.repo, { ".gitignore": ".mieruka/\n", ".mieruka/config.json": "{}\n" });
+    symlinkSync(outside, join(t.repo, ".mieruka", "evidence"));
+    git(t.repo, "add", "-f", ".gitignore", ".mieruka/evidence"); git(t.repo, "commit", "-q", "-m", "symlinked evidence");
+    t.h = head(t.repo);
+    r = rec(t.repo, report(t.h, t.b));
+    add("record/a symlinked .mieruka/evidence/ writes nothing and says git could not check the path", "nothing outside, skipped says could not check",
+      r.status === 0 && readdirSync(outside).length === 0 && /git could not check/.test(JSON.stringify(r.json.skipped)), r.stdout + r.stderr);
+    rmSync(outside, { recursive: true, force: true });
 
     // mieruka itself ignores .mieruka/ but force-adds a few screenshots under evidence/.
     t = mk();
