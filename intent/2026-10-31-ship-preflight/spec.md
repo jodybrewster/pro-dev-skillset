@@ -1,7 +1,7 @@
 ---
 intent: intent/2026-10-31-ship-preflight/intent.md
 intent-status: accepted
-status: draft
+status: done
 created: 2026-10-31T22:17:44-0400
 author: the maintainer
 ---
@@ -9,7 +9,7 @@ author: the maintainer
 # Spec: `/ship` preflight with a go/no-go verdict
 
 Built from `intent.md` in this folder (commit e73cbf5).
-Status: draft.
+Status: done.
 Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `docs/pr-check-stamp.md`, ADR-0002, ADR-0003, ADR-0004, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016, `docs/enforce-mode.md`, `plugins/pro-ship/scripts/merge-gate.py`, `plugins/pro-ship/scripts/pr-gate.py`, `plugins/pro-ship/skills/pr-check/` (SKILL.md, discovery.md, pr-body.md), `plugins/pro-security/scripts/push-gate.py`, `plugins/pro-ai-sdlc/scripts/production-gate.py`, `plugins/pro-legal/scripts/release-gate.py`, the `using-pro-dev` router, `../agent-skills/commands/ship.toml` and `skills/shipping-and-launch/SKILL.md` (MIT) and mieruka's `apps/web/src/service/spdd-evidence.ts`, `apps/web/src/lib/db.ts` and `apps/web/src/features/ship/DeployPanel.tsx`.
 No `DESIGN.md` or `SECURITY.md` exists in this repo; the installed `pro-security` skills were read for the hook rules REVIEW.md repeats.
 
@@ -39,18 +39,21 @@ Scope and targets (intent: "It works out how the project ships and what is about
   a `package.json` with `name` and `version` and no `"private": true`, a `pyproject.toml` with a `[project]` table, a `Cargo.toml` with `[package]` or a `.gemspec` gives `publish`.
 - R3. In a monorepo the rules run per workspace package (`workspaces` in the root `package.json`, `pnpm-workspace.yaml` or `apps/*` and `packages/*`), so each app is its own target.
 - R4. A fenced `yaml` block under a heading that starts with "Ship" in `CLAUDE.md` or `AGENTS.md` replaces detection, the way a verify block replaces command discovery in pr-check.
-  It lists `targets` (each with `id`, `kind` and optional `env`, `url` and `rollback`) and an optional `last_deploy` of `github`, `tag` or `ask`.
+  It lists `targets` (each with `id`, `kind` and optional `env`, `url` and `rollback`), an optional `last_deploy` of `github`, `tag` or `ask` and an optional `tag_pattern`, a git glob that picks the release tags for both target detection and the base of `scope`.
+  Without it a tag is a release tag when its name holds a semver `vX.Y.Z` or `X.Y.Z`, as in `v1.2.3`, `1.2.3`, `name--v1.2.3` and `name@1.2.3`.
 - R5. `ship.py scope` picks the range: `--pr <n>` gives that PR's merge base to its head; otherwise the range runs from the last production deploy to HEAD for a `deploy-on-merge` or `manual-deploy` target and from the newest reachable release tag to HEAD for every other kind.
 - R6. The last production deploy is the newest `production` environment entry from `gh api repos/{owner}/{repo}/deployments`, then the newest release tag, then a question to the person; `last_deploy` in the Ship block picks one source.
   The source used is written into the record.
 
 Coverage and review (intent: "It does not review code again").
 
-- R7. `ship.py coverage <base> <head>` maps every commit in the range to a merged PR through `gh pr list --state merged --json number,headRefOid,mergeCommit,body`.
+- R7. `ship.py coverage <base> <head>` maps every commit in the range to a merged PR through `gh pr list --state merged --json number,headRefOid,mergeCommit,body,author,authorAssociation,isCrossRepository`.
   A commit no PR merged is uncovered.
-- R8. A PR is covered when its body holds the pr-check marker with `result=pass` and a `head` equal to the PR's `headRefOid`.
-  A marker whose `head` is an ancestor of `headRefOid` covers only the commits up to that head; the later ones are uncovered.
-  A PR with no marker or a non-pass marker is uncovered.
+- R8. A PR is covered when its body holds exactly one pr-check marker with `result=pass` and a `head` equal to the PR's `headRefOid` and the marker is trusted.
+  A marker is trusted only when the PR is not cross-repository and its author is the current gh user (`gh api user --jq .login`, one call, with a timeout) or its `authorAssociation` is `OWNER`, `MEMBER` or `COLLABORATOR`, because the PR author writes the body.
+  `gh pr list` therefore also reads `author`, `authorAssociation` and `isCrossRepository`.
+  A marker whose `head` is an ancestor of `headRefOid` covers only the commits up to that head; the later ones are uncovered and so is the merge commit of a merge-type PR.
+  A PR with no marker, a non-pass marker, more than one marker or an untrusted marker is uncovered.
 - R9. pr-check's PR body draft ends with one line, `<!-- pro-ship:pr-check head=<full sha> result=<result> tier=<tier> -->`, taken from the stamp it just wrote.
   The stamp contract does not change.
 - R10. When any commit is uncovered `/ship` lists them and dispatches the code reviewer and, when the commits touch security surface, `security-architect` in diff mode, each with the four-field handoff (ADR-0012) on the uncovered commits only.
@@ -75,7 +78,7 @@ Release checks (intent: "It checks what only matters at release time").
   Each Blocking item is a Blocker, each Required item is a Recommended fix and a `Hold` verdict makes the verdict NO-GO.
   When pro-legal is not installed the report says "legal: not installed" and the verdict does not change.
 - R19a. pro-legal's `release-gate.py` reads `.pro-dev/ship/preflight.json` for the `tag`, `release`, `publish` and `deploy` kinds.
-  It skips its own deny when the record is fresh for the commit by R31, its `legal.status` is `done`, its `legal.verdict` is not `Hold` and its `legal.base` equals the gate's base or is an ancestor of it.
+  It skips its own deny when the record is fresh for the commit by R31, its `legal.status` is `done`, its `legal.verdict` is not `Hold`, its `legal.head` equals the record's `head` and its `legal.base` equals the gate's base or is an ancestor of it.
   It still runs its local release hygiene (LICENSE and license field) and still gates `pr` and `commit-deps` as before.
   It carries its own copy of the R31 rule with a comment naming `docs/ship-preflight.md`, as the push gate does for the stamp.
 - R20. A `publish` target can only add Blockers: a version that `npm view <name>@<version> version` (or the registry's equivalent) already returns, a failing dry run of the publish command or a publish workflow with no provenance (`--provenance` or `publishConfig.provenance`).
@@ -292,6 +295,7 @@ ADR needed: yes, the preflight record is a contract the gates and mieruka read, 
 With a fresh GO that holds the legal review, neither deny-once gate fires. | Intent constraints, ADR-0014 | resolved: both deny-once gates record the same call, so one retry clears both |
 | 5 | REVIEW.md forbids network calls in hooks, while the scope needs the GitHub Deployments API and coverage needs `gh pr list`. | REVIEW.md pass 2 | resolved: those calls run in `ship.py` under the skill; `ship-gate.py` and the merge gate's added line read local files only |
 | 6 | pro-ship is in pro-dev-starter, so the new gate reaches every starter repo, including this one, where every release tag warns until `/ship` has run. | ADR-0016, RELEASING.md | resolved: warn mode with one line per commit per session; R40 puts `/ship` in the release steps |
+| 7 | For a deploy target scoped from a GitHub deployment, `legal.base` is the last deploy, which is newer than the tag base pro-legal's gate uses, so the R19a skip fails on the base condition and pro-legal's gate still asks once. | `plugins/pro-legal/scripts/release-gate.py` | known limit, documented in `docs/ship-preflight.md`; not fixed |
 
 ## Open questions
 

@@ -99,6 +99,27 @@ Run them only when the person says yes; never run them unasked and never block t
 All must pass before tagging.
 The full install test (demo app, `pro-dev-starter` install, Codex smoke test) is in [docs/install-test.md](./docs/install-test.md).
 
+## Ship
+
+`/pro-ship:ship` reads this block.
+The marketplace ships as one `tag-release` target, because installs update from `main` (see [RELEASING.md](./RELEASING.md)) and each plugin is tagged `<plugin>--vX.Y.Z`.
+
+```yaml
+targets:
+  - id: marketplace
+    kind: tag-release
+    rollback:
+      triggers:
+        - "a plugin fails to load or its hooks block a session after an update"
+        - "claude plugin validate --strict fails on main"
+      steps:
+        - "Revert the release commits on main with git revert and push the revert."
+        - "Tag the previous version of each affected plugin as <plugin>--vX.Y.Z so installs update back to it."
+      rto: "one release cycle"
+tag_pattern: "*--v*"
+last_deploy: tag
+```
+
 ## Things Claude gets wrong
 
 - Editing plugin content without a version bump.

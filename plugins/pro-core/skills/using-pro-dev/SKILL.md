@@ -84,13 +84,14 @@ Task arrives
   ├ SHIP:
   │   ├ checks and stamp before gh pr create ──→ pr-check (pro-ship)
   │   ├ how risky is this branch or PR, before a merge ─→ risk-tiers (pro-ship)
-  │   └ deploy to Vercel ──────────────────────→ vercel-deploy-bridge (pro-ship, opt-in, bridge: /pro-dev install); ci-cd-and-automation, shipping-and-launch, docs, deprecation (still planned)
+  │   ├ "ship it", "are we ready to release", go/no-go before a tag, release, deploy or publish ─→ ship (pro-ship)
+  │   └ deploy to Vercel ──────────────────────→ vercel-deploy-bridge (pro-ship, opt-in, bridge: /pro-dev install); ci-cd-and-automation, docs, deprecation (still planned)
   └ META: memory piling up / MEMORY.md bloated → dream, /dream (pro-core); saving one new fact stays on plain auto-memory
 ```
 
 The LEGAL branch needs the opt-in `pro-legal` plugin, which is not in `pro-dev-starter`. If it is not installed, say so and suggest installing it. `software-counsel` spots legal issues and is not legal advice.
 
-One branch in this router still references **planned skills not yet built**: in SHIP, `ci-cd-and-automation`, `shipping-and-launch`, docs and deprecation are on the roadmap for pro-ship, which today holds `pr-check`, `risk-tiers` and `vercel-deploy-bridge` - when the user reaches one of those, surface what is planned and recommend the closest available substitute (e.g. the existing git workflow). The SECURITY branch splits by scope: `security-architect` challenges a specific idea, plan, spec or diff before it ships (pro-security hooks enforce this when a plan or commit touches security surface), while `security-audit` audits the whole repository and its infrastructure (git history, lockfiles, workflows, containers, IaC, installed skills). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development`, and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
+One branch in this router still references **planned skills not yet built**: in SHIP, `ci-cd-and-automation`, docs and deprecation are on the roadmap for pro-ship, which today holds `pr-check`, `ship`, `risk-tiers` and `vercel-deploy-bridge` - when the user reaches one of those, surface what is planned and recommend the closest available substitute (e.g. the existing git workflow). The SECURITY branch splits by scope: `security-architect` challenges a specific idea, plan, spec or diff before it ships (pro-security hooks enforce this when a plan or commit touches security surface), while `security-audit` audits the whole repository and its infrastructure (git history, lockfiles, workflows, containers, IaC, installed skills). Several BUILD skills — `api-and-interface-design`, `source-driven-development`, `context-engineering`, `doubt-driven-development` and `frontend-ui-engineering` — are integration-doc phases that may not be installed in every environment; route to them when present, otherwise fall back to the nearest available skill (typically `test-driven-development` or `subagent-driven-development`). Pure planning mode is a valid drafting environment, not the preferred review surface for a substantive plan. When a plan is detailed enough to approve, save, or execute, route it through `lavish` so the user can review the plan as an annotatable HTML artifact before implementation begins.
 
 ## Bridges
 
@@ -122,14 +123,14 @@ When a bridge fires and its engine is missing, run the engine's install command 
 4. test-driven-development / subagent-driven-development → build
 5. qa-do / run the suite → verify
 6. requesting-code-review / code-simplification → review
-7. shipping-and-launch → ship
+7. ship → ship (go/no-go before a release)
 
 **Client / spec-driven path:**
 1. interview-me → capture requirements
 2. open-SPDD: story → analysis → reasons-canvas → generate → review/api-test → sync
 3. qa-do / run the suite → verify
 4. requesting-code-review → review
-5. shipping-and-launch → ship
+5. ship → ship (go/no-go before a release)
 
 Not every task needs every phase — a bug fix might be just `systematic-debugging` → `test-driven-development` → `verification-before-completion`.
 
@@ -174,6 +175,7 @@ The pro-dev-specific rules are:
 | Security | security-audit, security-auditor, /security-audit | pro-security | Whole-repo audit: secrets, supply chain, CI/CD, OWASP, STRIDE |
 | Legal | software-counsel, /legal-review | pro-legal (opt-in) | Issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by planning and release hooks |
 | Ship | vercel-deploy-bridge (bridge, via `/pro-dev`) | pro-ship (opt-in) | Deploy to Vercel with token and .env checks and a yes at each step |
-| Ship | ci-cd-and-automation, shipping-and-launch, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, launch, document, retire |
+| Ship | ship | pro-ship | Go/no-go before a tag, release, deploy or publish, with a rollback plan per target |
+| Ship | ci-cd-and-automation, documentation-and-adrs, deprecation-and-migration | pro-ship (planned) | Automate, document, retire |
 | Research | lead-research | pro-research | ICP and lead profiling |
 | Design | design-token, typography-scale, shadcn-ui-composition, accessibility-audit | pro-design | Token system, type scale, components, accessibility |

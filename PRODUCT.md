@@ -26,7 +26,7 @@ Each plugin keeps its hooks in one `hooks/hooks.json` (`docs/hook-loading.md`, `
 
 ## Capabilities and Constraints
 
-The marketplace lists 20 plugin folders, each versioned in `.claude-plugin/marketplace.json` and under `plugins/`.
+The marketplace lists 21 plugin folders, each versioned in `.claude-plugin/marketplace.json` and under `plugins/`.
 `pro-dev-starter` pulls the default stack and `/pro-dev install` installs the external engines named in `plugins/pro-core/registry/engines.json`.
 Every enabled skill and hook costs context and routing accuracy each session, so a plugin boundary is where a person turns a group of them off (`docs/decisions/0013-plugin-layering.md`).
 Forked and adapted content keeps its upstream attribution (`docs/licenses.md`).

@@ -621,6 +621,77 @@ export function runLegalHookCases({ only = null } = {}) {
   add("release-gate/commit-without-a-ignores-unstaged", NONE, () => rg("rg26", c5, 'git commit -m "x"'));
   add("release-gate/commit-am-ignores-untracked", NONE, () => rg("rg26b", c5, 'git commit -am "x"'));
 
+  // ── release-gate: ship-preflight record (R19a, docs/ship-preflight.md) ─
+  // Records are built inline. A fresh GO with a clean legal review skips the deny;
+  // each broken condition denies once as before.
+  const gitOut = (dir, ...args) => sh("git", args, dir).trim();
+  const goRepo = (mutate = {}, { license = true, legal = {}, afterTag = false } = {}) => {
+    const dir = makeReleaseRepo(tmp, { license });
+    const tagSha = gitOut(dir, "rev-parse", "HEAD");
+    write(dir, "src/track.ts", POSTHOG_CODE);
+    commitAll(dir, "add tracking");
+    if (afterTag) { write(dir, "src/more.ts", "export const m = 1;\n"); commitAll(dir, "more"); }
+    const head = gitOut(dir, "rev-parse", "HEAD");
+    const lbase = afterTag ? gitOut(dir, "rev-parse", "HEAD~1") : tagSha;
+    const detail = { verdict: "GO", head, base: lbase, legal: { status: "done", verdict: "Ship", base: lbase, head, blocking: 0, required: 0, ...legal } };
+    const rec = { schema: 1, produced_by: "pro-ship:ship", head, status: "pass", detail_json: JSON.stringify(detail), ...mutate };
+    write(dir, ".pro-dev/ship/preflight.json", JSON.stringify(rec));
+    return dir;
+  };
+  const pf1 = goRepo();
+  add("release-gate/preflight-fresh-go-skips-tag-deny", NONE, () => rg("pf1", pf1, "git tag v0.2.0"));
+  add("release-gate/preflight-fresh-go-skips-release-deny", NONE, () => rg("pf1b", pf1, 'gh release create v0.2.0 --notes "x"'));
+  add("release-gate/preflight-fresh-go-skips-publish-deny", NONE, () => rg("pf1c", pf1, "npm publish"));
+  add("release-gate/preflight-fresh-go-skips-deploy-deny", NONE, () => rg("pf1d", pf1, "vercel --prod"));
+  const pf1p = goRepo({ status: "partial" });
+  add("release-gate/preflight-partial-skips-deny", NONE, () => rg("pf1e", pf1p, "git tag v0.2.0"));
+  // legal.base older than the gate's base (an ancestor of the last tag) still covers the range.
+  const pf1a = goRepo();
+  add("release-gate/preflight-legal-base-ancestor-of-gate-base-skips", NONE, () => {
+    sh("git", ["tag", "v0.2.0"], pf1a);
+    write(pf1a, "src/track2.ts", POSTHOG_CODE);
+    commitAll(pf1a, "more tracking");
+    const head = gitOut(pf1a, "rev-parse", "HEAD");
+    const old = gitOut(pf1a, "rev-parse", "v0.1.0");
+    const detail = { legal: { status: "done", verdict: "Ship with changes", base: old, head } };
+    write(pf1a, ".pro-dev/ship/preflight.json", JSON.stringify({ schema: 1, produced_by: "pro-ship:ship", head, status: "pass", detail_json: JSON.stringify(detail) }));
+    return rg("pf1f", pf1a, "git tag v0.3.0");
+  });
+  const pfDeny = (id, repo, cmd = "git tag v0.2.0") => {
+    add(`release-gate/preflight-${id}-denied`, DENY, () => reasonHas(rg(`pf-${id}`, repo, cmd), /Legal check before this/));
+    add(`release-gate/preflight-${id}-retry-passes`, NONE, () => rg(`pf-${id}`, repo, cmd));
+  };
+  pfDeny("hold-verdict", goRepo({}, { legal: { verdict: "Hold" } }));
+  pfDeny("legal-not-done", goRepo({}, { legal: { status: "could-not-run" } }));
+  pfDeny("legal-not-installed", goRepo({}, { legal: { status: "not-installed", verdict: null } }));
+  pfDeny("stale-head", goRepo({ head: "0".repeat(40) }));
+  pfDeny("no-go-status", goRepo({ status: "fail" }));
+  pfDeny("foreign-producer", goRepo({ produced_by: "other-tool" }));
+  pfDeny("wrong-schema", goRepo({ schema: 2 }));
+  pfDeny("bad-detail-json", goRepo({ detail_json: "{" }));
+  pfDeny("legal-head-other-commit", goRepo({}, { legal: { head: "0".repeat(40) } }));
+  pfDeny("legal-head-missing", goRepo({}, { legal: { head: null } }));
+  pfDeny("legal-base-newer-than-tag", goRepo({}, { afterTag: true }));
+  const pfUnread = goRepo();
+  write(pfUnread, ".pro-dev/ship/preflight.json", "not json");
+  pfDeny("unreadable-record", pfUnread);
+  const pfLic = goRepo({}, { license: false });
+  add("release-gate/preflight-hygiene-still-denies-missing-license", DENY, () =>
+    reasonHas(rg("pf-lic", pfLic, "git tag v0.2.0"), /release-hygiene/, /no LICENSE or COPYING file/));
+  const pfPr = goRepo();
+  sh("git", ["checkout", "-q", "-b", "feat/pf"], pfPr);
+  add("release-gate/preflight-pr-create-ignores-record", DENY, () => {
+    sh("git", ["checkout", "-q", "main"], pfPr);
+    sh("git", ["checkout", "-q", "-b", "feat/pf2", "v0.1.0"], pfPr);
+    write(pfPr, "src/track.ts", POSTHOG_CODE);
+    commitAll(pfPr, "track on branch");
+    // Re-aim the record at the new HEAD so only the kind keeps it from skipping.
+    const head = gitOut(pfPr, "rev-parse", "HEAD");
+    const detail = { legal: { status: "done", verdict: "Ship", base: head, head } };
+    write(pfPr, ".pro-dev/ship/preflight.json", JSON.stringify({ schema: 1, produced_by: "pro-ship:ship", head, status: "pass", detail_json: JSON.stringify(detail) }));
+    return reasonHas(rg("pf-pr", pfPr, "gh pr create --fill"), /kind: pr/);
+  });
+
   // oversize diff: only the file list is judged
   const big = makeReleaseRepo(tmp);
   write(big, "data/blob.bin", "x".repeat(9 * 1024 * 1024) + "\n");

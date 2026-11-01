@@ -20,6 +20,7 @@ import { runExecuteCases } from "./execute.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
+import { runShipPreflightCases } from "./ship-preflight.mjs";
 import { runRequiredDocsCases } from "./required-docs.mjs";
 import { runCodexRunCases } from "./codex-run.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
@@ -1182,6 +1183,15 @@ checks["ship-check"] = () => {
   return { failures, warnings };
 };
 
+checks["ship-preflight"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runShipPreflightCases();
+  if (skipped) { warnings.push(`ship preflight cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/ship-preflight.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ship preflight ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
 // required-docs: the pro-quality required-set script (cases in tests/required-docs.mjs) and the
 // contract between it, the three pro-ai-sdlc templates, /pro-dev install and the pr-check skill
 // (ADR-0020).
@@ -1277,6 +1287,53 @@ checks["stamp-contract"] = () => {
     if (!b) failures.push(`push gate produced no verdict for ${n}`);
     else if (!b.ok) failures.push(`push gate verdict for ${n} differs from expect.json (expected ${b.expect}, got ${b.actual})`);
   }
+  return { failures, warnings };
+};
+
+// One preflight record, many readers: the fixtures, expect.json, docs/ship-preflight.md and
+// `ship.py check` must agree. Every cause the page names needs a fixture (missing has none,
+// because the runner writes no file; tests/ship-preflight.mjs has a case for it).
+checks["preflight-contract"] = () => {
+  const failures = [], warnings = [];
+  const fixDir = join(ROOT, "tests", "fixtures", "ship-preflight");
+  const docPath = join(ROOT, "docs", "ship-preflight.md");
+  if (!existsSync(fixDir) || !existsSync(docPath)) {
+    if (existsSync(join(ROOT, "plugins", "pro-ship", "scripts", "ship.py"))) failures.push("ship.py exists but docs/ship-preflight.md or tests/fixtures/ship-preflight/ is missing");
+    return { failures, warnings };
+  }
+  const expected = JSON.parse(readFileSync(join(fixDir, "expect.json"), "utf8"));
+  const names = Object.keys(expected);
+  const files = readdirSync(fixDir).filter((f) => f.endsWith(".json") && f !== "expect.json");
+  for (const f of files) if (!expected[f]) failures.push(`fixture ${f} is not listed in expect.json`);
+  for (const n of names) if (!files.includes(n)) failures.push(`expect.json lists ${n} but the fixture file is missing`);
+  const doc = readFileSync(docPath, "utf8");
+  const section = doc.split("## The freshness rule")[1]?.split("\n## ")[0] ?? "";
+  const causes = [...section.matchAll(/^\| `([a-z-]+)` \|/gm)].map((m) => m[1]);
+  if (causes.join() !== "missing,unreadable,stale,no-go") failures.push(`docs/ship-preflight.md names causes [${causes}], expected missing,unreadable,stale,no-go in that order`);
+  for (const c of causes) {
+    if (c === "missing") continue;
+    if (!names.some((n) => expected[n]?.check === c)) failures.push(`docs/ship-preflight.md names the cause ${c} but no fixture in expect.json gives it`);
+  }
+  if (!names.some((n) => expected[n]?.check === "fresh")) failures.push("no fixture in expect.json is a fresh GO");
+  for (const n of names) {
+    const e = expected[n];
+    if (![...causes, "fresh"].includes(e.check)) failures.push(`${n}: check ${e.check} is not a cause in docs/ship-preflight.md`);
+    if (e.ship_gate !== (e.check === "fresh" ? "allow" : "warn")) failures.push(`${n}: ship_gate ${e.ship_gate} does not follow check ${e.check} (allow when fresh, warn otherwise)`);
+    if (typeof e.legal_skip !== "boolean") failures.push(`${n}: legal_skip must be true or false`);
+    let rec = null, detail = null;
+    try { rec = JSON.parse(readFileSync(join(fixDir, n), "utf8").split("HEAD").join("0".repeat(40)).split("BASE").join("1".repeat(40))); detail = JSON.parse(rec.detail_json); } catch { /* corrupt on purpose */ }
+    const skip = e.check === "fresh" && detail?.legal?.status === "done" && detail.legal.verdict !== "Hold" && detail.legal.base === "1".repeat(40);
+    if (e.legal_skip !== skip) failures.push(`${n}: legal_skip ${e.legal_skip} disagrees with the record (done, not Hold, base the tagged commit, fresh)`);
+    if (rec && typeof rec.detail_json !== "string") failures.push(`${n}: detail_json must be a JSON string`);
+  }
+  const run = runShipPreflightCases();
+  if (run.skipped) { warnings.push(`preflight contract skipped - ${run.skipped}`); return { failures, warnings }; }
+  for (const n of names) {
+    const r = run.results.find((x) => x.id === `check/${n}`);
+    if (!r) failures.push(`ship.py check produced no verdict for ${n}`);
+    else if (!r.ok) failures.push(`ship.py check for ${n} differs from expect.json (expected ${r.expect})${r.reason ? ` - ${r.reason}` : ""}`);
+  }
+  if (!run.results.some((x) => x.id === "check/missing" && x.ok)) failures.push("ship.py check gives no passing verdict for a missing record");
   return { failures, warnings };
 };
 

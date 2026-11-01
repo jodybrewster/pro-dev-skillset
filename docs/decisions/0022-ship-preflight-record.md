@@ -4,7 +4,7 @@ Date: 2026-10-31
 
 ## Status
 
-proposed
+accepted
 
 Decided by: the maintainer.
 Source: intent/2026-10-31-ship-preflight/ (decisions 2, 3 and 5; spec R25 to R37).

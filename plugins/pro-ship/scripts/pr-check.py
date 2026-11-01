@@ -24,6 +24,9 @@ restores it before it returns):
                                    reviewer records. The contract is docs/pr-check-stamp.md.
                                    --risk reads the classifier JSON: it sets `tier` and the
                                    `risk` field; an unreadable file gives tier high, never low.
+  marker                           print the one-line PR body marker from the stamp, for
+                                   /ship to find later: <!-- pro-ship:pr-check head=<sha>
+                                   result=<result> tier=<tier> -->. Exit 1 when there is no stamp.
 
 Python 3 standard library only. No network calls. It runs the commands the repo names in its
 own CLAUDE.md, AGENTS.md, package.json or Makefile, which is the same trust as running the
@@ -1010,6 +1013,21 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     return stamp
 
 
+def cmd_marker(root: str) -> str:
+    """The R9 line, taken from the stamp just written. The stamp contract does not change."""
+    try:
+        stamp = json.loads(read(os.path.join(root, ".pro-dev", "ship", "pr-check.json")))
+    except ValueError:
+        stamp = None
+    if not isinstance(stamp, dict) or not stamp.get("head") or not stamp.get("result"):
+        raise Refuse("pr-check: no readable stamp at .pro-dev/ship/pr-check.json. Run the stamp step first.")
+    head, result, tier = stamp["head"], stamp["result"], stamp.get("tier") or "unclassified"
+    if not (isinstance(head, str) and re.fullmatch(r"[0-9a-f]{40}", head)
+            and result in ("pass", "fail", "incomplete") and re.fullmatch(r"[a-z]+", str(tier))):
+        raise Refuse("pr-check: the stamp holds values the marker cannot carry. Run the stamp step again.")
+    return f"<!-- pro-ship:pr-check head={head} result={result} tier={tier} -->"
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -1033,6 +1051,9 @@ def main(argv: list[str]) -> int:
             return 0
         if cmd == "stamp":
             emit(cmd_stamp(repo_root(), rest))
+            return 0
+        if cmd == "marker":
+            print(cmd_marker(repo_root()))
             return 0
         if cmd == "find":
             if len(rest) != 2:

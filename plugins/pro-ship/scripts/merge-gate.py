@@ -24,6 +24,11 @@ sha is read from FETCH_HEAD and the PR is classified against it, never a stale l
                is unknown. An unresolved PR is never low.
   NO_PROMPT_MODES  in enforce, medium and high deny instead of ask, because an ask may not
                prompt there. Nothing else (env var, flag, file, stamp) clears an ask.
+  preflight    at medium and high, when the classifier ran and ship.py (a sibling script) finds a
+               deploy-on-merge target, the text ends with one line from ship.check on the PR head:
+               "preflight: GO for <sha>", "preflight: GO with <n> accepted risks" or "preflight: no
+               fresh GO for this PR (<cause>)". It changes no decision, adds no prompt and stays
+               silent at low, on a repo with no such target and on any error. File reads only.
 Mode: mode.merge-gate, then mode, in CLAUDE_GUARD_DIR or ~/.claude/hooks (default warn).
 A malformed payload exits 0 with no output. A command with no merge in it makes no call;
 nothing from the payload is executed. The gate answers within 20 seconds, before the hook's
@@ -32,6 +37,7 @@ nothing from the payload is executed. The gate answers within 20 seconds, before
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import re
 import shlex
@@ -470,6 +476,32 @@ def load_classifier():
         raise CouldNotRun(f"classifier not loadable: {type(e).__name__}")
 
 
+def preflight_line(directory: str | None, head: str) -> str:
+    """The one preflight line for a deploy-on-merge repo, else "". Reads files only; any failure gives ""."""
+    try:
+        root = repo_root(directory)
+        spec = importlib.util.spec_from_file_location("ship", os.path.join(HERE, "ship.py"))
+        ship = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ship)
+        if not any(t.get("kind") == "deploy-on-merge" for t in ship.targets(root)):
+            return ""
+        v = ship.check(root, head)
+        if not v.get("fresh"):
+            return f"preflight: no fresh GO for this PR ({v.get('cause')})"
+        if v.get("status") == "partial":
+            n = None
+            try:
+                with open(os.path.join(root, ".pro-dev", "ship", "preflight.json"), encoding="utf-8") as f:
+                    risks = json.loads(json.load(f)["detail_json"]).get("risks", [])
+                n = sum(1 for r in risks if isinstance(r, dict) and r.get("accepted_by"))
+            except Exception:
+                pass
+            return f"preflight: GO with {n if n is not None else 'accepted'} accepted risks".replace("accepted accepted", "accepted")
+        return f"preflight: GO for {head[:8]}"
+    except Exception:
+        return ""
+
+
 def run_git(root: str, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", root, *args], capture_output=True, text=True, timeout=timeout,
                           errors="replace", env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"})
@@ -589,6 +621,10 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
         return 0, ""
 
     no_prompt = permission_mode in NO_PROMPT_MODES
+    pf = ""
+    if res is not None:
+        pf = preflight_line(hit["dir"], res["head"])
+        pf = "\n" + pf if pf else ""
     if unknown is not None:
         log(HOOK, "could-not-run", f"{unknown} (treated as high)", cwd)
         head_note = ""
@@ -606,9 +642,9 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
                    f"the last one wins. Give one, {flag}. {summary(res)}")
             if enforcing:
                 log(HOOK, "deny", f"{tier} several pins PR {res['pr']} {head[:8]}", cwd)
-                return 3, msg
+                return 3, msg + pf
             log(HOOK, "warn", f"{tier} several pins PR {res['pr']} {head[:8]}", cwd)
-            return 1, msg + " (warn mode: allowed)"
+            return 1, msg + " (warn mode: allowed)" + pf
         sha = pins[-1] if pins else None
         valid = (sha is not None and re.fullmatch(r"[0-9a-fA-F]{7,64}", sha) is not None
                  and head.startswith(sha.lower()))
@@ -618,9 +654,9 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
             msg = f"[{HOOK}] {tier} risk merge of PR {res['pr']} {why}. Add {flag} so GitHub refuses the merge if the PR has moved.{auto} {summary(res)}"
             if enforcing:
                 log(HOOK, "deny", f"{tier} PR {res['pr']} pin {head[:8]}", cwd)
-                return 3, msg
+                return 3, msg + pf
             log(HOOK, "warn", f"{tier} PR {res['pr']} pin missing {head[:8]}", cwd)
-            return 1, msg + " (warn mode: allowed)"
+            return 1, msg + " (warn mode: allowed)" + pf
         ident = f" PR {res['pr']} {head[:8]}"
         head_note = f" PR {res['pr']} head {head}."
         body = summary(res)
@@ -629,6 +665,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
     if unknown is not None:
         text = f"[{HOOK}] {body} This approval covers whatever the PR head is when it merges."
     if enforcing:
+        text += pf
         if no_prompt:
             log(HOOK, "deny", f"{tier} {permission_mode}{ident}", cwd)
             return 3, (f"[{HOOK}] {tier} risk merge: approval needs a prompt and this session cannot show one "
@@ -636,7 +673,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
         log(HOOK, "ask", f"{tier}{ident}", cwd)
         return 2, text
     log(HOOK, "warn", f"{tier}" + (" unknown" if unknown else "") + ident, cwd)
-    return 1, text + " (warn mode: allowed)"
+    return 1, text + " (warn mode: allowed)" + pf
 
 
 def emit(rank: int, text: str) -> None:
