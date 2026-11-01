@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: idea
-status: draft
+status: accepted
 risk: medium
 created: 2026-10-31T12:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 15 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and feature 18 of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md); on 2026-10-31 Jody asked to "design for multiple scenarios, we'll also use it in mieruka".
-Status: draft.
+Status: accepted by Jody on 2026-10-31 ("ok the intent"); `/spec` is next.
 Created: 2026-10-31.
 
 ## Problem

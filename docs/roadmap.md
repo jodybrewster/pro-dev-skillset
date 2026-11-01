@@ -14,7 +14,8 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 ### Next: item 15, `/ship` preflight
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
-Intent drafted on 2026-10-31: [intent/2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md), status draft, waiting on Jody before `/spec`.
+Intent accepted on 2026-10-31: [intent/2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md); `/spec` is next.
+Two questions for the spec wait on Jody: is mieruka's web app hosted anywhere and is its CLI published to npm.
 It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read (Jody, 2026-10-31).
 
 Waiting on Jody, none of which blocks item 15:
@@ -170,7 +171,7 @@ Within a tier, items are in the order to build them.
 
 ### P2: situational, or past one person
 
-- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent drafted in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md)
+- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent accepted in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md)
 - [ ] 16. `pipeline`: the gate as required CI checks (L, pro-ship)
 - [ ] 17. Architecture review with twelve-factor (L, pro-quality)
 - [ ] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality)
