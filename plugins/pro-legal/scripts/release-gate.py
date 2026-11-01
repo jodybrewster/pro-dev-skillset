@@ -18,10 +18,16 @@ tag, release and publish also run local release hygiene: no LICENSE or COPYING
 file at the repo root, or a package.json with no license field, denies even
 when the diff itself is clean. Doc-only changes never trigger (see
 legal_surface.diff_files). Fails open on any error.
+
+For tag, release, publish and deploy, a fresh GO in .pro-dev/ship/preflight.json
+(docs/ship-preflight.md, ADR-0022) whose legal review ran on this range skips the
+deny: see preflight_covers(). Release hygiene still denies, and pr and commit-deps
+never read the record.
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -44,6 +50,7 @@ TAG_LIST_LETTERS = "ldvn"
 TAG_VALUE_LETTERS = "mFu"
 RUNNERS = {"npx", "bunx", "pnpx", "sudo", "time", "command", "exec"}
 HYGIENE_KINDS = {"tag", "release", "publish"}
+PREFLIGHT_KINDS = {"tag", "release", "publish", "deploy"}
 COMMIT_DEPS_CATS = {"dependency-license", "oss-licensing"}
 SIGNALS = ("tag", "release", "publish", "upload", "gem", "deploy", "vercel", "commit", "pr create")
 
@@ -139,6 +146,23 @@ def _is_tag_create(rest: list[str]) -> bool:
     return positional >= 1
 
 
+def _tag_ref(rest: list[str]) -> str | None:
+    """The commit named after the tag name in `git tag <name> <commit>`, else None."""
+    skip = False
+    pos: list[str] = []
+    for tok in rest:
+        if skip:
+            skip = False
+            continue
+        if tok in TAG_VALUE_FLAGS:
+            skip = True
+        elif tok.startswith("-") and not tok.startswith("--") and len(tok) > 1 and tok[1:].isalpha():
+            skip = tok[-1] in TAG_VALUE_LETTERS
+        elif not tok.startswith("-"):
+            pos.append(tok)
+    return pos[1] if len(pos) > 1 else None
+
+
 def classify(tokens: list[str]) -> dict | None:
     """Return {"kind": str, "dir": str|None, "all": bool} for a shipping event, or None."""
     t = list(tokens)
@@ -160,7 +184,13 @@ def classify(tokens: list[str]) -> dict | None:
         if t[1:3] == ["pr", "create"]:
             return {**ev, "kind": "pr"}
         if t[1:3] == ["release", "create"]:
-            return {**ev, "kind": "release"}
+            ref = None
+            for j, tok in enumerate(t):
+                if tok == "--target" and j + 1 < len(t):
+                    ref = t[j + 1]
+                elif tok.startswith("--target="):
+                    ref = tok.split("=", 1)[1]
+            return {**ev, "kind": "release", "ref": ref}
         return None
     if bin_ == "git":
         i, gdir = _git_args(t, 1)
@@ -168,7 +198,7 @@ def classify(tokens: list[str]) -> dict | None:
             return None
         sub = t[i]
         if sub == "tag":
-            return {**ev, "kind": "tag", "dir": gdir} if _is_tag_create(t[i + 1:]) else None
+            return {**ev, "kind": "tag", "dir": gdir, "ref": _tag_ref(t[i + 1:])} if _is_tag_create(t[i + 1:]) else None
         if sub != "commit":
             return None
         all_flag, skip = False, False
@@ -270,6 +300,53 @@ def hygiene(root: str) -> list[str]:
     return found
 
 
+def preflight_covers(root: str, base: str, ref: str | None) -> bool:
+    """True when .pro-dev/ship/preflight.json holds a fresh GO with a clean legal review for this range.
+
+    Own copy of the freshness rule in docs/ship-preflight.md (ADR-0022, R31), as
+    push-gate.py keeps for the pr-check stamp: a JSON object, schema 1, produced_by
+    starting pro-ship:ship, head equal to the shipped commit (HEAD unless the command
+    names one) and status pass or partial. Inside detail_json the legal review must
+    be done, not Hold, and its base must be this gate's base or an ancestor of it.
+    Any error means False, so the gate behaves as it did without the record.
+    """
+    try:
+        with open(os.path.join(root, ".pro-dev", "ship", "preflight.json"), encoding="utf-8") as fh:
+            rec = json.load(fh)
+        if not isinstance(rec, dict):
+            return False
+        schema = rec.get("schema")
+        if isinstance(schema, bool) or schema != 1 or not isinstance(schema, int):
+            return False
+        produced = rec.get("produced_by")
+        if not isinstance(produced, str) or not produced.startswith("pro-ship:ship"):
+            return False
+        if rec.get("status") not in ("pass", "partial"):
+            return False
+        ok, out = ls.run_git(["rev-parse", "--verify", "--quiet", (ref or "HEAD") + "^{commit}"], root, GIT_TIMEOUT)
+        shipped = out.strip()
+        if not ok or not shipped or rec.get("head") != shipped:
+            return False
+        detail = rec.get("detail_json")
+        detail = json.loads(detail) if isinstance(detail, str) else None
+        legal = detail.get("legal") if isinstance(detail, dict) else None
+        if not isinstance(legal, dict) or legal.get("status") != "done" or legal.get("verdict") == "Hold":
+            return False
+        lbase = legal.get("base")
+        if not isinstance(lbase, str) or not lbase:
+            return False
+        ok, out = ls.run_git(["rev-parse", "--verify", "--quiet", base + "^{commit}"], root, GIT_TIMEOUT)
+        if not ok or not out.strip():
+            # Empty-tree base: only the same tree counts.
+            return lbase == base
+        bc = out.strip()
+        if lbase == bc:
+            return True
+        return ls.run_git(["merge-base", "--is-ancestor", lbase, bc], root, GIT_TIMEOUT)[0]
+    except Exception:
+        return False
+
+
 KIND_LABELS = {
     "tag": "tag",
     "release": "GitHub release",
@@ -352,6 +429,8 @@ def main() -> int:
         files = {c: p for c, p in files.items() if c in COMMIT_DEPS_CATS}
     hyg = hygiene(root) if kind in HYGIENE_KINDS else []
     if not files and not hyg:
+        return 0
+    if kind in PREFLIGHT_KINDS and not hyg and preflight_covers(root, base, op.get("ref")):
         return 0
 
     cats = sorted(files) + (["release-hygiene"] if hyg else [])
