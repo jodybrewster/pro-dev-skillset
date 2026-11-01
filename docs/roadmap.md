@@ -19,7 +19,8 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
 Intent accepted and [spec](../intent/2026-10-31-ship-preflight/spec.md) written on 2026-10-31, with [ADR-0022](./decisions/0022-ship-preflight-record.md) proposed.
-The plan is drafted and waits on the maintainer: build now and keep the PR a draft until the 2026-11-13 enforce decision, because a pro-ship bump restarts the merge gate's warn-mode week.
+On 2026-11-01 the spec took in the rest of agent-skills' shipping material (the review fan-out with `test-engineer`, the six-section pre-launch checklist, rollout plan, post-launch verification, the error-budget gate and a `web-performance-auditor` pass), with a table of what was kept, replaced or dropped and why.
+The build merges when it is green: the neutral-repo PRs already bumped pro-ship twice on 2026-11-01, so the warn-mode week is counted per gate script, and only the merge gate's script changes here.
 The spec's three recommendations are taken: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
 mieruka's web app and CLI run only locally and nothing is published, so mieruka is a tag-and-release project for now.
 It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read.
