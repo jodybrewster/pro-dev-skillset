@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-10-30 (evening): all six P1 intents specced, built and merged (#97 to #99, #101 to #103).
+Last updated 2026-10-31: P0 and P1 shipped, the twelve shipped intents marked `done` and item 15 is next.
 
 A fresh session starts here: read "Now", then the intent folder it names.
 The ranked list came from comparing this marketplace with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
@@ -10,6 +10,27 @@ It revisits the older [AGENT-SKILLS-INTEGRATION](./plans/AGENT-SKILLS-INTEGRATIO
 Nothing below the "Now" section is decided until it moves into an intent or a spec.
 
 ## Now
+
+### Next: item 15, `/ship` preflight
+
+All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
+Intent accepted and [spec](../intent/2026-10-31-ship-preflight/spec.md) written on 2026-10-31, with [ADR-0022](./decisions/0022-ship-preflight-record.md) proposed.
+The plan is drafted and waits on Jody: build now and keep the PR a draft until the 2026-11-13 enforce decision, because a pro-ship bump restarts the merge gate's warn-mode week.
+Jody took the spec's three recommendations: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
+mieruka's web app and CLI run only locally and nothing is published (Jody, 2026-10-31), so mieruka is a tag-and-release project for now.
+It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read (Jody, 2026-10-31).
+
+Waiting on Jody, none of which blocks item 15:
+
+- ADRs 0016 to 0020 are proposed and wait for acceptance.
+- The warn-mode evidence week for the floor guard, pr-gate and merge gate in two repos, with the decision record due 2026-11-13 ([docs/enforce-mode.md](./enforce-mode.md)).
+- The four intents under [Housekeeping](#housekeeping): finish the remainder or mark them `done`.
+
+### Since P1 (2026-10-30 and 2026-10-31)
+
+- [#106](https://github.com/jodybrewster/pro-dev-skillset/pull/106): `CLAUDE.md` reminds to run live evals before a skill PR.
+- [#107](https://github.com/jodybrewster/pro-dev-skillset/pull/107): doc freshness moved from the push hook into pr-check as a Should-fix step ([ADR-0021](./decisions/0021-doc-freshness-is-judgment.md)).
+- [#108](https://github.com/jodybrewster/pro-dev-skillset/pull/108): pro-ship gained `documentation-and-adrs`, adapted from agent-skills; it was a planned Ship-phase skill and is not a ranked item.
 
 ### P1 intents (shipped 2026-10-30)
 
@@ -103,6 +124,8 @@ Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher,
 
 ## Housekeeping
 
+Marked `done` on 2026-10-31 after checking each against its merged PR: constraint-floor (#81), review-policy (#82), code-reviewer (#87), risk-tiers (#88), pr-gate (#89), untrusted-input-safety (#97), sdlc-loop-upgrades (#98), codex-second-reviewer (#99), p0-hardening (#101), doubt-driven-execute (#102), required-documents (#103) and pro-electron (#105).
+
 Marked `done` on 2026-10-29 after checking git history: [execute-command](../intent/2026-10-28-execute-command/intent.md) (#63), [plugin-installers](../intent/2026-10-28-plugin-installers/intent.md) (#70) and [pro-speckit](../intent/2026-10-28-pro-speckit/intent.md) (#71).
 Still `proposed` because part of each did not ship:
 
@@ -150,7 +173,7 @@ Within a tier, items are in the order to build them.
 
 ### P2: situational, or past one person
 
-- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship)
+- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent and spec in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/spec.md)
 - [ ] 16. `pipeline`: the gate as required CI checks (L, pro-ship)
 - [ ] 17. Architecture review with twelve-factor (L, pro-quality)
 - [ ] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality)
