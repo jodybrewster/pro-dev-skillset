@@ -30,9 +30,17 @@ const run = (cmd, args, cwd, env = {}) => spawnSync(cmd, args, { cwd, encoding: 
 const git = (cwd, ...a) => run("git", ["-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false", ...a], cwd);
 
 const repo = realpathSync(mkdtempSync(join(tmpdir(), "ship-mieruka-")));
+const work = realpathSync(mkdtempSync(join(tmpdir(), "ship-mieruka-report-")));
 const testFile = join(WEB, "tests", "service", `zz-pro-ship-preflight-${process.pid}.test.ts`);
+const cleanup = () => {
+  rmSync(testFile, { force: true });
+  rmSync(repo, { recursive: true, force: true });
+  rmSync(work, { recursive: true, force: true });
+};
+// An interrupt must not leave the vitest file in the mieruka checkout.
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { cleanup(); process.exit(130); });
 let ok = false;
-try {
+main: try {
   git(repo, "init", "-q");
   writeFileSync(join(repo, ".gitignore"), ".mieruka/\n");
   mkdirSync(join(repo, ".mieruka"), { recursive: true });
@@ -51,15 +59,14 @@ try {
       rollback: { triggers: ["the release breaks"], steps: ["Check out the previous tag."], rto: "minutes" } }],
     report_md: "# Ship decision: NO-GO (1 Blocker)\n",
   };
-  const reportPath = join(repo, "..", `ship-mieruka-report-${process.pid}.json`);
+  const reportPath = join(work, "report.json");
   writeFileSync(reportPath, JSON.stringify(report));
   const rec = run("python3", [SHIP, "record", reportPath, "--root", repo], repo);
-  rmSync(reportPath, { force: true });
   const out = rec.status === 0 ? JSON.parse(rec.stdout) : null;
   const key = out?.evidence_key;
   if (!key || !out.written.some((w) => w.startsWith(".mieruka/evidence/"))) {
     console.error(`ship.py record did not drop the mieruka copy:\n${rec.stdout}${rec.stderr}`);
-    process.exit(1);
+    break main;
   }
 
   writeFileSync(testFile, `import { it, expect, vi } from 'vitest';
@@ -92,7 +99,6 @@ it('loads a pro-ship preflight record with no sync error', () => {
   const tail = (v.stdout + v.stderr).split("\n").filter((l) => /Test Files|Tests |FAIL|Error|expected/.test(l)).join("\n");
   console.log(ok ? `mieruka sync check passed: ${key} loaded as review / ship-preflight` : `mieruka sync check failed\n${tail}`);
 } finally {
-  rmSync(testFile, { force: true });
-  rmSync(repo, { recursive: true, force: true });
+  cleanup();
 }
 process.exit(ok ? 0 : 1);
