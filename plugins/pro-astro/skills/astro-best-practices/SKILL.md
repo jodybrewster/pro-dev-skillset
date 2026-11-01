@@ -150,4 +150,4 @@ Start the dev server as a managed background process in your own tooling and pol
 
 _Written from the official Astro documentation (docs.astro.build), verified October 2026._
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

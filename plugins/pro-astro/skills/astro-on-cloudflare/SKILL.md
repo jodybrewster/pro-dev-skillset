@@ -168,4 +168,4 @@ At the time of writing:
 
 _Written from the official Astro and Cloudflare documentation, verified October 2026._
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

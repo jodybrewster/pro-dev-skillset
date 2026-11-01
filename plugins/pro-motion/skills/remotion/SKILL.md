@@ -157,4 +157,4 @@ const opacity = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' 
 
 ---
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

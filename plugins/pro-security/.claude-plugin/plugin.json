@@ -1,9 +1,8 @@
 {
   "name": "pro-security",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The Security phase: security-audit, a read-only whole-repository audit covering secrets archaeology, dependency supply chain, CI/CD exposure, container and IaC misconfiguration, webhook and integration gaps, LLM/AI attack surface, agent-skill supply chain, OWASP Top 10 and STRIDE threat modeling, with confidence-scored findings, quoted evidence and a concrete exploit path. Also ships the security-architect skill and subagent, which challenge a plan, idea or diff before it ships, and /threat-model. One push gate, a PreToolUse hook on git push and gh pr create, diffs what would leave the machine against its upstream and holds the command once per distinct diff when it touches security surface, so the architect reviews the diff and nothing else. The security-auditor subagent verifies findings independently. Adapted from the cso skill in garrytan/gstack.",
   "author": {
-    "name": "Jody Brewster",
-    "email": "jodybrewster@gmail.com"
+    "name": "pro-dev-skillset"
   }
 }

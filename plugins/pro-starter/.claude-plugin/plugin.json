@@ -1,10 +1,9 @@
 {
   "name": "pro-starter",
-  "version": "1.14.3",
+  "version": "1.14.4",
   "description": "Deprecated: renamed to pro-dev-starter. Run /pro-dev update to switch.",
   "author": {
-    "name": "Jody Brewster",
-    "email": "jodybrewster@gmail.com"
+    "name": "pro-dev-skillset"
   },
   "dependencies": [
     {

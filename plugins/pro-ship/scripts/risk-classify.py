@@ -22,7 +22,7 @@ JSON CONTRACT (--json; classify() returns the same dict)
     "tie": [top, one_below] | null,           set when only weak signals reach the top tier
     "architecture": bool,                     a Dockerfile/infra change or a new env var read
     "demands": {"checks": [str], "reviewers": [str],
-                "approval": "none"|"Jody", "local_decision": "allow"|"ask",
+                "approval": "none"|"maintainer", "local_decision": "allow"|"ask",
                 "label": "none"|"risk:high"},
     "base": str,                              full sha of the merge base
     "head": str,                              full sha of the head
@@ -74,9 +74,9 @@ DEMANDS = {
     "low": {"checks": ["build", "lint", "typecheck", "tests"], "reviewers": [],
             "approval": "none", "local_decision": "allow", "label": "none"},
     "medium": {"checks": ["all"], "reviewers": ["code-reviewer"],
-               "approval": "Jody", "local_decision": "ask", "label": "none"},
+               "approval": "maintainer", "local_decision": "ask", "label": "none"},
     "high": {"checks": ["all"], "reviewers": ["code-reviewer", "security-architect"],
-             "approval": "Jody", "local_decision": "ask", "label": "risk:high"},
+             "approval": "maintainer", "local_decision": "ask", "label": "risk:high"},
 }
 
 MANIFESTS = {"package.json", "requirements.txt", "pyproject.toml", "go.mod", "Cargo.toml", "Gemfile"}

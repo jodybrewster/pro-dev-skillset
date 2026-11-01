@@ -27,8 +27,8 @@ A diff with no signal at medium or above is low.
 | Tier | Checks | Reviewers | Approval | Label |
 |---|---|---|---|---|
 | low | build, lint, typecheck, tests | none, or the code reviewer on Sonnet | none | none |
-| medium | all | code-reviewer | Jody | none |
-| high | all | code-reviewer and security-architect | Jody | `risk:high` |
+| medium | all | code-reviewer | maintainer | none |
+| high | all | code-reviewer and security-architect | maintainer | `risk:high` |
 
 ## The signals
 
@@ -115,7 +115,7 @@ The tier is the PR's even when the session sits on `main`.
 When `/merge-pr` runs on a PR, use the classifier this way:
 
 1. Read the head with `gh pr view <number> --json headRefOid,baseRefName`, run `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>` and classify with `--head <headRefOid>` against the base tip that fetch wrote to `FETCH_HEAD`, the same way the gate does.
-2. Show Jody the tier, every signal with its evidence, any finding, the PR number and the `headRefOid` sha.
+2. Show the maintainer the tier, every signal with its evidence, any finding, the PR number and the `headRefOid` sha.
 3. Low needs no question.
    Medium and high wait for his answer.
    An agent's own statement of approval never counts.
@@ -128,6 +128,6 @@ When `/merge-pr` runs on a PR, use the classifier this way:
 
 ## Overrides
 
-Lowering a tier is Jody's decision alone, recorded in the stamp against one HEAD sha.
+Lowering a tier is the maintainer's decision alone, recorded in the stamp against one HEAD sha.
 It is not built yet.
 Until it is, no one lowers a tier: no flag, file, label or comment does it.

@@ -182,4 +182,4 @@ The `motion-system` skill defines the token vocabulary (duration scales, easing 
 
 ---
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

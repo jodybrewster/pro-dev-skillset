@@ -491,7 +491,7 @@ test("demands follow the tier table", () => {
   assert.deepEqual(low, { checks: ["build", "lint", "typecheck", "tests"], reviewers: [], approval: "none", local_decision: "allow", label: "none" });
   const med = run("new-dependency").demands;
   assert.deepEqual(med.reviewers, ["code-reviewer"]);
-  assert.equal(med.approval, "Jody");
+  assert.equal(med.approval, "maintainer");
   assert.equal(med.local_decision, "ask");
   assert.equal(med.label, "none");
   const high = run("workflow-change").demands;
@@ -563,7 +563,7 @@ test("an unreadable block is ignored as a whole with the default tier", () => {
     assert.match(j.policy, why, name);
     assert.equal(j.tier, "medium", name);
     assert.ok(!ids(j).includes("policy-high"), name);
-    assert.equal(j.demands.approval, "Jody", name);
+    assert.equal(j.demands.approval, "maintainer", name);
   }
   assert.match(withFixture("policy-bad-syntax", (repo) => classify(repo).stdout), /^policy: unreadable \(/m);
 });

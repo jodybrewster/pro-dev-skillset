@@ -228,4 +228,4 @@ Use `useReactTable` from `@tanstack/react-table` with `getCoreRowModel`, `getSor
 
 _Reference: [ui.shadcn.com/docs](https://ui.shadcn.com/docs)_
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._

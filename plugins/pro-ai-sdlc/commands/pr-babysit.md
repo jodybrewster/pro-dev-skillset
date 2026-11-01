@@ -70,12 +70,12 @@ Each round:
 ### 3. Stop
 
 Stop when checks are green, no thread needs work and the PR is waiting only on approval.
-Also stop after three rounds: stop, ask Jody to reconsider the approach and list what is still open.
+Also stop after three rounds: stop, ask the maintainer to reconsider the approach and list what is still open.
 Never merge, never enable auto-merge and never approve.
 If a draft PR is otherwise ready, say so; do not mark it ready yourself.
 
 ### 4. Report
 
 A few lines: the PR link, the rounds used, each fix with its commit hash, each thread answered without a code change and why, each Pre-existing thread skipped, the verify command result and the current `reviewDecision`.
-If you stopped at the cap of three rounds, list what is still failing or open, what you think it needs and ask Jody whether to reconsider the approach.
+If you stopped at the cap of three rounds, list what is still failing or open, what you think it needs and ask the maintainer whether to reconsider the approach.
 When everything is green, say it is waiting on approval and that a person merges.

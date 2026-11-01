@@ -140,4 +140,4 @@ security section in `references/methodology.md`.
 
 ---
 
-_Original skill for pro-dev-skillset (Jody Brewster). MIT License._
+_Original skill for pro-dev-skillset. MIT License._
