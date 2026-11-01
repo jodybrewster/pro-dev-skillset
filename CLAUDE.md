@@ -15,6 +15,9 @@ The longer version, the Mieruka bridge and the two use cases it is testing are i
 Work enters through an intent: `intent/<date>-<slug>/` holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
 Nothing is pushed straight to `main`: every change, intents and specs included, is its own pull request that the agent merges once its checks pass, with no approval needed.
 Intents and specs are written in the main checkout on a short branch, never in a worktree; a worktree starts at the plan stage.
+Nothing in this repo or on its PRs names the maintainer or records who said what in chat: intents, specs, plans, ADRs, docs, code comments, the roadmap, commit messages and PR bodies state the problem and the decision directly, with no quotes and no "(<name>, <date>)" attributions.
+Where a role is needed, write "the maintainer".
+Existing quotes are removed when a file is next edited.
 A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md](./RELEASING.md).
 
 ## How work flows here
