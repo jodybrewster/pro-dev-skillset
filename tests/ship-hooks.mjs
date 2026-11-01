@@ -395,6 +395,67 @@ export function runShipHookCases() {
       r = mrun(`${MERGE} --match-head-commit ${"0".repeat(40)}`, { cwd: lowR, env: MENF() });
       add("mg22 low ignores the pin", "silent", r, allowsQuiet(r));
 
+      // ---- preflight line (R32): file reads only, never changes a decision -----------------
+      {
+        const medFiles = { "package.json": JSON.stringify({ name: "x", dependencies: { a: "1.0.0", "left-pad": "1.0.0" } }, null, 2) + "\n" };
+        const pfRepo = (deploy) => {
+          const repo = featRepo(medFiles);
+          if (deploy) writeFileSync(join(repo, "vercel.json"), "{}\n");
+          return repo;
+        };
+        const writeRec = (repo, status, head, detail = { risks: [] }, raw = null) => {
+          mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+          writeFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), raw ?? JSON.stringify({
+            schema: 1, head, status, produced_by: "pro-ship:ship@0.0.0", detail_json: JSON.stringify(detail),
+          }));
+        };
+        const pin = (h) => `${MERGE} --match-head-commit ${h}`;
+        let pr = pfRepo(true), ph = sha(pr);
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg300 deploy-on-merge, no record: no fresh GO line, still asks", "ask + line", r,
+          asks(r) && r.text.includes("preflight: no fresh GO for this PR (missing)"));
+        r = mrun(MERGE, { cwd: pr, env: MWARN() });
+        add("mg301 the line also ends a pin-missing warn message", "message + line", r,
+          allowsMsg(r) && r.text.includes("(warn mode: allowed)") && r.text.includes("preflight: no fresh GO for this PR (missing)"));
+        r = mrun(MERGE, { cwd: pr, env: MENF() });
+        add("mg302 the line also ends a pin-missing deny, which stays a deny", "deny + line", r,
+          denies(r) && r.text.includes("preflight: no fresh GO"));
+        writeRec(pr, "pass", ph);
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg303 a fresh pass record shows GO for the short sha", "ask + GO", r,
+          asks(r) && r.text.includes(`preflight: GO for ${ph.slice(0, 8)}`));
+        r = mrun(pin(ph), { cwd: pr, env: MWARN() });
+        add("mg304 the same in warn", "message + GO", r, allowsMsg(r) && r.text.includes(`preflight: GO for ${ph.slice(0, 8)}`));
+        writeRec(pr, "partial", ph, { risks: [{ accepted_by: "a" }, { accepted_by: null }, { accepted_by: "b" }] });
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg305 a partial record counts accepted risks", "ask + GO with 2", r,
+          asks(r) && r.text.includes("preflight: GO with 2 accepted risks"));
+        writeRec(pr, "partial", ph, null, JSON.stringify({ schema: 1, head: ph, status: "partial", produced_by: "pro-ship:ship@0.0.0", detail_json: "{not json" }));
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg306 an unreadable detail gives GO with accepted risks", "ask + GO", r,
+          asks(r) && r.text.includes("preflight: GO with accepted risks"));
+        writeRec(pr, "pass", "0".repeat(40));
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg307 a record for another head is not fresh", "ask + stale", r, asks(r) && r.text.includes("(stale)"));
+        writeRec(pr, "fail", ph);
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg308 a NO-GO record is not fresh", "ask + no-go", r, asks(r) && r.text.includes("(no-go)"));
+        writeRec(pr, "pass", ph, null, "{ broken");
+        r = mrun(pin(ph), { cwd: pr, env: MENF() });
+        add("mg309 a broken record leaves the decision unchanged", "ask + unreadable", r,
+          asks(r) && r.text.includes("(unreadable)") && /medium/.test(r.text));
+        const lp = pfRepo(true);
+        writeRec(lp, "pass", sha(lp));
+        const lr = featRepo({ "README.md": "hi there\n" });
+        writeFileSync(join(lr, "vercel.json"), "{}\n");
+        r = mrun(MERGE, { cwd: lr, env: MENF() });
+        add("mg310 a low merge in a deploy-on-merge repo shows nothing", "silent", r, allowsQuiet(r));
+        const tr = pfRepo(false);
+        sh(tr, "tag", "v1.0.0");
+        r = mrun(pin(sha(tr)), { cwd: tr, env: MENF() });
+        add("mg311 a tag-only repo shows no preflight line", "ask, no line", r, asks(r) && !r.text.includes("preflight"));
+      }
+
       // ---- step 10: medium and high with a matching pin -------------------------------
       r = mrun(`${MERGE} --match-head-commit ${medH}`, { cwd: medR, env: MENF() });
       add("mg30 medium asks in enforce with tier, signals, sha and the commit-only line", "ask", r,
