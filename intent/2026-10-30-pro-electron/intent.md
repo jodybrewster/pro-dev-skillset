@@ -1,7 +1,7 @@
 ---
 source: research
 kind: change
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T12:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: research, "Electron Skills for AI Coding Agents: A Ranked Survey (October 2026)", brought by Jody on 2026-10-30.
-Status: draft.
+Status: done; shipped in #105.
 Created: 2026-10-30.
 
 ## Problem

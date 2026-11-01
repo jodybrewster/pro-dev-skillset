@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T09:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, the "loop batch" of the ranked list in [docs/roadmap.md](../../docs/roadmap.md): items 7, 8, 9 and 10, with 24, 25 and 29 riding along, from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
-Status: draft.
+Status: done; shipped in #98.
 Created: 2026-10-30.
 
 ## Problem

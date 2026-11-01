@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T09:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, drafted from the follow-ups recorded in [docs/roadmap.md](../../docs/roadmap.md) ("Now") and the "Departures from plan" and Done sections of the plans for [risk-tiers](../2026-10-29-risk-tiers/plan.md), [pr-gate](../2026-10-29-pr-gate/plan.md) and [constraint-floor](../2026-10-29-constraint-floor/plan.md), with no interview.
-Status: draft.
+Status: done; shipped in #101.
 Created: 2026-10-30.
 
 ## Problem

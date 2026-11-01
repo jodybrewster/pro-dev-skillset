@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: accepted
+status: done
 risk: medium
 created: 2026-10-29T19:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, items 5 and 6 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the "REVIEW.md template changes" and "Convergence" sections of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) and the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT).
-Status: accepted (Jody, 2026-10-30).
+Status: done; shipped in #82.
 Created: 2026-10-29.
 
 ## Problem

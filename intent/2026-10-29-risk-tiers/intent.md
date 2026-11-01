@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: accepted
+status: done
 risk: high
 created: 2026-10-29T19:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 4 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the pro-ship brainstorm ([risk gate](../2026-10-28-pro-ship-scope/brainstorm.md#risk-based-approval-gate-with-a-classifier) and [approval at one-person scale](../2026-10-28-pro-ship-scope/brainstorm.md#approval-at-one-person-scale)).
-Status: accepted (Jody, 2026-10-30).
+Status: done; shipped in #88.
 Created: 2026-10-29.
 
 ## Problem
