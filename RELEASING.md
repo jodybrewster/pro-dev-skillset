@@ -47,6 +47,11 @@ Tagging resumed in October 2026, so after the PR merges each bumped plugin is ta
 
 ## Pre-tag checklist
 
+Run `/pro-ship:ship` on the commit you are about to tag.
+It reviews what no passing `pr-check` covered, runs the release checks and writes the verdict for that commit to `.pro-dev/ship/preflight.json`, which the `ship-gate` hook reads when you run `git tag`.
+Fix every Blocker or accept it by name before tagging.
+The commands below are the marketplace's own validation.
+
 ```bash
 # Validate the whole marketplace AND each plugin in strict mode
 claude plugin validate . --strict
