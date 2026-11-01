@@ -50,7 +50,7 @@ When TTFB is slow (> 800ms), check each component in DevTools Network waterfall:
 - [ ] Modern scheduling APIs used where available: `scheduler.yield()` (preferred), `scheduler.postTask()` with priorities, `isInputPending()` to yield only when needed
 - [ ] `requestIdleCallback` for deferrable, non-urgent work (analytics flush, prefetch, warmup)
 - [ ] Non-critical work deferred out of event handlers (e.g. analytics, logging) so the response to the interaction is not delayed
-- [ ] Third-party scripts loaded with `async` / `defer`, audited for size, and fronted by a facade when heavy (chat widgets, embeds)
+- [ ] Third-party scripts loaded with `async` / `defer`, audited for size and fronted by a facade when heavy (chat widgets, embeds)
 
 ### CSS
 - [ ] Critical CSS inlined or preloaded
@@ -141,7 +141,7 @@ The decision material (which layer, which invalidation strategy, what never to c
 | **Cache-aside** (lazy) | App checks cache, on miss reads origin and populates | Default choice; read-heavy, tolerant of a cold first hit | Every miss hits the origin, so it needs stampede protection |
 | **Read-through** | Cache layer itself loads on miss | You want the load path in one place, not at every call site | Hides origin latency; a slow origin looks like a slow cache |
 | **Write-through** | Write goes to cache and origin together, synchronously | Reads must never see a stale value after a write | Adds cache latency to every write |
-| **Write-behind** (write-back) | Write hits cache, origin updated asynchronously | Write-heavy, and the origin is the bottleneck | Data loss window if the cache dies before the flush. Needs durability you can defend |
+| **Write-behind** (write-back) | Write hits cache, origin updated asynchronously | Write-heavy and the origin is the bottleneck | Data loss window if the cache dies before the flush. Needs durability you can defend |
 
 ### Negative caching
 
@@ -179,7 +179,7 @@ For a shared cache, the same idea needs a distributed lock, or `stale-while-reva
 - [ ] Stampede protection on hot keys (coalescing, lock, or `stale-while-revalidate`)
 - [ ] Negative results cached with a shorter TTL; origin errors never cached
 - [ ] Eviction policy and memory ceiling set (an unbounded cache is a memory leak)
-- [ ] Hit rate monitored - a cache nobody measures is an assumption, and a low hit rate is pure overhead
+- [ ] Hit rate monitored - a cache nobody measures is an assumption and a low hit rate is pure overhead
 - [ ] Nothing cached whose staleness is a correctness bug (balances, permissions, inventory at checkout)
 
 ## Measurement Commands

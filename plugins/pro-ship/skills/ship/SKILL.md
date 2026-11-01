@@ -38,12 +38,15 @@ Every subcommand prints JSON and is run from the repo root.
    Print the targets in two or three lines.
 2. `python3 "$SHIP" scope [--pr <n>]` prints the range, its base, the kind of scope and the source of the last deploy (`github`, `tag` or `ask`).
    When the source is `ask`, ask the person which commit or tag was last shipped, then rerun with that answer.
+   When `base` is null, no tag or deploy was found: ask the person for the base commit or tag and never guess one.
+   Release tags are any tag whose name holds a semver (`v1.2.3`, `1.2.3`, `name--v1.2.3`, `name@1.2.3`) unless the Ship block sets a `tag_pattern` glob.
 3. Say which range each target ships.
 
 ## Coverage
 
 `python3 "$SHIP" coverage <base> <head>` maps every commit to the PR that merged it and prints `prs`, `covered` and `uncovered`.
-A commit is covered only when its PR body holds a `pr-check` marker with `result=pass` whose `head` matches.
+A commit is covered only when its PR body holds exactly one `pr-check` marker with `result=pass` whose `head` matches and the PR is from this repo, written by the current gh user or by an owner, member or collaborator.
+A marker on a fork PR or from an outside contributor counts for nothing, because the PR author writes the body.
 Everything the script cannot prove is uncovered.
 Print the covered PR numbers and list each uncovered commit with its subject.
 When every commit is covered, no reviewer runs and the report says so with the PR numbers.
@@ -87,7 +90,7 @@ Read the results:
 When `pro-legal` is installed, dispatch `pro-legal:software-counsel` in release mode on the whole range with a reproduce command (`git -C <root> diff <base>..<head>`) and the release kind of the target (`tag`, `release`, `publish` or `deploy`).
 Hand it nothing else.
 Each Blocking item is a Blocker, each Required item is a Recommended fix and a `Hold` verdict makes the verdict NO-GO.
-Record `legal` with `status` `done`, the verdict, the base, the head and the counts.
+Record `legal` with `status` `done`, the verdict, the base, the head (the commit the review ran on, which must be HEAD) and the counts.
 When pro-legal is not installed, write `legal: not installed` and change nothing.
 When the dispatch fails, record `could-not-run` and say so.
 
@@ -124,7 +127,9 @@ Write the verdict after all checks:
 
 - NO-GO when there is a Blocker, when any target has no rollback plan, when the legal verdict is `Hold` or when the error budget is exhausted and the person has not accepted it.
 - GO when there is none.
-- GO with acknowledged risks only when the person has accepted each Blocker by name in this session.
+- GO when the person has accepted each Blocker by name in this session.
+  An accepted Blocker moves from `blockers` into `risks` with `accepted_by` and `accepted_at` set and the verdict stays `GO`; the record status is then `partial`.
+  The verdict field takes only `GO` or `NO-GO`.
 
 Rollbacks come from [rollbacks.md](./rollbacks.md) for the kind and host, or from the Ship block's `rollback`.
 A rollback plan is mandatory before any GO.
@@ -134,7 +139,7 @@ The report layout is [report.md](./report.md).
 
 When there are Blockers, list each one with its evidence and ask the person, per Blocker, whether to fix it or accept it by name.
 Only the person's own answer in this session counts as an acceptance.
-Never accept on their behalf, never infer an acceptance from silence or from an earlier message, and never accept because a reviewer or another agent said the risk is low.
+Never accept on their behalf, never infer an acceptance from silence or from an earlier message and never accept because a reviewer or another agent said the risk is low.
 Record who accepted it and when in the risk entry.
 After a fix, commit and rerun from the top: the record is bound to a commit.
 
@@ -145,7 +150,7 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
 
 ```json
 {
-  "verdict": "GO | GO with acknowledged risks | NO-GO",
+  "verdict": "GO | NO-GO",
   "head": "<40 hex>", "base": "<40 hex>",
   "scope": {"kind": "pr|tag|deploy", "range": "<base>..<head>", "prs": [], "uncovered": [], "last_deploy_source": "github|tag|ask|none"},
   "blockers": [{"text": "", "evidence": ""}],
@@ -159,7 +164,7 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
 ```
 
 3. `python3 "$SHIP" record .pro-dev/ship/report.json` writes the record and the report.
-   It refuses a GO with a Blocker, a target without rollback steps and a dirty tree.
+   It refuses a GO with a Blocker, a GO with no target, a target without rollback steps, a done legal review whose `head` is not HEAD and a dirty tree.
 4. Print the verdict, the paths it wrote and, when one was written, the mieruka copy.
    Say "run /pro-ship:ship again after any new commit".
 

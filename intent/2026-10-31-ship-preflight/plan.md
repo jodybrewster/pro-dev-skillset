@@ -96,7 +96,7 @@ Five builders run in parallel worktrees branched from this plan's commit, each c
 ## Risks
 
 Most likely to go wrong: coverage (builder A).
-Merge, squash and rebase merges map commits to PRs differently, and a force-push can drop the commit a marker names.
+Merge, squash and rebase merges map commits to PRs differently and a force-push can drop the commit a marker names.
 Anything it cannot map or prove is uncovered, so a mistake costs extra review and never skips one.
 
 What it might break:

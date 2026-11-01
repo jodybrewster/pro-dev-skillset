@@ -3,7 +3,7 @@
 A rollback plan is mandatory for every target before any GO.
 For each target, copy the entry for its kind and host into the report's Rollback plan, then fill in the commit, the project name and the URL from the repo.
 A target's `rollback` in the Ship block replaces the entry here.
-A target with no entry and no `rollback` has no plan, and the verdict is NO-GO.
+A target with no entry and no `rollback` has no plan and the verdict is NO-GO.
 
 Every entry has the same three parts: the trigger, the steps and the recovery time.
 The triggers below apply to every deploy target unless the entry says otherwise:
@@ -152,8 +152,8 @@ A migration the range adds needs its own line in the plan:
 
 - A migration with a down step: name the command (`prisma migrate resolve`, `alembic downgrade -1`, `rails db:rollback` and the like) and verify it on a copy.
 - A migration without one, or one that drops a table or a column: restore from a backup taken before the release. Name the backup and who runs the restore. If there is no way back, it is a Blocker.
-- Data the new feature wrote: say whether the old code can read it, and whether it is preserved or cleaned up.
-- Prefer expand and contract: ship the additive migration first, and drop in a later release.
+- Data the new feature wrote: say whether the old code can read it and whether it is preserved or cleaned up.
+- Prefer expand and contract: ship the additive migration first and drop in a later release.
 
 ## Feature flag
 

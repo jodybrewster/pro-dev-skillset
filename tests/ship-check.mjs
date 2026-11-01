@@ -82,10 +82,6 @@ export function runShipCheckCases() {
   }
   return out;
 
-  // -------------------------------------------------------------------------
-  // Codex second review (ADR-0018): find by relative path, codex-trigger, agree and the
-  // optional reviewers.codex stamp record.
-  // -------------------------------------------------------------------------
   // R9: the PR body marker line comes from the stamp and nowhere else.
   function markerCases() {
     const repo = mkrepo({ "a.txt": "1\n" });
@@ -110,6 +106,10 @@ export function runShipCheckCases() {
     add("m5 marker refuses a value that would break out of the comment", "exit 1, empty stdout", r.status === 1 && r.stdout === "", r.stdout + r.stderr);
   }
 
+  // -------------------------------------------------------------------------
+  // Codex second review (ADR-0018): find by relative path, codex-trigger, agree and the
+  // optional reviewers.codex stamp record.
+  // -------------------------------------------------------------------------
   function codexCases() {
     // find PLUGIN <plugin-relative path>, run from a copy of pr-check.py placed in a throwaway layout.
     const TWIN = ".codex-plugin/agents/code-reviewer.toml";

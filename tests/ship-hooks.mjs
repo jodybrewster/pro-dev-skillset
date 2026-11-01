@@ -21,7 +21,7 @@
 //   timing            none                       t1, t2
 
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync, cpSync, symlinkSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { join, dirname, resolve, relative } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -868,6 +868,7 @@ export function runShipHookCases() {
         ["sg12 schema 2", "unreadable", () => goFor(sRepo, { schema: 2 })],
         ["sg13 produced_by from another tool", "unreadable", () => goFor(sRepo, { produced_by: "other" })],
         ["sg14 a head for another commit", "stale", () => goFor(sRepo, { head: "0".repeat(40) })],
+        ["sg16 a status that is not a string", "unreadable", () => goFor(sRepo, { status: 1 })],
         ["sg15 status fail", "no-go", () => goFor(sRepo, { status: "fail" })],
       ]) {
         setup();
@@ -945,6 +946,25 @@ export function runShipHookCases() {
       add("sg94 a branch target checks HEAD", "deny (stale)", r, r.deny && r.text.includes(sha(sRepo2).slice(0, 8)));
       r = srun("git tag v7 no-such-ref", { cwd: sRepo2, env: sEnf() });
       add("sg95 an unresolvable commit is could-not-run", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+
+      // a compound command: every shipping command is checked, in its own directory
+      const lib = newRepo();
+      const libSha = sha(lib);
+      const rel = relative(sRepo, lib);
+      goFor(sRepo);
+      r = srun(`git -C ${rel} tag v1 && npm publish`, { cwd: sRepo, env: sEnf() });
+      add("sg120 the second shipping command is checked too", "deny naming the lib commit", r, r.deny && r.text.includes(`${libSha.slice(0, 8)} (missing)`) && !r.text.includes(s0.slice(0, 8)));
+      r = srun(`git tag v1 && git -C ${rel} tag v2`, { cwd: sRepo, env: sEnf() });
+      add("sg121 a fresh first command does not hide a later one", "deny naming the lib commit", r, r.deny && r.text.includes(libSha.slice(0, 8)));
+      writeRecord(sRepo, "{nope");
+      r = srun(`git -C ${rel} tag v1 && npm publish`, { cwd: sRepo, env: sEnf() });
+      add("sg122 both stale or missing commits are named, the most severe cause first", "deny", r, r.deny && r.text.includes(libSha.slice(0, 8)) && r.text.includes(s0.slice(0, 8))
+        && r.text.indexOf(`${s0.slice(0, 8)} (unreadable)`) !== -1 && r.text.indexOf("(unreadable)") < r.text.indexOf("(missing)"));
+      goFor(sRepo);
+      goFor(lib);
+      r = srun(`git -C ${rel} tag v1 && npm publish`, { cwd: sRepo, env: sEnf() });
+      add("sg123 every shipping command with a fresh GO is silent", "silent", r, noDecision(r));
+      rmSync(join(sRepo, ".pro-dev"), { recursive: true, force: true });
 
       // could not run (AC10, R37)
       r = srun("", { raw: "{not json", env: sEnf() });

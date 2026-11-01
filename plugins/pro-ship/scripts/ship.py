@@ -7,17 +7,22 @@ repo that holds the current directory):
                                    {id, kind, path, env, url, rollback, evidence}. kind is
                                    deploy-on-merge, tag-release, manual-deploy, desktop or
                                    publish. A "Ship" yaml block in CLAUDE.md or AGENTS.md
-                                   replaces detection. Reads files and tags only.
+                                   replaces detection; its tag_pattern (a git glob) picks the
+                                   release tags. Reads files and tags only.
   scope [--pr N]                   the review range: {kind, base, head, range,
                                    last_deploy_source, targets}. Uses gh.
   coverage BASE HEAD               map each commit in BASE..HEAD to a merged PR and say
                                    whether a passing pr-check marker covers it:
-                                   {prs, uncovered, covered}. Uses gh. Anything it cannot
-                                   prove covered is uncovered; a gh failure exits 1.
+                                   {prs, uncovered, covered}. Uses gh. A marker counts only
+                                   on a PR from this repo whose author is the current gh
+                                   user or an OWNER, MEMBER or COLLABORATOR and only when
+                                   the body holds exactly one. Anything it cannot prove
+                                   covered is uncovered; a gh failure exits 1.
   record REPORT.json               write .pro-dev/ship/preflight.json (a mieruka evidence
                                    manifest), preflight.md and, when the repo has an ignored
                                    .mieruka/evidence/, a copy there. Refuses a dirty tracked
-                                   tree, a GO with blockers and a GO target with no rollback.
+                                   tree, a GO with blockers, a GO with no target, a GO target
+                                   with no rollback and a done legal review of another commit.
   check SHA                        the freshness verdict the gates use:
                                    {fresh, cause, status, head}. The contract is
                                    docs/ship-preflight.md.
@@ -42,6 +47,8 @@ KINDS = ("deploy-on-merge", "tag-release", "manual-deploy", "desktop", "publish"
 SHA = re.compile(r"^[0-9a-f]{40}$")
 MARKER = re.compile(
     r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)\s*-->")
+SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
+TRUSTED_ASSOCIATIONS = ("OWNER", "MEMBER", "COLLABORATOR")
 DEPLOY_WORDS = re.compile(r"\b(deploy|vercel|netlify|fly|flyctl|wrangler)\b", re.I)
 LEGAL_STATUS = ("done", "not-installed", "could-not-run")
 SKIP_DIRS = {"node_modules", ".git", ".pro-dev"}
@@ -482,12 +489,30 @@ def unit_target(root: str, rel: str, is_root: bool, wf: dict, tags: list[str]) -
             "evidence": [os.path.normpath(e) for e in evidence]}
 
 
+def tag_pattern(data) -> str | None:
+    """The Ship block's tag_pattern, a git glob that overrides the semver tag rule."""
+    pat = data.get("tag_pattern") if isinstance(data, dict) else None
+    if pat is None:
+        return None
+    if not isinstance(pat, str) or not pat.strip() or pat.startswith("-"):
+        raise Refuse("ship: tag_pattern in the Ship block must be a git glob such as \"*--v*\"")
+    return pat.strip()
+
+
+def release_tags(root: str, pattern: str | None, *extra: str) -> list[str]:
+    """Release tags, newest first when extra sorts them. Without a pattern a tag counts when
+    its name holds a semver vX.Y.Z or X.Y.Z, so v1.2.3, 1.2.3, name--v1.2.3 and name@1.2.3 all do."""
+    names = git_lines(root, "tag", *extra, "--list", *([pattern] if pattern else []))
+    return names if pattern else [t for t in names if SEMVER_TAG.search(t)]
+
+
 def targets(root: str) -> list[dict]:
     data, name = ship_block(root)
-    if data is not None:
+    pattern = tag_pattern(data)
+    if data is not None and not (pattern and "targets" not in data):
         return block_targets(data, name)
     wf = repo_workflows(root)
-    tags = git_lines(root, "tag", "-l", "v*")
+    tags = release_tags(root, pattern)
     found = []
     for rel in workspace_dirs(root):
         t = unit_target(root, rel, False, wf, tags)
@@ -509,9 +534,9 @@ def targets(root: str) -> list[dict]:
 # scope (R5, R6)
 # ---------------------------------------------------------------------------
 
-def release_tag(root: str, head: str) -> str | None:
+def release_tag(root: str, head: str, pattern: str | None = None) -> str | None:
     """The newest release tag reachable from HEAD, as a commit sha."""
-    for tag in git_lines(root, "tag", "--merged", head, "--sort=-creatordate", "--list", "v[0-9]*"):
+    for tag in release_tags(root, pattern, "--merged", head, "--sort=-creatordate"):
         sha = rev(root, tag)
         if sha:
             return sha
@@ -555,10 +580,11 @@ def cmd_scope(root: str, args: list[str]) -> dict:
         raise Refuse("ship: this repo has no commits")
     data, _ = ship_block(root)
     wanted = data.get("last_deploy") if isinstance(data, dict) else None
+    pattern = tag_pattern(data)
     deploy_kind = any(t["kind"] in ("deploy-on-merge", "manual-deploy") for t in tg)
     base, source = None, "none"
     if not deploy_kind:
-        base = release_tag(root, head)
+        base = release_tag(root, head, pattern)
         source = "tag" if base else "none"
         kind = "tag"
     else:
@@ -568,7 +594,7 @@ def cmd_scope(root: str, args: list[str]) -> dict:
         else:
             order = [wanted] if wanted in ("github", "tag") else ["github", "tag"]
             for src in order:
-                cand = github_deploy(root) if src == "github" else release_tag(root, head)
+                cand = github_deploy(root) if src == "github" else release_tag(root, head, pattern)
                 if cand and rev(root, cand):
                     base, source = rev(root, cand), src
                     break
@@ -581,11 +607,31 @@ def cmd_scope(root: str, args: list[str]) -> dict:
 # ---------------------------------------------------------------------------
 
 def parse_marker(body) -> dict | None:
+    """The one marker in a PR body. Two or more are ambiguous, so none counts."""
     found = MARKER.findall(body if isinstance(body, str) else "")
-    if not found:
+    if len(found) != 1:
         return None
-    h, result, tier = found[-1]
+    h, result, tier = found[0]
     return {"head": h, "result": result, "tier": tier}
+
+
+def current_user(root: str) -> str | None:
+    """The gh login of the person running this, or None when gh cannot say (nobody is then trusted by name)."""
+    try:
+        out = gh_run(root, ["api", "user", "--jq", ".login"], "reading the current gh user").strip()
+    except Refuse:
+        return None
+    return out or None
+
+
+def trusted_author(p: dict, me: str | None) -> bool:
+    """A marker is the author's word, so it counts only from someone who can write to this repo."""
+    if p.get("cross") is not False:
+        return False
+    login = p.get("author")
+    if me and isinstance(login, str) and login == me:
+        return True
+    return p.get("assoc") in TRUSTED_ASSOCIATIONS
 
 
 def cmd_coverage(root: str, args: list[str]) -> dict:
@@ -597,10 +643,11 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     commits = git_lines(root, "rev-list", "--reverse", f"{base}..{head}")
     cset = set(commits)
     listed = gh_json(root, ["pr", "list", "--state", "merged", "--limit", "500",
-                            "--json", "number,headRefOid,mergeCommit,body"], "listing merged PRs")
+                            "--json", "number,headRefOid,mergeCommit,body,author,authorAssociation,isCrossRepository"], "listing merged PRs")
     if not isinstance(listed, list):
         raise Refuse("ship: coverage: gh pr list did not print a list")
-    prs: dict[int, dict] = {}   # number -> {head, body, type, members}
+    me = current_user(root)
+    prs: dict[int, dict] = {}   # number -> {head, body, type, members, mc, author, assoc, cross}
     claims: dict[str, list[int]] = {}
 
     def claim(n: int, sha: str) -> None:
@@ -615,8 +662,11 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
             continue
         parents = git_lines(root, "rev-list", "--parents", "-n", "1", mc)
         merge = bool(parents) and len(parents[0].split()) > 2
+        au = p.get("author") if isinstance(p.get("author"), dict) else {}
         prs[p["number"]] = {"head": p.get("headRefOid"), "body": p.get("body"),
-                            "type": "merge" if merge else "single", "members": [], "mc": mc}
+                            "type": "merge" if merge else "single", "members": [], "mc": mc,
+                            "author": au.get("login"), "assoc": p.get("authorAssociation"),
+                            "cross": p["isCrossRepository"] if isinstance(p.get("isCrossRepository"), bool) else None}
         claim(p["number"], mc)
         if merge:
             for b in git_lines(root, "rev-list", f"{mc}^1..{mc}^2"):
@@ -637,8 +687,14 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
             n = p["number"]
             if n not in prs:
                 h = p.get("head") if isinstance(p.get("head"), dict) else {}
+                hr = h.get("repo") if isinstance(h.get("repo"), dict) else {}
+                br = (p.get("base") or {}).get("repo") if isinstance(p.get("base"), dict) else None
+                br = br if isinstance(br, dict) else {}
+                same = bool(hr.get("full_name")) and hr.get("full_name") == br.get("full_name")
+                au = p.get("user") if isinstance(p.get("user"), dict) else {}
                 prs[n] = {"head": h.get("sha"), "body": p.get("body"), "type": "single", "members": [],
-                          "mc": p.get("merge_commit_sha")}
+                          "mc": p.get("merge_commit_sha"), "author": au.get("login"),
+                          "assoc": p.get("author_association"), "cross": not same}
             if prs[n]["type"] == "single":
                 claim(n, c)
     if len(unmapped) > PULLS_LOOKUP_CAP:
@@ -646,7 +702,7 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
 
     def member_covered(n: int, sha: str) -> bool:
         p = prs[n]
-        m = parse_marker(p["body"])
+        m = parse_marker(p["body"]) if trusted_author(p, me) else None
         tip = p["head"]
         if not (m and m["result"] == "pass" and isinstance(tip, str) and SHA.match(tip)):
             return False
@@ -654,8 +710,8 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
             return False
         if m["head"] == tip:
             return True
-        if p["type"] == "merge":
-            return sha == p["mc"] or is_ancestor(root, sha, m["head"])
+        if p["type"] == "merge":  # the merge commit holds the later work too, so it needs a full marker
+            return sha != p["mc"] and is_ancestor(root, sha, m["head"])
         return False  # a squash or rebase holds the later work too; a partial marker proves none of it
 
     covered_set = {c for c in commits if any(member_covered(n, c) for n in claims.get(c, []))}
@@ -663,7 +719,8 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     for n in sorted(prs):
         if not prs[n]["members"]:
             continue
-        out_prs.append({"number": n, "head": prs[n]["head"], "marker": parse_marker(prs[n]["body"]),
+        out_prs.append({"number": n, "head": prs[n]["head"], "trusted": trusted_author(prs[n], me),
+                        "marker": parse_marker(prs[n]["body"]),
                         "covered": all(member_covered(n, c) for c in prs[n]["members"])})
     out = {"prs": out_prs, "uncovered": [c for c in commits if c not in covered_set],
            "covered": [c for c in commits if c in covered_set]}
@@ -712,9 +769,13 @@ def validate_report(report, head: str) -> None:
     legal = report.get("legal")
     if legal is not None and not (isinstance(legal, dict) and legal.get("status") in LEGAL_STATUS):
         raise Refuse(f"ship: legal.status must be one of {', '.join(LEGAL_STATUS)}")
+    if isinstance(legal, dict) and legal.get("status") == "done" and legal.get("head") != head:
+        raise Refuse("ship: legal.head is not the commit being shipped. Run the legal review on this HEAD.")
     if report["verdict"] == "GO":
         if report.get("blockers"):
             raise Refuse("ship: refusing to record GO with blockers. Fix them or record NO-GO.")
+        if not report.get("targets"):
+            raise Refuse("ship: refusing to record GO with no target. List what ships, or record NO-GO.")
         for t in report.get("targets", []):
             rb = t.get("rollback") if isinstance(t, dict) else None
             steps = rb.get("steps") if isinstance(rb, dict) else None
