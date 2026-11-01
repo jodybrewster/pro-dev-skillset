@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Jody's Claude Code and Codex CLI status lines.
+# Install the Claude Code and Codex CLI status lines.
 #
 # Usage:
 #   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/install-statuslines.sh --jq .content | base64 -d)

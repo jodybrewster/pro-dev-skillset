@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-line bootstrap for a project that wants Jody's pro-dev stack in Codex.
+# One-line bootstrap for a project that wants the pro-dev stack in Codex.
 #
 # Usage from a target project:
 #   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/codex-bootstrap.sh --jq .content | base64 -d)

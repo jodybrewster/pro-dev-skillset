@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 accepted (2026-10-30)
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-29-pr-gate/.
 
 ## Context

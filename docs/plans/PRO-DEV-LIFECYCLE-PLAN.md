@@ -2,7 +2,7 @@
 
 ## Context
 
-`pro-dev-skillset` has grown to 13 plugins / 20+ skills covering most of the software lifecycle, but it has **no map of itself**. `addyosmani/agent-skills` solves this with a `using-agent-skills` meta-skill: a router diagram (task → phase → skill), a canonical lifecycle sequence, shared operating behaviors, and a quick-reference phase table — plus 7 lifecycle slash commands (`/spec /plan /build /test /review /ship`) and a README organized by phase. We want that same legibility, adapted to pro-dev's reality.
+`pro-dev-skillset` has grown to 13 plugins / 20+ skills covering most of the software lifecycle, but it has **no map of itself**. `agent-skills` solves this with a `using-agent-skills` meta-skill: a router diagram (task → phase → skill), a canonical lifecycle sequence, shared operating behaviors, and a quick-reference phase table — plus 7 lifecycle slash commands (`/spec /plan /build /test /review /ship`) and a README organized by phase. We want that same legibility, adapted to pro-dev's reality.
 
 pro-dev is **not a 1:1 of agent-skills** — it's a superset with branches:
 - **Define** uses `interview-me` + `idea-refine` (forked from agent-skills, **replacing the retired `grill-me`**) plus `brainstorming`.
@@ -49,8 +49,8 @@ Updated 2026-06-03. Parts A, B, C shipped. Part D is the remaining in-scope work
 - [x] Fork `interview-me` (SKILL.md) into pro-pdd with attribution footer
 - [x] Fork `idea-refine` (SKILL.md + 3 sidecars + script) into pro-pdd; Codex-parity fixes (relative script path, harness-neutral question phrasing)
 - [x] Delete `grill-me`; `"grill me"` trigger preserved in `interview-me`'s description
-- [x] Update pro-pdd `LICENSE` attribution (addyosmani/agent-skills)
-- [x] Scrub grill-me refs (README ×2, marketplace.json, plugin.json); swap `mattpocock/skills` → `addyosmani/agent-skills`; fix skill count (+2 → +4)
+- [x] Update pro-pdd `LICENSE` attribution (agent-skills)
+- [x] Scrub grill-me refs (README ×2, marketplace.json, plugin.json); swap `mattpocock/skills` → `agent-skills`; fix skill count (+2 → +4)
 - [x] Bump pro-pdd 0.1.0 → 0.2.0; marketplace `metadata.version` 1.8.0 → 1.9.0
 - [x] `claude plugin validate . --strict` passes
 
@@ -112,7 +112,7 @@ Task arrives
 
 ## Part B — Define phase: fork `interview-me` + `idea-refine`, retire `grill-me`
 
-Reverses the integration doc's earlier "skip" for these two. Fork from `/tmp/agent-skills/skills/{interview-me,idea-refine}/` into **pro-pdd** (the ideation/define home, alongside `brainstorming`). Attribution footer `_Forked from addyosmani/agent-skills — MIT._`; Codex-parity scan (frontmatter name+description only).
+Reverses the integration doc's earlier "skip" for these two. Fork from `/tmp/agent-skills/skills/{interview-me,idea-refine}/` into **pro-pdd** (the ideation/define home, alongside `brainstorming`). Attribution footer `_Forked from agent-skills — MIT._`; Codex-parity scan (frontmatter name+description only).
 
 **Retire `grill-me` (pro-core).** `interview-me`'s upstream description already absorbs the `"grill me"` trigger phrase, so the muscle memory survives. Steps:
 - Delete `plugins/pro-core/skills/grill-me/`; bump pro-core.

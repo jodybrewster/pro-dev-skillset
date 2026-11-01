@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-30-required-documents/.
 
 ## Context
@@ -15,7 +15,7 @@ The reviewer's policy field, the risk classifier and `pr-check` all read a repo'
 Nothing in the marketplace said which documents a project must have.
 `/pro-dev install` drafted only `CLAUDE.md` and `REVIEW.md`.
 `docs-before-push.py` checks that existing key documents move with the code, but never asks for a missing one.
-Jody asked on 2026-10-28 that every project have the documents it needs.
+On 2026-10-28 the requirement was set that every project has the documents it needs.
 
 The set has to depend on the project: a CLI has no design system and a single script needs no architecture page.
 It has to work with only some plugins installed.

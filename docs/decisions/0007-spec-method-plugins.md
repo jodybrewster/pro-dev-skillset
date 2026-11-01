@@ -8,7 +8,7 @@ proposed
 
 ## Context
 
-Jody wants to try several spec-driven methods side by side by installing and uninstalling plugins: pro-ai-sdlc, pro-spdd, GitHub spec-kit and Google's Elephant-Goldfish Model (EGM).
+The maintainer wants to try several spec-driven methods side by side by installing and uninstalling plugins: pro-ai-sdlc, pro-spdd, GitHub spec-kit and Google's Elephant-Goldfish Model (EGM).
 Nothing said how they relate, so with two installed a session could start the same feature in two places.
 EGM is Google's own plugin, `egm@egm`, in its own marketplace, which a registry row from ADR-0006 could not register.
 Its `egm-review-loop` reads reviewer persona and standard files by path, so a repo can bring its own goldfish without a fork.

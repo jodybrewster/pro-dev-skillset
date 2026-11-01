@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-30-doubt-driven-execute/.
 
 ## Context
@@ -34,7 +34,7 @@ An unattended run finishes the build and opens the pull request as a draft with 
 The same holds when two rounds in a row raise findings and none is actionable.
 A Codex second opinion is the person's choice in each round, confirmed per exact command, never offered in a non-interactive run and never reported as clean when it could not run.
 pro-ai-sdlc keeps its own `handoff.md` with the same four fields.
-This is the accepted exception to ADR-0012's single template (Jody, 2026-10-30), amended into ADR-0012: a check in `tests/check.mjs` fails when it names different fields from pro-quality's or drops its closing line.
+This is the accepted exception to ADR-0012's single template, amended into ADR-0012: a check in `tests/check.mjs` fails when it names different fields from pro-quality's or drops its closing line.
 pro-ai-sdlc keeps a byte-identical copy of `plugins/pro-ship/scripts/codex-run.py`; the `doubt` check fails on any difference.
 The plan's Done section records each doubted step in one line in the session's words.
 

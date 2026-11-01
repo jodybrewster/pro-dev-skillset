@@ -112,7 +112,7 @@ overlap table describe it as "our own focused TS/React unit skill" that we keep
   `Task`/`TodoWrite`; paths resolve).
 - Trade-off documented; README + router say "install-on-demand," not "included."
 
-## Open questions for Jody
+## Open questions
 
 1. **vitest:** keep native (Option A, recommended) or bridge it (Option B)?
 2. **Bridge skill name:** a single `qa-suite` router, or preserve the

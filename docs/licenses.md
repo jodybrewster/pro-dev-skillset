@@ -3,7 +3,7 @@
 Every skill, agent or engine in this marketplace that is not original work, with its upstream and the copyright line from the upstream's own LICENSE file.
 Each plugin that ships forked or adapted content carries `plugins/<name>/LICENSE` with the same lines.
 Each forked file ends with a footer naming its upstream.
-Manifests, templates, hooks, scripts, CI and the test harness are original work, MIT, Copyright (c) 2026 Jody Brewster (see the root [`LICENSE`](../LICENSE)).
+Manifests, templates, hooks, scripts, CI and the test harness are original work, MIT, Copyright (c) 2026 the pro-dev-skillset authors (see the root [`LICENSE`](../LICENSE)).
 
 How it entered:
 
@@ -25,7 +25,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-data | nextauth-patterns | [a5c-ai/babysitter](https://github.com/a5c-ai/babysitter) | MIT | Copyright (c) 2025 A5C AI | forked |
 | pro-data | prisma-schema-patterns | [IvanTorresEdge/molcajete.ai](https://github.com/IvanTorresEdge/molcajete.ai) | MIT | Copyright 2025 Ivan Torres | forked |
 | pro-design | accessibility-audit | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
-| pro-design | accessibility-audit (references/accessibility-checklist.md) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-design | accessibility-audit (references/accessibility-checklist.md) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-design | design-token | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
 | pro-design | motion-system | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
 | pro-design | typography-scale | [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) | MIT | Copyright (c) 2026 MC Dean | forked |
@@ -50,7 +50,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-design | taste-skills-bridge | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | MIT | Copyright (c) 2026 Leonxlnx | bridged |
 | pro-execution | subagent-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | systematic-debugging | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
-| pro-execution | systematic-debugging (Untrusted error output and non-reproducible-bugs.md) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-execution | systematic-debugging (Untrusted error output and non-reproducible-bugs.md) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-execution | test-driven-development | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-execution | using-git-worktrees | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-nextjs | next-best-practices | [Next.js docs](https://nextjs.org/docs) in [vercel/next.js](https://github.com/vercel/next.js/tree/canary/docs) | MIT | Copyright (c) 2025 Vercel, Inc. | adapted (written from the docs, one cited page per section) |
@@ -61,14 +61,14 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-electron | electron-skills-bridge (electron-release) | [laststance/skills](https://github.com/laststance/skills) | MIT | Copyright (c) 2026 Laststance.io | bridged |
 | pro-pdd | brainstorming | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-pdd | writing-plans | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
-| pro-pdd | interview-me | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
-| pro-pdd | idea-refine | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
+| pro-pdd | interview-me | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
+| pro-pdd | idea-refine | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | forked |
 | pro-pdd | adhd | [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd) | MIT | Copyright (c) 2026 ADHD contributors | forked |
 | pro-pdd | lavish | [kunchenguid/lavish-axi](https://github.com/kunchenguid/lavish-axi) | MIT | Copyright (c) 2026 Kun Chen | bridged |
-| pro-ai-sdlc | all content (commands, templates, agents, hooks) | original to this repo, adapted from the author's own AI-native SDLC kit and sample repo | MIT | Copyright (c) 2026 Jody Brewster | original apart from the rows below for the optional review lists and the loop guardrails; the ideas are credited to Anthropic's [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) |
-| pro-ai-sdlc | optional review lists in `templates/REVIEW.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted (the two commented optional blocks are rewritten from its review checklists) |
-| pro-ai-sdlc | loop guardrails in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
-| pro-ai-sdlc | `skills/doubt-driven-development` and the `## Doubt` section of `/execute` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ai-sdlc | all content (commands, templates, agents, hooks) | original to this repo, adapted from the author's own AI-native SDLC kit and sample repo | MIT | Copyright (c) 2026 the pro-dev-skillset authors | original apart from the rows below for the optional review lists and the loop guardrails; the ideas are credited to Anthropic's [AI-native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) |
+| pro-ai-sdlc | optional review lists in `templates/REVIEW.md` | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted (the two commented optional blocks are rewritten from its review checklists) |
+| pro-ai-sdlc | loop guardrails in `/execute`, `/spec`, `/plan` and `/adr`, the verifier and simplifier additions and `references/definition-of-done.md` | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ai-sdlc | `skills/doubt-driven-development` and the `## Doubt` section of `/execute` | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ai-sdlc | section names and schema comment in `templates/PRODUCT.md` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0 | Copyright 2025 Paul Bakaus | adapted (section names and the schema comment only) |
 | pro-quality | receiving-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | requesting-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
@@ -76,19 +76,19 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-quality | technical-writer (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
 | pro-quality | documentation-engineer (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
 | pro-quality | api-documenter (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
-| pro-quality | constraints | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
-| pro-quality | code-reviewer (agent) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | constraints | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | code-reviewer (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-security | security-audit | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted |
 | pro-security | security-architect (skill and agent) | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted (draws on the threat framing; the challenge procedure is original) |
 | pro-egm | egm-bridge | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) | Apache-2.0 | no copyright line in the upstream LICENSE | bridged |
 | pro-speckit | spec-kit-bridge | [github/spec-kit](https://github.com/github/spec-kit) | MIT | Copyright GitHub, Inc. | bridged (nothing copied) |
-| pro-ship | documentation-and-adrs | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | documentation-and-adrs | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | vercel-deploy-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-spdd | spdd-story-lead, spdd-analysis-lead, spdd-reasons-canvas-lead, spdd-generate-lead, spdd-code-review-lead, spdd-api-test-lead, spdd-prompt-update-lead, spdd-reverse-lead, spdd-sync-lead | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) | MIT | Copyright (c) 2026 gszhangwei | adapted (the engine is vendored under `upstream/`) |
 | pro-testing | vitest | [PaulRBerg/agent-skills](https://github.com/PaulRBerg/agent-skills) | MIT | Copyright (c) 2025 Paul Razvan Berg | forked |
 | pro-testing | storybook-interactions | [peterknezek/skills](https://github.com/peterknezek/skills) | MIT | Copyright (c) 2026 Peter Knezek | forked |
 | pro-testing | agent-browser | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | Apache-2.0; no NOTICE file upstream | Copyright 2025 Vercel Inc. | forked |
-| pro-testing | agent-browser (Security boundaries section) | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-testing | agent-browser (Security boundaries section) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-testing | qa-suite | [petrkindlmann/qa-skills](https://github.com/petrkindlmann/qa-skills) | MIT | Copyright (c) 2026 Petr Kindlmann | bridged |
 
 The pro-nextjs rows were closed on 2026-10-16.

@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-30-p0-hardening/.
 
 ## Context
@@ -25,11 +25,11 @@ A gate moves to enforce only when all of these hold:
 
 - Its row in `docs/enforce-mode.md` lists no open blocker; each known limit is closed or accepted there with a reason and an owner.
 - It has run in warn mode for at least seven days in two repos (this marketplace and one app repo that installs the starter), counted from the day its current version is installed in both.
-- The `warn.log` lines for that gate over the period show every finding either correct or caused by a bug since fixed and none Jody would have overridden.
+- The `warn.log` lines for that gate over the period show every finding either correct or caused by a bug since fixed and none the maintainer would have overridden.
 - The gate's own extra conditions in `docs/enforce-mode.md` hold: for the merge gate and the pr-gate no `could-not-run` line caused by the gate's own limits; for the floor guard the ADR-0010 revisit trigger.
 
 A gate with no logged line in the period was not exercised and stays in warn until it has been.
-An agent prepares the summary from `warn.log`; Jody alone makes the call, per gate: enforce, stay in warn or loosen a rule first.
+An agent prepares the summary from `warn.log`; the maintainer alone makes the call, per gate: enforce, stay in warn or loosen a rule first.
 The call is written in a decision record from the template in `docs/enforce-mode.md`, with the counts behind it.
 The switch is a `mode.<gate>` file holding `enforce` in the guard folder of each machine, never a change to the plugin default.
 A false denial in enforce mode sends that gate back to warn the same day with a line in its decision record.
@@ -42,7 +42,7 @@ The switch to enforce becomes a dated decision with numbers behind it and a read
 Moving a gate costs at least a week after its last fix, which slows down tightening.
 A gate that rarely fires (the merge gate on a quiet repo) can wait longer than a week for its first line.
 The mode stays per machine so a second person's machine starts in warn until they opt in.
-What must stay true: the plugin default is warn, `could not run` never reads as clean and only Jody makes the call.
+What must stay true: the plugin default is warn, `could not run` never reads as clean and only the maintainer makes the call.
 Reverse this decision if the evidence period keeps a gate in warn while real harm gets through it or if enforce mode moves into a repo ruleset where a per-machine file no longer applies.
 
 ## Alternatives considered

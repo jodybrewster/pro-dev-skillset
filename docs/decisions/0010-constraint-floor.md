@@ -6,7 +6,7 @@ Date: 2026-10-29
 
 accepted (2026-10-30)
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-29-constraint-floor/.
 
 ## Context
@@ -15,7 +15,7 @@ When an agent hits a red check it takes the cheapest road to green.
 Often that means silencing the checker, skipping or deleting a test, leaving a stub or loosening a threshold instead of fixing the code.
 No hook in the marketplace caught those moves; `protect-tests` only watches test edits during `/fix`.
 A repo's quality bar was not written down anywhere an agent reads it, so each session decided for itself what "done" meant.
-Addy Osmani's [agent-skills](https://github.com/addyosmani/agent-skills) names the moves and ships a `CONSTRAINTS.md` format and a reference floor guard.
+[agent-skills](https://github.com/addyosmani/agent-skills) names the moves and ships a `CONSTRAINTS.md` format and a reference floor guard.
 
 ## Decision
 

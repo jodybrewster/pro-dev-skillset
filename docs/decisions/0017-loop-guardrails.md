@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-30-sdlc-loop-upgrades/.
 
 ## Context

@@ -6,7 +6,7 @@ Date: 2026-10-31
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Supersedes the doc-freshness half of intent/2026-10-17-doc-hooks/.
 
 ## Context
@@ -15,9 +15,9 @@ Supersedes the doc-freshness half of intent/2026-10-17-doc-hooks/.
 It blocked any `git push` whose commits touched code unless every key doc the repo had (`README.md`, `AGENTS.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `PRODUCT.md`, `DESIGN.md`) also appeared in the diff.
 It ignored warn mode.
 Its message said to explain an unchanged doc in the PR description, yet a rerun saw the same diff and blocked again, so the only way through was a cosmetic edit the message forbade.
-Jody reported on 2026-10-31 that it stopped agents in other repos before they finished their goals.
+On 2026-10-31 the hook was reported to have stopped agents in other repos before they finished their goals.
 
-addyosmani/agent-skills ships no push gate for docs.
+agent-skills ships no push gate for docs.
 It treats docs as judgment: a `documentation-and-adrs` skill, a "docs changed where behavior changed" item in its definition of done and a docs list in `shipping-and-launch`.
 pro-ai-sdlc already carries that definition of done (ADR-0017).
 

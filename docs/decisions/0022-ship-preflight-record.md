@@ -6,7 +6,7 @@ Date: 2026-10-31
 
 proposed
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-31-ship-preflight/ (decisions 2, 3 and 5; spec R25 to R37).
 
 ## Context

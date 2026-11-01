@@ -14,7 +14,7 @@ ADR-0006's registry knows only the `skills-cli`, `npx` and `claude-plugin` row k
 spec-kit shipped five releases in two weeks; a git tag can be moved upstream and the CLI's dependencies are open ranges resolved from PyPI at install time.
 The files it writes include shell scripts its skills run.
 spec-kit's own `specify integration status` trusts manifest hashes that the repo itself can rewrite.
-Jody is new to spec-kit and wants plain slash commands with every safety check built in.
+The maintainer is new to spec-kit and wants plain slash commands with every safety check built in.
 Source: intent/2026-10-28-pro-speckit/.
 
 ## Decision
@@ -61,8 +61,8 @@ The constitution, spec-kit's own manifests and `specs/` are never pinned.
 The CLI is shared machine-wide.
 If two repos on different pins keep downgrading each other, the fallback is `uvx` with the same pin and no shared install.
 
-Raising a pin is a reviewed PR that moves the SHA, the `--exclude-newer` timestamp and the `pinnedFiles` hashes together, signed off by Jody.
-The dependency ranges that `--exclude-newer` still leaves open are a risk Jody accepts.
+Raising a pin is a reviewed PR that moves the SHA, the `--exclude-newer` timestamp and the `pinnedFiles` hashes together, signed off by the maintainer.
+The dependency ranges that `--exclude-newer` still leaves open are a risk the maintainer accepts.
 
 A method whose upstream is a CLI ships `requires: null` in its `sdlc-method.json` and states its prerequisite in the hand-off text.
 pro-speckit ships `/pro-speckit:install` and `/pro-speckit:remove`; `/pro-speckit:install update` replaces a separate update command.

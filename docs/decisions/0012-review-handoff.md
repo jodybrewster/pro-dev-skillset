@@ -8,7 +8,7 @@ accepted (2026-10-30)
 
 Amended 2026-10-30 by ADR-0019: a second template is allowed when a sync check holds it to the same four fields and closing line.
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-29-code-reviewer/.
 
 ## Context
@@ -16,7 +16,7 @@ Source: intent/2026-10-29-code-reviewer/.
 A new Claude Code subagent starts with an empty context.
 pro-quality's old `requesting-code-review/code-reviewer.md` was a prompt template with a `{DESCRIPTION}` field for "what you built".
 That field is where the author's reasoning leaks into the reviewer.
-Jody's rule is "I need the code reviewer to have fresh context as well".
+The rule is that the code reviewer has fresh context as well.
 The template broke it.
 The author is usually an agent that is blind to its own assumptions, so a reviewer that reads the author's account inherits the same blind spots.
 Several callers in the marketplace dispatch a reviewer.
