@@ -75,6 +75,7 @@ export function runShipCheckCases() {
     findFloorCases();
     mutationCases();
     stampCases();
+    markerCases();
     codexCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
@@ -85,6 +86,30 @@ export function runShipCheckCases() {
   // Codex second review (ADR-0018): find by relative path, codex-trigger, agree and the
   // optional reviewers.codex stamp record.
   // -------------------------------------------------------------------------
+  // R9: the PR body marker line comes from the stamp and nowhere else.
+  function markerCases() {
+    const repo = mkrepo({ "a.txt": "1\n" });
+    const sha = git(repo, "rev-parse", "HEAD").stdout.trim();
+    let r = pc(repo, ["marker"]);
+    add("m1 marker with no stamp exits 1 and says to stamp first", "exit 1, message, empty stdout", r.status === 1 && /no readable stamp/.test(r.stderr) && r.stdout === "", r.stdout + r.stderr);
+    mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+    const stampPath = join(repo, ".pro-dev", "ship", "pr-check.json");
+    const fx = readFileSync(join(FIXTURES, "valid-pass.json"), "utf8").split("HEAD").join(sha);
+    writeFileSync(stampPath, fx);
+    r = pc(repo, ["marker"]);
+    const tier = JSON.parse(fx).tier;
+    add("m2 marker prints the one-line comment from the stamp", "the R9 line", r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${sha} result=pass tier=${tier} -->\n`, r.stdout + r.stderr);
+    writeFileSync(stampPath, readFileSync(join(FIXTURES, "result-fail.json"), "utf8").split("HEAD").join(sha));
+    r = pc(repo, ["marker"]);
+    add("m3 marker carries a failing result as it is", "result=fail", r.status === 0 && /result=fail tier=/.test(r.stdout), r.stdout + r.stderr);
+    writeFileSync(stampPath, readFileSync(join(FIXTURES, "corrupt.json"), "utf8"));
+    r = pc(repo, ["marker"]);
+    add("m4 marker with a corrupt stamp exits 1", "exit 1, empty stdout", r.status === 1 && r.stdout === "", r.stdout + r.stderr);
+    writeFileSync(stampPath, JSON.stringify({ ...JSON.parse(fx), result: "pass --> <script>" }));
+    r = pc(repo, ["marker"]);
+    add("m5 marker refuses a value that would break out of the comment", "exit 1, empty stdout", r.status === 1 && r.stdout === "", r.stdout + r.stderr);
+  }
+
   function codexCases() {
     // find PLUGIN <plugin-relative path>, run from a copy of pr-check.py placed in a throwaway layout.
     const TWIN = ".codex-plugin/agents/code-reviewer.toml";
