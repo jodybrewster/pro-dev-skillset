@@ -3,7 +3,7 @@ intent: intent/2026-10-31-ship-preflight/intent.md
 intent-status: accepted
 status: draft
 created: 2026-10-31T22:17:44-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: `/ship` preflight with a go/no-go verdict
@@ -146,7 +146,7 @@ Packaging.
 - ADR-0016: `ship-gate` ships in warn and starts its own evidence period; the merge gate's added line is informational and does not restart its period.
 - ADR-0012: reviewers for uncovered commits get the four-field handoff and nothing from the session.
 - ADR-0015: the merge gate's tier is unchanged and never read from the record.
-- Forked content: agent-skills is MIT; `docs/licenses.md` gains a pro-ship `ship` row and the plugin `LICENSE` already carries Addy Osmani's copyright line.
+- Forked content: agent-skills is MIT; `docs/licenses.md` gains a pro-ship `ship` row and the plugin `LICENSE` already carries the agent-skills copyright line.
 - Writing rules: no em dashes, no Oxford comma, no comma before "and" and straight quotes in every file this change writes.
 
 ## Design
@@ -222,9 +222,9 @@ ADR needed: yes, the preflight record is a contract the gates and mieruka read, 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The intent says `/ship` "reads the `pr-check` stamp of each PR in that range", but the stamp is one local file that the next run overwrites, so no merged PR's stamp exists to read. R8 and R9 replace it with a marker line in the PR body that pr-check drafts, which survives the merge and any machine. It changes pr-check's body draft (not the stamp contract) and every PR merged before it ships reads as uncovered on the first run. | Intent, `docs/pr-check-stamp.md`, Jody | resolved: Jody took the PR body marker, 2026-10-31 |
-| 2 | The intent wants an override "in the repo's own config" without naming the file. R4 puts it in a "Ship" yaml block in `CLAUDE.md` or `AGENTS.md`, following pr-check's verify block, because `.pro-dev/` is excluded from git and cannot hold shared config. | Intent, Jody | resolved: Jody took the agent file block, 2026-10-31 |
-| 3 | The intent lists pro-legal's release review among the checks. Running it in `/ship` alone would review the same range twice, because pro-legal's gate denies once on the same `git tag` and asks for that review again; not running it would let `/ship` say GO before legal had looked. | Intent, `plugins/pro-legal/scripts/release-gate.py`, Jody | resolved: Jody took running it in `/ship` (R19) with pro-legal's gate reading the record and skipping a review the record already holds (R19a), 2026-10-31 |
+| 1 | The intent says `/ship` "reads the `pr-check` stamp of each PR in that range", but the stamp is one local file that the next run overwrites, so no merged PR's stamp exists to read. R8 and R9 replace it with a marker line in the PR body that pr-check drafts, which survives the merge and any machine. It changes pr-check's body draft (not the stamp contract) and every PR merged before it ships reads as uncovered on the first run. | Intent, `docs/pr-check-stamp.md` | resolved: the PR body marker, 2026-10-31 |
+| 2 | The intent wants an override "in the repo's own config" without naming the file. R4 puts it in a "Ship" yaml block in `CLAUDE.md` or `AGENTS.md`, following pr-check's verify block, because `.pro-dev/` is excluded from git and cannot hold shared config. | Intent | resolved: the agent file block, 2026-10-31 |
+| 3 | The intent lists pro-legal's release review among the checks. Running it in `/ship` alone would review the same range twice, because pro-legal's gate denies once on the same `git tag` and asks for that review again; not running it would let `/ship` say GO before legal had looked. | Intent, `plugins/pro-legal/scripts/release-gate.py` | resolved: run it in `/ship` (R19) with pro-legal's gate reading the record and skipping a review the record already holds (R19a), 2026-10-31 |
 | 4 | On a `gh release create` in enforce mode `ship-gate`, pro-legal's gate and `production-gate` can all fire. The first two deny once on the same call and the retry meets `production-gate`'s one ask, so the "at most one prompt" constraint holds at the cost of one retry.
 With a fresh GO that holds the legal review, neither deny-once gate fires. | Intent constraints, ADR-0014 | resolved: both deny-once gates record the same call, so one retry clears both |
 | 5 | REVIEW.md forbids network calls in hooks, while the scope needs the GitHub Deployments API and coverage needs `gh pr list`. | REVIEW.md pass 2 | resolved: those calls run in `ship.py` under the skill; `ship-gate.py` and the merge gate's added line read local files only |
@@ -234,12 +234,12 @@ With a fresh GO that holds the legal review, neither deny-once gate fires. | Int
 
 From the intent, all answered:
 
-- Is mieruka's web app hosted anywhere? No, it runs locally from a tagged release (Jody, 2026-10-31), so it is part of the `tag-release` target.
-- Is mieruka's CLI published to npm? No (Jody, 2026-10-31), so mieruka has no `publish` target and R2 must not find one from `apps/web/package.json` alone.
+- Is mieruka's web app hosted anywhere? No, it runs locally from a tagged release, so it is part of the `tag-release` target.
+- Is mieruka's CLI published to npm? No, so mieruka has no `publish` target and R2 must not find one from `apps/web/package.json` alone.
   R4's Ship block in mieruka's agent file settles it, or detection needs a rule; decided in `/plan`.
 - mieruka's desktop app has no installer yet, so its rollback is checking out the previous tag.
 
-New ones from the spec, all answered by Jody on 2026-10-31 ("I'll take your recommendations"): the PR body marker (concern 1), the agent file Ship block (concern 2) and the legal review in `/ship` with pro-legal's gate reading the record (concern 3).
+New ones from the spec, all answered on 2026-10-31 by taking the recommendations: the PR body marker (concern 1), the agent file Ship block (concern 2) and the legal review in `/ship` with pro-legal's gate reading the record (concern 3).
 Nothing blocks planning.
 
 ## Acceptance criteria

@@ -2,7 +2,7 @@
 
 Built from `spec.md` and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-30.
 
 This branch is off `origin/main` beside `intent/twelve-factor-skill`, which also bumps pro-quality.

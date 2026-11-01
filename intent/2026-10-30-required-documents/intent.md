@@ -4,19 +4,19 @@ kind: idea
 status: done
 risk: medium
 created: 2026-10-30T09:20:44-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: required documents per project
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, item 14 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and pro-ship features 14 to 16 in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md), "Every project has its required documents" (Jody, 2026-10-28).
+Author: the maintainer.
+Source: idea, item 14 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and pro-ship features 14 to 16 in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md), "Every project has its required documents".
 Status: done; shipped in #103.
 Created: 2026-10-30.
 
 ## Problem
 
-Jody's ask on 2026-10-28: "make sure that each project has the required documentation. REVIEW.md, ARCHITECTURE.md, CLAUDE.md, README.md, PRODUCT.md, DESIGN.md, etc".
+Every project should have its required documentation: REVIEW.md, ARCHITECTURE.md, CLAUDE.md, README.md, PRODUCT.md, DESIGN.md and the like.
 Nothing in the marketplace says which documents a project must have.
 `/pro-dev install` drafts `CLAUDE.md` or `AGENTS.md` and writes `REVIEW.md` when it is missing.
 That is all it does.
@@ -47,7 +47,7 @@ The reviewer also flags a line in `CLAUDE.md` or `ARCHITECTURE.md` that the diff
 
 ## Affected users and systems
 
-Jody and any agent session in a repo that installs the starter.
+The maintainer and any agent session in a repo that installs the starter.
 pro-core: `/pro-dev install` and its inspection.
 pro-ai-sdlc: new README, ARCHITECTURE and PRODUCT templates beside `REVIEW.md` and `adr.md`.
 pro-quality: `documentation-engineer`, which reads the repo to draft content.
@@ -78,7 +78,7 @@ Forked or adapted text keeps its footer and a row in `docs/licenses.md`.
 `SECURITY.md`, `CONTRIBUTING.md` and `CODEOWNERS`; those belong to `repo-hygiene` (ranked item 21).
 The architecture review itself, its agent and the twelve-factor checklist (ranked item 17), except where it writes into `ARCHITECTURE.md`.
 Keeping documents fresh beyond the existing `docs-before-push.py` and the reviewer flag.
-Writing documents into Jody's other repos as part of this change; each repo gets them later by running `/pro-dev install` itself.
+Writing documents into the maintainer's other repos as part of this change; each repo gets them later by running `/pro-dev install` itself.
 Making any missing-document check block in enforce mode.
 A `/pro-dev update` step that refreshes existing documents, which echoes the ADR-0011 decision for `REVIEW.md`.
 
@@ -88,7 +88,7 @@ A repo that runs `/pro-dev install` ends with every required document for its ki
 A PR opened in a repo that lacks one names it in the `pr-check` output with its rule.
 The reviewer's policy field points at documents that exist.
 The documents are short enough that a reviewer reads them whole.
-Over a couple of weeks in Jody's repos, a drafted document needs only light edits and the "applies" test picks the right rows without correction.
+Over a couple of weeks in the maintainer's repos, a drafted document needs only light edits and the "applies" test picks the right rows without correction.
 
 ## Open questions
 

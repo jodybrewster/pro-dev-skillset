@@ -2,10 +2,10 @@
 
 Built from `spec.md` (written in the same commit as this plan) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster (approved the batch, 2026-10-30).
+Approver: the maintainer (approved the batch, 2026-10-30).
 Dated: 2026-10-30.
 
-Jody is named as approver because the spec sets a rule every gate and reviewer will read (ADR-0020) and the intent is risk medium.
+The maintainer is named as approver because the spec sets a rule every gate and reviewer will read (ADR-0020) and the intent is risk medium.
 Two acceptance criteria (AC6 and AC8) need a person to read a real run, so it does not suit auto mode.
 
 This builds after the codex-second-reviewer PR merges.
@@ -298,16 +298,16 @@ Filled in when the build is finished, before sign-off.
   In a throwaway clone with `ARCHITECTURE.md` removed from the index it exited 3 naming ARCHITECTURE.md with a rule starting "more than one module".
 - AC4: pass; case `block-template` covers it (defaults as shipped, `REVIEW.md` once uncommented).
 - AC5: pass; the three templates exist and the `required-docs` check pins the schema comment, the ten headings in order and `## Twelve-factor`.
-- AC6: not run, needs Jody (a hand run of the pr-check skill, which needs a model).
+- AC6: not run, needs the maintainer (a hand run of the pr-check skill, which needs a model).
 - AC7: pass by grep; the skill says `not-installed` and "did not run" and prints `documents   pass` only after running the script.
-- AC8: not run, needs Jody (a hand run of `/pro-dev install` on a copy of a small app, which needs a model).
+- AC8: not run, needs the maintainer (a hand run of `/pro-dev install` on a copy of a small app, which needs a model).
 - AC9: pass; both reviewer files name `ARCHITECTURE.md` in the compliance lens and `handoff.md` is unchanged.
 - AC10: pass; the diff is empty.
 - AC11: pass; the version-bump check passes with pro-core 0.23.0, pro-ai-sdlc 0.12.0, pro-quality 0.16.0 and pro-ship 0.7.0 in both manifests and the marketplace, and `metadata.version` 1.70.0 (re-taken after PR 101 and PR 102 merged first).
 - AC12: pass; ADR-0020 is proposed with its index row and `docs/licenses.md` has the impeccable row.
 - AC13: pass; ARCHITECTURE.md and PRODUCT.md exist at the root, each path they name was checked with `ls` (the relative names left over were plugin-relative or slash commands), and REVIEW.md holds `add: [PRODUCT.md]`.
   PRODUCT.md leaves out Positioning, Brand Commitments and Accessibility & Inclusion because the code cannot inform them.
-- Definition of done: met except the verifier run and AC6 and AC8, which wait for Jody.
+- Definition of done: met except the verifier run and AC6 and AC8, which wait for the maintainer.
 - Sign-off: <the person's words and the date>
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -328,7 +328,7 @@ An empty section tells the reviewer the diff follows the plan.
   The old Setup step 3 pointed a missing `REVIEW.md` to `/sdlc-init`; the new step points to `/pro-dev install`, as R29 says.
 - Step 11: the licenses row copies its copyright line (Copyright 2025 Paul Bakaus) from the existing impeccable-bridge row, since no upstream `LICENSE` is cached locally and the repo already records it.
 - Step 13 (dogfood) and step 14 (manual runs) are recorded under Done.
-- Jody's decisions of 2026-10-30, all already in the spec: `/pro-dev install` does not draft DESIGN.md and names `/impeccable document`; pr-check lists DESIGN.md as missing until it exists; the templates stay in pro-ai-sdlc; the impeccable credit is a licenses row.
+- The decisions of 2026-10-30, all already in the spec: `/pro-dev install` does not draft DESIGN.md and names `/impeccable document`; pr-check lists DESIGN.md as missing until it exists; the templates stay in pro-ai-sdlc; the impeccable credit is a licenses row.
 - Step 13: `pro-quality:documentation-engineer` is not a dispatchable agent type in this run, so two Sonnet general-purpose subagents acted in that role with the template, the target and the fact list.
   The PRODUCT.md draft lowered the case of five section names; they were set back to the template's impeccable names.
 - Step 14: AC3 ran as described; AC6 and AC8 are recorded as not run under Done.

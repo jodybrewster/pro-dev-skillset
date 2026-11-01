@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit 7102701 for the intent) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster (approved spec and plan on 2026-10-30: "can we run the specs, plan you have my approval").
+Approver: the maintainer (approved spec and plan on 2026-10-30).
 Dated: 2026-10-30.
 
 ## Files that change

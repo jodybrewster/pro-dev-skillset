@@ -4,14 +4,14 @@ kind: idea
 status: accepted
 risk: medium
 created: 2026-10-31T12:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: `/ship` preflight with a go/no-go verdict, for every way a project ships
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: idea, item 15 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and feature 18 of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md); on 2026-10-31 Jody asked to "design for multiple scenarios, we'll also use it in mieruka".
-Status: accepted by Jody on 2026-10-31 ("ok the intent"); `/spec` is next.
+Author: the maintainer.
+Source: idea, item 15 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and feature 18 of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md); on 2026-10-31 the ask was to design for multiple scenarios, since mieruka will also use it.
+Status: accepted on 2026-10-31; `/spec` is next.
 Created: 2026-10-31.
 
 ## Problem
@@ -53,14 +53,14 @@ mieruka's Deliver section already has a Ship page whose deploy panel shows deplo
 - It checks what only matters at release time: new env vars and config, migrations and whether they can be undone, monitoring and health checks, feature flags, the changelog and docs, version numbers and, where pro-legal is installed, its release review.
 - It writes a rollback plan for each target, with what signals a rollback, the steps and how long it takes.
 - It ends in GO or NO-GO with the agent-skills layout: Blockers, Recommended fixes, Acknowledged risks, Rollback plan and the evidence it read.
-  A Blocker means NO-GO unless Jody explicitly accepts the risk.
+  A Blocker means NO-GO unless the maintainer explicitly accepts the risk.
   There is no GO without a rollback plan.
 - The result is a report a person reads and a machine-readable record bound to HEAD, so the existing gates and mieruka can both read it.
   The gate that guards the release (the merge gate for a deploy on merge, the tag, release and deploy commands otherwise) warns when there is no fresh GO for HEAD.
 
 ## Affected users and systems
 
-Jody and any agent session in a repo with pro-ship installed, which is every pro-dev-starter repo since pr-gate shipped.
+The maintainer and any agent session in a repo with pro-ship installed, which is every pro-dev-starter repo since pr-gate shipped.
 `pro-ship`: the new `ship` skill and its script, a reference file adapted from agent-skills' `shipping-and-launch` and `commands/ship.toml` (MIT, with attribution in `docs/licenses.md`) and the merge gate if it reads the record.
 `pro-ai-sdlc`'s `production-gate`, which already flags tags, releases, publishes and production deploys; pro-ai-sdlc is opt-in, so the release warning cannot depend on it alone.
 `pro-legal`'s release gate where it is installed.
@@ -79,7 +79,7 @@ It is never assumed from one stack.
 The machine-readable record is a documented contract like the stamp, so mieruka can read it without importing pro-ship code.
 Agent-skills' skip rule (2 files, 50 lines) is replaced by the risk tiers.
 Agent-skills' three reviewers are not run at ship time, because `pr-check` ran them per PR.
-The verdict informs Jody and an agent's GO never counts as his approval, as with every other gate.
+The verdict informs the maintainer and an agent's GO never counts as their approval, as with every other gate.
 Codex parity, the version-bump law and the hook-loading law apply.
 
 ## Out of scope
@@ -102,7 +102,7 @@ mieruka can show the verdict, blockers and rollback plan from the record alone.
 
 ## Decisions
 
-Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations").
+The recommendations were taken on 2026-10-31.
 
 1. Scenarios in v1: deploy on merge, tag and release, manual deploy and desktop app.
    Package publish is a check that can only add Blockers (version, provenance, a dry run of the publish), because a publish cannot be taken back.
@@ -116,7 +116,7 @@ Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations")
    - This replaces the brainstorm's "no new hook". That assumed `production-gate` was always installed; pro-ai-sdlc became opt-in, so a starter repo has nothing on `git tag` or `gh release create` without it.
 4. The last production deploy is found in this order: the GitHub Deployments API for the production environment (`gh api repos/{owner}/{repo}/deployments`, which Vercel and many CI setups write to), then the newest release tag, then asking the person.
    The repo config can name the source.
-5. Align to mieruka (Jody, 2026-10-31: "yes align mieruka", "or maybe align to mieruka").
+5. Align to mieruka.
    mieruka already reads file-dropped evidence: a manifest at `.mieruka/evidence/<evidence_key>/evidence.json` with `evidence_key`, `kind`, `status` (`pass`, `fail`, `partial` or `info`), `summary`, `detail_json`, `produced_by` and an optional `artifact_kind` and `artifact_key`, picked up by its evidence watcher (`apps/web/src/service/spdd-evidence.ts`, `apps/web/src/lib/spdd-watcher.ts`).
    Its deploy records keep `url`, `env` and `commit` in `detail_json` (`apps/web/src/features/ship/DeployPanel.tsx`).
    So the preflight record uses that manifest shape as it is, with no pro-ship format of its own:
@@ -137,7 +137,7 @@ Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations")
 ## Open questions
 
 None left for the intent.
-Jody answered on 2026-10-31 ("only runs locally, no not published anywhere right now"):
+Answered on 2026-10-31 (it only runs locally and is not published anywhere right now):
 
 - mieruka's web app is not hosted; it runs locally from a tagged release, so it is part of the tag target and not a deploy.
 - mieruka's CLI is not published to npm, so mieruka has no publish target today.

@@ -3,7 +3,7 @@ intent: intent/2026-10-30-required-documents/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T11:47:09-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: required documents per project
@@ -133,7 +133,7 @@ Tests and housekeeping:
 - R36. `docs/decisions/0020-required-documents.md` exists with Status `proposed` and a row in `docs/decisions/README.md`. (Intent: Open question 11.)
 - R37. `docs/licenses.md` gains a pro-ai-sdlc row for `templates/PRODUCT.md` naming impeccable, Apache-2.0, adapted (section names and schema comment). (Intent: Constraints, adapted text.)
 - R38. This repo gains `ARCHITECTURE.md` and `PRODUCT.md` at the root, drafted from the new templates by `documentation-engineer`, each linking `docs/overview.md` where it already says the same thing.
-  This repo's `REVIEW.md` gains an uncommented `## Required documents` block with `add: [PRODUCT.md]`, because the repo has an install base and no UI. (Intent: Problem; Out of scope names only Jody's other repos.)
+  This repo's `REVIEW.md` gains an uncommented `## Required documents` block with `add: [PRODUCT.md]`, because the repo has an install base and no UI. (Intent: Problem; Out of scope names only the maintainer's other repos.)
 
 ### Non-functional
 
@@ -212,12 +212,12 @@ ADR needed: yes, the required set and where it lives become a rule that `/pro-de
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | ADR-0013 says a method holds only its method, but the README, ARCHITECTURE and PRODUCT templates serve every method and sit in pro-ai-sdlc. | ADR-0013; Jody | resolved (Jody, 2026-10-30, the intent's recommendation): templates stay in pro-ai-sdlc and are read in place; revisit when ADR-0013 moves the dev domain together |
+| 1 | ADR-0013 says a method holds only its method, but the README, ARCHITECTURE and PRODUCT templates serve every method and sit in pro-ai-sdlc. | ADR-0013 | resolved (the intent's recommendation): templates stay in pro-ai-sdlc and are read in place; revisit when ADR-0013 moves the dev domain together |
 | 2 | The codex-second-reviewer change edits the pr-check skill, `pr-body.md`, `code-reviewer.md` and its twin and adds an engines row; the two PRs collide in four files and in every version number. | `intent/2026-10-30-codex-second-reviewer/intent.md`; ADR-0002 | resolved: build after it merges, rebase first, keep the pr-check edit to Setup step 3, the report example and one pr-body line; read versions from `main` at build time |
-| 3 | The PRODUCT template adapts impeccable's section names and schema comment, which are Apache-2.0. | `docs/licenses.md`; Jody | resolved with a recommendation: credit impeccable in the template's closing comment and a licenses row; Jody may judge section names need no row |
-| 4 | The intent says install drafts the missing documents, but DESIGN.md is written by impeccable's `document`, which runs its own interview beyond the four-question cap. | intent Proposed outcome; Jody | resolved with a recommendation: install names `/impeccable document` as the next step and does not draft DESIGN.md (R23) |
+| 3 | The PRODUCT template adapts impeccable's section names and schema comment, which are Apache-2.0. | `docs/licenses.md` | resolved with a recommendation: credit impeccable in the template's closing comment and a licenses row; the maintainer may judge section names need no row |
+| 4 | The intent says install drafts the missing documents, but DESIGN.md is written by impeccable's `document`, which runs its own interview beyond the four-question cap. | intent Proposed outcome | resolved with a recommendation: install names `/impeccable document` as the next step and does not draft DESIGN.md (R23) |
 | 5 | Writing the block into an existing `REVIEW.md` would edit a present document, which the intent forbids. | intent Constraints | resolved: install prints the block to paste and edits only a `REVIEW.md` it wrote in the same run (R24) |
-| 6 | The brainstorm lets a team make a missing document Blocking through the block, while the intent rules out any blocking check. | brainstorm; intent Out of scope | resolved (Jody, 2026-10-30, the intent's recommendation): no severity key in this change; ranked item 21 adds it with the scaling block |
+| 6 | The brainstorm lets a team make a missing document Blocking through the block, while the intent rules out any blocking check. | brainstorm; intent Out of scope | resolved (the intent's recommendation): no severity key in this change; ranked item 21 adds it with the scaling block |
 | 7 | "The folder may start empty" cannot be checked, because git does not track an empty folder. | intent Proposed outcome | resolved: the folder counts when it holds a tracked file and install writes `docs/decisions/README.md` (R3, R22) |
 | 8 | The architecture signal fires on this repo (root `package.json`, `demo/app`, `plugins/pro-spdd/bin` and an upstream `go.mod`), so every PR here would show ARCHITECTURE.md as Should-fix until the repo has one. | this repo | resolved: this PR adds `ARCHITECTURE.md` and `PRODUCT.md` (R38) |
 | 9 | `demo/app/` is a Next.js app, so a UI signal read from every `package.json` would demand DESIGN.md of a plugin marketplace. | this repo | resolved: the UI signal reads only the root manifest and declared workspace members (R4) |
@@ -257,7 +257,7 @@ ADR needed: yes, the required set and where it lives become a rule that `/pro-de
 `SECURITY.md`, `CONTRIBUTING.md` and `CODEOWNERS` (ranked item 21, `repo-hygiene`).
 The architecture review, its agent and the twelve-factor checklist (ranked item 17); only the empty heading lands here.
 Keeping documents fresh beyond `docs-before-push.py` and the reviewer flag.
-Writing documents into Jody's other repos; each gets them by running `/pro-dev install`.
+Writing documents into the maintainer's other repos; each gets them by running `/pro-dev install`.
 A severity key or any blocking path for a missing document.
 A `/pro-dev update` step that refreshes existing documents.
 A DESIGN.md template.

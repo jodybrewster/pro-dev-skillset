@@ -2,18 +2,18 @@
 
 Built from `spec.md` (commit on branch `feat/p0-hardening`, written 2026-10-30) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster, approved 2026-10-30 as part of the batch.
+Approver: the maintainer, approved 2026-10-30 as part of the batch.
 It changes a hook that every repo with pro-ship runs on `gh pr merge` and gives it network calls, which is why an approver is named.
-No second approver is needed: Jody owns this marketplace and decided the open questions on 2026-10-30.
+No second approver is needed: the maintainer owns this marketplace and decided the open questions on 2026-10-30.
 The blast radius is bounded: every gate stays in warn mode, a failed network call reads as high and never as low and the classifier itself stays network-free.
 Dated: 2026-10-30.
 
-Decided on 2026-10-30 by Jody, recorded in the spec:
+Decided on 2026-10-30, recorded in the spec:
 
 - The merge gate may call `gh pr view` and `git fetch origin pull/<n>/head` under short timeouts; any failure is could-not-run, high (spec R3 to R7).
-- The orchestrator edits Jody's user-level `/merge-pr` outside this repo; this plan only documents the call (spec R23).
+- The orchestrator edits the user-level `/merge-pr` outside this repo; this plan only documents the call (spec R23).
 - Every other open question takes the intent's recommendation.
-- The plan proposes thresholds from the calibration table; Jody judges the table at PR review (spec R13 to R15).
+- The plan proposes thresholds from the calibration table; the maintainer judges the table at PR review (spec R13 to R15).
 - Step 15 of risk-tiers is verified headless where possible, else the deny fallback stays (spec R22).
 - The warn-mode week happens after this build; its record stays pending (spec AC11).
 - ADR-0016 is the warn-to-enforce rule, status proposed.
@@ -35,7 +35,7 @@ It then moved one constant at a time with the others at their defaults and recor
 
 The proposal is to keep all six values, since each sits inside its measured tier-neutral range and to replace the placeholder comment with these ranges.
 `AREAS_MEDIUM` is the only constant the table pins exactly.
-Rows for Jody to judge at review: #78 (39 files, 2747 lines, declared low) is high on size alone and drops to medium only if both `FILES_HIGH` and `LINES_HIGH` rise past it; #67 and #73 are medium on areas alone (small fixes across two plugins plus the marketplace file).
+Rows for the maintainer to judge at review: #78 (39 files, 2747 lines, declared low) is high on size alone and drops to medium only if both `FILES_HIGH` and `LINES_HIGH` rise past it; #67 and #73 are medium on areas alone (small fixes across two plugins plus the marketplace file).
 Step 6 reproduces this with a committed script so the numbers above are checked again at build time.
 
 ## Files that change
@@ -77,7 +77,7 @@ Not changed on purpose:
 
 ## Order of work
 
-Take the build off a fresh `origin/main`, because Jody merges in parallel.
+Take the build off a fresh `origin/main`, because merges land in parallel.
 Steps 2 to 5 (Track A) own `merge-gate.py` and `tests/ship-hooks.mjs`.
 Steps 6 and 7 (Track B) own `risk-classify.py`, `tests/unit/risk-classifier.test.mjs` and the two calibration files.
 Step 8 (Track C) owns the router.
@@ -187,10 +187,10 @@ Track D: the rule, the list and the guidance.
    Write it one sentence per line with these sections.
    "The rule" links ADR-0016 and says every gate defaults to warn and is switched per machine with `mode.<gate>`.
    "Gates" is one table with columns gate, plugin, hook script, mode file, open blockers (owner), accepted with a reason:
-   floor guard (pro-quality, `floor-guard.py`, `mode.floor-guard`): open, the warn-mode week (Jody); accepted, `docs-before-push.py` blocks whatever the mode (constraint-floor flagged concern 2).
-   pr-gate (pro-ship, `pr-gate.py`, `mode.pr-gate`): open, the warn-mode week (Jody); accepted, a forged stamp passes a local guardrail (ADR-0014).
-   merge gate (pro-ship, `merge-gate.py`, `mode.merge-gate`): open, the warn-mode week (Jody), `/merge-pr` passing `--match-head-commit` (Jody, outside this repo) and, if step 11 could not verify, the live `ask` check (Jody); accepted, a low merge is not pinned so a push between gate and merge goes through, a `-R` repo that is not `origin` with no local head reads high and in enforce `production-gate.py` asks a second time.
-   push gate (pro-security, `push-gate.py`, no mode file): open, the week's gated-diff count (Jody); accepted, it denies once per diff and lets the identical retry through.
+   floor guard (pro-quality, `floor-guard.py`, `mode.floor-guard`): open, the warn-mode week; accepted, `docs-before-push.py` blocks whatever the mode (constraint-floor flagged concern 2).
+   pr-gate (pro-ship, `pr-gate.py`, `mode.pr-gate`): open, the warn-mode week; accepted, a forged stamp passes a local guardrail (ADR-0014).
+   merge gate (pro-ship, `merge-gate.py`, `mode.merge-gate`): open, the warn-mode week, `/merge-pr` passing `--match-head-commit` (outside this repo) and, if step 11 could not verify, the live `ask` check; accepted, a low merge is not pinned so a push between gate and merge goes through, a `-R` repo that is not `origin` with no local head reads high and in enforce `production-gate.py` asks a second time.
+   push gate (pro-security, `push-gate.py`, no mode file): open, the week's gated-diff count; accepted, it denies once per diff and lets the identical retry through.
    "Evidence per gate" lists the shared conditions of ADR-0016 and the extra ones: floor guard, findings mostly cleared with `floor-allow:` mean a rule is too broad (ADR-0010); pr-gate and merge gate, no `could-not-run` line caused by the gate's own limits; push gate, every gated diff did touch security surface.
    "Summary commands" gives, in a fenced block:
    `GUARD="${CLAUDE_GUARD_DIR:-$HOME/.claude/hooks}"` and `SINCE=2026-11-01`;
@@ -198,16 +198,16 @@ Track D: the rule, the list and the guidance.
    `awk -F'\t' -v since="$SINCE" '$1 >= since && $3 == "could-not-run" && $2 ~ /^(pr-gate|merge-gate)$/ {print $2 "\t" $4}' "$GUARD/warn.log" | sort | uniq -c` for the could-not-run reasons;
    and for the push gate, `find "${PRO_DEV_STATE_DIR:-$HOME/.claude/pro-dev}/security" -name '*.json' -newermt "$SINCE"` piped to a `python3 -c` that sums the length of each file's `gated_diffs`.
    Say in prose that the folders are the guard folder and the pro-dev state folder the scripts use, under the home folder unless the variables are set.
-   "Decision record template" is a fenced Markdown block with: gate, plugin version installed, period start and end, repos, lines by action, findings read, findings Jody agrees with, findings he would have overridden, could-not-run lines from the gate's own limits, the call (enforce, stay in warn or loosen a rule first), the date and Jody's words.
+   "Decision record template" is a fenced Markdown block with: gate, plugin version installed, period start and end, repos, lines by action, findings read, findings the maintainer agrees with, findings they would have overridden, could-not-run lines from the gate's own limits, the call (enforce, stay in warn or loosen a rule first), the date and the maintainer's words.
    Add the index lines to `docs/README.md`: one for `enforce-mode.md` after `pr-check-stamp.md` and one for ADR-0016 in the decisions list.
    Check: make a fixture log in a temp folder with two lines for each of `floor-guard`, `pr-gate` and `merge-gate`, one `could-not-run` line and one old line before `SINCE`; run the two `awk` commands with `CLAUDE_GUARD_DIR` set to it and confirm one count per gate and action, the old line left out and one reason line.
 
 10. Record, roadmap, ADR-0015 and the skill (XS). Satisfies R20, R21, R23, R24, AC11, AC13, AC14.
-    Write `intent/2026-10-30-p0-hardening/enforce-decision.md` from the template: status pending, owner Jody Brewster, decision date 2026-11-13, repos "this marketplace and one app repo with the starter, to be named by Jody", one empty row per gate and a line that the period starts once `/pro-dev update` shows pro-ship 0.5.0 or later and pro-quality 0.15.0 or later in both repos.
+    Write `intent/2026-10-30-p0-hardening/enforce-decision.md` from the template: status pending, owner the maintainer, decision date 2026-11-13, repos "this marketplace and one app repo with the starter, to be named by the maintainer", one empty row per gate and a line that the period starts once `/pro-dev update` shows pro-ship 0.5.0 or later and pro-quality 0.15.0 or later in both repos.
     In `docs/roadmap.md` replace the "Follow-ups before any gate goes to enforce mode" line with: "What still blocks enforce mode, per gate and with owners: [docs/enforce-mode.md](./enforce-mode.md); the decision record is pending until 2026-11-13."
     In `docs/decisions/0015-risk-tiers.md`, under Status, add "Amended 2026-10-30 by intent/2026-10-30-p0-hardening/: the merge gate reads the PR head through `gh pr view` and may fetch it, which replaces the rejected alternative of checking the head over the network."
     Leave that alternative's bullet in place and append " (since adopted, see the amendment)".
-    In `plugins/pro-ship/skills/risk-tiers/SKILL.md`, rewrite "Merging a PR": the merge gate resolves the PR itself so the classifier reads the PR's head even from `main`; `/merge-pr` reads `headRefOid` with `gh pr view <number> --json headRefOid`, shows the tier, signals and sha, waits for Jody at medium and high and runs `gh pr merge <number> <method> --match-head-commit <headRefOid>`; the same pin holds with `--auto`; a `gh api .../pulls/<n>/merge` call pins with `-f sha=<headRefOid>`.
+    In `plugins/pro-ship/skills/risk-tiers/SKILL.md`, rewrite "Merging a PR": the merge gate resolves the PR itself so the classifier reads the PR's head even from `main`; `/merge-pr` reads `headRefOid` with `gh pr view <number> --json headRefOid`, shows the tier, signals and sha, waits for the maintainer at medium and high and runs `gh pr merge <number> <method> --match-head-commit <headRefOid>`; the same pin holds with `--auto`; a `gh api .../pulls/<n>/merge` call pins with `-f sha=<headRefOid>`.
     Check: `node tests/check.mjs` passes and `grep -c "match-head-commit <headRefOid>" plugins/pro-ship/skills/risk-tiers/SKILL.md` prints at least 1.
 
 Checkpoint B/C/D: run the verify commands; all pass.
@@ -236,7 +236,7 @@ Serial tail.
 13. Review pass (S). Satisfies `REVIEW.md` passes 1 to 3.
     Run `/review` on the finished diff with the `reviewer` subagent at high effort, with the policy paths and nothing else.
     Fix every Important finding test first and record any departure under "Departures from plan" in the same commit.
-    Commit, push and open the PR as a draft; stop there, since the merge and the warn-mode week are Jody's.
+    Commit, push and open the PR as a draft; stop there, since the merge and the warn-mode week are the maintainer's.
 
 ## Tests that prove it
 
@@ -263,7 +263,7 @@ Serial tail.
 The step most likely to go wrong is step 11.
 It depends on Claude Code behavior this repo cannot pin, on `--permission-prompts none` meaning what its help text says and on a nested `claude -p` run working inside a builder session.
 `-p` is also only a proxy for an interactive prompt: a mode could behave differently with a person at the terminal.
-`NO_PROMPT_MODES` keeps `bypassPermissions`, `dontAsk` and `auto` and fails closed: a mode leaves the set only after an interactive ask check per mode (Jody).
+`NO_PROMPT_MODES` keeps `bypassPermissions`, `dontAsk` and `auto` and fails closed: a mode leaves the set only after an interactive ask check per mode.
 If the set were too small, a mode where an ask does not prompt would let a high merge through, so the headless probe is evidence and not a reason to shrink it.
 Every gate also stays in warn until that check is done.
 
@@ -286,7 +286,7 @@ What this might break:
 
 What was left out on purpose:
 
-- Editing `/merge-pr`: Jody's file, edited by the orchestrator outside the repo.
+- Editing `/merge-pr`: the maintainer's file, edited by the orchestrator outside the repo.
 - Pinning low merges: the intent recommends waiting for a wrong-branch merge in the warn log.
 - A warn mode for the push gate and refreshing `docs/releases.md`: out of scope.
 - Fetching from a `-R` repo that is not `origin`: rare here and it fails safe as high.
@@ -299,8 +299,8 @@ Steps 11 to 13 are serial.
 Nothing here is irreversible.
 There is no migration; reverting removes the network calls and the router lines on the consumers' next update, though the plugin cache keeps the old version until then.
 
-Suits auto mode: yes for steps 1 to 10 and 12 once Jody approves, since each has a command that passes or fails.
-Step 11 runs a nested `claude -p` that spends a small amount of usage and step 13 ships a hook change to every consumer so both need Jody's yes.
+Suits auto mode: yes for steps 1 to 10 and 12 once the maintainer approves, since each has a command that passes or fails.
+Step 11 runs a nested `claude -p` that spends a small amount of usage and step 13 ships a hook change to every consumer so both need the maintainer's yes.
 
 ## Options not taken
 
@@ -372,7 +372,7 @@ Built on 2026-10-30 by the builder session on branch `feat/p0-hardening`, rebase
 - AC14: pass (roadmap line replaced).
 - AC15: pass for every command under "Proof of done" that was run here. The last two (`git diff origin/main --stat` and `git status --short`) are checked at the end of this build: the stat lists the marketplace file and the four manifests and the tree is clean.
 - Not done here: step 13 (the `/review` pass with the reviewer subagent at high effort), the draft PR and its body with the calibration lines and probe results. They are left to the orchestrator.
-- AC11: deferred; `enforce-decision.md` is pending with Jody as owner and 2026-11-13 as the decision date.
+- AC11: deferred; `enforce-decision.md` is pending with the maintainer as owner and 2026-11-13 as the decision date.
 - Sign-off: pending.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -392,6 +392,6 @@ Added in the same commit as the change that departs, or in this one where noted.
 - Step 7: the existing unit case "the size thresholds are named placeholder constants" asserted the old wording, so it was renamed and its wording check removed. The new case holds the check.
 - Step 9: the push gate command prints nothing when no state file is newer than `SINCE` on macOS xargs, which reads as zero.
 - Step 11: the probe found the ask held in every mode, so `NO_PROMPT_MODES` is empty and mg80's deny cases are gone; mg81 now asks under all seven mode values and mg84 asks. While the set is empty the deny branch of the gate has no case (`PROBED_NO_PROMPT` in the test file takes a mode if one is added). Three extra control runs (plain echo under the three modes that were in the old set) were added to show the ask caused the denial.
-- Orchestrator decisions applied: `/merge-pr` is already edited outside this repo, so it is listed as done and not as a blocker in `docs/enforce-mode.md`; the app repo reads "this repo plus one app repo (Jody to name: JJ or mieruka)" in the decision record.
+- Orchestrator decisions applied: `/merge-pr` is already edited outside this repo, so it is listed as done and not as a blocker in `docs/enforce-mode.md`; the app repo reads "this repo plus one app repo (to be named by the maintainer: JJ or mieruka)" in the decision record.
 - Review round 1 fixes: the `gh api` merge path matches full URLs and query strings (mg250b to mg250e, mg251b to mg251e); `NO_PROMPT_MODES` is restored to `bypassPermissions`, `dontAsk` and `auto` (this reverses the step 11 departure above: mg81, mg84 and mg27x again cover the deny branch and mg120b covers it in the deadline path; the earlier risk statement that a wrong reading costs only a denied merge was wrong for a smaller set and is rewritten); the several-pins, ask and pinned-warn log lines name the PR and head sha (mg110, mg200, mg201); the gate classifies against `baseRefOid` when `gh pr view` gives it (mg223, mg224); `export GH_REPO=...` carries to later segments (mg218); more cases for a hanging fetch (mg222) and `--repo=` before `pr` (mg219).
-- Review round 2 fixes: Jody's installed gh is 2.21.2 and fails `gh pr view --json baseRefOid` with `Unknown JSON field`, so every real merge would have read could-not-run, high. The gate asks only for number, headRefOid, baseRefName and headRepository and the gh stub now rejects any other field the way 2.21 does. The base tip comes from one `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>` read from FETCH_HEAD, so `refs/remotes/origin/<base>` never moves (mg223 to mg225; mg224 now asserts the ref is unchanged and mg235 reads fetch failed). The fetch always runs when a PR resolves, so the test repos get a bare origin. A `gh api .../pulls/<n>/merge` call is gated only on an explicit PUT (R8 amended; mg253b to mg253f). `gh api graphql` with an `@file` field value or `--input` is could-not-run, high (mg255b, mg255c); the hook's first filter now also lets a command with `graphql` through. `/merge-pr` guidance in risk-tiers fetches the base the same way.
+- Review round 2 fixes: the maintainer's installed gh is 2.21.2 and fails `gh pr view --json baseRefOid` with `Unknown JSON field`, so every real merge would have read could-not-run, high. The gate asks only for number, headRefOid, baseRefName and headRepository and the gh stub now rejects any other field the way 2.21 does. The base tip comes from one `git fetch --no-tags --refmap= origin pull/<n>/head refs/heads/<base>` read from FETCH_HEAD, so `refs/remotes/origin/<base>` never moves (mg223 to mg225; mg224 now asserts the ref is unchanged and mg235 reads fetch failed). The fetch always runs when a PR resolves, so the test repos get a bare origin. A `gh api .../pulls/<n>/merge` call is gated only on an explicit PUT (R8 amended; mg253b to mg253f). `gh api graphql` with an `@file` field value or `--input` is could-not-run, high (mg255b, mg255c); the hook's first filter now also lets a command with `graphql` through. `/merge-pr` guidance in risk-tiers fetches the base the same way.

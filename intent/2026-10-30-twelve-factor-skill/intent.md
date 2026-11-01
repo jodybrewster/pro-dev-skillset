@@ -4,21 +4,21 @@ kind: change
 status: accepted
 risk: low
 created: 2026-10-30T10:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: a twelve-factor skill
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, the first slice of item 17 in [docs/roadmap.md](../../docs/roadmap.md), "Architecture review with twelve-factor".
-Jody asked on 2026-10-30 to look at the `twelve-factor` plugin in [jmagly/aiwg](https://github.com/jmagly/aiwg/tree/d88d04e401f658c10e0845b88610aafb100d2c73/agentic/code/plugins/twelve-factor) (MIT) and create a twelve-factor skill for this repo.
-Status: accepted (Jody, 2026-10-30, by asking for it).
+The request on 2026-10-30 was to look at the `twelve-factor` plugin in [jmagly/aiwg](https://github.com/jmagly/aiwg/tree/d88d04e401f658c10e0845b88610aafb100d2c73/agentic/code/plugins/twelve-factor) (MIT) and create a twelve-factor skill for this repo.
+Status: accepted (by asking for it).
 Created: 2026-10-30.
 
 ## Problem
 
 Nothing in the marketplace checks an app against the twelve factors.
-Neither our plugins nor [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) carry one.
+Neither our plugins nor [agent-skills](https://github.com/addyosmani/agent-skills) carry one.
 The aiwg plugin exists but its README calls its evidence status "design intent": it has generic checklists and no stack-specific checks, so an agent running it has to guess what evidence looks like.
 The [pro-ship research](../2026-10-28-pro-ship-scope/research.md) already wrote the concrete Node/Next.js and Python checks per factor.
 The [brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) decided twelve-factor belongs in an architecture review in pro-quality, with an `architect` agent and three modes.

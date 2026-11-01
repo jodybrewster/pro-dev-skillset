@@ -2,10 +2,10 @@
 
 Built from `spec.md` (draft, committed with this plan) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster (approved 2026-10-30 in the batch; flagged concerns 3 and 9 decided as the spec recommends).
+Approver: the maintainer (approved 2026-10-30 in the batch; flagged concerns 3 and 9 decided as the spec recommends).
 Dated: 2026-10-30.
 
-Jody approves because the change sends diffs to a second vendor, adds a field to the gate's stamp contract and a new kind to the engine registry.
+The maintainer approves because the change sends diffs to a second vendor, adds a field to the gate's stamp contract and a new kind to the engine registry.
 It does not suit auto mode: AC9 and AC10 need a real high-tier PR and a person reading the result.
 The ADR ships in this PR as `docs/decisions/0018-codex-second-reviewer.md` (proposed) with its row in `docs/decisions/README.md`; the Done sign-off moves it to accepted.
 
@@ -205,7 +205,7 @@ Checkpoint E: commit steps 12 to 14 ("codex-second-reviewer: twin check, docs an
 15. Run the proof of done, then the two live runs. [AC1, AC9, AC10] (S)
     - Run every command under "Proof of done" and paste the real output into Done.
     - AC9: in this repo, on the build branch (a high-tier change because it touches gate scripts), answer `codex` yes with `python3 plugins/pro-core/scripts/pro-dev.py answer codex yes`, run `/pro-ship:pr-check`, then paste the report line, `reviewers.codex` from the stamp and the Reviews section into the PR.
-      Do not commit the answers file unless Jody says so.
+      Do not commit the answers file unless the maintainer says so.
     - AC10: run the same with `PATH` set so `codex` is not found for the runner and confirm the one skip line, the skip line in the body and an unchanged `result`.
 
 ## Tests that prove it
@@ -236,7 +236,7 @@ Step 2 is next: a process-group kill that misses a child would leave Codex runni
 What was left out on purpose?
 Showing Codex findings in `merge-gate.py` (flagged concern 9), a per-person consent (flagged concern 3), the pro-ai-sdlc copy of the runner and its byte-identity check (doubt-driven-execute) and any Codex model or effort setting (Codex's own config decides).
 
-Open flagged concerns 3 and 9 are Jody's call; the plan builds the recommended options.
+Open flagged concerns 3 and 9 are the maintainer's call; the plan builds the recommended options.
 Nothing here is irreversible: the stamp field is optional, the row is opt-in and the runner is new.
 
 ## Options not taken
@@ -294,7 +294,7 @@ Filled in when the build is finished, before sign-off.
   - AC11 pass (`versions` and `codex-manifests` checks; pro-ship 0.5.0, pro-core 0.21.0, pro-quality 0.15.1, `metadata.version` 1.67.0 after rebasing onto #97 and #98, rows in `docs/releases.md`).
   - AC12 pass (ADR-0018 is proposed with its README row, ADR-0006 carries the amended line, `docs/pr-check-stamp.md` documents `reviewers.codex`).
   - AC13 pass with one note: the `codex` row shows `kind` `manual-cli` and the `manual` list, with `state` `not-applicable` here because pro-core is not installed for this repo; `pro-dev.md` names both `check` and `install` forms.
-- Sign-off: pending, Jody's words and the date.
+- Sign-off: pending, the maintainer's words and the date.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves ADR-0018 from `proposed` to `accepted`.

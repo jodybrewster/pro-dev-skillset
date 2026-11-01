@@ -3,7 +3,7 @@ intent: intent/2026-10-30-p0-hardening/intent.md
 intent-status: draft
 status: draft
 created: 2026-10-30T11:52:16-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: P0 hardening before any gate moves to enforce mode
@@ -12,14 +12,14 @@ Built from `intent.md` in this folder (commit 81765e0).
 Status: draft.
 Policies and skills consulted: `CLAUDE.md` (the version-bump, hook-loading and Codex parity laws and the layering rule), `REVIEW.md`, `docs/decisions/` (ADR-0002, ADR-0003, ADR-0004, ADR-0010, ADR-0014 and ADR-0015), `docs/hook-loading.md`, `docs/version-bump-law.md`, `docs/roadmap.md`, the plans and Done blocks of `intent/2026-10-29-risk-tiers/`, `intent/2026-10-29-pr-gate/` and `intent/2026-10-29-constraint-floor/`, `plugins/pro-ship/scripts/merge-gate.py`, `plugins/pro-ship/scripts/risk-classify.py`, `plugins/pro-ship/skills/risk-tiers/SKILL.md`, `tests/ship-hooks.mjs`, `tests/unit/risk-classifier.test.mjs`, `plugins/pro-security/scripts/push-gate.py`, `plugins/pro-ai-sdlc/scripts/production-gate.py` and `guard.py`, `plugins/pro-quality/scripts/floor-guard.py`, `plugins/pro-core/skills/using-pro-dev/SKILL.md`, the router check in `tests/check.mjs` and the user-level `/merge-pr` command (read only).
 
-Decisions from Jody on 2026-10-30, taken as given here:
+Decisions of 2026-10-30, taken as given here:
 
 - The merge gate may make network calls: `gh pr view <number|url> --json headRefOid,baseRefName,headRepository` and, when the head is not local, `git fetch origin pull/<n>/head` under a short timeout.
   Any failure is could-not-run and counts as high.
-- Jody's user-level `/merge-pr` is edited by the orchestrator, outside this repo, to pass `--match-head-commit <sha>`.
+- The maintainer's user-level `/merge-pr` is edited by the orchestrator, outside this repo, to pass `--match-head-commit <sha>`.
   This repo documents the exact call in the risk-tiers guidance and never edits a file outside the repo.
 - Every other open question takes the intent's recommendation.
-- The plan proposes size thresholds from the calibration table and re-runs the 30-PR check; Jody judges the table at PR review.
+- The plan proposes size thresholds from the calibration table and re-runs the 30-PR check; the maintainer judges the table at PR review.
 - Step 15 of risk-tiers is verified with a headless method when one exists, otherwise the deny fallback stays with the reason recorded.
 - The week of warn-mode use happens after this build.
   This build delivers the rule, the per-gate evidence criteria, a decision-record template and a warn.log summary; the decision record stays pending with an owner and a date.
@@ -33,9 +33,9 @@ The merge gate classifies the PR it is given, resolved through `gh pr view`, ins
 It also gates `gh api .../pulls/<n>/merge` and the GraphQL merge mutations and holds `--auto` merges to the same commit pin.
 The classifier's size and area thresholds carry the range the calibration over PRs #60 to #89 measured for each, with the table committed beside this spec.
 The pro-core router names `pr-check` and `risk-tiers`.
-ADR-0016 sets the rule for moving any gate from warn to enforce and a pending decision record waits for the warn-mode week with Jody as owner.
+ADR-0016 sets the rule for moving any gate from warn to enforce and a pending decision record waits for the warn-mode week with the maintainer as owner.
 Every gate stays in warn mode.
-Jody gets this, along with any session in a repo that installs pro-ship, pro-core or the starter.
+The maintainer gets this, along with any session in a repo that installs pro-ship, pro-core or the starter.
 
 ## Requirements
 
@@ -48,7 +48,7 @@ The merge gate (`plugins/pro-ship/scripts/merge-gate.py`):
 - R2. The gate reads the target repo, first match wins: `-R` or `--repo` anywhere in the `gh` call (before `pr` or after `merge`, with a space or `=`), a `GH_REPO=` assignment that prefixes the segment, then `GH_REPO` in the hook's own environment.
   A PR URL selector carries its own repo and needs no `-R`.
 - R3. The gate runs `gh pr view [<selector>] --json number,headRefOid,baseRefName,headRepository` with `-R <repo>` when R2 found one, in the directory the merge targets, with a 5 second timeout.
-  `number` is added to the fields Jody named, because a URL or branch selector does not give the number that R4's fetch needs.
+  `number` is added to the fields already named, because a URL or branch selector does not give the number that R4's fetch needs.
 - R4. When `headRefOid` is not a commit in the local clone, the gate runs `git fetch --no-tags origin pull/<number>/head` with an 8 second timeout and then checks that `headRefOid` resolves.
 - R5. The gate classifies with `classify(root, base, headRefOid)`, where `base` is `origin/<baseRefName>` when it resolves, else the local `<baseRefName>`.
 - R6. At medium and high, the commit pin is compared with `headRefOid`, never the local `HEAD`.
@@ -69,7 +69,7 @@ The classifier (`plugins/pro-ship/scripts/risk-classify.py`):
   No "placeholder" or "unmeasured" wording stays.
   A constant the table cannot bound says so in the same comment (the intent's constraint).
 - R14. `intent/2026-10-30-p0-hardening/calibration.md` holds one row per PR from #60 to #89 (tier, signal ids, counted files, lines and areas) and the tier-neutral range of each threshold; `calibrate.py` beside it reproduces both from git history and `gh`.
-- R15. Re-running the calibration with the chosen values gives 11 low, 9 medium and 10 high with no PR changing tier or every change is listed in `calibration.md` for Jody to judge.
+- R15. Re-running the calibration with the chosen values gives 11 low, 9 medium and 10 high with no PR changing tier or every change is listed in `calibration.md` for the maintainer to judge.
 
 The router (`plugins/pro-core/skills/using-pro-dev/SKILL.md`):
 
@@ -83,7 +83,7 @@ The enforce rule:
 - R19. `docs/enforce-mode.md` holds the one list: per gate, its hook name, plugin, mode file, what still blocks enforce mode, the owner of each blocker and the bypass routes accepted with a reason.
   It also holds the per-gate evidence criteria, the commands that summarize `warn.log` and the push gate's state per gate and the decision-record template.
   `docs/README.md` indexes it.
-- R20. `intent/2026-10-30-p0-hardening/enforce-decision.md` is the decision record, filled from the template with status pending, owner Jody and a decision date of 2026-11-13.
+- R20. `intent/2026-10-30-p0-hardening/enforce-decision.md` is the decision record, filled from the template with status pending, owner the maintainer and a decision date of 2026-11-13.
 - R21. `docs/roadmap.md` replaces the "Follow-ups before any gate goes to enforce mode" line with a pointer to `docs/enforce-mode.md` that names only items with an owner.
 
 Step 15 of risk-tiers:
@@ -161,25 +161,25 @@ ADR needed: yes, the rule for moving a gate from warn to enforce binds every fut
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The gate now makes network calls, which ADR-0015 listed as a rejected alternative and risk-tiers AC11 checked against. | ADR-0015, Jody | resolved: Jody approved the calls on 2026-10-30; R24 amends ADR-0015 and N3 keeps the classifier network-free. |
-| 2 | `warn.log` holds no line from floor-guard, pr-gate or merge-gate on Jody's machine today so the installed plugins may predate P0. | Jody | open: the evidence week starts only once `/pro-dev update` shows the new versions in both repos; `enforce-decision.md` records the start date. |
+| 1 | The gate now makes network calls, which ADR-0015 listed as a rejected alternative and risk-tiers AC11 checked against. | ADR-0015 | resolved: the calls were approved on 2026-10-30; R24 amends ADR-0015 and N3 keeps the classifier network-free. |
+| 2 | `warn.log` holds no line from floor-guard, pr-gate or merge-gate on the maintainer's machine today so the installed plugins may predate P0. | the maintainer | open: the evidence week starts only once `/pro-dev update` shows the new versions in both repos; `enforce-decision.md` records the start date. |
 | 3 | The summary commands need the guard folder, which lives under the home folder, while `CLAUDE.md` bans home-directory paths in docs. | `CLAUDE.md` | resolved: the commands read `CLAUDE_GUARD_DIR` with the scripts' own default and the prose names the folder without a user path. |
-| 4 | R3 adds `number` to the JSON fields Jody named. | Jody | resolved: the fetch in R4 needs the number for a URL or branch selector; the call and its timeout are otherwise as approved. |
-| 5 | The headless probe runs `claude -p`, which spends a small amount of usage and its result is a proxy for an interactive prompt. | Jody | open: the plan runs it on the cheapest model with three turns; Jody can rerun it interactively before any enforce switch. |
-| 6 | Which app repo joins this one for the warn-mode week. | Jody | open: the intent names JJ or mieruka; `enforce-decision.md` leaves the slot for Jody. |
+| 4 | R3 adds `number` to the JSON fields already named. | the maintainer | resolved: the fetch in R4 needs the number for a URL or branch selector; the call and its timeout are otherwise as approved. |
+| 5 | The headless probe runs `claude -p`, which spends a small amount of usage and its result is a proxy for an interactive prompt. | the maintainer | open: the plan runs it on the cheapest model with three turns; the maintainer can rerun it interactively before any enforce switch. |
+| 6 | Which app repo joins this one for the warn-mode week. | the maintainer | open: the intent names JJ or mieruka; `enforce-decision.md` leaves the slot for the maintainer. |
 
 ## Open questions
 
-- How to resolve the PR for the merge gate: answered by Jody, `gh pr view` first and classify the base and head it returns; a failed call is could-not-run (R3, R5, R7).
-- Whether the gate may fetch the PR head: answered by Jody, yes with `git fetch origin pull/<n>/head` under a short timeout (R4).
-- How to pick the size thresholds: answered, the plan proposes values from the table and re-runs the check; Jody judges the table at review (R13 to R15).
+- How to resolve the PR for the merge gate: answered, `gh pr view` first and classify the base and head it returns; a failed call is could-not-run (R3, R5, R7).
+- Whether the gate may fetch the PR head: answered, yes with `git fetch origin pull/<n>/head` under a short timeout (R4).
+- How to pick the size thresholds: answered, the plan proposes values from the table and re-runs the check; the maintainer judges the table at review (R13 to R15).
 - Whether the router change belongs here: answered, here as one pro-core bump (R16).
 - What evidence decides enforce mode for each gate: answered with the intent's recommendation, written into ADR-0016 and `docs/enforce-mode.md` (R18, R19).
-- Which repos count and who reads the log: answered with the recommendation, this repo plus one app repo with the starter; an agent prepares the summary and Jody reads it (open concern 6 for the choice of app repo).
+- Which repos count and who reads the log: answered with the recommendation, this repo plus one app repo with the starter; an agent prepares the summary and the maintainer reads it (open concern 6 for the choice of app repo).
 - Whether `gh api .../pulls/<n>/merge` is matched: answered, yes (R8).
 - Whether `gh pr merge --auto` is denied or pinned: answered, pinned like a direct merge (R10).
 - Whether low-tier merges given a PR number are pinned: answered, no, until the warn log shows a need (R11).
-- How `/merge-pr` gets `--match-head-commit <sha>`: answered by Jody, the orchestrator edits his command outside this repo and the guidance documents the call (R23).
+- How `/merge-pr` gets `--match-head-commit <sha>`: answered, the orchestrator edits the command outside this repo and the guidance documents the call (R23).
 - What the live check of `ask` under each `permission_mode` finds: answered, a headless probe with the deny fallback (R22).
 - Whether the push gate belongs in the enforce review: answered, yes, all four gates judged the same way (R19, R20).
 - Whether an ADR is needed: answered, ADR-0016.
@@ -197,8 +197,8 @@ ADR needed: yes, the rule for moving a gate from warn to enforce binds every fut
 - AC8. `grep -c -i -E "placeholder|unmeasured" plugins/pro-ship/scripts/risk-classify.py` prints 0, `calibration.md` holds 30 rows and its tier-neutral ranges and the re-run prints 11 low, 9 medium and 10 high or lists each change.
 - AC9. `node tests/check.mjs` prints no warning naming `pro-ship/pr-check` or `pro-ship/risk-tiers`.
 - AC10. ADR-0016 exists with status proposed and its row in `docs/decisions/README.md`; `docs/enforce-mode.md` lists all four gates with blockers and owners, the evidence criteria per gate, the summary commands and the template; run on a fixture log, the `warn.log` summary prints one count per gate and action.
-- AC11. Deferred, not dropped: `enforce-decision.md` exists with status pending, owner Jody and decision date 2026-11-13.
-  The filled record (per gate: findings in `warn.log`, how many Jody agrees with and the call made) lands after the warn-mode week, outside this build.
+- AC11. Deferred, not dropped: `enforce-decision.md` exists with status pending, owner the maintainer and decision date 2026-11-13.
+  The filled record (per gate: findings in `warn.log`, how many the maintainer agrees with and the call made) lands after the warn-mode week, outside this build.
 - AC12. The step 15 result is recorded: per mode, whether the probe's command ran, with the Claude Code version or "not verified" with the reason; `NO_PROMPT_MODES` matches and each mode has a case.
 - AC13. The risk-tiers skill documents `gh pr merge <number> <method> --match-head-commit <headRefOid>` for `/merge-pr` and ADR-0015 carries the amendment line.
 - AC14. The roadmap's follow-ups line is replaced by a pointer to `docs/enforce-mode.md`.

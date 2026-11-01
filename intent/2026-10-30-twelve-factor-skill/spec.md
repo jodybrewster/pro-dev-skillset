@@ -2,7 +2,7 @@
 intent: intent/2026-10-30-twelve-factor-skill/intent.md
 status: accepted
 created: 2026-10-30T10:10:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: a twelve-factor skill
