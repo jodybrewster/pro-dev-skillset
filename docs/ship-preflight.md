@@ -150,8 +150,16 @@ When `scope` returns a null base, the skill asks the person for the base and nev
 ## The mieruka drop
 
 When `.mieruka/` exists at the repo root and `git check-ignore` reports the manifest's own path `.mieruka/evidence/<evidence_key>/evidence.json` as ignored (and nothing under `.mieruka/evidence/<evidence_key>/` is tracked), `record` also writes the same manifest to `.mieruka/evidence/<evidence_key>/evidence.json`.
-When the folder is tracked, or is not ignored, or does not exist, `record` writes nothing there and prints why.
+When the manifest's folder is tracked, the path is not ignored, git cannot check the path (for example beyond a symbolic link) or `.mieruka/` does not exist, `record` writes nothing there and prints why.
 No manifest ever uses a `kind` outside mieruka's list and `detail_json` is always a string.
+
+## Checking against mieruka
+
+`MIERUKA_ROOT=<path to a mieruka checkout> node tests/mieruka-sync.mjs` (or `npm run test:mieruka-sync`) records a NO-GO in a throwaway repo shaped like mieruka and loads it with mieruka's own `syncFromFilesystem` on an in-memory database.
+It passes when the record loads with no sync error as kind `review` and artifact kind `ship-preflight`.
+The sync writes only inside the throwaway repo and the one vitest file it drops into the checkout is removed afterwards.
+Without `MIERUKA_ROOT`, or with no installed web app there, it skips.
+Run it after any change to the record fields or to mieruka's evidence sync.
 
 ## Known limit
 
