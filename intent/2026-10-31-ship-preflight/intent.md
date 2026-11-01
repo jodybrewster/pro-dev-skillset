@@ -51,6 +51,8 @@ mieruka's Deliver section already has a Ship page whose deploy panel shows deplo
 - It does not review code again.
   It reads the `pr-check` stamp of each PR in that range and names any commit no passing check covered; only those get reviewed.
 - It checks what only matters at release time: new env vars and config, migrations and whether they can be undone, monitoring and health checks, feature flags, the changelog and docs, version numbers and, where pro-legal is installed, its release review.
+- It brings across agent-skills' full shipping material: the parallel review fan-out (code reviewer, security reviewer and test engineer), the six-section pre-launch checklist (code quality, security, performance, accessibility, infrastructure, documentation), feature-flag rules, a rollout plan with thresholds, monitoring, post-launch verification, the error-budget gate and its verification checklist, with a web performance audit for web targets.
+  Anything not brought across is listed in the spec with its reason.
 - It writes a rollback plan for each target, with what signals a rollback, the steps and how long it takes.
 - It ends in GO or NO-GO with the agent-skills layout: Blockers, Recommended fixes, Acknowledged risks, Rollback plan and the evidence it read.
   A Blocker means NO-GO unless the maintainer explicitly accepts the risk.
@@ -64,7 +66,7 @@ The maintainer and any agent session in a repo with pro-ship installed, which is
 `pro-ship`: the new `ship` skill and its script, a reference file adapted from agent-skills' `shipping-and-launch` and `commands/ship.toml` (MIT, with attribution in `docs/licenses.md`) and the merge gate if it reads the record.
 `pro-ai-sdlc`'s `production-gate`, which already flags tags, releases, publishes and production deploys; pro-ai-sdlc is opt-in, so the release warning cannot depend on it alone.
 `pro-legal`'s release gate where it is installed.
-`pro-quality`'s `code-reviewer` and pro-security's review, called only for commits no stamp covers.
+`pro-quality`'s `code-reviewer` and pro-security's review, called only for commits no stamp covers, plus two new `pro-quality` agents adapted from agent-skills, `test-engineer` and `web-performance-auditor`.
 The `pr-check` stamp contract in [docs/pr-check-stamp.md](../../docs/pr-check-stamp.md), read and not changed.
 mieruka ([jodybrewster/mieruka](https://github.com/jodybrewster/mieruka)): as a project, its release flow in `docs/plans/2026-10-23-releases.md`; as a UI, its Ship page and its deploy records.
 The `using-pro-dev` router and the README's Ship row.
@@ -86,7 +88,7 @@ Codex parity, the version-bump law and the hook-loading law apply.
 
 Running deploys, cutting tags or publishing; `/ship` judges readiness and the person or another command acts.
 `pipeline` (item 16) and the CI version of this check.
-Staged rollout, feature-flag systems and automatic rollback (item 31).
+Running a staged rollout, a feature-flag system or an automatic rollback (item 31); `/ship` writes the rollout plan and the person runs it.
 Mobile store releases (EAS), until a project needs them.
 Building mieruka's Ship page; this intent only makes sure there is a contract it can read.
 The mieruka work is its own intent in that repo.

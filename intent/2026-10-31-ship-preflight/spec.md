@@ -54,12 +54,14 @@ Coverage and review (intent: "It does not review code again").
 - R9. pr-check's PR body draft ends with one line, `<!-- pro-ship:pr-check head=<full sha> result=<result> tier=<tier> -->`, taken from the stamp it just wrote.
   The stamp contract does not change.
 - R10. When any commit is uncovered `/ship` lists them and dispatches the code reviewer and, when the commits touch security surface, `security-architect` in diff mode, each with the four-field handoff (ADR-0012) on the uncovered commits only.
+  The reviewers and `test-engineer` (R43) are dispatched in one turn so they run in parallel.
+  None of them calls another.
   An Important finding from the code reviewer or a blocking finding from the security review is a Blocker.
 - R11. When every commit is covered no reviewer runs and the report says so with the PR numbers.
 
 Release checks (intent: "It checks what only matters at release time").
 
-- R12. The checks run in this order and each writes `pass`, `finding` or `confirm` with its evidence: the repo's own checks on HEAD, env vars and config, migrations, monitoring and health checks, feature flags, the changelog and docs, version numbers and legal.
+- R12. The release checks run in the six sections of R42 (code quality, security, performance, accessibility, infrastructure, documentation), then legal (R19); each item writes `pass`, `finding` or `confirm` with its evidence.
 - R13. The repo's own checks reuse `pr-check.py discover` and `run` on HEAD, unless a valid stamp for HEAD already holds them; a failing check is a Blocker.
 - R14. An env var or config key the range adds, read from `.env.example`, `.env.*.example` and `process.env.X` or `os.environ` references in the diff, is a Blocker when the production config can be read and lacks it (`vercel env ls production` for a linked Vercel project) and a `confirm` Recommended fix when it cannot be read.
 - R15. A new migration (`prisma/migrations`, `drizzle`, `supabase/migrations`, `db/migrate`, `alembic/versions`, `migrations/`) that drops a table or a column, or that has no down step where the tool supports one, is a Blocker unless the report names how to go back.
@@ -80,7 +82,7 @@ Release checks (intent: "It checks what only matters at release time").
 
 Verdict and rollback (intent: "It ends in GO or NO-GO with the agent-skills layout").
 
-- R21. The report has the sections Ship decision, Scope, Blockers, Recommended fixes, Acknowledged risks, Rollback plan (one subsection per target) and Evidence, in that order.
+- R21. The report has the sections Ship decision, Scope, Blockers, Recommended fixes, Acknowledged risks, Rollout plan (deploy targets, R45), Rollback plan (one subsection per target), Post-launch verification and Verification checklist (R47) and Evidence with the specialist reports, in that order.
 - R22. Each rollback subsection gives the trigger conditions, the exact steps and the recovery time, from `rollbacks.md` for its kind or from the Ship block's `rollback`.
 - R23. The verdict is NO-GO when there is a Blocker or any target lacks a rollback plan.
   It is GO with acknowledged risks only when the person accepts each Blocker by name in the session; the record keeps who accepted it and when.
@@ -118,6 +120,34 @@ The gates (intent decision 3).
 - R36. Mode is `mode.ship-gate`, then `mode`, in `CLAUDE_GUARD_DIR` or `~/.claude/hooks`, default warn.
 - R37. It reads one file and runs `git rev-parse`, makes no network call, executes nothing from the payload and writes only `warn.log` and its session state file.
   A malformed payload, no git, no repo or a git timeout logs `could-not-run` and allows.
+
+Upstream checklist and specialists (intent: "the full agent-skills shipping material").
+
+- R42. `release-checks.md` carries agent-skills' pre-launch checklist in full, in its six sections: code quality, security, performance, accessibility, infrastructure and documentation.
+  Each item ends as `pass`, `finding` or `confirm` with its evidence.
+  An item a passing `pr-check` already proved per PR (tests, build, lint, typecheck, review) reads its result from R13 and is not run again.
+  The release-time items are:
+  - Code quality: a `TODO` or `FIXME` the range adds in non-test code and a debugging statement the range adds (`console.log`, `print(`, `debugger`) are Recommended fixes.
+  - Security: the ecosystem's dependency audit (`npm audit --audit-level=high`, `pnpm audit`, `pip-audit`, `cargo audit`) with a critical or high finding is a Blocker; a credential-shaped string the range adds (the patterns in `REVIEW.md`) is a Blocker; for a web deploy target, missing security headers (CSP, HSTS), a wildcard CORS origin and an auth endpoint with no rate limit are Recommended fixes, read from `references/security-checklist.md`.
+  - Performance: R49 for a web target whose range touches UI files; the backend items of `references/performance-checklist.md` (an N+1 query, a missing index for a new query) found in the range are Recommended fixes.
+  - Accessibility: for a web target whose range touches UI files, pro-design's `accessibility-audit` runs on the changed views when pro-design is installed; a Critical finding is a Blocker and the rest are Recommended fixes; without pro-design the section is `confirm` with the six upstream checks listed.
+  - Infrastructure: env vars (R14), migrations (R15), DNS and SSL for a target with a `url` (`curl -sSI` answers 2xx or 3xx over a valid certificate; a failure is a Blocker), a CDN for static assets (`confirm`), logging and error reporting (R46) and the health check (R16).
+  - Documentation: README setup steps for new env vars or commands, API docs for changed endpoints, an ADR for an architectural decision in the range, the changelog (R17) and user-facing docs; each missing one is a Recommended fix.
+- R43. `/ship` dispatches `pro-quality:test-engineer` on the whole range with the four-field handoff (ADR-0012), asking for coverage gaps on the changed behavior.
+  A gap on a critical path (auth, payments, data writes, the release's headline feature) is a Recommended fix; a missing test for a Blocker's fix is a Blocker.
+  It runs at medium and high tier, in the same turn as the R10 reviewers.
+- R44. Each feature flag the range adds needs an owner and a removal date, is not nested inside another flag and has both states tested; each miss is a Recommended fix.
+- R45. A `deploy-on-merge` or `manual-deploy` target gets a Rollout plan section: the staging step, production with the flag off when the range adds a flag, then the upstream thresholds table (error rate, p95 latency, client errors, business metrics) with advance, hold and roll back columns.
+  `/ship` writes the plan and never runs it.
+- R46. A deploy target is checked against the pre-launch gate of `references/observability-checklist.md`: structured logs, error reporting, a health check and an alert on the error rate; a missing error reporter or health check is a Recommended fix.
+- R47. The report ends with Post-launch verification (the upstream first-hour list: health check returns 200, no new error types, latency normal, the critical flow tested by hand, logs flowing, the rollback path dry-run) and the upstream Verification checklist, before and after deploying, per target.
+- R48. The Ship block may name an `error_budget` (a percent remaining or a command that prints one).
+  Above 20 percent changes nothing; 0 to 20 percent makes a high-tier range a Blocker; an exhausted budget makes the verdict NO-GO unless the person accepts it by name.
+  Without an `error_budget` the report writes one `confirm` line.
+- R49. `/ship` dispatches `pro-quality:web-performance-auditor` for a web target whose range touches UI files, in Deep mode when a Lighthouse or PageSpeed JSON or a live URL with the Chrome DevTools MCP is available and in Quick mode otherwise.
+  Quick-mode findings are labelled `potential impact` and never carry an invented metric; a regression past a Core Web Vitals "Good" threshold measured in Deep mode is a Blocker.
+- R50. `pro-quality` gains `agents/test-engineer.md` and `agents/web-performance-auditor.md`, adapted from the agent-skills agents with their footer, each with `model: opus` (reviewers run on Opus), a `.codex-plugin/agents/<name>.toml` and a routing case or an entry in `tests/cases/uncovered.json`.
+  `plugins/pro-ship/skills/ship/references/` gains `performance-checklist.md`, `security-checklist.md` and `observability-checklist.md`, adapted with their footer; `docs/licenses.md` gains their rows.
 
 Packaging.
 
@@ -171,6 +201,8 @@ New files:
 - `plugins/pro-ship/skills/ship/SKILL.md`, `release-checks.md`, `rollbacks.md`, `report.md`.
 - `plugins/pro-ship/scripts/ship.py` with the subcommands `targets`, `scope`, `coverage`, `record` and `check <sha>`, the last one printing the R31 verdict for the gates and the tests.
 - `plugins/pro-ship/scripts/ship-gate.py`.
+- `plugins/pro-ship/skills/ship/references/performance-checklist.md`, `security-checklist.md` and `observability-checklist.md`, adapted from agent-skills.
+- `plugins/pro-quality/agents/test-engineer.md` and `web-performance-auditor.md` with `.codex-plugin/agents/` twins, adapted from agent-skills.
 - `docs/ship-preflight.md`, the record contract, like `docs/pr-check-stamp.md`.
 - `docs/decisions/0022-ship-preflight-record.md`.
 - `tests/fixtures/ship-preflight/`: record cases with `expect.json` and target-detection repos (Vercel app, tag-only marketplace, mieruka-shaped monorepo with an Electron app, a publishable package).
@@ -216,6 +248,37 @@ None has a deploy or a publish, so each rollback is checking out the previous ta
 - Agent-skills' three parallel reviewers on every run: `pr-check` already ran them per PR (intent constraints).
 - A time limit on freshness: the record is bound to a commit like the stamp; a stale production config is caught by rerunning, not by a clock.
 
+## Upstream coverage
+
+agent-skills (release 0.6.14, commit `eb07f19`) is the baseline for this command.
+Every part of its shipping material is listed here as kept, replaced or dropped, with the reason.
+
+| Upstream part | Here | Why |
+|---|---|---|
+| `commands/ship.toml` Phase A: code-reviewer, security-auditor and test-engineer in parallel | kept for the release range: the three run in one turn on the commits no passing `pr-check` covered (R10); `test-engineer` also runs on the whole range (R43) | `pr-check` already ran code and security review on each covered PR; it never ran a coverage analysis |
+| Phase A skip rule (2 files, 50 lines, no auth, payments, data or config) | replaced by the risk tiers: a low-tier range with no uncovered commit skips the fan-out | the tiers are this repo's classifier for the same question (ADR-0015) |
+| Phase B merge: code quality, security, performance, accessibility, infrastructure, documentation | kept, as the six sections of the pre-launch checklist (R42) | |
+| Phase C report: decision, Blockers, Recommended fixes, Acknowledged risks, Rollback plan, specialist reports | kept (R21), with the specialist reports under Evidence | |
+| Rules 1 to 4 (parallel, flat, rollback before GO, Critical means NO-GO) | kept (R10, R23) | |
+| `skills/shipping-and-launch` pre-launch checklist, all six sections | kept in full in `release-checks.md` (R42) | |
+| Feature flag strategy and its rules | kept as checks on flags the range adds (R44) | |
+| Staged rollout, rollout thresholds and when to roll back | kept in the report as a rollout plan for deploy targets (R45); running a rollout stays out of scope | `/ship` judges readiness and never deploys |
+| Monitoring and observability, error reporting | kept, from `observability-checklist.md` (R42, R46) | |
+| Post-launch verification | kept as its own report section (R47) | |
+| Error budget release gate | kept when the Ship block names an error budget; `confirm` otherwise (R48) | most repos have no SLO to read |
+| Rollback strategy template | kept (R22) | |
+| Common rationalizations and red flags | kept in the skill body | |
+| Verification checklist (before and after deploying) | kept as the report's last section (R47) | |
+| `agents/code-reviewer.md` | already adapted as `pro-quality:code-reviewer` | |
+| `agents/security-auditor.md` | replaced by `pro-security:security-architect` in diff mode | that is this repo's diff-mode security reviewer; pro-security's own `security-auditor` judges single findings |
+| `agents/test-engineer.md` | adapted as `pro-quality:test-engineer` (R43) | |
+| `agents/web-performance-auditor.md` | adapted as `pro-quality:web-performance-auditor` (R49) | |
+| `references/performance-checklist.md`, `security-checklist.md`, `observability-checklist.md` | adapted under `plugins/pro-ship/skills/ship/references/` (R42) | |
+| `references/accessibility-checklist.md` | used from pro-design's `accessibility-audit`, which already adapted it | one copy |
+| `references/definition-of-done.md` | used from pro-ai-sdlc where installed | one copy |
+| `references/orchestration-patterns.md` | dropped | it describes how to build fan-out commands, not a ship step |
+| `commands/webperf.toml` | dropped from this intent | a standalone `/webperf` is roadmap item 18; `/ship` calls the agent directly |
+
 ## Flagged concerns
 
 ADR needed: yes, the preflight record is a contract the gates and mieruka read, so changing it later breaks readers in two repos: [ADR-0022](../../docs/decisions/0022-ship-preflight-record.md), proposed.
@@ -258,6 +321,10 @@ Nothing blocks planning.
 - AC11. A routing case "ship it, are we good to release?" resolves to `ship`, not `pr-check`.
 - AC12. `node tests/check.mjs` passes with the new `preflight-contract` check and the version-bump law.
 - AC12a. With pro-legal installed and a fresh GO whose `legal` review covers the range, `git tag v1.2.0` meets no legal deny; with a `Hold` verdict, a stale record or a `legal.base` newer than the last tag it denies once as before.
+- AC14. A fixture range adding a `console.log` and a dependency with a known high advisory (stubbed `npm audit`) yields one Recommended fix and one Blocker.
+- AC15. On a web fixture whose range touches a component, `/ship` dispatches `web-performance-auditor` in Quick mode and every finding it reports is labelled `potential impact`.
+- AC16. The report for a `deploy-on-merge` fixture contains the Rollout plan thresholds table, Post-launch verification and the before and after Verification checklist.
+- AC17. `pro-quality:test-engineer` and `pro-quality:web-performance-auditor` load under `claude plugin validate --strict`, have Codex `.toml` twins and pass the Codex parity check.
 - AC13. In mieruka, running `/ship` before a tag writes a manifest the next evidence sync loads with no error, shown in its evidence list under `artifact_kind` `ship-preflight`.
 
 ## Out of scope
