@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: idea
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T09:20:53-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 12 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md), from the comparison with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) `doubt-driven-development` (MIT).
-Status: draft.
+Status: done; shipped in #102.
 Created: 2026-10-30.
 
 ## Problem

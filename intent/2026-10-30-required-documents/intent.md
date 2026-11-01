@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: idea
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T09:20:44-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 14 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and pro-ship features 14 to 16 in the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md), "Every project has its required documents" (Jody, 2026-10-28).
-Status: draft.
+Status: done; shipped in #103.
 Created: 2026-10-30.
 
 ## Problem
