@@ -14,7 +14,8 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 ### Built: the loop after the build (sign-off and hand runs open)
 
 [intent/2026-11-01-after-build-loop](../intent/2026-11-01-after-build-loop/intent.md): a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) proposed).
-mieruka builds its review, ship and maintain views in its own repo against that page.
+Built in #128.
+mieruka's readers are merged in its own repo: the Ship page shows the preflight and deploys, and the board runs past build through Validate, Review, Ship, Done and Maintain; `tests/mieruka-sync.mjs` passes against its main.
 Next after it, each its own intent with a security challenge first: `claude -p` in CI, tiered deploy autonomy, a rollback command and a control-band watcher.
 The reviewer checklist items left out of it (change sizing, dependency discipline, "I'll clean it up later", multi-model review) go into the next code-reviewer change.
 

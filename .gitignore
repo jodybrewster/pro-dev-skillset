@@ -20,3 +20,4 @@ coverage/
 evals/results/
 plugins/*/evals/results/
 tests/loop-results/
+.mieruka/
