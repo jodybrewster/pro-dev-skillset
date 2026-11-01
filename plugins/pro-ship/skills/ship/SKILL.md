@@ -167,6 +167,7 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
    It refuses a GO with a Blocker, a GO with no target, a target without rollback steps, a done legal review whose `head` is not HEAD and a dirty tree.
 4. Print the verdict, the paths it wrote and, when one was written, the mieruka copy.
    Say "run /pro-ship:ship again after any new commit".
+   After a GO, add one line: once the deploy has happened, run `/pro-ship:deployed` to record it and walk the post-deploy checks.
 
 ## Common rationalizations
 

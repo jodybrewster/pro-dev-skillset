@@ -7,7 +7,7 @@ The spec is `intent/2026-11-01-after-build-loop/spec.md`.
 The preflight record that comes before a deploy has its own page, [ship-preflight.md](./ship-preflight.md).
 Nothing here changes it.
 
-Status: draft until the build merges; field names and kinds are fixed now so readers can start.
+Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0.
 
 ## Shared rules
 
@@ -136,7 +136,7 @@ Written by `visual.py record` when `/execute` compares a UI step with the mock t
 
 Local copy: `.pro-dev/visual/<evidence_key>.json`, with the screenshot beside it as `<evidence_key>.png`.
 
-`detail_json` holds `step` (the plan step number), `title`, `viewport` (`desktop` or `mobile`, with its width), `mock` (the path or URL in the plan), `screenshot` (the PNG's path relative to the repo root), `url` (the page captured), `console` (`{errors, warnings}` counts), `differences` (a list of strings), `head` and `created`.
+`detail_json` holds `step` (the plan step number), `title`, `viewport` (an object `{name, width}`: `desktop` at 1280 or `mobile` at 390), `mock` (the path or URL in the plan), `screenshot` (the PNG's path relative to the repo root), `url` (the page captured), `console` (`{errors, warnings}` counts), `differences` (a list of strings), `head` and `created`.
 
 ## Checking against mieruka
 

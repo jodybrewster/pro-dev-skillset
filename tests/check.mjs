@@ -21,6 +21,11 @@ import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
 import { runShipPreflightCases } from "./ship-preflight.mjs";
+import { runShipDeployCases } from "./ship-deploy.mjs";
+import { runFormatHookCases } from "./format-hook.mjs";
+import { runIncidentCases } from "./incident.mjs";
+import { runLessonsCases } from "./lessons.mjs";
+import { runVisualCases } from "./visual.mjs";
 import { runRequiredDocsCases } from "./required-docs.mjs";
 import { runCodexRunCases } from "./codex-run.mjs";
 import { runLegalHookCases } from "./legal-hooks.mjs";
@@ -1189,6 +1194,56 @@ checks["ship-preflight"] = () => {
   if (skipped) { warnings.push(`ship preflight cases skipped - ${skipped}`); return { failures, warnings }; }
   if (!results.length) failures.push("tests/ship-preflight.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`ship preflight ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// ship-deploy: the pro-ship deploy record (docs/loop-records.md) (cases in tests/ship-deploy.mjs, ADR-0023).
+checks["ship-deploy"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runShipDeployCases();
+  if (skipped) { warnings.push(`ship deploy cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/ship-deploy.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ship deploy ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// format-hook: pro-quality's format-on-edit hook (cases in tests/format-hook.mjs, ADR-0023).
+checks["format-hook"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runFormatHookCases();
+  if (skipped) { warnings.push(`format hook cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/format-hook.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`format hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// incident: pro-ai-sdlc's incident record and credential check (cases in tests/incident.mjs, ADR-0023).
+checks["incident"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runIncidentCases();
+  if (skipped) { warnings.push(`incident cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/incident.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`incident ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// lessons: pro-ai-sdlc's review lessons, including the scoped tools of /review (cases in tests/lessons.mjs, ADR-0023).
+checks["lessons"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runLessonsCases();
+  if (skipped) { warnings.push(`lessons cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/lessons.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`lessons ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// visual: pro-ai-sdlc's visual check of UI steps (cases in tests/visual.mjs, ADR-0023).
+checks["visual"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runVisualCases();
+  if (skipped) { warnings.push(`visual cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/visual.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`visual ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

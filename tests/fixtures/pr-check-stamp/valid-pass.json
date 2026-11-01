@@ -59,6 +59,12 @@
       "blocking": 0,
       "important": 1,
       "range": "2222222222222222222222222222222222222222..HEAD"
+    },
+    "verifier": {
+      "agent": "pro-ai-sdlc:verifier",
+      "status": "done",
+      "verdict": "pass",
+      "head": "HEAD"
     }
   },
   "result": "pass",

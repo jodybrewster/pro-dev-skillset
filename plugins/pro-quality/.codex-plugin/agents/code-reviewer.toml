@@ -81,6 +81,13 @@ Otherwise report a nit and name the simpler design.
 - a near-duplicate of an existing canonical helper;
 - a silent fallback that hides an unclear invariant.
 
+## Red flags
+
+Raise each of these as Important when the diff shows it.
+
+- a bug fix with no regression test that fails without the fix;
+- a UI change with no screenshot, or before and after screenshots, in the PR.
+
 ## Mutation check
 
 You do not run a mutation check: you are read-only and a fresh worktree has no installed dependencies.

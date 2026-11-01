@@ -40,7 +40,7 @@ Shas are 40 lowercase hex characters.
 | `checks` | array | zero or more check records, see below |
 | `floor` | string | `pass`, `findings`, `could-not-run`, `not-installed` or `not-found` |
 | `mutation` | object | `{status, reason, file, accepted}`, see below |
-| `reviewers` | object | the keys `code` and `security`, plus an optional `codex`, see below |
+| `reviewers` | object | the keys `code`, `security` and `verifier`, plus an optional `codex`, see below |
 | `result` | string | `pass`, `fail` or `incomplete` |
 | `risk` | object | optional; `{tier, signals, declared, findings, tie}` from the classifier, plus `could_not_run: true` and `reason` when it could not run |
 | `sources` | object | optional; `{"floor-guard": <path or "not-installed">}`, the path `pr-check.py find` used |
@@ -106,6 +106,46 @@ Each element of `checks` is one command that `run` executed or could not find.
 `inline` means the host could not dispatch a subagent and the skill applied the reviewer's skill in the same session, with a context that was not fresh.
 A reviewer that was not dispatched has `blocking` 0 and `important` 0.
 
+### The verifier
+
+`reviewers.verifier` is the independent verifier pass of `pro-ai-sdlc:verifier`.
+`schema` stays 1.
+A stamp written before the field existed has no `verifier` key and the readers ignore it because they read only `result`.
+`stamp` writes the key every time: when the caller passes none it records `{"agent": null, "status": "could-not-run", "verdict": null, "head": null}`.
+
+| Field | Type | Allowed values |
+|---|---|---|
+| `agent` | string or null | `pro-ai-sdlc:verifier` for `done`, which `stamp` requires; null otherwise |
+| `status` | string | `done`, `not-installed` or `could-not-run` |
+| `verdict` | string or null | `pass`, `fail` or `incomplete` from the report's last line; null when there was no verdict |
+| `head` | string or null | the 40 lowercase hex sha from the report's first line, `HEAD: <sha>`; null when there was none |
+
+`stamp` checks the record before it uses it:
+
+- `head` must be 40 lowercase hex characters or null and is refused otherwise, before any git command sees it.
+- A `done` record needs `agent` `pro-ai-sdlc:verifier`.
+- `not-installed` is refused when `verifier_available` is true, so a session cannot declare a dispatchable verifier absent.
+  The verifier is available when `pro-ai-sdlc` has `agents/verifier.md` as an in-place sibling or in an install record (project or local scope covering the repo, then user scope).
+  The repo's own `plugins/` folder never counts, because it proves a file and not an install.
+  An install that `enabledPlugins` sets to false is not available.
+  Only two sources are read: `~/.claude/settings.json`, then the HEAD copy of the repo's `.claude/settings.json` (`git show HEAD:.claude/settings.json`), with the later one winning.
+  The working copy and `.claude/settings.local.json` are ignored, so a session cannot disable the verifier by editing an untracked or uncommitted file.
+  An absent key, a missing file and a git error all mean enabled.
+- When `not-installed` is accepted because a setting disabled an install, the record carries `disabled_by` (`user settings` or `committed project settings`) so a reviewer can see it.
+  The field is absent otherwise.
+
+A verifier result counts for the stamp's HEAD when its `status` is `done` and either:
+
+- its `head` equals HEAD; or
+- its `head` is an ancestor of HEAD and every path in `git diff --name-status --no-renames <head> HEAD` starts with the top-level `intent/`.
+  With rename detection off a rename shows as a delete and an add, so both the old and the new path must be under `intent/`.
+  A symlink (mode 120000), a submodule entry (mode 160000) or a mode change in that diff voids the result.
+  This keeps `/execute`'s last `plan.md` commit from voiding a verifier pass and nothing else.
+
+The verifier's report begins with `HEAD: <sha>`, `Uncommitted tracked changes: none | <n> files` and `Untracked files not ignored: <n>`.
+Uncommitted tracked changes make its verdict `incomplete`.
+Untracked files can change what passes and the stamp does not see them, so CI stays the backstop.
+
 ### The codex reviewer
 
 `reviewers.codex` is optional.
@@ -156,13 +196,15 @@ The first rule that matches wins.
 1. `fail` when any of these holds:
    - a check has `status` `fail`;
    - `floor` is `findings`;
-   - `reviewers.code` or `reviewers.security` has `blocking` above 0 (`reviewers.codex` is never read).
+   - `reviewers.code` or `reviewers.security` has `blocking` above 0 (`reviewers.codex` is never read);
+   - `reviewers.verifier` counts for HEAD (see "The verifier") and has `verdict` `fail`.
 2. `pass` when all of these hold:
    - every check has `status` `pass` or `not-found` (a repo with no command found has only `not-found` checks and still passes this line);
    - `floor` is `pass`, `not-installed` or `not-found`;
    - `mutation.status` is `killed` or `skipped`, or it is `survived` with `accepted` true;
    - `reviewers.code.status` is `done` or `inline`;
-   - `reviewers.security.status` is `done`, `inline` or `skipped-no-surface`.
+   - `reviewers.security.status` is `done`, `inline` or `skipped-no-surface`;
+   - `reviewers.verifier.status` is `not-installed`, or it counts for HEAD and has `verdict` `pass`.
 3. `incomplete` in every other case.
 
 The consequences of rule 3 are spelled out because the spec leaves them open:
@@ -174,6 +216,8 @@ The consequences of rule 3 are spelled out because the spec leaves them open:
 - `reviewers.code.status` of `not-installed` or `could-not-run` gives `incomplete` (AC9, AC11).
   A missing code reviewer is never a pass.
 - `reviewers.security.status` of `not-installed` or `could-not-run` gives `incomplete`.
+- `reviewers.verifier` missing, `could-not-run`, `done` with a `verdict` of `incomplete` or null, or `done` for a commit that no longer counts for HEAD gives `incomplete`.
+  A verifier that did not run is never a pass and an old verifier pass does not carry across a code change.
 - A run record with no check for a step that `discover` returns for this HEAD, no `floor` or no `mutation` gives `incomplete` unless rule 1 matches.
   `stamp` names the missing records on stderr, so a run that skipped every step never stamps `pass`.
 - `floor` of `not-installed` is the one sibling that may be absent and still pass, as R13 says.

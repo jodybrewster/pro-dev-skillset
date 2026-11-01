@@ -144,6 +144,10 @@
     "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
   },
   {
+    "id": "pro-ai-sdlc/command:incident",
+    "reason": "a slash command the person types with an incident in hand; covered by tests/incident.mjs and the hand run in the after-build-loop plan"
+  },
+  {
     "id": "pro-ai-sdlc/agent:simplifier",
     "reason": "not covered by a positive case yet; intent and adr output quality are out of scope for the first eval set"
   },

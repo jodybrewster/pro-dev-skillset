@@ -26,9 +26,19 @@ repo that holds the current directory):
   check SHA                        the freshness verdict the gates use:
                                    {fresh, cause, status, head}. The contract is
                                    docs/ship-preflight.md.
+  deployed --target ID --env ENV [--url U] [--commit SHA] [--outcome succeeded|failed|rolled-back]
+           [--deployed-at ISO] [--checks FILE]
+  deployed --from-github --target ID [--env production]
+                                   write the deploy record of docs/loop-records.md to
+                                   .pro-dev/ship/deploys/<evidence_key>.json (plus the ignored
+                                   mieruka copy) and print {path, mieruka, why, status,
+                                   evidence_key}. It records a deploy that happened and never
+                                   runs one. --from-github reads the newest deployment and its
+                                   newest status for ENV through gh. Only http and https URLs
+                                   are kept; ENV is a-z, 0-9 and - and URL-encoded in the query.
 
-Python 3 standard library only. The only network calls are the gh calls in scope and
-coverage, each with a timeout. Nothing here deploys, tags, publishes or pushes.
+Python 3 standard library only. The only network calls are the gh calls in scope,
+coverage and deployed --from-github, each with a timeout. Nothing here deploys, tags, publishes or pushes.
 """
 from __future__ import annotations
 
@@ -39,7 +49,8 @@ import re
 import signal
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from urllib.parse import quote, urlparse
 
 GH_TIMEOUT = 30
 PULLS_LOOKUP_CAP = 60
@@ -918,6 +929,161 @@ def check(root: str, sha: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# deployed - the deploy record after a deploy happened (docs/loop-records.md)
+# ---------------------------------------------------------------------------
+
+SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+OUTCOMES = ("succeeded", "failed", "rolled-back")
+CHECK_STATUSES = ("pass", "finding", "confirm")
+DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks")
+GITHUB_OUTCOMES = {"success": "succeeded", "failure": "failed", "error": "failed"}
+
+
+def http_url(value) -> str | None:
+    """The URL when it is an absolute http or https one without spaces or control characters."""
+    if not isinstance(value, str) or not value or len(value) > 2000:
+        return None
+    if any(ord(c) <= 32 or ord(c) == 127 for c in value):
+        return None
+    p = urlparse(value)
+    return value if p.scheme in ("http", "https") and p.netloc and p.hostname else None
+
+
+def parse_time(text: str, what: str) -> datetime:
+    """An ISO 8601 time with an offset (Z counts as +00:00)."""
+    try:
+        t = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith(("Z", "z")) else text)
+    except ValueError:
+        raise Refuse(f"ship: {what} is not an ISO 8601 time: {text}")
+    if t.tzinfo is None:
+        raise Refuse(f"ship: {what} needs a UTC offset, for example 2026-11-02T10:15:00Z")
+    return t
+
+
+def read_checks(path: str) -> list[dict]:
+    try:
+        data = json.loads(read(path))
+    except ValueError as e:
+        raise Refuse(f"ship: {path} is not valid JSON ({e})")
+    if isinstance(data, dict):
+        data = data.get("checks")
+    if not isinstance(data, list):
+        raise Refuse("ship: the checks file must be a JSON array of {item, status, evidence}")
+    out = []
+    for c in data:
+        if (not isinstance(c, dict) or not isinstance(c.get("item"), str) or not c["item"].strip()
+                or c.get("status") not in CHECK_STATUSES):
+            raise Refuse(f"ship: every check needs an item and a status of {', '.join(CHECK_STATUSES)}")
+        ev = c.get("evidence", "")
+        if not isinstance(ev, str):
+            raise Refuse("ship: a check's evidence must be a string")
+        out.append({"item": c["item"], "status": c["status"], "evidence": ev})
+    return out
+
+
+def github_facts(root: str, env: str) -> dict:
+    """The newest deployment for env and its newest status, from gh. The env is URL-encoded."""
+    deps = gh_json(root, ["api", f"repos/{{owner}}/{{repo}}/deployments?environment={quote(env, safe='')}&per_page=1"],
+                   f"reading the {env} deployment")
+    dep = deps[0] if isinstance(deps, list) and deps else None
+    if not isinstance(dep, dict) or not dep.get("id") or not isinstance(dep.get("sha"), str) or not SHA.match(dep["sha"]):
+        raise Refuse(f"ship: GitHub has no deployment for the {env} environment")
+    sts = gh_json(root, ["api", f"repos/{{owner}}/{{repo}}/deployments/{int(dep['id'])}/statuses?per_page=1"],
+                  "reading the deployment status")
+    st = sts[0] if isinstance(sts, list) and sts and isinstance(sts[0], dict) else None
+    if not st:
+        raise Refuse(f"ship: the {env} deployment has no status yet")
+    outcome = GITHUB_OUTCOMES.get(st.get("state"))
+    if not outcome:
+        raise Refuse(f"ship: the newest {env} deployment status is {st.get('state')}, not a finished deploy")
+    when = st.get("created_at") or dep.get("created_at")
+    if not isinstance(when, str):
+        raise Refuse("ship: the deployment status has no time")
+    return {"commit": dep["sha"], "url": http_url(st.get("environment_url")), "outcome": outcome,
+            "deployed_at": parse_time(when, "the deployment time")}
+
+
+def cmd_deployed(root: str, args: list[str]) -> dict:
+    rest = [a for a in args if a != "--from-github"]
+    from_github = len(rest) != len(args)
+    for i, a in enumerate(rest):
+        if a.startswith("--") and a not in DEPLOY_FLAGS:
+            raise Refuse(f"ship: deployed: unknown option {a}")
+    opt = {n[2:].replace("-", "_"): flag(rest, n) for n in DEPLOY_FLAGS}
+    tid = opt["target"]
+    if not tid:
+        raise Refuse("ship: usage: deployed --target <id> --env <env> [--url U] [--commit SHA] "
+                     "[--outcome succeeded|failed|rolled-back] [--deployed-at ISO] [--checks FILE] | "
+                     "deployed --from-github --target <id> [--env production]")
+    known = {t["id"]: t for t in targets(root) if isinstance(t, dict) and isinstance(t.get("id"), str)}
+    if not SAFE_NAME.match(tid) or tid not in known:
+        listed = ", ".join(sorted(known)) or "none found"
+        raise Refuse(f"ship: --target {tid!r} is not a target of this repo. Targets: {listed}")
+    env = opt["env"] or ("production" if from_github else None)
+    if not env:
+        raise Refuse("ship: --env is required (production, staging, preview or another name)")
+    if not SAFE_NAME.match(env) or len(env) > 40:
+        raise Refuse("ship: --env may use only a-z, 0-9 and - (lowercase)")
+    if from_github:
+        for n in ("url", "commit", "outcome", "deployed_at"):
+            if opt[n]:
+                raise Refuse(f"ship: --from-github fills the facts itself; drop --{n.replace('_', '-')}")
+        facts = github_facts(root, env)
+        source = "github"
+    else:
+        url = None
+        if opt["url"]:
+            url = http_url(opt["url"])
+            if not url:
+                raise Refuse("ship: --url must be an http or https URL")
+        commit = rev(root, opt["commit"] or "HEAD")
+        if not commit:
+            raise Refuse(f"ship: {opt['commit'] or 'HEAD'} is not a commit of this repo")
+        outcome = opt["outcome"] or "succeeded"
+        if outcome not in OUTCOMES:
+            raise Refuse(f"ship: --outcome must be one of {', '.join(OUTCOMES)}")
+        when = parse_time(opt["deployed_at"], "--deployed-at") if opt["deployed_at"] else datetime.now().astimezone()
+        facts = {"commit": commit, "url": url, "outcome": outcome, "deployed_at": when}
+        source = "manual"
+    checks = read_checks(opt["checks"]) if opt["checks"] else []
+    commit, outcome, when = facts["commit"], facts["outcome"], facts["deployed_at"]
+    pre = check(root, commit)
+    pre_rec = read_json(os.path.join(root, ".pro-dev", "ship", "preflight.json")) if pre["cause"] != "missing" else None
+    pre_key = pre_rec.get("evidence_key") if isinstance(pre_rec, dict) and isinstance(pre_rec.get("evidence_key"), str) else None
+    findings = sum(1 for c in checks if c["status"] == "finding")
+    confirms = sum(1 for c in checks if c["status"] == "confirm")
+    status = "fail" if outcome != "succeeded" else ("partial" if findings or confirms else "pass")
+    short = commit[:12]
+    if outcome == "succeeded":
+        tail = [plural(findings, "finding")] if findings else []
+        tail += [plural(confirms, "check") + " to confirm"] if confirms else []
+        summary = f"{env}: deployed {short}" + "".join(f", {t}" for t in tail)
+    else:
+        summary = f"{env}: {'deploy failed' if outcome == 'failed' else 'rolled back'} {short}"
+    stamp = when.astimezone(timezone.utc).strftime("%Y%m%dt%H%M%Sz")
+    key = f"deploy-{tid}-{short}-{stamp}"
+    detail = {
+        "target": tid, "target_kind": known[tid].get("kind"), "env": env, "url": facts["url"],
+        "commit": commit, "deployed_at": when.isoformat(timespec="seconds"),
+        "created": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "source": source, "outcome": outcome,
+        "preflight": {"state": "fresh" if pre["cause"] is None else pre["cause"], "evidence_key": pre_key},
+        "checks": checks, "rollback": known[tid].get("rollback") or None,
+    }
+    record = {
+        "schema": 1, "head": commit, "evidence_key": key, "kind": "deploy", "artifact_kind": "deploy",
+        "artifact_key": tid, "status": status, "summary": summary, "detail_json": json.dumps(detail),
+        "produced_by": f"pro-ship:deployed@{plugin_version()}",
+    }
+    text = json.dumps(record, indent=2) + "\n"
+    ship_dir(root)
+    local = os.path.join(root, ".pro-dev", "ship", "deploys", key + ".json")
+    write_atomic(local, text)
+    copy, why = mieruka_copy(root, key, text)
+    return {"path": os.path.relpath(local, root), "mieruka": copy, "why": why, "status": status, "evidence_key": key}
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -946,6 +1112,8 @@ def main(argv: list[str]) -> int:
             emit(cmd_coverage(root, rest))
         elif cmd == "record":
             emit(cmd_record(root, rest))
+        elif cmd == "deployed":
+            emit(cmd_deployed(root, rest))
         elif cmd == "check":
             if len(rest) != 1:
                 raise Refuse("ship: usage: check <sha>")

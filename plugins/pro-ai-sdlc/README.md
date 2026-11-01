@@ -17,7 +17,8 @@ Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this o
 | Plan | `/plan` | `plan.md` beside the spec |
 | Build | `/execute` | a worktree and branch off the default branch, the built change, the plan's Done section and an open PR; never a merge |
 | Decision | `/adr` | an ADR for a decision with no change behind it |
-| Review | `/review` | findings, nothing on disk |
+| Review | `/review` | findings, a local finding ledger and, on a yes, one line in the agent file when a class of finding repeats |
+| Incident | `/incident` | `incident.md` beside a new `intent.md`, with the raw evidence kept out of git |
 | PR | `/pr-babysit` | fixes on the PR branch, never a merge |
 | Setup | `/pro-dev install` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
 
@@ -29,6 +30,7 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 - `templates/spec.md`
 - `templates/plan.md`
 - `templates/adr.md`
+- `templates/incident.md`
 - `templates/REVIEW.md`
 - `references/definition-of-done.md`, the standing definition of done that every plan's `## Done` section cites
 
@@ -49,6 +51,15 @@ Two scripts hold the parts that must not depend on the model:
 The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`; the session moves into it.
 `/execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
 The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
+
+## Records
+
+`/incident`, `/review` and the visual check in `/execute` write records in the shape of [docs/loop-records.md](../../docs/loop-records.md), through `scripts/evidence.py`.
+Each lands under the excluded `.pro-dev/` and, when the repo has an ignored `.mieruka/evidence/`, there too.
+
+- `scripts/incident.py` prepares the excluded evidence folder, refuses an `incident.md` that holds a credential and writes the incident record.
+- `scripts/lessons.py` keeps the finding ledger and writes a review lesson when a class repeats on a second change.
+- `scripts/visual.py` copies a screenshot and writes the visual check of a UI step against the plan's `Mock:`.
 
 ## Decisions
 

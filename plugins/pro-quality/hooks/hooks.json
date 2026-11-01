@@ -23,6 +23,16 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/format-on-edit.py\"",
+            "timeout": 40
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {

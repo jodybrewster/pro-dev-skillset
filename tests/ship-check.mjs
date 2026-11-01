@@ -8,7 +8,7 @@
 //
 // Also exported as runShipCheckCases() for tests/check.mjs.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, copyFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, copyFileSync, symlinkSync, chmodSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -232,7 +232,7 @@ export function runShipCheckCases() {
       const head = commit(repo, { "a.txt": "2\n" }, "feature");
       mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
       writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...GOOD_RUN }));
-      const r = pc(repo, ["stamp", "--base", baseSha, "--reviewers", JSON.stringify(codex === undefined ? REV : { ...REV, codex })]);
+      const r = pc(repo, ["stamp", "--base", baseSha, "--reviewers", JSON.stringify({ ...REV, verifier: { agent: "pro-ai-sdlc:verifier", status: "done", verdict: "pass", head }, ...(codex === undefined ? {} : { codex }) })]);
       let st = null;
       try { st = JSON.parse(readFileSync(join(repo, ".pro-dev", "ship", "pr-check.json"), "utf8")); } catch { /* none */ }
       return { r, st };
@@ -618,6 +618,9 @@ export function runShipCheckCases() {
       mutation: { status: "killed", reason: null, file: "src/index.ts", accepted: false }, sources: { "floor-guard": "/x/floor-guard.py" } };
     const rv = (status, extra = {}) => ({ agent: status === "done" ? "pro-quality:code-reviewer" : null, status, blocking: 0, important: 0, range: null, ...extra });
     const GOOD_REV = { code: rv("done", { range: "BASE..HEAD" }), security: rv("skipped-no-surface") };
+    // R10 to R12: a verifier record. `stamp` adds a counted pass for the case's HEAD unless the
+    // reviewers already have a `verifier` key; `verifier: "omit"` leaves the key out.
+    const vr = (head, extra = {}) => ({ agent: "pro-ai-sdlc:verifier", status: "done", verdict: "pass", head, ...extra });
 
     // A repo with a base on main and one feature commit; run.json is written for HEAD with `over` applied.
     const prep = (over = {}) => {
@@ -629,7 +632,12 @@ export function runShipCheckCases() {
       writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...JSON.parse(JSON.stringify(GOOD_RUN)), ...over }));
       return { repo, baseSha, head };
     };
-    const stamp = (p, rev = GOOD_REV, extra = []) => pc(p.repo, ["stamp", "--base", p.baseSha, "--reviewers", JSON.stringify(rev), ...extra]);
+    const withV = (rev, head) => {
+      if (!("verifier" in rev)) return { ...rev, verifier: vr(head) };
+      if (rev.verifier === "omit") { const { verifier, ...rest } = rev; return rest; }
+      return rev;
+    };
+    const stamp = (p, rev = GOOD_REV, extra = [], opts = {}) => pc(p.repo, ["stamp", "--base", p.baseSha, "--reviewers", JSON.stringify(withV(rev, p.head)), ...extra], opts);
     const result = (r) => r.json?.result;
     const written = (p) => { try { return JSON.parse(readFileSync(join(p.repo, ".pro-dev", "ship", "pr-check.json"), "utf8")); } catch { return null; } };
     const keys = (o) => Object.keys(o || {}).sort().join(",");
@@ -703,6 +711,7 @@ export function runShipCheckCases() {
     inc("s3f a security reviewer not-installed gives incomplete", "security", withRun({}, { ...GOOD_REV, security: rv("not-installed") }));
     inc("s3g a reviewer that could not run gives incomplete", "code cnr", withRun({}, { ...GOOD_REV, code: rv("could-not-run") }));
     inc("s3h reviewers left out give incomplete", "no --reviewers", (() => { const q = prep(); return pc(q.repo, ["stamp", "--base", q.baseSha]); })());
+    inc("s3i a missing verifier key gives incomplete (AC3)", "no verifier", withRun({}, { ...GOOD_REV, verifier: "omit" }));
 
     add("s4 --accept-mutation turns survived into pass and records accepted", "pass with accepted true",
       (() => { const q = prep({ mutation: { status: "survived", reason: null, file: "a.py", accepted: false } }); const x = stamp(q, GOOD_REV, ["--accept-mutation"]); return result(x) === "pass" && written(q)?.mutation.accepted === true; })(), "");
@@ -774,9 +783,11 @@ export function runShipCheckCases() {
     git(p.repo, "worktree", "add", "-q", "-b", "wtb", wt, p.head);
     mkdirSync(join(wt, ".pro-dev", "ship"), { recursive: true });
     writeFileSync(join(wt, ".pro-dev", "ship", "run.json"), JSON.stringify({ head: p.head, ...GOOD_RUN }));
-    r = pc(wt, ["stamp", "--base", p.baseSha, "--reviewers", JSON.stringify(GOOD_REV)]);
+    r = pc(wt, ["stamp", "--base", p.baseSha, "--reviewers", JSON.stringify({ ...GOOD_REV, verifier: vr(p.head) })]);
     add("s7 in a linked worktree the stamp is written and the tree stays clean", "pass and empty status",
       r.status === 0 && result(r) === "pass" && git(wt, "status", "--short").stdout.trim() === "", r.stdout + r.stderr + git(wt, "status", "--short").stdout);
+
+    verifierCases();
 
     // End to end: real run steps (with the fake floor sibling layout), then stamp.
     const lay = { base: join(sandbox, "e2e"), script: null };
@@ -793,9 +804,199 @@ export function runShipCheckCases() {
     pc(e, ["run", "--step", "verify:1"], o);
     pc(e, ["run", "--step", "floor"], o);
     pc(e, ["run", "--step", "mutation", "--base", eBase], o);
-    r = pc(e, ["stamp", "--base", eBase, "--reviewers", JSON.stringify(GOOD_REV)], o);
+    r = pc(e, ["stamp", "--base", eBase, "--reviewers", JSON.stringify({ ...GOOD_REV, verifier: { agent: null, status: "not-installed", verdict: null, head: null } })], o);
     add("s8 run steps then stamp give a passing stamp that names the floor script", "pass, skipped mutation, floor pass",
       r.json?.result === "pass" && r.json.floor === "pass" && r.json.mutation.status === "skipped" && r.json.sources["floor-guard"].endsWith("floor-guard.py"), r.stdout + r.stderr);
+
+    // AC3 (R10 to R12): the verifier pass. The script's own plugin layout decides what
+    // find_sibling reports for pro-ai-sdlc, so the cases run a copy of pr-check.py in a folder
+    // that has a pro-ai-sdlc sibling (verifier found) or has none (not installed). The default
+    // script in this repo always has the sibling.
+    function verifierCases() {
+      const layout = (name, withVerifier) => {
+        const b = join(sandbox, name);
+        mkdirSync(join(b, "plugins", "pro-ship", "scripts"), { recursive: true });
+        copyFileSync(PRCHECK, join(b, "plugins", "pro-ship", "scripts", "pr-check.py"));
+        if (withVerifier) {
+          mkdirSync(join(b, "plugins", "pro-ai-sdlc", "agents"), { recursive: true });
+          writeFileSync(join(b, "plugins", "pro-ai-sdlc", "agents", "verifier.md"), "---\nname: verifier\n---\n");
+        }
+        return { script: join(b, "plugins", "pro-ship", "scripts", "pr-check.py") };
+      };
+      const found = layout("lay-found", true), absent = layout("lay-absent", false);
+      // Like prep() but the feature branch has two commits, so the verifier can have run on the first.
+      const prepV = () => {
+        const repo = mkrepo({ "a.txt": "1\n", "src/auth.ts": "x\n", "intent/k/plan.md": "p\n" });
+        const baseSha = git(repo, "rev-parse", "HEAD").stdout.trim();
+        git(repo, "checkout", "-q", "-b", "feat");
+        const first = commit(repo, { "a.txt": "2\n" }, "feature");
+        return { repo, baseSha, first, head: first };
+      };
+      const finish = (q) => {
+        q.head = git(q.repo, "rev-parse", "HEAD").stdout.trim();
+        mkdirSync(join(q.repo, ".pro-dev", "ship"), { recursive: true });
+        writeFileSync(join(q.repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head: q.head, ...JSON.parse(JSON.stringify(GOOD_RUN)) }));
+        return q;
+      };
+      const run = (q, v, opts = found) => {
+        const rev = { ...GOOD_REV, verifier: v };
+        return { x: stamp(q, rev, [], opts), st: written(q) };
+      };
+      const want = (id, res, o, expect) => add(id, expect, o.x.status === 0 && o.st?.result === res, o.x.stdout + o.x.stderr);
+
+      let q = finish(prepV());
+      let o = run(q, vr(q.head));
+      want("v1 a counted passing verifier gives pass", "pass", o, "pass");
+      add("v1b the stamp stores the four verifier fields", "agent, head, status, verdict", Object.keys(o.st?.reviewers?.verifier || {}).sort().join(",") === "agent,head,status,verdict" && o.st.reviewers.verifier.head === q.head, JSON.stringify(o.st?.reviewers));
+      q = finish(prepV());
+      o = run(q, "omit");
+      want("v2 no verifier key gives incomplete", "incomplete", o, "incomplete");
+      add("v2b the missing verifier is stored as could-not-run", "could-not-run", o.st?.reviewers?.verifier?.status === "could-not-run", JSON.stringify(o.st?.reviewers));
+      q = finish(prepV());
+      o = run(q, vr(q.head, { verdict: "fail" }));
+      want("v3 a counted failing verifier gives fail", "fail", o, "fail");
+      q = finish(prepV());
+      o = run(q, vr(q.head, { verdict: "incomplete" }));
+      want("v3b a counted incomplete verdict gives incomplete", "incomplete", o, "incomplete");
+      q = finish(prepV());
+      o = run(q, vr(q.head, { status: "could-not-run", verdict: null, head: null, agent: null }));
+      want("v3c a verifier that could not run gives incomplete", "incomplete", o, "incomplete");
+      q = finish(prepV());
+      o = run(q, vr(null, { verdict: "pass" }));
+      want("v3d a done verifier with no head gives incomplete", "incomplete", o, "incomplete");
+      q = prepV();
+      commit(q.repo, { "src/auth.ts": "y\n" }, "more code");
+      o = run(finish(q), vr(q.first, { verdict: "fail" }));
+      want("v3e a failing verdict on an ancestor that code changed since is not counted (incomplete, not fail)", "incomplete", o, "incomplete");
+      q = finish(prepV());
+      const nv = { agent: null, status: "not-installed", verdict: null, head: null };
+      o = run(q, nv, absent);
+      want("v4 not-installed when no verifier is found gives pass", "pass", o, "pass");
+      q = finish(prepV());
+      o = run(q, nv, found);
+      add("v5 not-installed is refused when the verifier is found", "exit 1, no stamp", o.x.status === 1 && /installed/.test(o.x.stderr) && o.st === null, o.x.stdout + o.x.stderr);
+      // Install-record layouts: the script runs from a cache folder with no sibling.
+      const instV = (name, scope) => {
+        const d = join(sandbox, "inst", name);
+        mkdirSync(join(d, "agents"), { recursive: true });
+        writeFileSync(join(d, "agents", "verifier.md"), "---\nname: verifier\n---\n");
+        writeFileSync(join(env.CLAUDE_CODE_PLUGIN_CACHE_DIR, "installed_plugins.json"), JSON.stringify({ version: 2, plugins: { "pro-ai-sdlc@mkt": [{ scope, ...(scope === "user" ? {} : { projectPath: q.repo }), installPath: d, version: "1" }] } }));
+      };
+      const noRecords = () => rmSync(join(env.CLAUDE_CODE_PLUGIN_CACHE_DIR, "installed_plugins.json"), { force: true });
+      const OFF = JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": false } });
+      const disable = (dir, name = "settings.json", body = OFF) => { mkdirSync(join(dir, ".claude"), { recursive: true }); writeFileSync(join(dir, ".claude", name), body); };
+      q = finish(prepV());
+      instV("v8a", "user");
+      o = run(q, nv, absent);
+      add("v5b an enabled user install still refuses not-installed", "exit 1, no stamp", o.x.status === 1 && o.st === null, o.x.stdout + o.x.stderr);
+      disable(env.HOME);
+      o = run(q, nv, absent);
+      want("v5c a user install disabled in user settings accepts not-installed", "pass", o, "pass");
+      add("v5c2 the stamp names the disabling source", "user settings", o.st?.reviewers?.verifier?.disabled_by === "user settings", JSON.stringify(o.st?.reviewers?.verifier));
+      rmSync(join(env.HOME, ".claude"), { recursive: true, force: true });
+      q = finish(prepV());
+      instV("v8b", "project");
+      disable(q.repo);
+      o = run(q, nv, absent);
+      add("v5d0 a settings file that is not committed does not disable", "exit 1, no stamp", o.x.status === 1 && o.st === null, o.x.stdout + o.x.stderr);
+      // Committed settings: HEAD carries the disabling file, the stamp is made on that commit.
+      q = prepV();
+      instV("v8d", "project");
+      commit(q.repo, { ".claude/settings.json": OFF }, "disable verifier");
+      q = finish(q);
+      o = run(q, nv, absent);
+      want("v5d a project install disabled in the committed repo settings accepts not-installed", "pass", o, "pass");
+      add("v5d2 the stamp names the committed project settings", "committed project settings", o.st?.reviewers?.verifier?.disabled_by === "committed project settings", JSON.stringify(o.st?.reviewers?.verifier));
+      // Working copy re-enabled while HEAD disables (hidden from git status): HEAD wins.
+      git(q.repo, "update-index", "--skip-worktree", ".claude/settings.json");
+      writeFileSync(join(q.repo, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": true } }));
+      o = run(q, nv, absent);
+      want("v5f the HEAD copy wins over a differing working copy", "pass", o, "pass");
+      noRecords();
+      q = finish(prepV());
+      instV("v8c", "project");
+      disable(q.repo, "settings.local.json");
+      o = run(q, nv, absent);
+      add("v5g only settings.local.json disabling is ignored, not-installed is refused", "exit 1, no stamp", o.x.status === 1 && o.st === null, o.x.stdout + o.x.stderr);
+      noRecords();
+      q = finish(prepV());
+      mkdirSync(join(q.repo, "plugins", "pro-ai-sdlc", "agents"), { recursive: true });
+      writeFileSync(join(q.repo, "plugins", "pro-ai-sdlc", "agents", "verifier.md"), "---\nname: verifier\n---\n");
+      mkdirSync(join(q.repo, ".claude-plugin"), { recursive: true });
+      writeFileSync(join(q.repo, ".claude-plugin", "marketplace.json"), JSON.stringify({ name: "m", plugins: [{ name: "pro-ai-sdlc", source: "./plugins/pro-ai-sdlc" }] }));
+      o = run(q, nv, absent);
+      want("v5e only the repo's own plugins/pro-ai-sdlc accepts not-installed", "pass", o, "pass");
+      q = finish(prepV());
+      o = run(q, vr(q.head, { agent: "pro-quality:code-reviewer" }));
+      add("v6 a done result from another agent is refused", "exit 1, no stamp", o.x.status === 1 && o.st === null, o.x.stdout + o.x.stderr);
+      // Refusal, not incomplete: a head that is not 40 lowercase hex never reaches git.
+      for (const bad of ["--output=x", "HEAD", q.head.toUpperCase(), q.head.slice(0, 12), `${q.head}\n`]) {
+        q = finish(prepV());
+        o = run(q, vr(bad));
+        add(`v7 a bad head ${JSON.stringify(bad).slice(0, 24)} is refused`, "exit 1, no stamp", o.x.status === 1 && /head/.test(o.x.stderr) && o.st === null, o.x.stdout + o.x.stderr);
+      }
+      q = finish(prepV());
+      o = run(q, vr("0".repeat(40)));
+      want("v7b a well-formed head that is not a commit gives incomplete", "incomplete", o, "incomplete");
+      q = finish(prepV());
+      o = run(q, vr(q.head, { verdict: "maybe" }));
+      add("v7c an unknown verdict is refused", "exit 1", o.x.status === 1, o.x.stdout + o.x.stderr);
+      // R11: only top-level intent/ changed since the verifier's head.
+      q = prepV();
+      commit(q.repo, { "intent/k/plan.md": "p2\n", "intent/k/new.md": "n\n" }, "plan");
+      o = run(finish(q), vr(q.first));
+      want("v8 only intent/ changed since the verifier's head still counts", "pass", o, "pass");
+      q = prepV();
+      commit(q.repo, { "intent/k/plan.md": "p2\n", "src/auth.ts": "y\n" }, "plan and code");
+      o = run(finish(q), vr(q.first));
+      want("v8b a code change beside intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      commit(q.repo, { "docs/intent/x.md": "x\n" }, "nested intent");
+      o = run(finish(q), vr(q.first));
+      want("v8c a nested intent/ folder does not count as the top-level one", "incomplete", o, "incomplete");
+      q = prepV();
+      commit(q.repo, { "intentional/x.md": "x\n" }, "prefix");
+      o = run(finish(q), vr(q.first));
+      want("v8d a folder that only starts with the letters intent does not count", "incomplete", o, "incomplete");
+      q = prepV();
+      git(q.repo, "mv", "src/auth.ts", "intent/k/auth.ts");
+      git(q.repo, "commit", "-q", "-m", "move auth into intent");
+      o = run(finish(q), vr(q.first));
+      want("v9 a file renamed into intent/ voids it (AC3)", "incomplete", o, "incomplete");
+      q = prepV();
+      git(q.repo, "rm", "-q", "src/auth.ts");
+      git(q.repo, "commit", "-q", "-m", "delete code");
+      o = run(finish(q), vr(q.first));
+      want("v9b a deletion outside intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      git(q.repo, "mv", "intent/k/plan.md", "docs-plan.md");
+      git(q.repo, "commit", "-q", "-m", "move plan out");
+      o = run(finish(q), vr(q.first));
+      want("v9c a file renamed out of intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      symlinkSync("../src/auth.ts", join(q.repo, "intent", "k", "link.md"));
+      git(q.repo, "add", "-A"); git(q.repo, "commit", "-q", "-m", "symlink in intent");
+      o = run(finish(q), vr(q.first));
+      want("v10 a symlink under intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      chmodSync(join(q.repo, "intent", "k", "plan.md"), 0o755);
+      git(q.repo, "add", "-A"); git(q.repo, "commit", "-q", "-m", "mode change");
+      o = run(finish(q), vr(q.first));
+      want("v11 a mode change under intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      git(q.repo, "update-index", "--add", "--cacheinfo", `160000,${q.first},intent/k/sub`);
+      mkdirSync(join(q.repo, "intent", "k", "sub"), { recursive: true });
+      git(q.repo, "commit", "-q", "-m", "submodule entry");
+      o = run(finish(q), vr(q.first));
+      want("v12 a submodule entry under intent/ voids it", "incomplete", o, "incomplete");
+      q = prepV();
+      git(q.repo, "checkout", "-q", "-b", "other", q.baseSha);
+      commit(q.repo, { "intent/k/plan.md": "other\n" }, "side");
+      const side = git(q.repo, "rev-parse", "HEAD").stdout.trim();
+      git(q.repo, "checkout", "-q", "feat");
+      o = run(finish(q), vr(side));
+      want("v13 a head that is not an ancestor of HEAD is not counted", "incomplete", o, "incomplete");
+    }
   }
 }
 
