@@ -669,6 +669,8 @@ export function runLegalHookCases({ only = null } = {}) {
   pfDeny("foreign-producer", goRepo({ produced_by: "other-tool" }));
   pfDeny("wrong-schema", goRepo({ schema: 2 }));
   pfDeny("bad-detail-json", goRepo({ detail_json: "{" }));
+  pfDeny("legal-head-other-commit", goRepo({}, { legal: { head: "0".repeat(40) } }));
+  pfDeny("legal-head-missing", goRepo({}, { legal: { head: null } }));
   pfDeny("legal-base-newer-than-tag", goRepo({}, { afterTag: true }));
   const pfUnread = goRepo();
   write(pfUnread, ".pro-dev/ship/preflight.json", "not json");

@@ -1,12 +1,12 @@
 # Report layout
 
-`/ship` writes the report as Markdown, once, and passes it as `report_md` in `report.json`.
+`/ship` writes the report as Markdown, once and passes it as `report_md` in `report.json`.
 The record writes it to `.pro-dev/ship/preflight.md`.
 The sections come in this order.
 Leave out Rollout plan when no target is `deploy-on-merge` or `manual-deploy`.
 
 ````markdown
-## Ship decision: GO | GO with 1 accepted risk | NO-GO (2 Blockers)
+## Ship decision: GO | GO (1 accepted risk) | NO-GO (2 Blockers)
 
 ### Scope
 - Targets: [id (kind), one per line]
@@ -22,7 +22,7 @@ Leave out Rollout plan when no target is `deploy-on-merge` or `manual-deploy`.
 - [Source: finding + evidence]
 
 ### Acknowledged risks (shipping anyway)
-- [Risk + mitigation. Accepted by: name, at: ISO 8601]
+- [Risk + mitigation. Accepted by: name, at: ISO 8601. A Blocker the person accepted moves here from Blockers and carries `accepted_by` and `accepted_at` in `report.json`]
 - [Feature flag the range adds + its default]
 
 ### Rollout plan

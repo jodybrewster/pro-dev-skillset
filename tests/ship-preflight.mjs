@@ -37,6 +37,7 @@ if [ -n "$GH_STUB_FAIL" ]; then echo "HTTP 502: bad gateway" >&2; exit 1; fi
 case "$1 $2" in
   "pr list") cat "$d/pr-list.json" ;;
   "pr view") cat "$d/pr-view.json" ;;
+  "api user") if [ -f "$d/user.txt" ]; then cat "$d/user.txt"; else echo me; fi ;;
   "api repos/{owner}/{repo}/compare/"*) cat "$d/compare.txt" ;;
   "api repos/{owner}/{repo}/deployments?"*) cat "$d/deployments.json" ;;
   "api repos/{owner}/{repo}/deployments/"*) cat "$d/status-$(echo "$2" | sed 's|.*/deployments/\\([0-9]*\\)/.*|\\1|').json" ;;
@@ -161,6 +162,37 @@ export function runShipPreflightCases() {
     git(repo, "tag", "v1.0.0");
     r = ship(repo, ["targets"]);
     add("targets/an existing v* tag is a tag-release target", "tag-release", r.status === 0 && kinds(r).join() === "tag-release", r.stdout + r.stderr);
+    for (const tag of ["pro-ship--v0.9.2", "1.2.3", "name@1.2.3", "v1.2.3-rc.1", "release_v2.0.0"]) {
+      repo = mkrepo({ "x.txt": "1\n" });
+      git(repo, "tag", tag);
+      r = ship(repo, ["targets"]);
+      add(`targets/a ${tag} tag is a tag-release target`, "tag-release", r.status === 0 && kinds(r).join() === "tag-release", r.stdout + r.stderr);
+    }
+    for (const tag of ["v1", "latest", "release1.2.3", "v1.2", "stable-2024"]) {
+      repo = mkrepo({ "x.txt": "1\n" });
+      git(repo, "tag", tag);
+      r = ship(repo, ["targets"]);
+      add(`targets/a ${tag} tag is not a release tag`, "no targets", r.status === 0 && r.json.length === 0, r.stdout + r.stderr);
+    }
+    const patternBlock = (pat) => `## Ship\n\n\`\`\`yaml\ntag_pattern: "${pat}"\n\`\`\`\n`;
+    repo = mkrepo({ "AGENTS.md": patternBlock("rel-*") });
+    git(repo, "tag", "rel-5");
+    r = ship(repo, ["targets"]);
+    add("targets/a Ship block with only tag_pattern uses it to find tag-release", "tag-release", r.status === 0 && kinds(r).join() === "tag-release", r.stdout + r.stderr);
+    repo = mkrepo({ "AGENTS.md": patternBlock("rel-*") });
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["targets"]);
+    add("targets/tag_pattern overrides the semver rule", "no targets", r.status === 0 && r.json.length === 0, r.stdout + r.stderr);
+    repo = mkrepo({ "AGENTS.md": patternBlock("-x") });
+    r = ship(repo, ["targets"]);
+    add("targets/a tag_pattern that looks like an option is refused", "exit 1", r.status === 1 && /tag_pattern/.test(r.stderr), r.stdout + r.stderr);
+    // This marketplace's own Ship block: one tag-release target, per-plugin tags.
+    r = ship(ROOT, ["targets", "--root", ROOT]);
+    add("targets/this repo's CLAUDE.md declares one tag-release target with a rollback and a tag_pattern",
+      "marketplace tag-release, rollback steps, evidence CLAUDE.md",
+      r.status === 0 && r.json.length === 1 && r.json[0].id === "marketplace" && r.json[0].kind === "tag-release"
+        && r.json[0].rollback?.steps?.length >= 1 && r.json[0].evidence[0] === "CLAUDE.md"
+        && /^\s*tag_pattern: "\*--v\*"$/m.test(readFileSync(join(ROOT, "CLAUDE.md"), "utf8")), r.stdout + r.stderr);
     repo = mkrepo({ "x.txt": "1\n" });
     r = ship(repo, ["targets"]);
     add("targets/a repo with nothing to ship has no targets", "empty list", r.status === 0 && Array.isArray(r.json) && r.json.length === 0, r.stdout + r.stderr);
@@ -194,6 +226,8 @@ export function runShipPreflightCases() {
     const m6 = merge("pr6");
     const tip = head(repo);
     const oid = (s) => ({ oid: s });
+    // Every PR below is by the current gh user ("me") from a branch in this repo unless a case says otherwise.
+    const own = { author: { login: "me" }, authorAssociation: "NONE", isCrossRepository: false };
     const list = [
       { number: 1, headRefOid: p1a, mergeCommit: oid(m1), body: marker(p1a) },
       { number: 2, headRefOid: p2b, mergeCommit: oid(m2), body: marker(p2a) },
@@ -201,22 +235,42 @@ export function runShipPreflightCases() {
       { number: 4, headRefOid: p2b, mergeCommit: oid(squashPartial), body: marker(p2a) },
       { number: 5, headRefOid: "5".repeat(40), mergeCommit: oid(r2), body: marker("5".repeat(40)) },
       { number: 6, headRefOid: nomark[0], mergeCommit: oid(m6), body: "no marker here" },
-    ];
+    ].map((p) => ({ ...own, ...p }));
     const dir = stubDir({
       "pr-list.json": list,
-      [`pulls-${r1}.json`]: [{ number: 5, merged_at: "2026-11-01T00:00:00Z", head: { sha: "5".repeat(40) }, body: marker("5".repeat(40)), merge_commit_sha: r2 }],
+      [`pulls-${r1}.json`]: [{ number: 5, merged_at: "2026-11-01T00:00:00Z", body: marker("5".repeat(40)), merge_commit_sha: r2,
+        user: { login: "me" }, author_association: "NONE", head: { sha: "5".repeat(40), repo: { full_name: "o/r" } }, base: { repo: { full_name: "o/r" } } }],
     });
     const r = ship(repo, ["coverage", base, tip], { env: { GH_STUB_DIR: dir } });
     const unc = new Set(r.json?.uncovered || []), cov = new Set(r.json?.covered || []);
-    const want = { covered: [p1a, m1, p2a, m2, squash, r1, r2], uncovered: [p2b, direct, squashPartial, nomark[0], m6] };
+    const want = { covered: [p1a, m1, p2a, squash, r1, r2], uncovered: [p2b, m2, direct, squashPartial, nomark[0], m6] };
     const ok = r.status === 0 && want.covered.every((s) => cov.has(s)) && want.uncovered.every((s) => unc.has(s))
       && unc.size === want.uncovered.length && cov.size === want.covered.length;
-    add("coverage/merge, squash, rebase, partial marker, no marker and a direct push", "only the later commit of PR 2, the partial squash, the unmarked PR and the direct push are uncovered",
+    add("coverage/merge, squash, rebase, partial marker, no marker and a direct push", "only the later commit and the merge commit of PR 2, the partial squash, the unmarked PR and the direct push are uncovered",
       ok, `${r.stderr} uncovered=${[...unc].map((s) => s.slice(0, 7))} covered=${[...cov].map((s) => s.slice(0, 7))}`);
     const byNum = Object.fromEntries((r.json?.prs || []).map((p) => [p.number, p]));
     add("coverage/the PR records say which PR is covered and carry the marker", "PR 1 covered, PR 2 not, marker head shown",
       byNum[1]?.covered === true && byNum[2]?.covered === false && byNum[2]?.marker?.head === p2a && byNum[6]?.marker === null && byNum[5]?.covered === true,
       JSON.stringify(r.json?.prs));
+
+    // Who wrote the marker matters: it is the PR author's word.
+    const covers = (label, expectCovered, over, extraFiles = {}) => {
+      const d = stubDir({ "pr-list.json": [{ ...own, number: 1, headRefOid: p1a, mergeCommit: oid(m1), body: marker(p1a), ...over }], ...extraFiles });
+      const x = ship(repo, ["coverage", base, m1], { env: { GH_STUB_DIR: d } });
+      const got = x.status === 0 && x.json.covered.includes(m1) && x.json.covered.includes(p1a);
+      add(`coverage/${label}`, expectCovered ? "covered" : "uncovered", x.status === 0 && got === expectCovered && (expectCovered || x.json.covered.length === 0), x.stdout + x.stderr);
+    };
+    covers("a marker on a PR by the current gh user covers", true, {});
+    covers("a pass marker on a fork PR covers nothing, even from the current gh user", false, { isCrossRepository: true });
+    covers("a pass marker on a PR by an outside contributor covers nothing", false, { author: { login: "stranger" }, authorAssociation: "CONTRIBUTOR" });
+    covers("a pass marker on a PR by a first-time contributor covers nothing", false, { author: { login: "stranger" }, authorAssociation: "FIRST_TIME_CONTRIBUTOR" });
+    covers("a PR by a collaborator is covered", true, { author: { login: "mate" }, authorAssociation: "COLLABORATOR" });
+    covers("a PR by a member is covered", true, { author: { login: "mate" }, authorAssociation: "MEMBER" });
+    covers("a PR by the owner is covered", true, { author: { login: "boss" }, authorAssociation: "OWNER" });
+    covers("a PR with no author data covers nothing", false, { author: null, authorAssociation: undefined });
+    covers("a PR with no cross-repository flag covers nothing", false, { isCrossRepository: undefined });
+    covers("two markers in one body cover nothing", false, { body: marker(p1a) + marker(p1a) });
+    covers("a pass marker followed by a forged second one covers nothing", false, { body: marker(p1a) + marker(p1a, "pass", "low") });
 
     // A non-pass marker and a marker for a different head cover nothing.
     const bad = stubDir({ "pr-list.json": [
@@ -276,6 +330,26 @@ export function runShipPreflightCases() {
     r = ship(repo, ["scope"], { env: { GH_STUB_FAIL: "1" } });
     add("scope/a tag-release repo starts at the newest reachable tag without calling gh", "kind tag, base is the tag",
       r.status === 0 && r.json.kind === "tag" && r.json.base === t1 && r.json.last_deploy_source === "tag", r.stdout + r.stderr);
+
+    // Per-plugin tags (name--vX.Y.Z) and bare semver tags are release tags; tag_pattern narrows them.
+    for (const tag of ["pro-ship--v0.9.2", "1.2.3", "name@1.2.3"]) {
+      repo = treeRepo("tag-only");
+      const at = head(repo);
+      git(repo, "tag", tag);
+      commit(repo, { "n.txt": "1\n" });
+      r = ship(repo, ["scope"]);
+      add(`scope/the ${tag} tag is the base`, "base is the tag", r.status === 0 && r.json.base === at && r.json.last_deploy_source === "tag", r.stdout + r.stderr);
+    }
+    repo = treeRepo("tag-only");
+    const early = head(repo);
+    git(repo, "tag", "pro-ship--v0.9.2");
+    commit(repo, { "n.txt": "1\n" });
+    git(repo, "tag", "v2.0.0");
+    commit(repo, { "n2.txt": "1\n" });
+    put(repo, { "CLAUDE.md": "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: market\n    kind: tag-release\n    rollback:\n      steps: [revert]\ntag_pattern: \"*--v*\"\nlast_deploy: tag\n```\n" });
+    git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "ship block");
+    r = ship(repo, ["scope"]);
+    add("scope/tag_pattern in the Ship block picks the base and skips other tags", "base is the pattern tag, not v2.0.0", r.status === 0 && r.json.base === early, r.stdout + r.stderr);
 
     // Nothing to start from: base null, source none; the skill asks.
     repo = treeRepo("tag-only");
@@ -365,6 +439,27 @@ export function runShipPreflightCases() {
     t = mk();
     r = rec(t.repo, report("f".repeat(40), t.b));
     add("record/refuses a report for another commit", "exit 1", r.status === 1 && /another commit/.test(r.stderr), r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { verdict: "GO with acknowledged risks" }));
+    add("record/refuses the verdict GO with acknowledged risks (an accepted risk is a risk with accepted_by)", "exit 1", r.status === 1 && /GO or NO-GO/.test(r.stderr), r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { targets: [] }));
+    add("record/refuses a GO with no targets", "exit 1, no file", r.status === 1 && /no target/.test(r.stderr) && !existsSync(join(t.repo, ".pro-dev", "ship", "preflight.json")), r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { verdict: "NO-GO", targets: [], blockers: [{ text: "nothing ships", evidence: "targets" }] }));
+    add("record/accepts a NO-GO with no targets", "exit 0, status fail", r.status === 0 && r.json.status === "fail", r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { legal: { status: "done", verdict: "Ship", base: t.b, head: t.b, blocking: 0, required: 0 } }));
+    add("record/refuses a done legal review of another commit", "exit 1, no file", r.status === 1 && /legal\.head/.test(r.stderr) && !existsSync(join(t.repo, ".pro-dev", "ship", "preflight.json")), r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { legal: { status: "done", verdict: "Ship", base: t.b, head: null, blocking: 0, required: 0 } }));
+    add("record/refuses a done legal review with no head", "exit 1", r.status === 1 && /legal\.head/.test(r.stderr), r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { legal: { status: "done", verdict: "Ship", base: t.b, head: t.h, blocking: 0, required: 0 } }));
+    add("record/accepts a done legal review of this commit", "exit 0", r.status === 0, r.stdout + r.stderr);
+    t = mk();
+    r = rec(t.repo, report(t.h, t.b, { legal: { status: "could-not-run", verdict: null, base: null, head: null, blocking: 0, required: 0 } }));
+    add("record/a legal review that did not run needs no head", "exit 0", r.status === 0, r.stdout + r.stderr);
     t = mk();
     r = rec(t.repo, report(t.h, t.b, { verdict: "MAYBE" }));
     add("record/refuses a verdict that is not GO or NO-GO", "exit 1", r.status === 1, r.stdout + r.stderr);

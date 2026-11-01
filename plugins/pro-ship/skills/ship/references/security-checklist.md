@@ -22,7 +22,7 @@ Quick reference for web application security. The `/ship` skill reads its header
 
 Before reaching for controls, spend five minutes thinking like an attacker:
 
-- [ ] Trust boundaries mapped (requests, uploads, webhooks, third-party APIs, LLM output, and local values written by processes you don't control)
+- [ ] Trust boundaries mapped (requests, uploads, webhooks, third-party APIs, LLM output and local values written by processes you don't control)
 - [ ] Assets named (credentials, PII, payment data, admin actions, money movement)
 - [ ] STRIDE run per boundary (Spoofing, Tampering, Repudiation, Info disclosure, DoS, Elevation)
 - [ ] Abuse cases written next to use cases ("how would I misuse this?")
@@ -57,7 +57,7 @@ Before reaching for controls, spend five minutes thinking like an attacker:
 - [ ] Validation uses allowlists (not denylists)
 - [ ] String lengths constrained (min/max)
 - [ ] Numeric ranges validated
-- [ ] Email, URL, and date formats validated with proper libraries
+- [ ] Email, URL and date formats validated with proper libraries
 - [ ] File uploads: type restricted, size limited, content verified
 - [ ] SQL queries parameterized (no string concatenation)
 - [ ] HTML output encoded (use framework auto-escaping)
@@ -94,10 +94,10 @@ async function resolveDeletable(candidate: string, expectedOwner: string) {
 }
 ```
 
-What this does not do, and must be said where the snippet is copied from:
+What this does not do and must be said where the snippet is copied from:
 
 - **The marker is self-attestation.** Anything that can write inside the root can write
-  `.owner`. `expectedOwner` has to come from authenticated state, and the marker needs
+  `.owner`. `expectedOwner` has to come from authenticated state and the marker needs
   integrity protection (restrictive ownership, or a MAC) before it is authorization
   rather than a consistency check against a misderived target.
 - **Returning a path leaves a check/use race.** Where an untrusted process can swap an
@@ -138,13 +138,13 @@ cors({ origin: '*' })  // Allows any origin
 - [ ] PII encrypted at rest (if required by regulation)
 - [ ] HTTPS for all external communication
 - [ ] Database backups encrypted
-- [ ] Personal data is classified, collected against a stated purpose, and minimized
+- [ ] Personal data is classified, collected against a stated purpose and minimized
 - [ ] Personal data has a retention limit and a working deletion path (incl. backups, caches, indexes)
 - [ ] Export/delete (data-subject) requests are supported where required; third-party sharing has consent and a data-processing agreement
 
 ## Dependency Security
 
-First locate the **installation boundary**. If the package is matched by a parent `workspaces` declaration, use that workspace root; otherwise use the nearest project root that owns both its manifest and dependency graph. At that boundary, corroborate `packageManager` (when present), the lockfile, and CI commands. Stop if they disagree or competing manager lockfiles exist there. A nested project is independent only when it is outside the parent workspace; independent subprojects may legitimately use different managers.
+First locate the **installation boundary**. If the package is matched by a parent `workspaces` declaration, use that workspace root; otherwise use the nearest project root that owns both its manifest and dependency graph. At that boundary, corroborate `packageManager` (when present), the lockfile and CI commands. Stop if they disagree or competing manager lockfiles exist there. A nested project is independent only when it is outside the parent workspace; independent subprojects may legitimately use different managers.
 
 | Manager/version signal | Frozen/immutable CI install | Known-advisory audit |
 |---|---|---|
@@ -179,7 +179,7 @@ Never discover dependency lifecycle scripts by first executing an ordinary insta
 | Yarn 2-4.13 | Set `enableScripts: false` in `.yarnrc.yml`, then grant only required exceptions with top-level `dependenciesMeta.<package>.built: true`; do not enable scripts globally. |
 | Yarn 1 | Bootstrap with `yarn install --ignore-scripts`; keep scripts disabled unless each required exception is reviewed under the pinned client's documented workflow. |
 
-Authoritative checks: [npm install-scripts](https://docs.npmjs.com/cli/v11/commands/npm-install-scripts/), [install policy](https://docs.npmjs.com/cli/v11/commands/npm-install/), and [CLI releases](https://github.com/npm/cli/releases); [pnpm approve-builds](https://pnpm.io/cli/approve-builds) and [build settings](https://pnpm.io/settings#allowbuilds); [Yarn security](https://yarnpkg.com/features/security) and [manifest](https://yarnpkg.com/configuration/manifest#dependenciesMeta).
+Authoritative checks: [npm install-scripts](https://docs.npmjs.com/cli/v11/commands/npm-install-scripts/), [install policy](https://docs.npmjs.com/cli/v11/commands/npm-install/) and [CLI releases](https://github.com/npm/cli/releases); [pnpm approve-builds](https://pnpm.io/cli/approve-builds) and [build settings](https://pnpm.io/settings#allowbuilds); [Yarn security](https://yarnpkg.com/features/security) and [manifest](https://yarnpkg.com/configuration/manifest#dependenciesMeta).
 
 **Supply-chain hygiene** (advisory audits do not catch newly malicious packages):
 - [ ] Exactly one authoritative lockfile per project/workspace root is committed and CI never rewrites it
@@ -187,7 +187,7 @@ Authoritative checks: [npm install-scripts](https://docs.npmjs.com/cli/v11/comma
 - [ ] Forced audit remediation (`npm audit fix --force` or equivalent) is never automatic; remediation diffs and changelogs are reviewed
 - [ ] Registry signatures/provenance are verified where the manager supports it
 - [ ] Dependency lifecycle scripts are blocked before first execution and approved only through the pinned manager's native policy
-- [ ] New dependencies are reviewed for ownership, maintenance, release age, provenance, transitive graph, and typosquatting
+- [ ] New dependencies are reviewed for ownership, maintenance, release age, provenance, transitive graph and typosquatting
 
 ## AI / LLM Security
 
@@ -195,9 +195,9 @@ For any feature that calls an LLM (chatbots, summarizers, agents, RAG):
 
 - [ ] Model output treated as untrusted - never into `eval`/SQL/shell/`innerHTML`/file paths
 - [ ] Prompt injection assumed; permissions enforced in code, not in the system prompt
-- [ ] Secrets, cross-tenant data, and full system prompts kept out of the context window
+- [ ] Secrets, cross-tenant data and full system prompts kept out of the context window
 - [ ] Tool/agent permissions scoped; destructive or irreversible actions require confirmation
-- [ ] Token, rate, and recursion/loop limits set (bound consumption)
+- [ ] Token, rate and recursion/loop limits set (bound consumption)
 
 ## Error Handling
 
@@ -238,13 +238,13 @@ For apps with LLM features. See the [OWASP GenAI Security Project](https://genai
 |---|---|---|
 | LLM01 | Prompt Injection | Don't trust the system prompt as a boundary; enforce permissions in code |
 | LLM02 | Sensitive Information Disclosure | Keep secrets/PII out of prompts; filter outputs |
-| LLM03 | Supply Chain | Vet models, datasets, and plugins like any dependency |
+| LLM03 | Supply Chain | Vet models, datasets and plugins like any dependency |
 | LLM04 | Data and Model Poisoning | Use trusted model sources, verify integrity; vet fine-tuning and RAG data |
 | LLM05 | Improper Output Handling | Treat model output as untrusted; validate, parameterize, encode |
 | LLM06 | Excessive Agency | Scope tool permissions; confirm destructive actions |
 | LLM07 | System Prompt Leakage | Assume the system prompt can leak; put no secrets in it |
 | LLM08 | Vector and Embedding Weaknesses | Partition RAG embeddings per tenant; validate documents before indexing |
 | LLM09 | Misinformation | Ground answers with citations; validate critical claims; keep a human in the loop |
-| LLM10 | Unbounded Consumption | Cap tokens, request rate, and loop/recursion depth |
+| LLM10 | Unbounded Consumption | Cap tokens, request rate and loop/recursion depth |
 
 _Adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (`references/security-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani._

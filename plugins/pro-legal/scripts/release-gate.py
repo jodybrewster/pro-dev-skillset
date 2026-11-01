@@ -21,7 +21,7 @@ legal_surface.diff_files). Fails open on any error.
 
 For tag, release, publish and deploy, a fresh GO in .pro-dev/ship/preflight.json
 (docs/ship-preflight.md, ADR-0022) whose legal review ran on this range skips the
-deny: see preflight_covers(). Release hygiene still denies, and pr and commit-deps
+deny: see preflight_covers(). Release hygiene still denies and pr and commit-deps
 never read the record.
 """
 from __future__ import annotations
@@ -307,7 +307,8 @@ def preflight_covers(root: str, base: str, ref: str | None) -> bool:
     push-gate.py keeps for the pr-check stamp: a JSON object, schema 1, produced_by
     starting pro-ship:ship, head equal to the shipped commit (HEAD unless the command
     names one) and status pass or partial. Inside detail_json the legal review must
-    be done, not Hold, and its base must be this gate's base or an ancestor of it.
+    be done, not Hold, on the shipped commit (legal.head) and its base must be this gate's
+    base or an ancestor of it.
     Any error means False, so the gate behaves as it did without the record.
     """
     try:
@@ -332,6 +333,8 @@ def preflight_covers(root: str, base: str, ref: str | None) -> bool:
         legal = detail.get("legal") if isinstance(detail, dict) else None
         if not isinstance(legal, dict) or legal.get("status") != "done" or legal.get("verdict") == "Hold":
             return False
+        if legal.get("head") != shipped:
+            return False  # the legal review must cover the commit shipped
         lbase = legal.get("base")
         if not isinstance(lbase, str) or not lbase:
             return False

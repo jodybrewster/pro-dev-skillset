@@ -28,7 +28,7 @@ A publish target adds only the Blockers in "Publish".
   A critical or high finding is a Blocker.
   A missing tool or no network is `confirm`.
 - Input validation, authentication and authorization on user-facing endpoints: from the security reviewer, else `confirm`.
-- For a web deploy target, read [references/security-checklist.md](./references/security-checklist.md) for each of these, and write a Recommended fix for a miss:
+- For a web deploy target, read [references/security-checklist.md](./references/security-checklist.md) for each of these and write a Recommended fix for a miss:
   - Security headers configured (CSP, HSTS and the rest of its Security Headers block).
   - Rate limiting on authentication endpoints.
   - CORS set to specific origins and never a wildcard.
@@ -69,7 +69,7 @@ Without pro-design, write `confirm` and list the six checks for the person:
   A failure is a Blocker.
   No `url` is `confirm`.
 - CDN configured for static assets: `confirm`.
-- Logging and error reporting configured, and a health check endpoint that responds: from "Monitoring" below.
+- Logging and error reporting configured and a health check endpoint that responds: from "Monitoring" below.
 
 ## Documentation
 

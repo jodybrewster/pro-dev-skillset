@@ -46,7 +46,7 @@ Telemetry without a question is noise. Before instrumenting anything:
 ## Distributed Tracing
 
 - [ ] OpenTelemetry (or equivalent) initialized at service startup, before other imports
-- [ ] Auto-instrumentation enabled for HTTP, gRPC, and DB clients
+- [ ] Auto-instrumentation enabled for HTTP, gRPC and DB clients
 - [ ] Trace context propagated on every outbound call (W3C `traceparent`/`tracestate`) and extracted from every inbound request
 - [ ] Context survives async boundaries - queue messages carry trace metadata
 - [ ] Manual spans only around meaningful internal units of work, with the attributes on-call will filter by

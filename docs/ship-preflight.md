@@ -44,7 +44,7 @@ Shas are 40 lowercase hex characters.
 | `kind` | string | `review`, always; mieruka's table accepts only six kinds and one unknown kind stops the rest of its sync |
 | `artifact_kind` | string | `ship-preflight` |
 | `artifact_key` | string | the first 12 characters of `head` |
-| `status` | string | `pass` for GO, `partial` for GO with at least one risk whose `accepted_by` is set, `fail` for NO-GO |
+| `status` | string | `pass` for GO, `partial` for GO with at least one risk whose `accepted_by` is set, `fail` for NO-GO. A Blocker the person accepts by name moves from `blockers` into `risks` with `accepted_by` and `accepted_at` set, so the verdict stays `GO` and the status is `partial` |
 | `summary` | string | starts with the verdict and the Blocker count, for example `NO-GO: 1 Blocker, 2 recommended fixes, 3 targets` |
 | `detail_json` | string | a JSON-encoded string, never an object, because mieruka binds it straight into a text column |
 | `produced_by` | string | `pro-ship:ship@<version>`, the version read from the plugin's `.claude-plugin/plugin.json` |
@@ -80,7 +80,9 @@ The `legal` object records the pro-legal review of the range.
 | `required` | integer | Required items, 0 or more |
 
 A `Hold` verdict makes the report NO-GO.
-`record` refuses a GO that has blockers or a target with no rollback steps.
+When `status` is `done`, `head` must equal the report's `head`, because a review of another commit says nothing about the commit shipped.
+`record` refuses a GO that has blockers, a GO with no target, a GO target with no rollback steps and a `done` legal review whose `head` is another commit.
+It accepts only the verdicts `GO` and `NO-GO`; there is no "GO with acknowledged risks" verdict.
 
 ## The freshness rule
 
@@ -122,17 +124,34 @@ It skips its own legal deny when all of these hold:
 - the record is fresh for the commit by the rule above;
 - `legal.status` is `done`;
 - `legal.verdict` is not `Hold`;
+- `legal.head` equals the record's `head`;
 - `legal.base` equals the gate's base or is an ancestor of it.
 
 It still runs its local release hygiene (LICENSE and the license field) and still gates `pr` and `commit-deps` as before.
 When any condition fails the gate behaves as it did before the record existed.
 The reader parses `detail_json` as a string to reach `legal`.
 
+## Coverage
+
+`ship.py coverage` decides which commits a passing `pr-check` already reviewed.
+It reads the marker line in each merged PR's body and that body is written by the PR's author.
+A marker therefore counts only when the PR is not cross-repository and its author is the current gh user (`gh api user`) or has an `authorAssociation` of `OWNER`, `MEMBER` or `COLLABORATOR`.
+A body with more than one marker is uncovered, because the last one must not win.
+A marker whose head is an ancestor of the PR tip covers only the commits up to that head.
+A merge commit is covered only by a marker whose head is the PR tip, because the merge commit holds the later work too.
+Anything the script cannot prove is uncovered.
+
+## Tags
+
+A tag counts as a release tag when its name holds a semver `vX.Y.Z` or `X.Y.Z`: `v1.2.3`, `1.2.3`, `name--v1.2.3` and `name@1.2.3` all do.
+The Ship block's `tag_pattern` (a git glob such as `*--v*`) replaces that rule for both `targets` and the base of `scope`.
+When `scope` returns a null base, the skill asks the person for the base and never guesses one.
+
 ## The mieruka drop
 
 When `.mieruka/` exists at the repo root and `git check-ignore` reports `.mieruka/evidence/` as ignored, `record` also writes the same manifest to `.mieruka/evidence/<evidence_key>/evidence.json`.
 When the folder is tracked, or is not ignored, or does not exist, `record` writes nothing there and prints why.
-No manifest ever uses a `kind` outside mieruka's list, and `detail_json` is always a string.
+No manifest ever uses a `kind` outside mieruka's list and `detail_json` is always a string.
 
 ## Known limit
 
@@ -140,20 +159,24 @@ The record is a plain file in the working tree, so anyone with shell access can 
 That is accepted for a local guardrail, as with the stamp ([ADR-0022](./decisions/0022-ship-preflight-record.md)).
 The gates warn by default and never ask.
 
+When a deploy target is scoped from a GitHub deployment, `legal.base` is the last deploy, which is newer than the tag base pro-legal's gate uses.
+The legal skip rule then fails on the base condition and pro-legal's gate still asks once.
+That is a known limit, not a bug in the record.
+
 ## Fixtures
 
 `tests/fixtures/ship-preflight/` holds one file per case and `expect.json`, which maps each file name to its verdicts:
 
 - `check`: `fresh`, `missing`, `unreadable`, `stale` or `no-go`, the cause `ship.py check` gives;
 - `ship_gate`: `allow` for a fresh record and `warn` otherwise (the default mode);
-- `legal_skip`: true only for a fresh record whose `legal.status` is `done`, whose `legal.verdict` is not `Hold` and whose `legal.base` is not newer than the last tag.
+- `legal_skip`: true only for a fresh record whose `legal.status` is `done`, whose `legal.verdict` is not `Hold`, whose `legal.head` is the record's `head` and whose `legal.base` is not newer than the last tag.
 
 Each runner reads a fixture as text, replaces the substring `HEAD` with the sha of its throwaway repo's HEAD and the substring `BASE` with the sha of the commit the runner tagged just before HEAD, then writes the result to `.pro-dev/ship/preflight.json`.
 The gate's base is that tagged commit.
 `corrupt.json` is not valid JSON on purpose.
 `stale.json` holds a fixed sha that no throwaway repo has.
 `legal-old-base.json` is fresh but its `legal.base` is `HEAD`, which is newer than the tag, so the legal skip does not apply.
-`missing` has no fixture file: the runner writes no record, and `tests/ship-preflight.mjs` has a case for it.
+`missing` has no fixture file: the runner writes no record and `tests/ship-preflight.mjs` has a case for it.
 `go-risks.json` is a `partial` record.
 `legal-hold.json` is a NO-GO record whose `legal.verdict` is `Hold`.
 

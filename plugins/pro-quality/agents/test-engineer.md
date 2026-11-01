@@ -33,7 +33,7 @@ Never ask for a description of the change.
 - Run `git diff <base>..<head>` and read the code around each hunk, not only the hunk.
 - Identify the public API or interface each change touches (what to test).
 - Identify the edge cases and error paths in the changed code.
-- Read the existing tests for the patterns and conventions this repo uses, and for what they already cover.
+- Read the existing tests for the patterns and conventions this repo uses and for what they already cover.
 
 ### 2. Judge the level
 

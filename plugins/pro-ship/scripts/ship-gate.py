@@ -6,7 +6,9 @@ publish, a production deploy) it reads `.pro-dev/ship/preflight.json` under the 
 and checks that the record /pro-ship:ship wrote is a fresh GO for the commit being shipped.
 The freshness rule and the causes (missing, unreadable, stale, no-go) are in
 docs/ship-preflight.md. The commit is the one the command names (`git tag <name> <commit>`,
-`gh release create --target <sha>`) and HEAD otherwise.
+`gh release create --target <sha>`) and HEAD otherwise. A compound command is checked
+shipping command by shipping command, each in its own directory (`-C`, `cd`) and the
+most severe cause leads the message.
 
 A fresh GO passes with no output. Without one the mode decides: mode.ship-gate, then mode,
 in CLAUDE_GUARD_DIR or ~/.claude/hooks (default warn).
@@ -33,6 +35,7 @@ import time
 
 HOOK = "ship-gate"
 RECORD = os.path.join(".pro-dev", "ship", "preflight.json")
+SEVERITY = ("no-go", "stale", "unreadable", "missing")  # most severe first
 
 # ---------------------------------------------------------------------------
 # Mode lookup and warn.log writer.
@@ -483,7 +486,7 @@ def record_cause(root: str, commit: str) -> str | None:
     """None for a fresh GO, else missing, unreadable, stale or no-go.
 
     The rule is R31 in docs/ship-preflight.md: an object, schema 1, produced_by starting
-    pro-ship:ship, head equal to the commit, status pass or partial. Keep this copy in step
+    pro-ship:ship, a string head and status, head equal to the commit, status pass or partial. Keep this copy in step
     with the one in the merge gate and ship.py by hand (ADR-0003).
     """
     path = os.path.join(root, RECORD)
@@ -496,7 +499,7 @@ def record_cause(root: str, commit: str) -> str | None:
         return "unreadable"
     if (not isinstance(data, dict) or isinstance(data.get("schema"), bool) or data.get("schema") != 1
             or not isinstance(data.get("produced_by"), str) or not data["produced_by"].startswith("pro-ship:ship")
-            or not isinstance(data.get("head"), str)):
+            or not isinstance(data.get("head"), str) or not isinstance(data.get("status"), str)):
         return "unreadable"
     if data["head"] != commit:
         return "stale"
@@ -552,40 +555,58 @@ def main_hook() -> int:
     hits = actions(command, cwd)
     if not hits:
         return 0
-    directory, ref, kind = hits[0]
-    try:
-        if directory is None:
-            raise CouldNotRun("the directory of the shipping command could not be resolved")
-        root, commit = repo_and_commit(directory, ref)
-    except CouldNotRun as e:
-        log(HOOK, "could-not-run", f"{e} (allowed)", cwd)
-        return 0
-    cause = record_cause(root, commit)
-    if cause is None:
+    # Every shipping command in a compound command is checked against its own directory.
+    problems: list[tuple[str, str, str, str]] = []  # (cause, kind, root, commit)
+    for directory, ref, kind in hits:
+        try:
+            if directory is None:
+                raise CouldNotRun("the directory of the shipping command could not be resolved")
+            root, commit = repo_and_commit(directory, ref)
+        except CouldNotRun as e:
+            log(HOOK, "could-not-run", f"{e} (allowed)", cwd)
+            continue
+        cause = record_cause(root, commit)
+        if cause is not None:
+            problems.append((cause, kind, root, commit))
+    if not problems:
         return 0
 
     enforcing = mode(HOOK) == "enforce"
     key = "ship_denied" if enforcing else "ship_warned"  # not pr-gate's keys: same file, own lists
-    path = state_path(str(payload.get("session_id") or "nosession"), root)
-    state = load_state(path)
-    seen = state.get(key)
-    seen = seen if isinstance(seen, list) else []
-    if commit in seen:
+    fresh: list[tuple[str, str, str, str]] = []
+    states: dict[str, tuple[str, dict]] = {}
+    for prob in problems:
+        root, commit = prob[2], prob[3]
+        if root not in states:
+            path = state_path(str(payload.get("session_id") or "nosession"), root)
+            states[root] = (path, load_state(path))
+        state = states[root][1]
+        seen = state.get(key)
+        seen = seen if isinstance(seen, list) else []
+        if commit in seen or any(f[2:] == prob[2:] for f in fresh):
+            continue
+        state[key] = seen[-50:] + [commit]
+        fresh.append(prob)
+    if not fresh:
         return 0
-    state[key] = seen[-50:] + [commit]
-    if not save_state(path, state):
-        log(HOOK, "could-not-run", "session state not writable (allowed)", root)
-        return 0
+    for path, state in states.values():
+        if not save_state(path, state):
+            log(HOOK, "could-not-run", "session state not writable (allowed)", cwd)
+            return 0
 
-    why = f"[{HOOK}] no fresh GO for {commit[:8]} ({cause}). Run /pro-ship:ship."
+    fresh.sort(key=lambda f: SEVERITY.index(f[0]))  # the most severe cause leads; ties keep command order
+    named = ", ".join(f"{c[:8]} ({cause})" for cause, _k, _r, c in fresh)
+    why = f"[{HOOK}] no fresh GO for {named}. Run /pro-ship:ship."
     if enforcing:
-        log(HOOK, "deny", f"{kind} {cause} {commit[:8]}", root)
+        for cause, kind, root, commit in fresh:
+            log(HOOK, "deny", f"{kind} {cause} {commit[:8]}", root)
         reason = f"{why} The identical command passes if you run it again."
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
                                                  "permissionDecision": "deny",
                                                  "permissionDecisionReason": reason}}))
     else:
-        log(HOOK, "warn", f"{kind} {cause} {commit[:8]}", root)
+        for cause, kind, root, commit in fresh:
+            log(HOOK, "warn", f"{kind} {cause} {commit[:8]}", root)
         msg = f"{why} (warn mode: allowed)"
         print(json.dumps({"systemMessage": msg,
                           "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": msg}}))
