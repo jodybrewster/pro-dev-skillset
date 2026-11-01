@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: idea
-status: draft
+status: done
 risk: medium
 created: 2026-10-30T10:00:00-0400
 author: Jody Brewster
@@ -11,7 +11,7 @@ author: Jody Brewster
 
 Author: Jody Brewster (pro-dev-skillset).
 Source: idea, item 13 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and feature 5 of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md) ("maybe use codex for code review as well", Jody, 2026-10-28).
-Status: draft.
+Status: done; shipped in #99.
 Created: 2026-10-30.
 
 ## Problem
