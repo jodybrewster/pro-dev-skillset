@@ -12,7 +12,7 @@ Source: intent/2026-10-31-ship-preflight/ (decisions 2, 3 and 5; spec R25 to R37
 ## Context
 
 `/pro-ship:ship` ends in GO or NO-GO.
-Three readers need that verdict without importing pro-ship code: the merge gate, the new `ship-gate.py` and mieruka's Ship page.
+Four readers need that verdict without importing pro-ship code: the merge gate, the new `ship-gate.py`, pro-legal's release gate and mieruka's Ship page.
 mieruka already loads file-dropped evidence from `.mieruka/evidence/<evidence_key>/evidence.json`.
 Its table accepts only six `kind` values through a `CHECK` constraint.
 Its sync does not catch a failed insert, so one manifest with an unknown kind stops every manifest after it from loading.
@@ -30,12 +30,13 @@ The record is a mieruka evidence manifest as it is: `evidence_key`, `kind`, `art
 Two top-level fields mieruka ignores, `schema` (1) and `head` (the full sha), are what the gates read.
 A record is a fresh GO for a commit only when `schema` is 1, `produced_by` starts with `pro-ship:ship`, `head` equals that commit and `status` is `pass` or `partial`.
 When `.mieruka/` exists and its evidence folder is ignored by git, the same manifest is also written there.
+pro-legal's release gate skips its own review when a fresh record holds a legal review of the same range that is not `Hold`.
 A gate without a fresh GO warns, or in enforce mode denies once per commit per session; it never asks.
 The fields, the freshness rule and the causes are written once in `docs/ship-preflight.md`.
 
 ## Consequences
 
-The merge gate, the ship gate and mieruka read one file with one rule.
+The merge gate, the ship gate, the legal gate and mieruka read one file with one rule.
 mieruka needs no change to show the record; its Ship page can filter by `artifact_kind`.
 A new field goes inside `detail_json` or as an optional top-level field and does not change `schema`.
 Changing `kind`, the status mapping or the freshness rule breaks readers in two repos and needs a new ADR.
@@ -53,5 +54,5 @@ What must stay true: no manifest pro-ship writes ever uses a `kind` outside mier
 
 ## Where it is enforced
 
-`plugins/pro-ship/scripts/ship.py` (`record` and `check`), `plugins/pro-ship/scripts/ship-gate.py`, the preflight line in `plugins/pro-ship/scripts/merge-gate.py`, `tests/fixtures/ship-preflight/` with its `expect.json` and the `preflight-contract` check in `tests/check.mjs`.
+`plugins/pro-ship/scripts/ship.py` (`record` and `check`), `plugins/pro-ship/scripts/ship-gate.py`, the preflight line in `plugins/pro-ship/scripts/merge-gate.py`, the record reader in `plugins/pro-legal/scripts/release-gate.py`, `tests/fixtures/ship-preflight/` with its `expect.json` and the `preflight-contract` check in `tests/check.mjs`.
 Not enforced yet: none of these exist until the build lands.

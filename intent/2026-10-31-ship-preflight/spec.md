@@ -68,7 +68,14 @@ Release checks (intent: "It checks what only matters at release time").
 - R17. A release the repo's changelog tool has not picked up (a release-please config with no open release PR, a `CHANGELOG.md` with no entry for the version) is a Recommended fix; `/ship` never edits a changelog.
 - R18. A tag or release version that differs from the version in the manifests the repo ships is a Blocker.
   In this marketplace the version-bump law check in `tests/check.mjs` stands in for it through R13.
-- R19. When pro-legal is installed the report names that its release gate reviews the release when the tag or publish runs; `/ship` does not run the legal review itself (see Flagged concern 3).
+- R19. When pro-legal is installed `/ship` dispatches `software-counsel` in release mode on the whole range with a reproduce command (`git -C <root> diff <base>..<head>`) and the release kind of the target.
+  It hands the reviewer nothing else.
+  Each Blocking item is a Blocker, each Required item is a Recommended fix and a `Hold` verdict makes the verdict NO-GO.
+  When pro-legal is not installed the report says "legal: not installed" and the verdict does not change.
+- R19a. pro-legal's `release-gate.py` reads `.pro-dev/ship/preflight.json` for the `tag`, `release`, `publish` and `deploy` kinds.
+  It skips its own deny when the record is fresh for the commit by R31, its `legal.status` is `done`, its `legal.verdict` is not `Hold` and its `legal.base` equals the gate's base or is an ancestor of it.
+  It still runs its local release hygiene (LICENSE and license field) and still gates `pr` and `commit-deps` as before.
+  It carries its own copy of the R31 rule with a comment naming `docs/ship-preflight.md`, as the push gate does for the stamp.
 - R20. A `publish` target can only add Blockers: a version that `npm view <name>@<version> version` (or the registry's equivalent) already returns, a failing dry run of the publish command or a publish workflow with no provenance (`--provenance` or `publishConfig.provenance`).
 
 Verdict and rollback (intent: "It ends in GO or NO-GO with the agent-skills layout").
@@ -88,7 +95,7 @@ The record (intent decisions 2 and 5).
   `summary` starts with the verdict and the Blocker count.
   `produced_by` is `pro-ship:ship@<plugin version>`.
 - R27. `detail_json` is a JSON-encoded string, because mieruka binds it straight into a text column.
-  It holds `verdict`, `head`, `base`, `created`, the scope (kind, range, PR numbers, uncovered commits, last-deploy source), `blockers`, `fixes`, `risks` (with `accepted_by` and `accepted_at`), the check results and one `targets` entry per target with `id`, `kind`, `env`, `url`, `commit` and `rollback`.
+  It holds `verdict`, `head`, `base`, `created`, the scope (kind, range, PR numbers, uncovered commits, last-deploy source), `blockers`, `fixes`, `risks` (with `accepted_by` and `accepted_at`), the check results, a `legal` object (`status` of `done`, `not-installed` or `could-not-run`, `verdict`, `base`, `head`, `blocking` and `required`) and one `targets` entry per target with `id`, `kind`, `env`, `url`, `commit` and `rollback`.
 - R28. `record` refuses to run with uncommitted tracked changes, as `pr-check.py stamp` does.
   It adds `.pro-dev/` to the `info/exclude` file when it is missing.
 - R29. When `.mieruka/` exists at the repo root and `git check-ignore` reports `.mieruka/evidence/` as ignored, `record` also writes the same manifest to `.mieruka/evidence/<evidence_key>/evidence.json`.
@@ -128,7 +135,7 @@ Packaging.
 
 ### Policy constraints applied
 
-- Version-bump law (ADR-0002): pro-ship and pro-core bump in both manifests and the marketplace entry, plus `metadata.version`, in the build commit.
+- Version-bump law (ADR-0002): pro-ship, pro-core and pro-legal bump in both manifests and the marketplace entry, plus `metadata.version`, in the build commit.
 - Hook-loading law (ADR-0003): `ship-gate.py` is a third entry under pro-ship's one `Bash` matcher in `hooks/hooks.json` and is tracked by git.
 - Codex parity (ADR-0004): the skill prose is harness-neutral and the Codex manifest version matches; the gate is a Claude Code hook and Codex users run `/ship` by hand.
 - Plugins cannot import each other (ADR-0003): `ship-gate.py` copies `guard_dir`, `mode` and `log` from `guard.py` and its tag and publish matching from `release-gate.py`, with a comment naming the sources, as pr-gate does.
@@ -175,7 +182,8 @@ Changed files:
 - `plugins/pro-ship/skills/pr-check/pr-body.md`: the R9 marker line.
 - `plugins/pro-core/skills/using-pro-dev/SKILL.md`, `README.md`, `RELEASING.md`, `docs/enforce-mode.md`, `docs/licenses.md`, `docs/README.md`, `docs/decisions/README.md`.
 - `tests/ship-hooks.mjs` (ship-gate cases, merge gate line cases), `tests/ship-check.mjs` (ship.py), `tests/check.mjs` (a `preflight-contract` check like `stamp-contract`), `tests/cases/routing.jsonl` (one `ship` case with `notOneOf: ["pr-check"]`).
-- The pro-ship and pro-core manifests, the marketplace entries and `metadata.version`.
+- `plugins/pro-legal/scripts/release-gate.py`: the R19a reader; `tests/legal-hooks.mjs` gains a skip case and a no-skip case per condition.
+- The pro-ship, pro-core and pro-legal manifests, the marketplace entries and `metadata.version`.
 
 Example record, as written:
 
@@ -214,10 +222,11 @@ ADR needed: yes, the preflight record is a contract the gates and mieruka read, 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The intent says `/ship` "reads the `pr-check` stamp of each PR in that range", but the stamp is one local file that the next run overwrites, so no merged PR's stamp exists to read. R8 and R9 replace it with a marker line in the PR body that pr-check drafts, which survives the merge and any machine. It changes pr-check's body draft (not the stamp contract) and every PR merged before it ships reads as uncovered on the first run. | Intent, `docs/pr-check-stamp.md`, Jody | open: recommend the PR body marker |
-| 2 | The intent wants an override "in the repo's own config" without naming the file. R4 puts it in a "Ship" yaml block in `CLAUDE.md` or `AGENTS.md`, following pr-check's verify block, because `.pro-dev/` is excluded from git and cannot hold shared config. | Intent, Jody | open: recommend the agent file block |
-| 3 | The intent lists pro-legal's release review among the checks. Running it inside `/ship` would review the same range twice, because pro-legal's gate denies once on the same `git tag` and asks for that review anyway. R19 only names that it will run. | Intent, `plugins/pro-legal/scripts/release-gate.py`, Jody | open: recommend naming it and not running it |
-| 4 | On a `gh release create` in enforce mode `ship-gate`, pro-legal's gate and `production-gate` can all fire. The first two deny once on the same call and the retry meets `production-gate`'s one ask, so the "at most one prompt" constraint holds at the cost of one retry. | Intent constraints, ADR-0014 | resolved: both deny-once gates record the same call, so one retry clears both |
+| 1 | The intent says `/ship` "reads the `pr-check` stamp of each PR in that range", but the stamp is one local file that the next run overwrites, so no merged PR's stamp exists to read. R8 and R9 replace it with a marker line in the PR body that pr-check drafts, which survives the merge and any machine. It changes pr-check's body draft (not the stamp contract) and every PR merged before it ships reads as uncovered on the first run. | Intent, `docs/pr-check-stamp.md`, Jody | resolved: Jody took the PR body marker, 2026-10-31 |
+| 2 | The intent wants an override "in the repo's own config" without naming the file. R4 puts it in a "Ship" yaml block in `CLAUDE.md` or `AGENTS.md`, following pr-check's verify block, because `.pro-dev/` is excluded from git and cannot hold shared config. | Intent, Jody | resolved: Jody took the agent file block, 2026-10-31 |
+| 3 | The intent lists pro-legal's release review among the checks. Running it in `/ship` alone would review the same range twice, because pro-legal's gate denies once on the same `git tag` and asks for that review again; not running it would let `/ship` say GO before legal had looked. | Intent, `plugins/pro-legal/scripts/release-gate.py`, Jody | resolved: Jody took running it in `/ship` (R19) with pro-legal's gate reading the record and skipping a review the record already holds (R19a), 2026-10-31 |
+| 4 | On a `gh release create` in enforce mode `ship-gate`, pro-legal's gate and `production-gate` can all fire. The first two deny once on the same call and the retry meets `production-gate`'s one ask, so the "at most one prompt" constraint holds at the cost of one retry.
+With a fresh GO that holds the legal review, neither deny-once gate fires. | Intent constraints, ADR-0014 | resolved: both deny-once gates record the same call, so one retry clears both |
 | 5 | REVIEW.md forbids network calls in hooks, while the scope needs the GitHub Deployments API and coverage needs `gh pr list`. | REVIEW.md pass 2 | resolved: those calls run in `ship.py` under the skill; `ship-gate.py` and the merge gate's added line read local files only |
 | 6 | pro-ship is in pro-dev-starter, so the new gate reaches every starter repo, including this one, where every release tag warns until `/ship` has run. | ADR-0016, RELEASING.md | resolved: warn mode with one line per commit per session; R40 puts `/ship` in the release steps |
 
@@ -230,8 +239,8 @@ From the intent, all answered:
   R4's Ship block in mieruka's agent file settles it, or detection needs a rule; decided in `/plan`.
 - mieruka's desktop app has no installer yet, so its rollback is checking out the previous tag.
 
-New, waiting on Jody: Flagged concerns 1, 2 and 3.
-They block planning only in that the plan files touched depend on concern 1.
+New ones from the spec, all answered by Jody on 2026-10-31 ("I'll take your recommendations"): the PR body marker (concern 1), the agent file Ship block (concern 2) and the legal review in `/ship` with pro-legal's gate reading the record (concern 3).
+Nothing blocks planning.
 
 ## Acceptance criteria
 
@@ -248,6 +257,7 @@ They block planning only in that the plan files touched depend on concern 1.
 - AC10. A malformed payload to `ship-gate.py` exits 0 with no output and a `could-not-run` line.
 - AC11. A routing case "ship it, are we good to release?" resolves to `ship`, not `pr-check`.
 - AC12. `node tests/check.mjs` passes with the new `preflight-contract` check and the version-bump law.
+- AC12a. With pro-legal installed and a fresh GO whose `legal` review covers the range, `git tag v1.2.0` meets no legal deny; with a `Hold` verdict, a stale record or a `legal.base` newer than the last tag it denies once as before.
 - AC13. In mieruka, running `/ship` before a tag writes a manifest the next evidence sync loads with no error, shown in its evidence list under `artifact_kind` `ship-preflight`.
 
 ## Out of scope

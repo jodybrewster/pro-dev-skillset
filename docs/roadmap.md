@@ -14,7 +14,8 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 ### Next: item 15, `/ship` preflight
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
-Intent accepted on 2026-10-31: [intent/2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md); `/spec` is next.
+Intent accepted and [spec](../intent/2026-10-31-ship-preflight/spec.md) written on 2026-10-31, with [ADR-0022](./decisions/0022-ship-preflight-record.md) proposed; `/plan` is next.
+Jody took the spec's three recommendations: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
 mieruka's web app and CLI run only locally and nothing is published (Jody, 2026-10-31), so mieruka is a tag-and-release project for now.
 It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read (Jody, 2026-10-31).
 
@@ -171,7 +172,7 @@ Within a tier, items are in the order to build them.
 
 ### P2: situational, or past one person
 
-- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent accepted in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md)
+- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent and spec in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/spec.md)
 - [ ] 16. `pipeline`: the gate as required CI checks (L, pro-ship)
 - [ ] 17. Architecture review with twelve-factor (L, pro-quality)
 - [ ] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality)
