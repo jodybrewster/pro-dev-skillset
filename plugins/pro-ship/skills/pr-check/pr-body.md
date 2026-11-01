@@ -1,6 +1,6 @@
 # PR body draft
 
-Write `.pro-dev/ship/pr-body.md` with these four sections from the stamp and the diff.
+Write `.pro-dev/ship/pr-body.md` with these four sections from the stamp and the diff, then the marker line below.
 Print it.
 Never run `gh pr create`.
 Write "confirm" beside any claim you could not check.
@@ -45,3 +45,10 @@ When Codex did not run, write one line: `Codex review: <status> (<reason>)`, tak
 
 `git revert <base>..<head>` with the real shas.
 List any migration, config or generated file in the diff and write "confirm" beside each, so the person decides whether a revert needs more than the revert commit.
+
+## Marker line
+
+End the draft with the output of `pr-check.py marker`, alone on the last line and unchanged.
+It reads `<!-- pro-ship:pr-check head=<full sha> result=<result> tier=<tier> -->` from the stamp you just wrote.
+`/pro-ship:ship` reads it later to tell which PRs a passing pr-check already covered.
+When the command exits 1 there is no stamp: say so and leave the line out.

@@ -1,0 +1,47 @@
+{
+  "corrupt.json": {
+    "check": "unreadable",
+    "ship_gate": "warn",
+    "legal_skip": false
+  },
+  "foreign-producer.json": {
+    "check": "unreadable",
+    "ship_gate": "warn",
+    "legal_skip": false
+  },
+  "go-risks.json": {
+    "check": "fresh",
+    "ship_gate": "allow",
+    "legal_skip": true
+  },
+  "go.json": {
+    "check": "fresh",
+    "ship_gate": "allow",
+    "legal_skip": true
+  },
+  "legal-hold.json": {
+    "check": "no-go",
+    "ship_gate": "warn",
+    "legal_skip": false
+  },
+  "legal-old-base.json": {
+    "check": "fresh",
+    "ship_gate": "allow",
+    "legal_skip": false
+  },
+  "no-go.json": {
+    "check": "no-go",
+    "ship_gate": "warn",
+    "legal_skip": false
+  },
+  "stale.json": {
+    "check": "stale",
+    "ship_gate": "warn",
+    "legal_skip": false
+  },
+  "wrong-schema.json": {
+    "check": "unreadable",
+    "ship_gate": "warn",
+    "legal_skip": false
+  }
+}

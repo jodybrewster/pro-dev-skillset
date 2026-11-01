@@ -1,0 +1,12 @@
+{
+  "schema": 2,
+  "head": "HEAD",
+  "evidence_key": "ship-preflight-000000000000",
+  "kind": "review",
+  "artifact_kind": "ship-preflight",
+  "artifact_key": "000000000000",
+  "status": "pass",
+  "summary": "GO: 0 Blockers, 1 recommended fix, 1 target",
+  "detail_json": "{\"verdict\": \"GO\", \"head\": \"HEAD\", \"base\": \"BASE\", \"created\": \"2026-11-01T09:00:00-04:00\", \"scope\": {\"kind\": \"tag\", \"range\": \"BASE..HEAD\", \"prs\": [12], \"uncovered\": [], \"last_deploy_source\": \"tag\"}, \"blockers\": [], \"fixes\": [{\"text\": \"Add a changelog line\", \"evidence\": \"CHANGELOG.md\"}], \"risks\": [], \"checks\": [{\"section\": \"security\", \"item\": \"dependency audit\", \"status\": \"pass\", \"evidence\": \"npm audit: 0 vulnerabilities\"}], \"legal\": {\"status\": \"done\", \"verdict\": \"Ship\", \"base\": \"BASE\", \"head\": \"HEAD\", \"blocking\": 0, \"required\": 0}, \"targets\": [{\"id\": \"web\", \"kind\": \"tag-release\", \"env\": \"production\", \"url\": null, \"commit\": \"HEAD\", \"rollback\": {\"triggers\": [\"error rate above 2 percent\"], \"steps\": [\"git checkout the previous tag\"], \"rto\": \"5 minutes\"}}]}",
+  "produced_by": "pro-ship:ship@0.10.0"
+}
