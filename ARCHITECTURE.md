@@ -15,7 +15,7 @@ Longer version and the Mieruka bridge: [docs/overview.md](./docs/overview.md).
 | SDLC methods | `plugins/pro-ai-sdlc`, `pro-pdd`, `pro-spdd`, `pro-speckit`, `pro-egm` | One way each of taking a change from idea to merged | nothing (independent) |
 | Engineering discipline | `plugins/pro-execution`, `pro-quality`, `pro-testing`, `pro-data` | TDD, debugging, review, test and data-layer skills | nothing (independent) |
 | Web and stacks | `plugins/pro-design`, `pro-motion`, `pro-nextjs`, `pro-astro` | Design, motion and framework conventions | nothing (independent) |
-| Gates | `plugins/pro-security`, `pro-legal`, `pro-ship` | Hooks that review or block a plan, push or release | Claude Code hook events |
+| Gates | `plugins/pro-security`, `pro-legal`, `pro-ship` | Hooks that review or block a plan, push or release; pro-ship's `pr-check` and `/ship` preflight write the records those hooks read | Claude Code hook events; the records under `.pro-dev/ship/` (`docs/pr-check-stamp.md`, `docs/ship-preflight.md`) and a copy of the preflight in mieruka's `.mieruka/evidence/` |
 | Research | `plugins/pro-research` | `/research` and `/lead-research` | Web sources |
 | Starters | `plugins/pro-starter`, `pro-dev-starter` | Dependency aggregators with no skills of their own | The plugins named in its `dependencies` (`.claude-plugin/plugin.json`) |
 | Tests | `tests/check.mjs`, `tests/eval.mjs`, `tests/route-lexical.mjs`, `tests/*-hooks.mjs`, `tests/unit/` | Static checks, routing evals and hook tests | Every plugin manifest |
