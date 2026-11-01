@@ -1,6 +1,6 @@
 ---
 intent: intent/2026-11-01-after-build-loop/intent.md
-intent-status: accepted
+intent-status: done
 status: accepted
 created: 2026-11-01T10:40:00-0500
 author: the maintainer
@@ -9,7 +9,7 @@ author: the maintainer
 # Spec: carry the loop past the build
 
 Built from `intent.md` in this folder.
-Status: accepted.
+Status: done.
 Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, ADR-0002, ADR-0003, ADR-0004, ADR-0012, ADR-0014, ADR-0016, ADR-0022, `docs/pr-check-stamp.md`, `docs/ship-preflight.md`, `docs/hook-loading.md`, `plugins/pro-ship/scripts/{ship,pr-check,pr-gate}.py`, `plugins/pro-ship/skills/{ship,pr-check}/`, `plugins/pro-ai-sdlc/commands/{review,execute,intent}.md`, `plugins/pro-ai-sdlc/agents/verifier.md`, `plugins/pro-ai-sdlc/templates/{plan,REVIEW,intent}.md`, `plugins/pro-ai-sdlc/references/definition-of-done.md`, `plugins/pro-quality/hooks/hooks.json`, `plugins/pro-quality/agents/code-reviewer.md` and agent-skills' `ci-cd-and-automation`, `observability-and-instrumentation`, `browser-testing-with-devtools`, `code-review-and-quality`, `debugging-and-error-recovery`, `shipping-and-launch`, `incremental-implementation` and `git-workflow-and-versioning` (MIT).
 In mieruka: `apps/web/src/service/spdd-evidence.ts`, `apps/web/src/lib/db.ts`, `apps/web/src/features/ship/DeployPanel.tsx` and `apps/web/src/service/change-sync.ts`.
 No `DESIGN.md` or `SECURITY.md` exists in this repo.

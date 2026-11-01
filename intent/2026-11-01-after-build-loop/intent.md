@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: accepted
+status: done
 risk: medium
 created: 2026-11-01T10:26:13-0500
 author: the maintainer
@@ -10,7 +10,7 @@ author: the maintainer
 # Intent: carry the loop past the build, from verified work to deploys, incidents and lessons
 
 Source: idea.
-Status: accepted.
+Status: done; shipped in #127 and #128.
 Created: 2026-11-01.
 Related: [ship-preflight](../2026-10-31-ship-preflight/intent.md), which wrote the GO or NO-GO record before a release; this intent adds the records that come after it.
 

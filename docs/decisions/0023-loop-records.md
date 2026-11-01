@@ -4,7 +4,7 @@ Date: 2026-11-01
 
 ## Status
 
-proposed
+accepted
 
 Decided by: the maintainer.
 Source: intent/2026-11-01-after-build-loop/ (spec R1 to R50).
