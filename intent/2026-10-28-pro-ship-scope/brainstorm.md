@@ -58,6 +58,8 @@ In the order he raised them on 2026-10-28, in his words, with where each is answ
 10. "ok so 12 factor apps should be a part of the architecture review" See "Twelve-factor is part of the architecture review".
 11. On 2026-10-29: "can we look at the ../agent-skills directory and do a deep dive and tell me what we're missing compared to what we have?" See the ranked list and the agent-skills comparison in [docs/roadmap.md](../../docs/roadmap.md).
 
+12. On 2026-10-31, for `/ship`: "yes, design for multiple scenarios, we'll also use it in mieruka". See [intent/2026-10-31-ship-preflight](../2026-10-31-ship-preflight/intent.md).
+
 Earlier the same day, already in [intent.md](intent.md): GitHub practices and portable twelve-factor apps.
 
 ## Answers to the intent's open questions (recommendations)
