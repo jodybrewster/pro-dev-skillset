@@ -15,7 +15,7 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
 Intent accepted on 2026-10-31: [intent/2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/intent.md); `/spec` is next.
-Two questions for the spec wait on Jody: is mieruka's web app hosted anywhere and is its CLI published to npm.
+mieruka's web app and CLI run only locally and nothing is published (Jody, 2026-10-31), so mieruka is a tag-and-release project for now.
 It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read (Jody, 2026-10-31).
 
 Waiting on Jody, none of which blocks item 15:

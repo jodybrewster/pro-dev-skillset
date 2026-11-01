@@ -95,8 +95,8 @@ The mieruka work is its own intent in that repo.
 
 In a Vercel app, `/ship` before merging a high-tier PR reports GO or NO-GO for that PR, names a new env var missing from the production config as a Blocker and gives Vercel's instant rollback as the plan.
 In this marketplace, `/ship` before a release covers every PR since the last tag, flags a merged commit with no passing stamp and checks the version-bump law and the changelog.
-In mieruka, one run reports separate sections for the web app, the CLI and the desktop app.
-The desktop section's rollback plan is publishing the previous version.
+In mieruka, one run covers the tagged release with separate sections for the web app, the CLI and the desktop app.
+None of them has a deploy or a publish step, so each section's rollback plan is checking out the previous tag.
 A release action with no fresh GO for HEAD prints one warning.
 mieruka can show the verdict, blockers and rollback plan from the record alone.
 
@@ -136,9 +136,14 @@ Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations")
 
 ## Open questions
 
-- Is mieruka's web app hosted anywhere, or does it only run locally from a tagged release? This decides whether mieruka's web target is a deploy or only part of the tag (Jody).
-- Is mieruka's CLI published to npm? `apps/web/package.json` is not marked private (Jody).
-- mieruka's desktop app has no installer yet (release 5, M4), so its rollback today is checking out the previous tag; the installer case waits until packaging exists.
+None left for the intent.
+Jody answered on 2026-10-31 ("only runs locally, no not published anywhere right now"):
+
+- mieruka's web app is not hosted; it runs locally from a tagged release, so it is part of the tag target and not a deploy.
+- mieruka's CLI is not published to npm, so mieruka has no publish target today.
+- mieruka's desktop app has no installer yet (release 5, M4), so its rollback is also checking out the previous tag; the installer case waits until packaging exists.
+
+That makes mieruka a pure tag-and-release project for now, while the deploy, desktop-installer and publish scenarios are tested on other projects or fixtures.
 
 ## Evidence
 
