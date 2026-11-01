@@ -11,9 +11,9 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
-### First: neutral repo
+### Done: neutral repo
 
-[intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md), intent and spec accepted: take the maintainer's name, chat quotes and the stray upstream handle out of tracked files, in four PRs by area, before item 15 continues.
+[intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md) shipped on 2026-11-01: no maintainer name or chat quotes in tracked files and the upstream named agent-skills outside its license lines, held by the `names` check in `tests/check.mjs`.
 
 ### Next: item 15, `/ship` preflight
 

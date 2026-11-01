@@ -161,4 +161,4 @@ Automated tools catch only part of the issues, so pair them with a keyboard pass
 | Empty links or buttons | Announced as "link" with no description | Add text or `aria-label` |
 | `tabindex > 0` | Breaks natural tab order | Use `tabindex="0"` or `-1` only |
 
-_Adapted from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`references/accessibility-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani. Lifted from WCAG 2.1 AA to 2.2 AA for this skill._
+_Adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (`references/accessibility-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani. Lifted from WCAG 2.1 AA to 2.2 AA for this skill._

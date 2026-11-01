@@ -163,4 +163,4 @@ Suggest `/pr-babysit` as the next step.
 
 Never merge, never push to the default branch, never force-push and never pass `--no-verify`.
 
-Stop list, scope rules and staging rule adapted from addyosmani/agent-skills (commands/build.toml, skills/incremental-implementation/SKILL.md and skills/git-workflow-and-versioning/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Stop list, scope rules and staging rule adapted from agent-skills (commands/build.toml, skills/incremental-implementation/SKILL.md and skills/git-workflow-and-versioning/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

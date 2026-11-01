@@ -78,4 +78,4 @@ If the current branch is `main` or `master`, say so before committing, since a b
 
 The path, the commit hash and the one-line decision.
 
-Convention check and deprecated status adapted from addyosmani/agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Convention check and deprecated status adapted from agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

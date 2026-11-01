@@ -13,4 +13,4 @@ The plan's `## Done` section cites this file in one line and names the items not
 - Departures and noticed items are recorded in the plan.
 - The verifier ran and its verdict is recorded.
 
-Adapted from addyosmani/agent-skills (references/definition-of-done.md), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (references/definition-of-done.md), MIT, Copyright (c) 2025 Addy Osmani.

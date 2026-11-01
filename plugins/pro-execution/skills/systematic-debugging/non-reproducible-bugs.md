@@ -40,4 +40,4 @@ Use the repository's own focused test command, not a guess at one.
 The command must exit non-zero only on this bug; exit 125 skips a commit that cannot be tested.
 Keep the repro script outside the repo, or have it exit 125 when the test file is missing, since a new test does not exist at older commits.
 
-_Adapted from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`skills/debugging-and-error-recovery/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._
+_Adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (`skills/debugging-and-error-recovery/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._

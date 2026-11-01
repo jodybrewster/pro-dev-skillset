@@ -34,4 +34,4 @@ Each failed check is a finding in the Issue Format with its WCAG criterion numbe
 
 _Forked from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) — MIT License. See original repository for full license text._
 
-_Checklist adapted in part from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`references/accessibility-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani._
+_Checklist adapted in part from [agent-skills](https://github.com/addyosmani/agent-skills) (`references/accessibility-checklist.md`) - MIT, Copyright (c) 2025 Addy Osmani._

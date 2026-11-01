@@ -166,4 +166,4 @@ Clearer wording must not change the decision or its limits.
 - Agent instruction files match how the repo works now.
 - Prose edits kept every detail, trade-off and qualifier from the source.
 
-Adapted from addyosmani/agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (skills/documentation-and-adrs/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

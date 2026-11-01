@@ -267,7 +267,7 @@ function floorCases(sandbox, out) {
     `| Coverage | ${o.cov ?? ">= 80% lines"} | npm test | CI |`, `| Bundle | ${o.bundle ?? "<= 200 KB"} | npm run size | CI |`,
     `| Cycles | ${o.cycles ?? "5 allowed"} | npm run cycles | CI |`, `| Complexity | ${o.cx ?? "at most 10 per function"} | lint | CI |`, ...(o.extraRow ? [o.extraRow] : []), "",
     "## Measured, not yet enforced", "", "| Metric | Today | Direction |", "|---|---|---|", `| Lint warnings | ${o.warn ?? "12"} | down |`, "",
-    "## Exceptions", "", "| ID | Rule | Path | Reason | Owner | Expires |", "|---|---|---|---|---|---|", ...(o.exc ?? ["| E1 | silenced-checker | src/x.ts | legacy | jody | 2026-12-31 |"]), "",
+    "## Exceptions", "", "| ID | Rule | Path | Reason | Owner | Expires |", "|---|---|---|---|---|---|", ...(o.exc ?? ["| E1 | silenced-checker | src/x.ts | legacy | maintainer | 2026-12-31 |"]), "",
     ...(o.testFiles ? [`Test files: ${o.testFiles}`, ""] : []),
   ].join("\n");
   const cscen = (before, after) => scen({ base: { ...BASE, "CONSTRAINTS.md": CBASE(before) }, commits: [{ files: { "CONSTRAINTS.md": CBASE(after) }, msg: "constraints" }] });
@@ -293,9 +293,9 @@ function floorCases(sandbox, out) {
   add("f93 a reworded row with the same number is silent", "silent", r, silentC({}, { cov: ">= 80% of lines covered" }));
   add("f94 a number that gains direction words is silent", "silent", r, silentC({ cycles: "5 allowed" }, { cycles: "at most 5 allowed" }));
   add("f94b a measured number changing is silent", "silent", r, silentC({}, { warn: "40" }));
-  r = push(cscen({}, { exc: ["| E1 | silenced-checker | src/x.ts | legacy | jody | 2026-12-31 |", "| E2 | test-deleted | tests/y.test.ts | flaky | jody | 2026-11-30 |"] }));
+  r = push(cscen({}, { exc: ["| E1 | silenced-checker | src/x.ts | legacy | maintainer | 2026-12-31 |", "| E2 | test-deleted | tests/y.test.ts | flaky | maintainer | 2026-11-30 |"] }));
   add("f95 an added Exceptions row fires new-exception", "fired", r, has(r, "new-exception", "CONSTRAINTS.md") && /E2/.test(r.text));
-  r = push(one({ "templates/CONSTRAINTS.md": CBASE({ exc: ["| E1 | silenced-checker | src/x.ts | legacy | jody | 2026-12-31 |", "| E2 | test-deleted | tests/y.test.ts | flaky | jody | 2026-11-30 |"] }) }, "a template copy"));
+  r = push(one({ "templates/CONSTRAINTS.md": CBASE({ exc: ["| E1 | silenced-checker | src/x.ts | legacy | maintainer | 2026-12-31 |", "| E2 | test-deleted | tests/y.test.ts | flaky | maintainer | 2026-11-30 |"] }) }, "a template copy"));
   add("f95b a CONSTRAINTS.md below the repo root is not the bar and stays quiet", "silent", r, quiet(r));
   r = push(cscen({}, { warn: "11" }));
   add("f96 an unrelated CONSTRAINTS.md edit stays quiet", "silent", r, quiet(r));

@@ -115,4 +115,4 @@ With nothing doubted the line reads `Doubt: none`.
 
 Example: `Doubt: step 3 (plan marker), 2 rounds, Codex ran in round 1; null customer id now rejected before the copy (fixed); row lock held for the whole copy accepted because the table is small; one naming note was noise.`
 
-Adapted from addyosmani/agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19), MIT, Copyright (c) 2025 Addy Osmani.

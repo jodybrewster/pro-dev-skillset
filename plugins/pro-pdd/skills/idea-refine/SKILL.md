@@ -179,4 +179,4 @@ After completing an ideation session:
 
 ---
 
-_Forked from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) — MIT License. See original repository for full license text._
+_Forked from [agent-skills](https://github.com/addyosmani/agent-skills) — MIT License. See original repository for full license text._

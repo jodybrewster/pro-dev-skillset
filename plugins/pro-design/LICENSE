@@ -30,7 +30,7 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
   Used for: interface-review (and its sidecars), better-interface (holistic
   review and verdict layer), better-layout (and its sidecars)
 
-- addyosmani/agent-skills (https://github.com/addyosmani/agent-skills)
+- agent-skills (https://github.com/addyosmani/agent-skills)
   Copyright (c) 2025 Addy Osmani
   Used for: references/accessibility-checklist.md of accessibility-audit (adapted)
 

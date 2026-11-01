@@ -309,4 +309,4 @@ From debugging sessions:
 
 _Forked from [obra/superpowers](https://github.com/obra/superpowers) — MIT License. See original repository for full license text._
 
-_Untrusted error output and the non-reproducible sidecar adapted in part from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`skills/debugging-and-error-recovery/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._
+_Untrusted error output and the non-reproducible sidecar adapted in part from [agent-skills](https://github.com/addyosmani/agent-skills) (`skills/debugging-and-error-recovery/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._

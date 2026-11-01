@@ -691,7 +691,7 @@ export function runShipHookCases() {
 
       // ---- ask per permission mode (step 11, probed headless on Claude Code 2.1.314) ------
       // The headless probe denied an ask in every mode, but it is a proxy: the set fails closed and
-      // shrinks only after an interactive ask check per mode (Jody, 2026-10-30).
+      // shrinks only after an interactive ask check per mode.
       const PROBED_NO_PROMPT = ["bypassPermissions", "dontAsk", "auto"];
       for (const [i, pm] of ["auto", "default", "acceptEdits", "plan", "dontAsk", "bypassPermissions"].entries()) {
         r = mrun(`${MERGE} --match-head-commit ${prH}`, { cwd: prR, env: MENF(), pm, extraEnv: stub(prOut) });

@@ -74,4 +74,4 @@ From a shell, `python3 floor-guard.py --check [--base <ref>] [--worktree]` runs 
 
 ---
 
-_Adapted from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`constraint-driven-development`) - MIT License, Copyright (c) 2025 Addy Osmani. See the original repository for the full license text._
+_Adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (`constraint-driven-development`) - MIT License, Copyright (c) 2025 Addy Osmani. See the original repository for the full license text._

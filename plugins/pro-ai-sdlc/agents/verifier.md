@@ -66,4 +66,4 @@ Keep it short and factual, in this order:
 End with one line: `VERDICT: pass`, `VERDICT: fail` or `VERDICT: incomplete`.
 Missing scenarios for new behavior make the verdict at best `VERDICT: incomplete`; a test that cannot fail makes it `VERDICT: fail`.
 
-Test lens adapted from addyosmani/agent-skills (agents/test-engineer.md), MIT, Copyright (c) 2025 Addy Osmani.
+Test lens adapted from agent-skills (agents/test-engineer.md), MIT, Copyright (c) 2025 Addy Osmani.
