@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Portable pro dev skill stack",
-    "version": "1.76.0"
+    "version": "1.77.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -120,7 +120,7 @@
       "name": "pro-ship",
       "source": "./plugins/pro-ship",
       "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. A risk classifier sorts each change into low, medium or high and a merge gate on gh pr merge asks for approval at medium and high, pinned to the head commit. In pro-dev-starter. The documentation-and-adrs skill, adapted from agent-skills, says which docs a change touches and how to write an ADR; docs are judgment, never a gate. Deploy rules for Vercel: the vercel-deploy-bridge skill keeps the token in the environment, uploads and commits no .env file, defaults to preview and waits for a yes before every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy. The upstream deploy-to-vercel skill installs via /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
-      "version": "0.10.0",
+      "version": "0.10.1",
       "category": "development",
       "strict": true
     },

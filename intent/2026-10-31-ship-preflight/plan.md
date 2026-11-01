@@ -132,12 +132,16 @@ claude plugin validate . --strict
 - Checks run: `node tests/check.mjs` 40 checks, 0 failures, 12 warnings; `node tests/eval.mjs --dry` 98 cases; `node tests/route-lexical.mjs --min-rank1 70` rank-1 79 of 97; `node --test tests/unit/*.test.mjs` 167 pass, 0 fail; `tests/ship-preflight.mjs` 90 of 90; `tests/ship-hooks.mjs` 351 of 351; `tests/legal-hooks.mjs` 336 cases, 0 failures; `tests/ship-check.mjs` 189 of 189; `claude plugin validate . --strict` and all 21 plugins passed; `tests/check.mjs names` passed.
 - AC1 to AC12a, AC14 to AC17: pass, each covered by the test files above.
 - Live checks: `ship.py targets` on this repo returns the `marketplace` tag-release target from the new Ship block in `CLAUDE.md`; `ship.py scope` returns the range from the last `*--v*` tag; `ship.py coverage` over that range read 48 merged PRs through the real `gh` and reported every commit uncovered, as expected before any PR carries a marker.
-- AC13: open. In mieruka `ship.py targets` reports a `publish` target for `apps/web`, because mieruka has no Ship block yet; its `.mieruka/evidence/` is git-ignored, so the drop will land. The Ship block and the first live run belong to the mieruka-side intent.
+- AC13: pass, run on 2026-11-01 in mieruka at `75425fc`: `ship.py scope` found the tag-release range from the last tag.
+  `ship.py record` wrote an honest NO-GO record and dropped the same manifest into `.mieruka/evidence/ship-preflight-75425fc11247/`.
+  Mieruka's own `syncFromFilesystem` (through its vitest setup, on an in-memory database) loaded it with no error as kind `review`, artifact kind `ship-preflight`, listed by `listEvidence` under that artifact kind. The test record and the doc the sync generated were removed afterwards. Without a Ship block mieruka's `targets` still reports a `publish` target for `apps/web`; adding that block belongs to mieruka.
 - Sign-off: the maintainer, 2026-11-01, by asking for the ship command to be finished.
 
 The sign-off moves the intent and the spec to `done` and ADR-0022 to `accepted`.
 
 ## Departures from plan
+
+- The mieruka drop checked whether anything under `.mieruka/evidence/` was tracked, which skipped mieruka itself (it ignores `.mieruka/` but force-adds a few screenshots there). It now checks the manifest's own path, so the copy lands whenever that path is ignored and untracked.
 
 - Both new pro-quality agents are read-only (`Read, Grep, Glob, Bash`, Codex `sandbox_mode = "read-only"`); upstream's test-engineer writes tests, while a ship-time reviewer reports the tests that would close each gap.
 - The web-performance-auditor takes Lighthouse or PageSpeed JSON that the skill captures, because a subagent with a fixed tool list cannot call the Chrome DevTools MCP.

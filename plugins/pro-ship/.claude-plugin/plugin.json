@@ -1,6 +1,6 @@
 {
   "name": "pro-ship",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "/pro-ship:pr-check runs a repo's own checks, the floor guard, a mutation check and fresh-context reviewers, then writes a stamp; a gate hook on gh pr create warns when the stamp is missing or stale. A risk classifier sorts each change into low, medium or high and a merge gate on gh pr merge asks for approval at medium and high, pinned to the head commit. In pro-dev-starter. /pro-ship:ship is the go/no-go before a tag, release, deploy or publish: it reviews only the commits no passing pr-check covered, runs the release checks, writes a rollback plan per target and records the verdict for HEAD; a ship gate hook warns on a tag, release, publish or production deploy with no fresh GO. The documentation-and-adrs skill, adapted from agent-skills, says which docs a change touches and how to write an ADR; docs are judgment, never a gate. Opt-in shipping plugin. Today it holds the Vercel deploy bridge: a deploy walk with its own token and .env checks that asks before staging, committing, pushing, linking, installing the CLI, an anonymous --temporary deploy or production. Install the upstream skill with /pro-dev install. /pro-ship:install sets up its engines when pro-core is installed.",
   "author": {
     "name": "pro-dev-skillset"

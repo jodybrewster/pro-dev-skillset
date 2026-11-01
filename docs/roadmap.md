@@ -20,7 +20,7 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 `/pro-ship:ship` shipped on 2026-11-01 ([intent](../intent/2026-10-31-ship-preflight/intent.md), [spec](../intent/2026-10-31-ship-preflight/spec.md), [plan](../intent/2026-10-31-ship-preflight/plan.md), [ADR-0022](./decisions/0022-ship-preflight-record.md) accepted).
 It reads how a project ships, reviews only the commits no trusted pr-check marker covers, runs agent-skills' full pre-launch checklist with the test-engineer and web-performance-auditor agents and the legal review and writes a GO or NO-GO record the merge gate, the new `ship-gate` and pro-legal's gate read.
 `ship-gate` starts in warn and its evidence period starts with this release.
-Left: a Ship block and the first live run in mieruka (AC13), which go with the mieruka-side intent that also shows the record on its Ship page.
+The mieruka run (AC13) passed on 2026-11-01. Left for mieruka itself: a Ship block (so `apps/web` is not read as an npm publish) and showing the record on its Ship page.
 
 ### Waiting on the maintainer
 
