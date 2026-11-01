@@ -8,7 +8,7 @@ The folder holds the artifacts each stage writes and the next stage reads.
 - `plan.md`: how to get there, as ordered steps that cite the statements they satisfy, committed before the first change and kept true afterwards.
 
 `intent.md` and `spec.md` are written in the main checkout, never in a worktree, on a short branch off `main`.
-Each goes up as its own pull request that the agent merges as soon as its checks pass, with no approval needed, so Jody can read it on GitHub right away (Jody, 2026-11-01).
+Each goes up as its own pull request that the agent merges as soon as its checks pass, with no approval needed, so it can be read on GitHub right away.
 Nothing is pushed straight to `main`.
 A worktree starts at the plan stage.
 `/execute <plan.md>` builds an approved plan in its own worktree and opens that pull request; it never merges.
