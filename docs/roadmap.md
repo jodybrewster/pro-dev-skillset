@@ -11,6 +11,10 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
+### First: neutral repo
+
+[intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md), intent and spec accepted: take the maintainer's name, chat quotes and the stray upstream handle out of tracked files, in four PRs by area, before item 15 continues.
+
 ### Next: item 15, `/ship` preflight
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
