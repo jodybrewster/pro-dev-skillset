@@ -103,7 +103,7 @@ The record (intent decisions 2 and 5).
   It holds `verdict`, `head`, `base`, `created`, the scope (kind, range, PR numbers, uncovered commits, last-deploy source), `blockers`, `fixes`, `risks` (with `accepted_by` and `accepted_at`), the check results, a `legal` object (`status` of `done`, `not-installed` or `could-not-run`, `verdict`, `base`, `head`, `blocking` and `required`) and one `targets` entry per target with `id`, `kind`, `env`, `url`, `commit` and `rollback`.
 - R28. `record` refuses to run with uncommitted tracked changes, as `pr-check.py stamp` does.
   It adds `.pro-dev/` to the `info/exclude` file when it is missing.
-- R29. When `.mieruka/` exists at the repo root and `git check-ignore` reports `.mieruka/evidence/` as ignored, `record` also writes the same manifest to `.mieruka/evidence/<evidence_key>/evidence.json`.
+- R29. When `.mieruka/` exists at the repo root and `git check-ignore` reports the manifest's own path under `.mieruka/evidence/` as ignored (and it is not tracked), `record` also writes the same manifest to `.mieruka/evidence/<evidence_key>/evidence.json`.
   When the folder is tracked it writes nothing there and says why.
 - R30. `.pro-dev/ship/preflight.md` holds the report from R21 and is rewritten with the record.
 

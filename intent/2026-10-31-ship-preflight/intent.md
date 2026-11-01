@@ -11,7 +11,7 @@ author: the maintainer
 
 Author: the maintainer.
 Source: idea, item 15 of the ranked list in [docs/roadmap.md](../../docs/roadmap.md) and feature 18 of the [pro-ship brainstorm](../2026-10-28-pro-ship-scope/brainstorm.md); on 2026-10-31 the ask was to design for multiple scenarios, since mieruka will also use it.
-Status: done; shipped on 2026-11-01, with the mieruka live run (AC13) left to the mieruka-side intent.
+Status: done; shipped on 2026-11-01, including the mieruka run (AC13).
 Created: 2026-10-31.
 
 ## Problem

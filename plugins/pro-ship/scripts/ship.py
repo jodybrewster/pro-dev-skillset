@@ -811,12 +811,15 @@ def validate_report(report, head: str) -> None:
 
 
 def mieruka_copy(root: str, key: str, text: str) -> tuple[str | None, str]:
-    """(path written, why not). Only when .mieruka/ exists and git ignores its evidence folder."""
+    """(path written, why not). Only when .mieruka/ exists and git ignores the manifest's own path.
+
+    The folder may hold a few force-added files (mieruka tracks some screenshots there); what
+    matters is that this manifest is ignored and untracked, so writing it never dirties the tree."""
     if not os.path.isdir(os.path.join(root, ".mieruka")):
         return None, "no .mieruka/ folder at the repo root"
     rel = os.path.join(".mieruka", "evidence", key, "evidence.json")
-    if git_lines(root, "ls-files", ".mieruka/evidence"):
-        return None, ".mieruka/evidence/ is tracked by git, so nothing was written there"
+    if git_lines(root, "ls-files", "--", os.path.join(".mieruka", "evidence", key)):
+        return None, f".mieruka/evidence/{key}/ is tracked by git, so nothing was written there"
     if sh(["git", "check-ignore", "-q", rel], root).returncode != 0:
         return None, ".mieruka/evidence/ is not ignored by git, so nothing was written there (add it to .gitignore to get the copy)"
     write_atomic(os.path.join(root, rel), text)

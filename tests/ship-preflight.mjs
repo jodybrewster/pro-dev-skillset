@@ -487,8 +487,18 @@ export function runShipPreflightCases() {
     git(t.repo, "add", "-A"); git(t.repo, "commit", "-q", "-m", "tracked evidence");
     t.h = head(t.repo);
     r = rec(t.repo, report(t.h, t.b));
-    add("record/a tracked .mieruka/evidence/ gets nothing and the output says why", "no file there, skipped message names tracked",
-      r.status === 0 && !existsSync(join(t.repo, ".mieruka", "evidence", `ship-preflight-${t.h.slice(0, 12)}`)) && /tracked/.test(JSON.stringify(r.json.skipped)), r.stdout + r.stderr);
+    add("record/a tracked .mieruka/evidence/ gets nothing and the output says why", "no file there, skipped message says why",
+      r.status === 0 && !existsSync(join(t.repo, ".mieruka", "evidence", `ship-preflight-${t.h.slice(0, 12)}`)) && /tracked|not ignored/.test(JSON.stringify(r.json.skipped)), r.stdout + r.stderr);
+
+    // mieruka itself ignores .mieruka/ but force-adds a few screenshots under evidence/.
+    t = mk();
+    put(t.repo, { ".gitignore": ".mieruka/\n", ".mieruka/evidence/shot.png": "png\n" });
+    git(t.repo, "add", "-f", ".gitignore", ".mieruka/evidence/shot.png"); git(t.repo, "commit", "-q", "-m", "force-added screenshot");
+    t.h = head(t.repo);
+    r = rec(t.repo, report(t.h, t.b));
+    add("record/an ignored folder with force-added files still gets the manifest", "written, tree clean",
+      r.status === 0 && existsSync(join(t.repo, ".mieruka", "evidence", `ship-preflight-${t.h.slice(0, 12)}`, "evidence.json"))
+        && git(t.repo, "status", "--short").stdout.trim() === "", r.stdout + r.stderr);
 
     t = mk();
     put(t.repo, { ".mieruka/config.json": "{}\n" });
