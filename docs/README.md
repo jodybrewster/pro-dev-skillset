@@ -12,6 +12,7 @@ The agent file is [CLAUDE.md](../CLAUDE.md); the review policy is [REVIEW.md](..
 - [subagents.md](./subagents.md): how to split work across parallel subagents and which model each runs on.
 - [version-bump-law.md](./version-bump-law.md): the version-bump law in detail.
 - [hook-loading.md](./hook-loading.md): the hook-loading law in detail, including blocking on `Stop`.
+- [ship-preflight.md](./ship-preflight.md): the record contract that `/pro-ship:ship` writes and the ship gate, the merge gate and pro-legal's release gate read.
 - [pr-check-stamp.md](./pr-check-stamp.md): the stamp contract that `/pro-ship:pr-check` writes and pr-gate and the push gate read.
 - [enforce-mode.md](./enforce-mode.md): what still blocks each gate from enforce mode, the evidence it needs, the `warn.log` summary commands and the decision record template.
 - [codex-parity.md](./codex-parity.md): Codex parity for skills and agents in detail.

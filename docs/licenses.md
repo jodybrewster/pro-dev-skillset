@@ -78,11 +78,17 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-quality | api-documenter (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
 | pro-quality | constraints | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-quality | code-reviewer (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | test-engineer (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | web-performance-auditor (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-security | security-audit | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted |
 | pro-security | security-architect (skill and agent) | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted (draws on the threat framing; the challenge procedure is original) |
 | pro-egm | egm-bridge | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) | Apache-2.0 | no copyright line in the upstream LICENSE | bridged |
 | pro-speckit | spec-kit-bridge | [github/spec-kit](https://github.com/github/spec-kit) | MIT | Copyright GitHub, Inc. | bridged (nothing copied) |
 | pro-ship | documentation-and-adrs | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | ship (SKILL.md, release-checks.md, rollbacks.md and report.md, from `shipping-and-launch` and `commands/ship.toml`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | ship/references/performance-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | ship/references/security-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | ship/references/observability-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | vercel-deploy-bridge | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT, stated in the README; no license file | none published | bridged |
 | pro-spdd | spdd-story-lead, spdd-analysis-lead, spdd-reasons-canvas-lead, spdd-generate-lead, spdd-code-review-lead, spdd-api-test-lead, spdd-prompt-update-lead, spdd-reverse-lead, spdd-sync-lead | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) | MIT | Copyright (c) 2026 gszhangwei | adapted (the engine is vendored under `upstream/`) |
 | pro-testing | vitest | [PaulRBerg/agent-skills](https://github.com/PaulRBerg/agent-skills) | MIT | Copyright (c) 2025 Paul Razvan Berg | forked |
