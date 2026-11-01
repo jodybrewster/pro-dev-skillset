@@ -11,6 +11,13 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
+### In progress: the loop after the build
+
+[intent/2026-11-01-after-build-loop](../intent/2026-11-01-after-build-loop/intent.md): a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) proposed).
+mieruka builds its review, ship and maintain views in its own repo against that page.
+Next after it, each its own intent with a security challenge first: `claude -p` in CI, tiered deploy autonomy, a rollback command and a control-band watcher.
+The reviewer checklist items left out of it (change sizing, dependency discipline, "I'll clean it up later", multi-model review) go into the next code-reviewer change.
+
 ### Done: neutral repo
 
 [intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md) shipped on 2026-11-01: no maintainer name or chat quotes in tracked files and the upstream named agent-skills outside its license lines, held by the `names` check in `tests/check.mjs`.
