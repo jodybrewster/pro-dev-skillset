@@ -6,7 +6,7 @@ This plugin contains skills forked from the following MIT-licensed upstream repo
   Copyright (c) 2025 Jesse Vincent
   Used for: brainstorming, writing-plans
 
-- addyosmani/agent-skills (https://github.com/addyosmani/agent-skills)
+- agent-skills (https://github.com/addyosmani/agent-skills)
   Copyright (c) 2025 Addy Osmani
   Used for: interview-me, idea-refine
 

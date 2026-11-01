@@ -137,4 +137,4 @@ Rank findings most severe first.
 Name one thing the change does well when it is true and specific.
 When unsure about something, say so and name what to investigate.
 
-Adapted from addyosmani/agent-skills (agents/code-reviewer.md, agents/test-engineer.md and skills/code-review-and-quality/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (agents/code-reviewer.md, agents/test-engineer.md and skills/code-review-and-quality/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

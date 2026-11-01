@@ -923,7 +923,7 @@ checks.installers = (m) => {
     if (!existsSync(cmdPath)) missing.push("commands/install.md");
     if (!existsSync(join(p.dir, "scripts", "pro-dev-owner.py"))) missing.push("scripts/pro-dev-owner.py");
     const deps = Array.isArray(p.manifest?.dependencies) ? p.manifest.dependencies : [];
-    // a pro-core dependency would re-enable a pro-core the person disabled (Jody, 2026-10-28)
+    // a pro-core dependency would re-enable a pro-core the person disabled
     if (deps.some((d) => d && (d === "pro-core" || d.name === "pro-core")))
       failures.push(`installer ${owner}: declares a pro-core dependency, which re-enables a pro-core the person disabled; the installer checks for pro-core instead`);
     if (missing.length) failures.push(`installer ${owner}: owns registry rows but is missing ${missing.join(", ")}`);
@@ -1276,6 +1276,29 @@ checks["stamp-contract"] = () => {
     else if (!a.ok) failures.push(`pr-gate verdict for ${n} differs from expect.json (expected ${a.expect})${a.reason ? ` - ${a.reason}` : ""}`);
     if (!b) failures.push(`push gate produced no verdict for ${n}`);
     else if (!b.ok) failures.push(`push gate verdict for ${n} differs from expect.json (expected ${b.expect}, got ${b.actual})`);
+  }
+  return { failures, warnings };
+};
+
+// names: the repo never names the maintainer or quotes chat, and the upstream's handle
+// appears only where its MIT notice or a working link needs it
+// (intent/2026-11-01-neutral-repo/spec.md R1, R2, R7, R9). The repo path and other repos
+// under the same GitHub owner stay, because installs and links depend on them.
+checks["names"] = () => {
+  const failures = [], warnings = [];
+  const r = spawnSync("git", ["grep", "-I", "-n", "-i", "-E", "jody|brewster|osmani", "--", ".",
+    ":!CHANGELOG.md", ":!intent/2026-11-01-neutral-repo", ":!tests/check.mjs"], { cwd: ROOT, encoding: "utf8" });
+  if (r.status !== 0 && r.status !== 1) {
+    warnings.push(`names check skipped - git grep exited ${r.status}`);
+    return { failures, warnings };
+  }
+  const allowed = [/jodybrewster\//gi, /Copyright \(c\) 2025 Addy Osmani/g, /github\.com\/addyosmani\/agent-skills/gi];
+  for (const line of (r.stdout || "").split("\n").filter(Boolean)) {
+    const m = line.match(/^([^:]+):(\d+):(.*)$/);
+    if (!m) continue;
+    let text = m[3];
+    for (const a of allowed) text = text.replace(a, "");
+    if (/jody|brewster|osmani/i.test(text)) failures.push(`${m[1]}:${m[2]} names the maintainer or the upstream author outside a license line or a repo link`);
   }
   return { failures, warnings };
 };

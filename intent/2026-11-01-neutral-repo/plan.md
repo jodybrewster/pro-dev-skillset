@@ -63,11 +63,15 @@ The two greps print nothing (the second may print `docs/licenses.md` copyright c
 
 ## Done
 
-- Build commits:
-- Checks run:
-- AC1 to AC4:
-- Sign-off:
+- Build commits: #118 (intents from 2026-10-30), #119 (docs and root files), #120 (intents before 2026-10-30), #121 (plugins and manifests), then this PR (tests, the `names` check and the leftovers it found).
+- Checks run: `node tests/check.mjs` 38 checks, 0 failures, 10 warnings; `node tests/eval.mjs --dry` 97 cases; `node tests/route-lexical.mjs --min-rank1 70` passed; `node --test tests/unit/*.test.mjs` 167 pass, 0 fail; `tests/quality-hooks.mjs` 138 of 138; `tests/ship-hooks.mjs` 254 of 254; `claude plugin validate . --strict` and every plugin passed.
+- AC1: pass, the R1, R2 and R7 greps return only the repo paths, the 2025 copyright lines and the upstream URLs.
+- AC2: pass, a line naming the maintainer added to `README.md` made `node tests/check.mjs names` fail with that line; removing it passed.
+- AC3: pass, as above.
+- AC4: pass, `risk-classify.py` prints `"approval": "maintainer"` and `tests/unit/risk-classifier.test.mjs` asserts it.
+- Sign-off: the maintainer, 2026-11-01, by asking for this work to be finished.
 
 ## Departures from plan
 
-None yet.
+- The `names` check found 28 footers, LICENSE notes and agent files that still wrote the upstream as `addyosmani/agent-skills` in prose; this PR rewrites them to `agent-skills` (the copyright lines and URLs stay) and bumps the seven plugins they live in.
+- `tests/quality-hooks.mjs` used the maintainer's first name as an exception owner in two fixtures; it now uses `maintainer`.

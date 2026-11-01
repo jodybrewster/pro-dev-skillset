@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: accepted
+status: done
 risk: medium
 created: 2026-11-01T08:00:00-0500
 author: the maintainer
@@ -10,7 +10,7 @@ author: the maintainer
 # Intent: take the maintainer's name, quotes and the upstream author's handle out of the repo
 
 Source: idea.
-Status: accepted.
+Status: done; shipped in #118 to #121 and the tests PR.
 Created: 2026-11-01.
 Related: [owner-neutral-skill](../2026-10-30-owner-neutral-skill/intent.md), which keeps owners out of the apps these plugins help build; this intent does the same for the marketplace itself.
 

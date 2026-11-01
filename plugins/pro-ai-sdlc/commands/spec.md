@@ -109,4 +109,4 @@ Check `git status` that nothing else got staged.
 The path, the commit hash, the number of requirements, the ADR path when one was drafted, each flagged concern in one line and the open questions that block planning.
 Suggest `/plan <intent dir>/spec.md` as the next step.
 
-Capability map and assumptions steps adapted from addyosmani/agent-skills (skills/spec-driven-development/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Capability map and assumptions steps adapted from agent-skills (skills/spec-driven-development/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

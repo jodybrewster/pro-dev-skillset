@@ -153,7 +153,7 @@ Checkpoint C: `node tests/check.mjs` reports 0 failures apart from any version-b
    - If the new case is not rank-1 lexically, leave it; the gate is the overall rate and the model router decides the rest.
 10. (XS) Attribution and docs. (R28, AC10; parallel with step 9)
     - `docs/licenses.md`: add after the pro-ai-sdlc rows `| pro-ai-sdlc | doubt-driven-development | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |`.
-    - `plugins/pro-ai-sdlc/LICENSE`: if it has no Addy Osmani line yet, add a short attribution notice at the top in the style of `plugins/pro-quality/LICENSE` naming the skill and "Copyright (c) 2025 Addy Osmani".
+    - `plugins/pro-ai-sdlc/LICENSE`: if it has no agent-skills copyright line yet, add a short attribution notice at the top in the style of `plugins/pro-quality/LICENSE` naming the skill and "Copyright (c) 2025 Addy Osmani".
     - `README.md`: in the pro-ai-sdlc bullet of the plugin list, name the `doubt-driven-development` skill that `/execute` runs on irreversible steps.
     - `docs/roadmap.md`: mark item 12 built, in the style the roadmap uses for built items.
     - Commit steps 9 and 10: "docs: doubt-driven-development routing, coverage and attribution".

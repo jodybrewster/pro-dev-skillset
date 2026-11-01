@@ -1,6 +1,6 @@
 {
   "name": "pro-testing",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "The Verify phase: native Vitest (unit/component), agent-browser (interactive verification), and Storybook interactions, plus qa-suite — a bridge to the petrkindlmann/qa-skills library installed by /pro-dev install: qa-do/qa-start routers, playwright-automation, visual-testing, api/contract-testing, test-reliability, and QA strategy/risk/planning. Playwright is provided on demand via the qa-suite bridge (/pro-dev), not as a hard plugin dependency. /pro-testing:install sets up its engines when pro-core is installed.",
   "author": {
     "name": "pro-dev-skillset"

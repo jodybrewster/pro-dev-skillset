@@ -236,4 +236,4 @@ then `tab docs` to switch. Tab ids (`t1`, `t2`) are stable and never reused.
 
 _Forked from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) (v0.27.0) — Apache-2.0. The `references/` files are adapted from the CLI's bundled `skill-data/core`. See `LICENSE` for attribution._
 
-_Security boundaries adapted in part from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (`skills/browser-testing-with-devtools/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._
+_Security boundaries adapted in part from [agent-skills](https://github.com/addyosmani/agent-skills) (`skills/browser-testing-with-devtools/SKILL.md`) - MIT, Copyright (c) 2025 Addy Osmani._

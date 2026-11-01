@@ -59,4 +59,4 @@ Report:
 3. The verify command, its result and the relevant output lines.
 4. Net lines removed (`git diff --stat`).
 
-Callers-and-history check and balance rule adapted from addyosmani/agent-skills (skills/code-simplification/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Callers-and-history check and balance rule adapted from agent-skills (skills/code-simplification/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.

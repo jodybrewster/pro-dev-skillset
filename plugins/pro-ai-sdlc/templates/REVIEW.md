@@ -133,4 +133,4 @@ List Pre-existing findings last in their own group.
 
 ---
 
-_Adapted from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) - MIT License, Copyright (c) 2025 Addy Osmani. See original repository for full license text._
+_Adapted from [agent-skills](https://github.com/addyosmani/agent-skills) - MIT License, Copyright (c) 2025 Addy Osmani. See original repository for full license text._
