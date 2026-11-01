@@ -116,8 +116,17 @@ Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations")
    - This replaces the brainstorm's "no new hook". That assumed `production-gate` was always installed; pro-ai-sdlc became opt-in, so a starter repo has nothing on `git tag` or `gh release create` without it.
 4. The last production deploy is found in this order: the GitHub Deployments API for the production environment (`gh api repos/{owner}/{repo}/deployments`, which Vercel and many CI setups write to), then the newest release tag, then asking the person.
    The repo config can name the source.
-5. The record carries, per target, the fields mieruka's deploy records use (URL, environment, commit), so mieruka can pair a deploy with the preflight that cleared it.
-   The pro-ship contract is the stable side; the mieruka intent adapts to it.
+5. Align to mieruka (Jody, 2026-10-31: "yes align mieruka", "or maybe align to mieruka").
+   mieruka already reads file-dropped evidence: a manifest at `.mieruka/evidence/<evidence_key>/evidence.json` with `evidence_key`, `kind`, `status` (`pass`, `fail`, `partial` or `info`), `summary`, `detail_json`, `produced_by` and an optional `artifact_kind` and `artifact_key`, picked up by its evidence watcher (`apps/web/src/service/spdd-evidence.ts`, `apps/web/src/lib/spdd-watcher.ts`).
+   Its deploy records keep `url`, `env` and `commit` in `detail_json` (`apps/web/src/features/ship/DeployPanel.tsx`).
+   So the preflight record uses that manifest shape as it is, with no pro-ship format of its own:
+   - `status`: GO is `pass`, GO with acknowledged risks is `partial`, NO-GO is `fail`.
+   - `summary`: the verdict line with the Blocker count first.
+   - `detail_json`: the verdict, HEAD, the scope, the Blockers, Recommended fixes, Acknowledged risks and one entry per target with its rollback plan and mieruka's `url`, `env` and `commit` fields.
+   - `produced_by`: `pro-ship:ship` and its version.
+   pro-ship always writes it to `.pro-dev/ship/preflight.json`, which the gates read.
+   When the repo has a `.mieruka/` folder it also drops the same manifest into `.mieruka/evidence/ship-preflight-<short sha>/evidence.json`, so mieruka shows it with no translation step.
+   mieruka has no evidence kind for a preflight today (`review`, `qa_run`, `deploy`, `a11y`, `visual_drift`, `doc`), so the mieruka intent adds `preflight` and shows it on the Ship page; until then the gates still work and mieruka ignores the unknown kind.
 6. One ADR for the preflight record contract, written with the spec.
 
 ## Open questions
