@@ -126,7 +126,12 @@ Jody took the recommendations on 2026-10-31 ("I'll take you're recommendations")
    - `produced_by`: `pro-ship:ship` and its version.
    pro-ship always writes it to `.pro-dev/ship/preflight.json`, which the gates read.
    When the repo has a `.mieruka/` folder it also drops the same manifest into `.mieruka/evidence/ship-preflight-<short sha>/evidence.json`, so mieruka shows it with no translation step.
-   mieruka has no evidence kind for a preflight today (`review`, `qa_run`, `deploy`, `a11y`, `visual_drift`, `doc`), so the mieruka intent adds `preflight` and shows it on the Ship page; until then the gates still work and mieruka ignores the unknown kind.
+   - `kind`: `review`, with `artifact_kind` `ship-preflight` and `artifact_key` the short HEAD sha.
+     mieruka's table only accepts six kinds (`review`, `qa_run`, `deploy`, `a11y`, `visual_drift`, `doc`; a `CHECK` in `apps/web/src/lib/db.ts`).
+     `syncFromFilesystem` does not catch a failed insert, so one manifest with a new kind would stop the sync for every manifest after it.
+     Using `review` works in mieruka today with no change there.
+   The mieruka intent then shows these records on the Ship page by their `artifact_kind`.
+   It should also make the sync skip a bad manifest instead of stopping.
 6. One ADR for the preflight record contract, written with the spec.
 
 ## Open questions
