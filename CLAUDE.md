@@ -31,7 +31,7 @@ Mieruka is only a UI over it and reads the plugin's templates and rules.
 - Sonnet runs the subagents: per-plugin edits, drafting, validation and code search, dispatched in parallel in one turn with self-contained prompts ([docs/subagents.md](./docs/subagents.md)).
 - Haiku runs the bounded fetch-and-extract agents of `pro-research` and the read-only `researcher` of `pro-ai-sdlc`.
 - Every agent declares `model:` for its role in frontmatter: readers and explorers on haiku, builders on sonnet, reviewers on opus.
-- One exception: `pro-ai-sdlc`'s `/execute` runs on Opus as the builder and dispatches subagents when a step needs one (Jody, 2026-10-28).
+- One exception: `pro-ai-sdlc`'s `/execute` runs on Opus as the builder and dispatches subagents when a step needs one.
 
 ## The three laws
 

@@ -5,7 +5,7 @@ Update it whenever an intent starts, moves a stage, parks or ships, in the same 
 Last updated 2026-10-31: P0 and P1 shipped, the twelve shipped intents marked `done` and item 15 is next.
 
 A fresh session starts here: read "Now", then the intent folder it names.
-The ranked list came from comparing this marketplace with [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
+The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
 It revisits the older [AGENT-SKILLS-INTEGRATION](./plans/AGENT-SKILLS-INTEGRATION.md) plan, which skipped most of agent-skills before the pro-ship work existed.
 Nothing below the "Now" section is decided until it moves into an intent or a spec.
 
@@ -19,12 +19,12 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 All of P0 and P1 has shipped, so the next build is the first P2 item: `/pro-ship:ship` with a go/no-go verdict ([detail](#15-ship-preflight-with-a-gono-go-verdict)).
 Intent accepted and [spec](../intent/2026-10-31-ship-preflight/spec.md) written on 2026-10-31, with [ADR-0022](./decisions/0022-ship-preflight-record.md) proposed.
-The plan is drafted and waits on Jody: build now and keep the PR a draft until the 2026-11-13 enforce decision, because a pro-ship bump restarts the merge gate's warn-mode week.
-Jody took the spec's three recommendations: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
-mieruka's web app and CLI run only locally and nothing is published (Jody, 2026-10-31), so mieruka is a tag-and-release project for now.
-It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read (Jody, 2026-10-31).
+The plan is drafted and waits on the maintainer: build now and keep the PR a draft until the 2026-11-13 enforce decision, because a pro-ship bump restarts the merge gate's warn-mode week.
+The spec's three recommendations are taken: a pr-check marker in the PR body for coverage, a Ship block in the agent file for overrides and the legal review inside `/ship` with pro-legal's gate reading the record.
+mieruka's web app and CLI run only locally and nothing is published, so mieruka is a tag-and-release project for now.
+It covers every way a project ships (deploy on merge, tag and release, manual deploy, desktop app, package publish) and a record mieruka can read.
 
-Waiting on Jody, none of which blocks item 15:
+Waiting on the maintainer, none of which blocks item 15:
 
 - ADRs 0016 to 0020 are proposed and wait for acceptance.
 - The warn-mode evidence week for the floor guard, pr-gate and merge gate in two repos, with the decision record due 2026-11-13 ([docs/enforce-mode.md](./enforce-mode.md)).
@@ -39,7 +39,7 @@ Waiting on Jody, none of which blocks item 15:
 ### P1 intents (shipped 2026-10-30)
 
 P0 shipped on 2026-10-30 (#81, #82, #87, #88, #89).
-Each P1 group went through spec, plan and build in one PR per intent; the ADRs 0016 to 0020 are proposed and wait for Jody's acceptance.
+Each P1 group went through spec, plan and build in one PR per intent; the ADRs 0016 to 0020 are proposed and wait for acceptance.
 Hand checks that need a person or a model run are listed in each plan's Done section.
 
 | Intent | Ranked items | Plugins | Risk | Intent PR | Build PR |
@@ -56,8 +56,8 @@ The warn-mode evidence week for the gates is in [docs/enforce-mode.md](./enforce
 
 ### pro-electron (built 2026-10-30)
 
-A new opt-in stack plugin for Electron apps, from Jody's Electron skills survey of 2026-10-30.
-Folder: [intent/2026-10-30-pro-electron/](../intent/2026-10-30-pro-electron/intent.md); spec and plan approved by Jody on 2026-10-30.
+A new opt-in stack plugin for Electron apps, from an Electron skills survey of 2026-10-30.
+Folder: [intent/2026-10-30-pro-electron/](../intent/2026-10-30-pro-electron/intent.md); spec and plan approved on 2026-10-30.
 Ships `electron-skills-bridge` (jwynia `electron-best-practices`, laststance `electron-release`, manual Playwright MCP over CDP), `electron-upgrade` and `electron-security-audit`.
 Live evals passed on 2026-10-30 (docs/evals.md).
 
@@ -68,19 +68,19 @@ Folder: [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-fl
 - Intent: written and committed (`8b78aa3`), status draft.
 - Spec: [spec.md](../intent/2026-10-29-constraint-floor/spec.md) with 18 functional and 4 non-functional requirements and 9 acceptance criteria, committed with ADR-0010 (`b23f41c`).
 - ADR: [ADR-0010](./decisions/0010-constraint-floor.md), status proposed; it moves to accepted at the plan's Done sign-off.
-  Jody saw no reason he would remove the floor, so it records a revisit trigger instead: findings that mostly get waved through with `floor-allow:` mean a rule is too broad.
+  There is no expectation that the floor will be removed, so it records a revisit trigger instead: findings that mostly get waved through with `floor-allow:` mean a rule is too broad.
 - Flagged concerns 1-4 resolved on 2026-10-29 with the recommendations: copy the mode lookup into pro-quality; accept pro-quality's mixed hook behavior for now; enforce mode denies every retry; the verifier reading `CONSTRAINTS.md` is a follow-up change.
-- Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks plus a serial tail; approved by Jody on 2026-10-30.
-  Jody approved on 2026-10-29 three spec changes found while planning: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
+- Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks plus a serial tail; approved on 2026-10-30.
+  Three spec changes found while planning were approved on 2026-10-29: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
 - Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
 - Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
-- Signed off by Jody on 2026-10-30 and merged in #81. AC9 (a week of warn-mode use in two repos) gates the later switch to enforce mode.
+- Signed off on 2026-10-30 and merged in #81. AC9 (a week of warn-mode use in two repos) gates the later switch to enforce mode.
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
 
 ### The P0 review stack (ranked items 2-6)
 
-Jody approved on 2026-10-29 splitting the brainstorm's "Intent A" into four intents, drafted from the brainstorm and this roadmap with no interview.
+The brainstorm's "Intent A" was split into four intents on 2026-10-29, drafted from the brainstorm and this roadmap with no interview.
 All four intents and specs are committed as drafts.
 Each spec says `ADR needed: yes` with the ADR not yet written; each lists its flagged concerns with a recommendation and its open questions.
 They replace the dropped [pro-ship-scope intent](../intent/2026-10-28-pro-ship-scope/intent.md); `code-reviewer` moved out of the parked specialist-agents intent.
@@ -98,28 +98,28 @@ Facts the drafts found that change earlier notes:
 - pro-quality's `pr-quality-gate.py` fired since 0.11.1 (PR 76), as a `PostToolUse` hook after `gh pr create` succeeded; it ran `npm run lint` and `npm test` and checked the body length; pr-gate replaces it and the script is deleted.
 - `/merge-pr` is a user-level command in `~/.claude/commands/merge-pr.md`, not in this repo; risk-tiers adds a merge-gate hook on `gh pr merge` instead of editing it.
 
-Cross-cutting decisions for Jody:
+Cross-cutting decisions:
 
 - Five ADRs are pending across the stack: constraint floor (0010), review convergence, the reviewer handoff contract, the shared gate stamp and the tier model.
   Recommended: fold review convergence and the handoff contract into one "review contract" ADR, making four.
 - Every spec names a version bump that collides with the others (pro-quality, pro-ai-sdlc, metadata.version); the recommendation in each is to take the next number over main at build time and stack the PRs.
 - Build order: constraint-floor and review-policy can run in parallel; then code-reviewer; then pr-gate; then risk-tiers.
-- One PR per intent (Jody, 2026-10-29): each intent's PR holds its intent, spec, plan and build, and stays a draft until the build lands.
+- One PR per intent: each intent's PR holds its intent, spec, plan and build and stays a draft until the build lands.
   constraint-floor [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81), review-policy [#82](https://github.com/jodybrewster/pro-dev-skillset/pull/82), code-reviewer [#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), pr-gate [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84) and risk-tiers [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85).
 
-review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update` (Jody, 2026-10-30).
+review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update`.
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
 pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
 risk-tiers shipped in #88 on 2026-10-30 with ADR-0015. All of P0 (ranked items 1 to 6) shipped on 2026-10-30.
 What still blocks enforce mode, per gate and with owners: [docs/enforce-mode.md](./enforce-mode.md); the decision record is pending until 2026-11-13.
-Jody decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
+Decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 
 ## Parked intents
 
 | Intent | Status | Why parked | Comes back when |
 |---|---|---|---|
 | [2026-10-28-specialist-agents](../intent/2026-10-28-specialist-agents/intent.md) | draft | `code-reviewer` moved to its own intent; the rest is ranked item 18 (P2). | Item 18 starts: the security finder, `web-performance-auditor` and possibly `test-engineer`. |
-| [2026-10-28-rename-pro-dev](../intent/2026-10-28-rename-pro-dev/intent.md) | draft | The intent itself says "not for today". | Jody decides to rename the plugins. |
+| [2026-10-28-rename-pro-dev](../intent/2026-10-28-rename-pro-dev/intent.md) | draft | The intent itself says "not for today". | The maintainer decides to rename the plugins. |
 | [2026-10-28-taste-skill-v2](../intent/2026-10-28-taste-skill-v2/intent.md) | draft | Not on the ranked list; nobody has started it. | pro-design is next touched, or the bridge's smoke test fails. |
 
 ## Dropped intents
@@ -134,11 +134,11 @@ Marked `done` on 2026-10-29 after checking git history: [execute-command](../int
 Still `proposed` because part of each did not ship:
 
 - [pro-dev-setup](../intent/2026-10-28-pro-dev-setup/intent.md): #65 left its item 5 undone (pro-quality's `/review`, `/api-docs` and `/lead-research` still exist).
-- [design-vercel-bridges](../intent/2026-10-28-design-vercel-bridges/intent.md): #68 shipped everything except Hallmark, which Jody held.
+- [design-vercel-bridges](../intent/2026-10-28-design-vercel-bridges/intent.md): #68 shipped everything except Hallmark, which was held.
 - [spec-methods](../intent/2026-10-28-spec-methods/intent.md): #66 shipped the EGM hand-off, but #73 made pro-pdd the default against the intent's "pro-ai-sdlc stays the default", and the `/intent` offer was not built.
 - [pro-dev-simplify](../intent/2026-10-27-pro-dev-simplify/intent.md): item G has no intent; C and D are partial.
 
-Each needs Jody's call: finish the remainder, or mark it `done` with the remainder dropped.
+Each needs the maintainer's call: finish the remainder, or mark it `done` with the remainder dropped.
 
 ## How it is ranked
 
@@ -269,7 +269,7 @@ Source: pro-ship features 3 and 4; [specialist agents intent](../intent/2026-10-
 ### 4. Risk classifier and approval tiers
 
 What: a deterministic classifier sorts each diff into low, medium or high from paths, security and legal surface, dependency changes, weakened tests, size and the intent's declared risk.
-The tier sets review depth and approval: low merges on green, medium and high need Jody, an agent's approval never counts and an approval covers one commit.
+The tier sets review depth and approval: low merges on green, medium and high need the maintainer, an agent's approval never counts and an approval covers one commit.
 Why it is P0: it sets how much of 2 and 3 runs, which keeps the gate cheap on small PRs and strict on risky ones.
 Source: pro-ship features 7 and 8.
 
@@ -353,7 +353,7 @@ Source: pro-ship features 14-16.
 What: `/pro-ship:ship` writes `.pro-dev/ship/preflight.md` for HEAD.
 Take from `commands/ship.toml`:
 - The body layout: Blockers, Recommended fixes, Acknowledged risks, Rollback plan and the specialist reports (`:49-72`).
-- The verdict rules: a Critical finding is NO-GO unless Jody explicitly accepts the risk; no GO without a rollback plan (`:78-82`).
+- The verdict rules: a Critical finding is NO-GO unless the maintainer explicitly accepts the risk; no GO without a rollback plan (`:78-82`).
 Skip their skip rule (2 files or fewer, under 50 lines); our risk tiers replace it.
 `skills/shipping-and-launch/SKILL.md` becomes a sidecar, as the pro-ship brainstorm already plans.
 Source: pro-ship feature 18.

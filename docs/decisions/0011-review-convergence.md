@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 accepted (2026-10-30)
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-29-review-policy/.
 
 ## Context
@@ -32,7 +32,7 @@ One fix per class closes it.
 A finding in code the PR did not change is tagged Pre-existing.
 It is listed and never blocks.
 
-`/pr-babysit` stops after three rounds and asks Jody to rethink the approach.
+`/pr-babysit` stops after three rounds and asks the maintainer to rethink the approach.
 Every round counts toward the cap.
 
 The report opens with one summary line: `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.
@@ -40,7 +40,7 @@ The report opens with one summary line: `important: <n>  nits: <n>  pre-existing
 ## Consequences
 
 A PR with an old bug nearby now merges on its own merits and the old bug stays visible in the report.
-A bug the first round missed in unchanged code is found only by a fresh full review, which Jody can ask for.
+A bug the first round missed in unchanged code is found only by a fresh full review, which the maintainer can ask for.
 The summary line gives a reader and a script the verdict before the detail.
 Five copies of the rules exist (template, agent, TOML, two commands), so the contract check guards them.
 

@@ -21,12 +21,12 @@ Two costs drive the answer, and both are paid per enabled plugin, every session,
 
 A plugin is the only unit a person can enable or disable, so plugin boundaries are the only knob for these costs.
 Two goals shape where the boundaries go.
-Jody wants to trial SDLC methods by turning them on and off, so each method is its own plugin.
+The maintainer wants to trial SDLC methods by turning them on and off, so each method is its own plugin.
 The repo is open source and the core must serve someone outside software: a GTM engineer who hacks social media and video content, has no codebase and would carry a GTM plugin instead of a dev one.
 That rules out folding engineering discipline into core.
 
 This split is our own design.
-[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) ships one flat plugin of 25 stack-neutral skills organised by SDLC phase; `claude-plugins-official` ships per-vendor plugins with no shared core.
+[agent-skills](https://github.com/addyosmani/agent-skills) ships one flat plugin of 25 stack-neutral skills organised by SDLC phase; `claude-plugins-official` ships per-vendor plugins with no shared core.
 Neither has stack-specific skills next to a general layer, which is the case that forces layering here.
 
 ## Decision

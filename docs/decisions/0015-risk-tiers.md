@@ -8,7 +8,7 @@ accepted (2026-10-30) (2026-10-30)
 
 Amended 2026-10-30 by intent/2026-10-30-p0-hardening/: the merge gate reads the PR head through `gh pr view` and may fetch it, which replaces the rejected alternative of checking the head over the network.
 
-Decided by: Jody Brewster.
+Decided by: the maintainer.
 Source: intent/2026-10-29-risk-tiers/.
 
 ## Context
@@ -29,7 +29,7 @@ Only the person answering a permission prompt approves a medium or high merge, a
 An approval covers one HEAD sha through `gh pr merge --match-head-commit`, so a new commit needs a new look.
 The tier table lives in an optional `## Risk tiers` section of `REVIEW.md`.
 The approval column stays fixed until the scaling block exists.
-A tier is overridden down only by Jody, recorded in the stamp against one HEAD sha.
+A tier is overridden down only by the maintainer, recorded in the stamp against one HEAD sha.
 That override is later work and is not built.
 
 ## Consequences

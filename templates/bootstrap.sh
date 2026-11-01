@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-line bootstrap for a fresh project that wants Jody's pro-dev stack.
+# One-line bootstrap for a fresh project that wants the pro-dev stack.
 #
 # Usage (from inside a project dir):
 #   bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.sh --jq .content | base64 -d)

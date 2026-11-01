@@ -28,7 +28,7 @@ Every plugin that owns registry rows also ships one `/<plugin>:install`, which i
 It runs pro-core's `pro-dev.py --owner <plugin>` through the plugin's own `scripts/pro-dev-owner.py`, a script identical in every owning plugin.
 That script reads the owner from its own manifest and runs only a pro-core from the trusted marketplace that Claude Code loads for this repo.
 No owning plugin depends on pro-core: installing a dependent silently re-enables a pro-core the person disabled, with its `git-safe`, `memory-recall`, session-start and Stop hooks.
-Jody decided 2026-10-28: "yes you don't need pro-core for pro-nextjs".
+pro-nextjs does not need pro-core (decided 2026-10-28).
 `/<plugin>:install` needs pro-core installed and enabled and otherwise prints one line saying so and stops.
 Rows stay in pro-core's one registry for now.
 Before running, both `/pro-dev` and every `/<plugin>:install` list each row that will install, mark answers taken from the committed `.claude/pro-dev.json` and wait for a yes.

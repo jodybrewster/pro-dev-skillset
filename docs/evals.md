@@ -261,5 +261,5 @@ Findings:
 
 ## Credit
 
-The tiers follow Addy Osmani's [agent-skills](https://github.com/addyosmani/agent-skills) (MIT): its deterministic trigger evals, its behavioral runner with pressure cases and its `claude plugin eval` pairs.
+The tiers follow [agent-skills](https://github.com/addyosmani/agent-skills) (MIT): its deterministic trigger evals, its behavioral runner with pressure cases and its `claude plugin eval` pairs.
 No code or fixture is copied from it; the scripts here are written for this repo's `tests/` conventions.

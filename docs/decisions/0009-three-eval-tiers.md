@@ -12,7 +12,7 @@ Until now the only eval was `tests/eval.mjs`, which asks Haiku to pick one skill
 It needs an API key, so CI ran it as `--dry` and only checked that the cases name real skills.
 Nothing measured whether a skill changes what the agent does.
 Nothing in CI failed when a description drifted.
-Addy Osmani's [agent-skills](https://github.com/addyosmani/agent-skills) measures routing without a key, runs behavioral evals against fixtures and ships `claude plugin eval` cases.
+[agent-skills](https://github.com/addyosmani/agent-skills) measures routing without a key, runs behavioral evals against fixtures and ships `claude plugin eval` cases.
 The repo has no API secret in GitHub Actions.
 Source: intent/2026-10-29-evals-three-tiers/.
 

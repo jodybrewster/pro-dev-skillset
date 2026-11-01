@@ -6,7 +6,7 @@ Date: 2026-10-30
 
 proposed
 
-Decided by: Jody Brewster (at sign-off).
+Decided by: the maintainer (at sign-off).
 Source: intent/2026-10-30-codex-second-reviewer/.
 
 ## Context

@@ -6,7 +6,7 @@ Status (2026-10): GStack has been removed. `cso` landed as `pro-security`'s `sec
 
 Three related goals:
 0. **Wrap `petrkindlmann/qa-skills` into `pro-testing` first** (MIT) using a vendor-and-adapt model: vendor the full 43-skill QA library, expose only the testing-core subset, retire the two current hand-forked qa-skills skills, and sharpen the `agent-browser` vs `playwright-automation` boundary.
-1. **Absorb the genuinely-additive parts of `addyosmani/agent-skills`** (MIT) into the marketplace — 12 net-new skills, 5 reference checklists, 1 agent — without duplicating skills we already have at equal rigor, and without disturbing `pro-spdd` (sole owner of spec-driven work).
+1. **Absorb the genuinely-additive parts of `agent-skills`** (MIT) into the marketplace — 12 net-new skills, 5 reference checklists, 1 agent — without duplicating skills we already have at equal rigor, and without disturbing `pro-spdd` (sole owner of spec-driven work).
 2. **Remove `pro-gstack` entirely**, but first salvage the ~22 of its 58 skills whose value is framework-independent (survives without the gstack runtime: gbrain, browser daemon, telemetry, deploy/queue infra, iOS bridge, proprietary binaries). The rest (~30) are pure gstack runtime/infra and are dropped with the plugin.
 
 These are executed as **small, independently-reviewable phases**. Each phase ends with version bumps, marketplace registration, and `claude plugin validate` passing, so it can be reviewed and shipped before the next begins. **Removing `pro-gstack` is the final phase** — nothing is deleted until all salvage is done and validated.
@@ -119,7 +119,7 @@ Before committing each exposed shim: read its upstream description and `AGENTS.m
 
 ## agent-skills inventory (net-new + skipped overlaps)
 
-**Upstream:** `addyosmani/agent-skills` — 23 production-grade engineering workflow skills for AI coding agents, MIT-licensed.
+**Upstream:** `agent-skills` — 23 production-grade engineering workflow skills for AI coding agents, MIT-licensed.
 
 ```
 skills/            # 23 workflow skills
@@ -167,7 +167,7 @@ Rationale: the existing equivalents are `obra/superpowers`-derived and equally r
 ## Global conventions (every forked/salvaged file)
 
 1. **Attribution footers** matching repo convention:
-   - agent-skills: `_Forked from [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) — MIT License._`
+   - agent-skills: `_Forked from [agent-skills](https://github.com/addyosmani/agent-skills) — MIT License._`
    - gstack: `_Adapted from [garrytan/gstack](https://github.com/garrytan/gstack) — MIT License._` (verified: MIT, © 2026 Garry Tan; matches existing pro-gstack wording)
 2. **`LICENSE`** added to each new plugin (`pro-security`, `pro-ship`, `pro-review`).
 3. **Version-bump law** (`CLAUDE.md`/`RELEASING.md`): bump each touched `plugin.json` version **and** its `marketplace.json` entry; new plugins get a new entry; bump top-level `metadata.version` once per phase touching the manifest.
