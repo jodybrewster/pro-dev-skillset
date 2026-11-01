@@ -2,14 +2,14 @@
 
 Built from `spec.md` (commit dcdb98f, amended 2026-10-29 before approval) and `intent.md` in this folder.
 Status: implemented.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-29.
 
-Jody is named as approver because the spec sets a contract every reviewer in the marketplace will follow (the four-field handoff) and the intent is risk medium.
+The maintainer is named as approver because the spec sets a contract every reviewer in the marketplace will follow (the four-field handoff) and the intent is risk medium.
 The prose of the agent prompt is the product and AC7 needs a person to read one real review.
 It does not suit auto mode.
 
-The ADR for the four-field handoff ships in this PR as `docs/decisions/0012-review-handoff.md` (proposed), with its row in `docs/decisions/README.md`, written in step 7 (one PR per intent, Jody 2026-10-30).
+The ADR for the four-field handoff ships in this PR as `docs/decisions/0012-review-handoff.md` (proposed), with its row in `docs/decisions/README.md`, written in step 7 (one PR per intent).
 ADR-0011 is review convergence, shipped in #82.
 
 Build-time readings on 2026-10-30, replacing the numbers below: pro-quality 0.13.0 to 0.14.0, pro-execution 0.6.0 to 0.6.1 and `metadata.version` 1.61.0 to 1.62.0.
@@ -48,7 +48,7 @@ At the root:
 
 - `tests/check.mjs` (modified): a new `handoff` contract check (R22), written first.
 - `tests/cases/routing.jsonl` (modified): one case that expects `code-reviewer` (AC9).
-- `docs/licenses.md` (modified): a pro-quality row for `code-reviewer` (agent) naming addyosmani/agent-skills as adapted, with "Copyright (c) 2025 Addy Osmani" (AC10).
+- `docs/licenses.md` (modified): a pro-quality row for `code-reviewer` (agent) naming agent-skills as adapted, with "Copyright (c) 2025 Addy Osmani" (AC10).
 - `README.md` (modified): the pro-quality row at line 224 and the description at line 252 still say "reusable reviewer prompt"; name the agent instead.
 - `.claude-plugin/marketplace.json` (modified): the pro-quality entry 0.12.0 to 0.13.0 with its description, the pro-execution entry 0.6.0 to 0.6.1 and `metadata.version` from 1.59.1 to 1.60.0, bumped once.
 
@@ -104,7 +104,7 @@ Step 9 comes last so version numbers are taken at build time.
    - Run `node tests/quality-hooks.mjs` (the quality-hooks check runs it) to see the gate cases still pass.
    - Run `grep -rn "code-reviewer.md\|DESCRIPTION"` over the three files and expect nothing.
 7. Attribution. (R23, AC10; parallel)
-   - Add the Addy Osmani copyright line and a one-line note in `plugins/pro-quality/LICENSE`.
+   - Add the agent-skills copyright line and a one-line note in `plugins/pro-quality/LICENSE`.
    - Add the `docs/licenses.md` row.
    - Update the two README lines.
 8. Add the routing case to `tests/cases/routing.jsonl`, expecting `code-reviewer`, in the style of the `reviewer` case at line 82. (AC9; parallel)
@@ -129,7 +129,7 @@ Step 9 comes last so version numbers are taken at build time.
 - The three-file grep and `node tests/quality-hooks.mjs` cover AC12; the pro-execution manifests and marketplace entry cover AC13.
 - `grep -rn "code-reviewer.md" plugins docs README.md` prints nothing (AC8).
 - `node tests/check.mjs` and `node tests/route-lexical.mjs --min-rank1 70` cover AC9: the warning count does not rise and rank-1 stays above 70.
-- `grep -n "Addy Osmani" docs/licenses.md plugins/pro-quality/LICENSE` and `grep -n "Adapted from addyosmani/agent-skills" plugins/pro-quality/agents/code-reviewer.md plugins/pro-quality/.codex-plugin/agents/code-reviewer.toml` cover AC10.
+- `grep -n "agent-skills" docs/licenses.md plugins/pro-quality/LICENSE` and `grep -n "Adapted from agent-skills" plugins/pro-quality/agents/code-reviewer.md plugins/pro-quality/.codex-plugin/agents/code-reviewer.toml` cover AC10.
 - `node tests/check.mjs` covers AC11: the version-bump check fails when the two manifests and the marketplace entry disagree.
 - The manual dispatch in step 10 covers AC7.
 - The full proof of done below covers AC1.
@@ -172,9 +172,9 @@ Overlaps with sibling plans:
 - The handoff contract may fold into a shared review-contract ADR with review-policy; the plan assumes it exists before step 1.
 - pr-gate owns pr-check's handoff while this change owns the check on it (spec flagged concern 1); the plan assumes one shared `handoff.md` that the check reads, so pr-gate references it and adds no second template.
 
-Decided by Jody on 2026-10-29 and no longer open: effort high set by the dispatcher, a subagent dispatch (`pr-gate` may choose `claude -p` later without changing the agent), one shared `handoff.md` that pr-check also uses, the mutation check moving into pr-check (pr-gate spec R29) and the three extra callers with the pro-execution patch bump.
+Decided by the maintainer on 2026-10-29 and no longer open: effort high set by the dispatcher, a subagent dispatch (`pr-gate` may choose `claude -p` later without changing the agent), one shared `handoff.md` that pr-check also uses, the mutation check moving into pr-check (pr-gate spec R29) and the three extra callers with the pro-execution patch bump.
 
-Decided on 2026-10-30 under Jody's approval of all P0 work, with the spec's recommendations:
+Decided on 2026-10-30 under the maintainer's approval of all P0 work, with the spec's recommendations:
 
 - Both severities stay and Critical goes; this changes the wording `commands/review.md` and the gate hook use today.
 - The caller filters repeated findings with a new base sha and the handoff gets no prior-findings field (flagged concern 3).
@@ -223,9 +223,9 @@ Filled in when the build is finished, before sign-off.
 - AC7: pass after the fixes recorded under departures; see the trial there.
 - AC8: pass, `grep -rn "requesting-code-review/code-reviewer.md" plugins README.md` prints nothing.
 - AC9: pass, a routing case expects `code-reviewer`; rank-1 80.0%.
-- AC10: pass, the Addy Osmani line in the LICENSE notice, the `docs/licenses.md` row and the footer in both agent files.
+- AC10: pass, the agent-skills line in the LICENSE notice, the `docs/licenses.md` row and the footer in both agent files.
 - AC11: pass, pro-quality 0.14.0, pro-execution 0.6.1 and `metadata.version` 1.62.0 agree across manifests and the marketplace.
-- Sign-off: Jody, 2026-10-30: "keep going and finish P0 you have my approval on all".
+- Sign-off: the maintainer, 2026-10-30.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 It also moves any ADR with Status `proposed` from this change to `accepted`.

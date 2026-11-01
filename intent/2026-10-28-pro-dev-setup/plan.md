@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit c15ecf2) and `intent.md` in this folder.
 Status: draft.
-Approver: Jody Brewster, as owner and architect of the marketplace.
+Approver: the maintainer, as owner and architect of the marketplace.
 The intent is `risk: high`: it changes the install path for every site and edits Claude Code's `installed_plugins.json`, so this is not auto-mode work.
 Dated: 2026-10-28.
 
@@ -49,7 +49,7 @@ PR 2 (item 5):
 ## Order of work
 
 Build in a worktree on branch `feat/pro-dev-setup` based on local `main`, since the spec and ADR commits are not on `origin` yet; they ride in PR 1.
-Leave the five uncommitted pro-ai-sdlc command edits in the main checkout alone; they are Jody's `; true` fix and not part of this plan.
+Leave the five uncommitted pro-ai-sdlc command edits in the main checkout alone; they are the maintainer's `; true` fix and not part of this plan.
 Copy that `; true` pattern into every `!` context line of the new `pro-dev.md`.
 
 PR 1:
@@ -123,7 +123,7 @@ Nothing is irreversible: the deletions and rename revert with the PR; the stale 
 - Pointing `codex-bootstrap.sh` at the script now: deferred to umbrella item G.
 - Thin alias commands for the deleted ones: keeps the long command list the intent sets out to cut.
 - A Node script: every pro-dev script is Python and `/pro-dev check` must not assume Node.
-- Updating every install on the machine: Jody chose per repo.
+- Updating every install on the machine: the maintainer chose per repo.
 
 Left out on purpose: the upstream catalog diffs of the old engine commands move behind `check --upstream` and are not rebuilt in this PR beyond carrying the existing `gh api` lines into the registry `note`; nobody ran them routinely and they need network.
 

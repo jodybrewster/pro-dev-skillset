@@ -4,12 +4,12 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-28T08:10:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: /execute builds an approved plan in its own worktree
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, intent F of the [pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md), from planning intent A on 2026-10-28.
 Status: done; shipped in PR #63 (684b90f).
 Created: 2026-10-28.
@@ -19,7 +19,7 @@ Created: 2026-10-28.
 pro-ai-sdlc's loop has a command for every stage except the build.
 After `/plan` is committed, the person has to make a worktree, copy the env files the app needs, install dependencies and then tell a session to build from the plan.
 Each step is easy to get wrong: a worktree off a stale `main`, a missing `.env` that makes the baseline tests fail, or a build that drifts from the plan.
-Jody: "can we create a slash command called execute in ai-sdlc that can take a plan, create a new worktree, copy the env files if there are any and based on a plan file when you pass the path in an argument."
+The ask is a slash command called execute in ai-sdlc that takes the path to a plan file as an argument, creates a new worktree and copies the env files if there are any.
 
 ## Proposed outcome
 

@@ -4,12 +4,12 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-28T15:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: every plugin with engines ships its own installer
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, raised while settling intent E (pro-speckit) Flagged concern 2.
 Status: done; shipped in PR #70 (adb3f95).
 Created: 2026-10-28.
@@ -18,7 +18,7 @@ Created: 2026-10-28.
 
 ADR-0006 says no plugin ships its own engine install command: every engine installs through `/pro-dev install` in pro-core.
 That suits a site on `pro-dev-starter`, but someone who installs one plugin on its own, such as `pro-nextjs` or `pro-speckit`, has to know that the setup lives in a different plugin.
-Jody: "the individual plugins can all have installers but anything bundled with starter should install with starter but if they choose to install just pro-nextjs then they can have an install".
+Individual plugins can all have installers, but anything bundled with the starter installs with the starter. A person who installs just pro-nextjs gets an installer for it.
 
 ## Proposed outcome
 

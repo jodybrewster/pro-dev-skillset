@@ -3,13 +3,13 @@ intent: intent/2026-10-29-review-policy/intent.md
 intent-status: draft
 status: accepted
 created: 2026-10-29T19:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: review policy and convergence rules
 
 Built from `intent.md` in this folder (not yet committed).
-Status: accepted (Jody, 2026-10-30).
+Status: accepted.
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0002 and 0004 bear on this change), `docs/roadmap.md`, the pro-ship brainstorm, `plugins/pro-ai-sdlc/templates/REVIEW.md`, `plugins/pro-ai-sdlc/agents/reviewer.md`, `plugins/pro-ai-sdlc/.codex-plugin/agents/reviewer.toml`, `plugins/pro-ai-sdlc/commands/review.md`, `plugins/pro-ai-sdlc/commands/pr-babysit.md`, the `sdlc-contract` check in `tests/check.mjs` and the sibling spec `intent/2026-10-29-constraint-floor/spec.md`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 
@@ -43,7 +43,7 @@ Everyone who installs pro-ai-sdlc gets them on the next update; repos with an ol
 - R14. `plugins/pro-ai-sdlc/.codex-plugin/agents/reviewer.toml` carries the same instructions as the agent file, word for word apart from the TOML wrapper. (Codex parity.)
 - R15. `plugins/pro-ai-sdlc/commands/review.md` accepts `--since <sha>`, passes it to the reviewer in the diff spec and keeps in the calling session the list of findings it has already shown (each as pass, file, class or claim). It drops any new finding that matches an entry, says how many it dropped and never passes earlier findings to the reviewer. (Intent: Constraints; Open question 3.)
 - R16. `/review` reports Pre-existing findings in their own group, never counts them as Important and uses the summary-first format of R5. (Intent: Proposed outcome.)
-- R17. `plugins/pro-ai-sdlc/commands/pr-babysit.md` changes its cap from five rounds to three in its heading, its Stop step and its Report step and on the cap stops and asks Jody to reconsider the approach, listing what is still open. (Intent: Proposed outcome; Open question 1.)
+- R17. `plugins/pro-ai-sdlc/commands/pr-babysit.md` changes its cap from five rounds to three in its heading, its Stop step and its Report step and on the cap stops and asks the maintainer to reconsider the approach, listing what is still open. (Intent: Proposed outcome; Open question 1.)
 - R18. `/pr-babysit` does not treat a review thread as needing work when its comment is tagged Pre-existing; it lists such threads in its report. (Intent: Problem.)
 - R19. `/pr-babysit` keeps a list of threads and checks it has already addressed, never answers a finding it already answered and never starts a round whose only open items repeat an earlier one. (Intent: Proposed outcome.)
 - R20. When several open threads or failures in one round are the same class of problem, `/pr-babysit` fixes every instance in that round and replies once per thread with the same commit. (Intent: Problem.)
@@ -122,20 +122,20 @@ ADR needed: yes, "a finding is never raised twice, old bugs never block and a fi
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
 | 1 | The summary line moves from the end of the report to the start and gains a `pre-existing` field, so anything that parses the old tally breaks (no consumer is known today but `pr-check` and `code-reviewer` will parse it). | roadmap items 2 and 3; the sibling intents | open: change it now while nothing parses it (recommended) and give the sibling specs the exact line to read |
-| 2 | The cap changes from five to three, but `/pr-babysit` rounds also fix failing checks and merge conflicts, which can need more than three tries. | brainstorm, Convergence; Jody | open: three for every round as the brainstorm says (recommended), with the report listing what is left so Jody can restart it |
+| 2 | The cap changes from five to three, but `/pr-babysit` rounds also fix failing checks and merge conflicts, which can need more than three tries. | brainstorm, Convergence | open: three for every round as the brainstorm says (recommended), with the report listing what is left so the maintainer can restart it |
 | 3 | `/review` keeps its already-raised list only in the calling session, so a new session repeats findings. | brainstorm (pr-check dedupes against its stamp); intent/2026-10-29-pr-gate | open: accept for now (recommended) and let the stamp carry it across sessions |
 | 4 | Pre-existing is judged from the diff and `git show` with no `git blame`, so a line an older commit in the same PR changed can be misread. | reviewer's Bash limits (N1) | open: judge by the range only (recommended); adding `git blame` is a later change |
-| 5 | The same rules sit in the template, the agent, the Codex twin and two commands, so they can drift. | ADR-0004; Jody | open: the `check.mjs` assertions of R21 catch the key words (recommended); a shared sidecar is not possible because plugin files cannot be included across an agent file |
-| 6 | Older repos keep an old `REVIEW.md` that lacks the new sections while `/review` reads the repo file before the template. | intent, Open question 4; Jody | open: the agent and commands carry the rules (recommended); a refresh offer from `/pro-dev update` is a separate change |
+| 5 | The same rules sit in the template, the agent, the Codex twin and two commands, so they can drift. | ADR-0004 | open: the `check.mjs` assertions of R21 catch the key words (recommended); a shared sidecar is not possible because plugin files cannot be included across an agent file |
+| 6 | Older repos keep an old `REVIEW.md` that lacks the new sections while `/review` reads the repo file before the template. | intent, Open question 4 | open: the agent and commands carry the rules (recommended); a refresh offer from `/pro-dev update` is a separate change |
 | 7 | The optional design-smell list and presumptive blockers overlap what the `code-reviewer` agent will carry, so the same list lives in two places. | intent/2026-10-29-code-reviewer | open: keep them only as commented optional blocks here (recommended) and let the agent own the active copy |
-| 8 | The pro-ai-sdlc version bump collides with the constraint-floor spec, which also names 0.7.0 and metadata 1.60.0. | ADR-0002; Jody | open: whichever merges second takes the next number (recommended); the plan states the numbers at merge time |
+| 8 | The pro-ai-sdlc version bump collides with the constraint-floor spec, which also names 0.7.0 and metadata 1.60.0. | ADR-0002 | open: whichever merges second takes the next number (recommended); the plan states the numbers at merge time |
 
 ## Open questions
 
-1. The round cap: still open, owner Jody; the spec writes three (R17) as recommended.
-2. Whether the count moves to the start of the report: answered, yes (R5, R13); confirm with Jody.
+1. The round cap: still open, owner the maintainer; the spec writes three (R17) as recommended.
+2. Whether the count moves to the start of the report: answered, yes (R5, R13); confirm with the maintainer.
 3. Where the already-raised list lives: answered, the calling session (R15); cross-session memory belongs to the PR gate intent.
-4. Whether `/pro-dev` refreshes an older `REVIEW.md`: still open, owner Jody; left out of this change.
+4. Whether `/pro-dev` refreshes an older `REVIEW.md`: still open, owner the maintainer; left out of this change.
 5. Commented blocks or a sidecar for the optional lists: answered, commented blocks (R7).
 6. Likely needs an ADR: answered, yes (Flagged concerns).
 
@@ -148,7 +148,7 @@ ADR needed: yes, "a finding is never raised twice, old bugs never block and a fi
 - AC5. `grep -n "five" plugins/pro-ai-sdlc/commands/pr-babysit.md` prints nothing and `grep -n "three rounds" plugins/pro-ai-sdlc/commands/pr-babysit.md` prints the cap lines.
 - AC6. A manual run of `/review` on a fixture diff with one added bug, one bug in an untouched line and one bug repeated in three files prints the summary line first, one Important entry, one class entry listing three locations and one Pre-existing entry that is not in the important count; the run is shown in the PR.
 - AC7. A manual second run with `--since <sha>` on the same PR reports nothing from the first range and prints a dropped count for any repeat; a run on a clean diff prints "Nothing to fix."
-- AC8. `docs/licenses.md` has a pro-ai-sdlc row naming addyosmani/agent-skills as adapted for the optional lists and the template carries the upstream footer.
+- AC8. `docs/licenses.md` has a pro-ai-sdlc row naming agent-skills as adapted for the optional lists and the template carries the upstream footer.
 - AC9. `git diff --stat` shows `pro-ai-sdlc` at the same new version in `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` and its marketplace entry, with `metadata.version` bumped once.
 - AC10. The `grep -c` checks for a comma before "and" and for the em dash print 0 on every changed file.
 

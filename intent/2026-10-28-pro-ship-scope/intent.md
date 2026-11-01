@@ -4,14 +4,14 @@ kind: change
 status: dropped
 risk: medium
 created: 2026-10-28T15:45:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: fill the Ship phase with pro-ship v0.1
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: research Jody brought on 2026-10-28 (kept in full in [research.md](research.md)), "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus Jody's ask for GitHub practices and portable twelve-factor apps.
-Status: draft; Jody is still brainstorming and evaluating the scope before `/spec`.
+Author: the maintainer.
+Source: research the maintainer brought on 2026-10-28 (kept in full in [research.md](research.md)), "pro-ship: What Goes in It, Where It Lives, and What to Build First", plus the maintainer's ask for GitHub practices and portable twelve-factor apps.
+Status: draft; the maintainer is still brainstorming and evaluating the scope before `/spec`.
 The brainstorm so far, which widens this scope and proposes splitting it into three intents, is in [brainstorm.md](brainstorm.md).
 Dropped on 2026-10-29: the PR gate part (the brainstorm's Intent A) is replaced by four intents, [review-policy](../2026-10-29-review-policy/intent.md), [code-reviewer](../2026-10-29-code-reviewer/intent.md), [pr-gate](../2026-10-29-pr-gate/intent.md) and [risk-tiers](../2026-10-29-risk-tiers/intent.md).
 The brainstorm's Intents B (`ship`, `pipeline`, `repo-hygiene`) and C (docs and architecture review) get their own intents when [docs/roadmap.md](../../docs/roadmap.md) reaches them; `research.md` and `brainstorm.md` stay here as their source.
@@ -43,7 +43,7 @@ pro-ship calls into the existing plugins for commits, PR shepherding, security a
 ## Affected users and systems
 
 Every pro-dev-starter site once pro-ship joins the starter.
-`plugins/pro-ship/`, `plugins/pro-dev-starter` (dependencies), the `using-pro-dev` router, README, the registry (if any new engine), `tests/check.mjs` and routing cases, `docs/licenses.md` for content forked from `addyosmani/agent-skills` (MIT).
+`plugins/pro-ship/`, `plugins/pro-dev-starter` (dependencies), the `using-pro-dev` router, README, the registry (if any new engine), `tests/check.mjs` and routing cases, `docs/licenses.md` for content forked from `agent-skills` (MIT).
 
 ## Constraints
 
@@ -72,5 +72,5 @@ A `git tag` with no fresh preflight prints one warning, not three.
 - Join `pro-dev-starter` now or once v0.1 lands; today pro-ship is opt-in and holds only the Vercel deploy bridge.
 - How the release gate shares one prompt with `production-gate` and pro-legal's gate: one gate that reads all three, or an order with a marker file.
 - Skills or commands: the research says `skills/` is preferred and `commands/` is legacy, while this repo uses `commands/` for slash commands today.
-- Which of `ci-cd-and-automation` and `shipping-and-launch` to fork from `addyosmani/agent-skills` and how much to specialise.
+- Which of `ci-cd-and-automation` and `shipping-and-launch` to fork from `agent-skills` and how much to specialise.
 - Likely needs an ADR if the release-gate coordination sets a rule for every gate hook.

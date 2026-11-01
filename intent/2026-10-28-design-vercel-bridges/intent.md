@@ -4,19 +4,19 @@ kind: change
 status: proposed
 risk: medium
 created: 2026-10-28T07:40:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: Hallmark, web-design-guidelines and Vercel skill bridges
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, intent D of the [pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md), items 8 to 12, from a research session on 2026-10-27.
 Status: proposed.
 Created: 2026-10-28.
 
 ## Problem
 
-Jody asked whether the marketplace has UI/UX Pro Max, Hallmark, Emil Kowalski, shadcn or Vercel's web design guidelines, then whether Vercel's agent-skills are in pro-nextjs.
+The maintainer asked whether the marketplace has UI/UX Pro Max, Hallmark, Emil Kowalski, shadcn or Vercel's web design guidelines, then whether Vercel's agent-skills are in pro-nextjs.
 UI/UX Pro Max (now `impeccable-bridge`), Emil Kowalski and shadcn are here; Hallmark, web-design-guidelines and every vercel-labs/agent-skills skill are not.
 Research on 2026-10-27 compared each candidate with the skills already shipped.
 
@@ -38,7 +38,7 @@ Four bridges, each a registry row from intent B and no copied upstream text:
 - A stack-neutral React bridge, likely in pro-design: composition-patterns and react-view-transitions, which are plain React.
   `shadcn-ui-composition` gains a hand-off for non-shadcn component design.
 
-Dropped: writing-guidelines (Vercel's docs house style clashes with Jody's writing rules) and react-native-skills (no mobile work here).
+Dropped: writing-guidelines (Vercel's docs house style clashes with the repo's writing rules) and react-native-skills (no mobile work here).
 
 ## Affected users and systems
 

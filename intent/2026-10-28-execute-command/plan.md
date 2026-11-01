@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit f2d1710) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster; no separate lead, but this copies secrets between checkouts, so it does not suit auto mode.
+Approver: the maintainer; no separate lead, but this copies secrets between checkouts, so it does not suit auto mode.
 Dated: 2026-10-28.
 
 ## Files that change
@@ -22,7 +22,7 @@ Dated: 2026-10-28.
 ## Order of work
 
 1. Make the worktree the way `/execute` will: `git fetch origin`, `git worktree add ../pro-dev-skillset.execute-command -b execute-command origin/main`, then build there.
-   The main checkout carries Jody's uncommitted edits to five pro-ai-sdlc commands, so nothing is built in it.
+   The main checkout carries the maintainer's uncommitted edits to five pro-ai-sdlc commands, so nothing is built in it.
 2. Probe that `claude plugin validate plugins/pro-ai-sdlc --strict` accepts `model: opus` in a command's frontmatter, using a scratch copy of the plugin outside the repo.
    If it is refused, stop and record a departure before going further, since R18 depends on it.
 3. Write `tests/execute.mjs` with every case below for both scripts, wire it into `tests/check.mjs` as `execute-scripts` and add `test:execute` to `package.json`.
@@ -49,7 +49,7 @@ Dated: 2026-10-28.
 - `node tests/check.mjs` runs both the `execute-scripts` and `sdlc-contract` checks.
 - Live check A (AC1): `/execute` on this folder's own `plan.md` while its status is `draft` stops at the gate with no worktree made.
 - Live check B (AC5): in a scratch repo with an approved plan and a failing test, `/execute` stops after the baseline, keeps the worktree and makes no commit on the branch.
-- Live check C (AC2, AC3, AC4, AC6): after merge, `/execute` on the next unbuilt approved plan in this repo, chosen by Jody (spec concern 5), ends with an open PR, a Done section with the build commit and checks and an empty Sign-off; the transcript and PR body hold no env file contents.
+- Live check C (AC2, AC3, AC4, AC6): after merge, `/execute` on the next unbuilt approved plan in this repo, chosen by the maintainer (spec concern 5), ends with an open PR, a Done section with the build commit and checks and an empty Sign-off; the transcript and PR body hold no env file contents.
 
 ## Risks
 
@@ -58,7 +58,7 @@ A pathspec or ignore rule that matches more than intended could copy a secret in
 The second risk is the command prose: during a failing baseline the model may want to read `.env` to debug, which R8 forbids. Only the prose holds that line, so the rule must be explicit and early.
 Step 2 could fail if strict validation rejects `model:` in a command; R18 then needs another route, recorded as a departure.
 What it could break: nothing that exists today, since `/execute` is new and the scripts are not hooks; the version bump only reaches people who update.
-If Jody's uncommitted pro-ai-sdlc command edits land first with their own bump, this branch merges `origin/main` and bumps to the next minor.
+If the maintainer's uncommitted pro-ai-sdlc command edits land first with their own bump, this branch merges `origin/main` and bumps to the next minor.
 Nothing here is irreversible: a bad run leaves a worktree and a branch that `git worktree remove` and `git branch -D` clear.
 
 ## Options not taken

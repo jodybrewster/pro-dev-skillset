@@ -4,12 +4,12 @@ kind: bug
 status: draft
 risk: low
 created: 2026-10-28T09:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: bring taste-skills-bridge in line with taste-skill v2
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, found by the bridge install smoke run during intent B (`intent/2026-10-28-pro-dev-setup/`).
 Status: draft.
 Created: 2026-10-28.
@@ -55,8 +55,8 @@ A routing case for one retired ask (for example a brutalist landing page) resolv
 
 ## Open questions
 
-- Should the bridge keep the v1 names as "if already installed" fallbacks for older sites, or drop them entirely? Jody.
-- Do any retired asks (brand kit, image-to-code, mobile image generation) belong with another pro-design skill or bridge, or just get a "no longer covered upstream" line? Jody, at spec time.
+- Should the bridge keep the v1 names as "if already installed" fallbacks for older sites, or drop them entirely? Owner: the maintainer.
+- Do any retired asks (brand kit, image-to-code, mobile image generation) belong with another pro-design skill or bridge, or just get a "no longer covered upstream" line? Owner: the maintainer, at spec time.
 - Is v2 a lasting reshape or will upstream split it again? Check the upstream changelog at spec time; the registry row already installs with `-s '*'` so a later split installs everything.
 
 ## Evidence

@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit a60e1aa) and `intent.md` in this folder.
 Status: draft.
-Approver: Jody Brewster, as owner and architect of the marketplace.
+Approver: the maintainer, as owner and architect of the marketplace.
 This is not auto-mode work: it adds a script that finds and runs another plugin's code, widens what a command may run without a prompt and adds an installer to six plugins, so every new permission pattern and every script run needs his eye.
 Dated: 2026-10-28.
 
@@ -12,7 +12,7 @@ Dated: 2026-10-28.
 - `plugins/pro-core/commands/pro-dev.md` (modified): the pre-run list and yes step in install and update (R34) and one line naming `/<plugin>:install` (R9).
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/scripts/pro-dev-owner.py` (new, six byte-identical copies): reads the owner from its own manifest, checks argv, the marketplace source, scope, path and version, then runs pro-core's `pro-dev.py --owner` with `sys.executable -I` (R10 to R17, R32, N1, N2); it has no flag or environment variable that overrides R32, R14 or R15.
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/commands/install.md` (new, six copies that differ only in the plugin name): the `/<plugin>:install [update]` flow (R18 to R22, R34), which relays a refusal and stops.
-- `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.claude-plugin/plugin.json` (modified): a description clause, no pro-core dependency (Jody, 2026-10-28) and a minor bump (R23, R28).
+- `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.claude-plugin/plugin.json` (modified): a description clause, no pro-core dependency and a minor bump (R23, R28).
 - `plugins/{pro-design,pro-nextjs,pro-testing,pro-pdd,pro-egm,pro-ship}/.codex-plugin/plugin.json` (modified): version and the clause that `/<plugin>:install` is Claude Code only, nothing else (R29).
 - `plugins/pro-core/.claude-plugin/plugin.json` and `plugins/pro-core/.codex-plugin/plugin.json` (modified): minor bump to 0.19.0.
 - `plugins/pro-dev-starter/.claude-plugin/plugin.json` and `plugins/pro-starter/.claude-plugin/plugin.json` (modified): patch bumps as meta-plugins over bumped plugins (R28); neither has a Codex manifest.
@@ -24,7 +24,7 @@ Dated: 2026-10-28.
 - `CLAUDE.md` and `AGENTS.md` (modified, kept mirrored): the bridge-row bullet in "Things Claude gets wrong" adds that a new row owner also needs an installer (R31).
 - `docs/releases.md` (modified): a row per bump and the new `metadata.version`.
 
-Left alone on purpose: `plugins/pro-core/registry/engines.json` (no row or `version` change, so the SessionStart nudge does not fire), every bridge skill (the `bridges` check requires them to keep naming `/pro-dev`), `plugins/pro-ai-sdlc/commands/` (Jody's uncommitted work in the main checkout) and `intent/2026-10-28-pro-speckit/` (another agent's plan).
+Left alone on purpose: `plugins/pro-core/registry/engines.json` (no row or `version` change, so the SessionStart nudge does not fire), every bridge skill (the `bridges` check requires them to keep naming `/pro-dev`), `plugins/pro-ai-sdlc/commands/` (the maintainer's uncommitted work in the main checkout) and `intent/2026-10-28-pro-speckit/` (another agent's plan).
 
 ## Order of work
 
@@ -35,7 +35,7 @@ Intent E (pro-speckit) builds on this change, so this PR merges first and E's ve
 0. Build checks, run before any code as one `set -eu` script kept in the session scratchpad and run in a single Bash call, because every Bash call starts with a fresh environment and a reset working folder.
    The script exports a scratch `CLAUDE_CONFIG_DIR`, creates a scratch git repo and `cd`s into it itself.
    Before any write it asserts that `claude plugin list --json` prints `[]` and that the scratch repo's real path is outside the worktree and outside `~/.claude`; otherwise it exits.
-   No sub-step is ever run on its own, so Jody's real installs are never touched.
+   No sub-step is ever run on its own, so the maintainer's real installs are never touched.
    a. Per-scope enablement: add a local marketplace named `pro-dev-skillset` from a copy of the worktree, install pro-core at user scope and at project scope in the scratch repo, run `claude plugin disable pro-core@pro-dev-skillset --scope local` there, then run `claude plugin list --json` from the repo root, from outside the repo and from a subfolder that has its own local disable.
       Record whether `enabled` differs per entry or is one effective value per plugin id for the working folder, which folder decides and what `projectEnabled` means.
       Install two pro-core versions, an older at user scope and a newer at project scope; record which `installPath` loads when the scopes differ.
@@ -88,7 +88,7 @@ Intent E (pro-speckit) builds on this change, so this PR merges first and E's ve
    b. Rewrite the scratch `known_marketplaces.json` entry to `{"source": "github", "repo": "jodybrewster/pro-dev-skillset"}` over the same cache and run it again; confirm it names the cached pro-core and lists only pro-nextjs's three rows.
    c. With fake `claude` and `npx` first on `PATH` under the scratch config, run `python3 plugins/pro-core/scripts/pro-dev.py --owner pro-nextjs run impeccable install`; it must print `impeccable: owned by pro-design, not pro-nextjs` and `exit 2`.
       No real engine installs.
-   Jody then runs `/pro-nextjs:install` once in a scratch repo in a real session under the scratch config with the github-sourced marketplace, to see the confirmation step and the permission prompt on `run`; his real pro-core stays at 0.18.1 until release, so R15 refuses there.
+   The maintainer then runs `/pro-nextjs:install` once in a scratch repo in a real session under the scratch config with the github-sourced marketplace, to see the confirmation step and the permission prompt on `run`; his real pro-core stays at 0.18.1 until release, so R15 refuses there.
 
 Parallel work: steps 0 to 2 are sequential, since step 0 can change requirements and step 2 builds on step 1's status code.
 Once step 1 lands the `--owner` interface, steps 3, 4, 5 and 6 touch separate files and can run as four Sonnet subagents in one turn, each with its requirement numbers and the step's check.
@@ -155,7 +155,7 @@ ls plugins/*/commands/*.md | wc -l
 Finished means: check prints one more check than before (the `installers` check) with 0 failures and the same warning count, eval dry-run passes, validation passes once for the marketplace and once per plugin directory and `tests/pro-dev.mjs` passes every case including the new ones.
 The `cmp` loop prints nothing, `wc -l` prints a number under 150, the AC4 case in `tests/pro-dev.mjs` passes (step 9c runs the real command under fakes in the scratch config), the grep prints nothing and the command count is six higher than on `main`.
 AC6's three mutations each make `node tests/check.mjs installers` fail in a scratch copy.
-Then the step 9 live runs and Jody's `/pro-nextjs:install` session, with the observed output pasted into Done.
+Then the step 9 live runs and the maintainer's `/pro-nextjs:install` session, with the observed output pasted into Done.
 
 ## Security challenge
 
@@ -171,7 +171,7 @@ The owner script keeps the spec's order of checks (argv, owner from the manifest
    Step 9 runs the owner script against a local copy, but R32 refuses any directory source by design. Change: step 0c says a directory source is refused by design; step 9 treats that refusal as a pass and proves the positive path by rewriting the scratch `known_marketplaces.json` entry to the github source over the same cache; step 4 states the owner script has no flag or environment override for R32, R14 or R15.
    Answered by steps 0c, 4 and 9.
 2. [7/10] Step 0 relies on a scratch `CLAUDE_CONFIG_DIR` and cwd, but each Bash call starts with fresh environment and a reset cwd.
-   A step run alone lands in Jody's real `~/.claude` and could replace his marketplace or disable his real pro-core. Change: run step 0 as one `set -eu` script that sets `CLAUDE_CONFIG_DIR` and `cd`s into the scratch repo itself; before any write it asserts that `claude plugin list --json` prints `[]` and the scratch repo's real path is outside the worktree.
+   A step run alone lands in the maintainer's real `~/.claude` and could replace his marketplace or disable his real pro-core. Change: run step 0 as one `set -eu` script that sets `CLAUDE_CONFIG_DIR` and `cd`s into the scratch repo itself; before any write it asserts that `claude plugin list --json` prints `[]` and the scratch repo's real path is outside the worktree.
    Answered by step 0.
 3. [7/10] Proof of done runs `pro-dev.py --owner pro-nextjs run impeccable install` against the real `claude` and `npx`; an R4 bug would install a third-party engine into the marketplace repo. Change: run it only under the step 0 scratch config with the fake `claude` and `npx` first on `PATH`, or drop it since the AC4 test covers it.
    Answered by step 9.
@@ -189,7 +189,7 @@ The owner script keeps the spec's order of checks (argv, owner from the manifest
 
 ### Open questions from the challenge
 
-- Jody's real `pro-dev-skillset` marketplace source: answered 2026-10-28, it is `{"source": "github", "repo": "jodybrewster/pro-dev-skillset"}`, so R32 passes on his machine.
+- The maintainer's real `pro-dev-skillset` marketplace source: answered 2026-10-28, it is `{"source": "github", "repo": "jodybrewster/pro-dev-skillset"}`, so R32 passes on his machine.
 - Which config the step 9 real-session run uses: his real pro-core stays at 0.18.1 until release, so R15 refuses there; step 9 names the scratch config with a github-sourced marketplace.
 - Whether Claude Code prompts for `status --json > somefile` under a `status*` allow rule; if not, a prompt-injected model could overwrite a file. Check in step 0 and narrow the pattern if needed.
 - Whether the owner script should pass a protocol version so `pro-dev.py` can refuse an old caller after a later trust fix.
@@ -220,7 +220,7 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 0 findings.
   `enabled` is one effective value per plugin id for the cwd, decided by the git root, so a subfolder with its own local disable does not change it.
   `projectEnabled` is not the effective state and the owner script does not read it.
-  A dependency re-enables a disabled pro-core, so Jody dropped the pro-core dependency from the six owning plugins ("yes you don't need pro-core for pro-nextjs", 2026-10-28).
+  A dependency re-enables a disabled pro-core, so the pro-core dependency was dropped from the six owning plugins on 2026-10-28.
   The installer checks for pro-core instead and the `installers` check now fails if an owner declares the dependency.
   A directory marketplace source has the shape `{"source": "directory", "path": ...}`, which R32 refuses; only the github source of `jodybrewster/pro-dev-skillset` passes.
   The `status*` redirect question still needs a live check; the `installers` check keeps the `status*` and `answer*` wildcard forms that `/pro-dev` already uses, so narrowing them to exact forms is a follow-up once that check runs.

@@ -39,13 +39,13 @@ Proof: `git log --oneline` shows this as the first commit above 299df9e.
 Proof: `wc -l REVIEW.md` and a read-through against S1.
 ## Step 3: you-isms (S6)
 
-1. Replace `/Users/jodybrewster/Projects/pro-dev-skillset/plugins/...` in `.claude/commands/research.md` (lines 16 and 38) and `lead-research.md` (line 18) with `plugins/pro-research/skills/lead-research/scripts` relative to the repo root, and say "run from the repo root".
+1. Replace `/Users/<name>/Projects/pro-dev-skillset/plugins/...` in `.claude/commands/research.md` (lines 16 and 38) and `lead-research.md` (line 18) with `plugins/pro-research/skills/lead-research/scripts` relative to the repo root, and say "run from the repo root".
 2. README lines 104 and 121: use `<path-to-pro-dev-skillset>`.
 3. Also fix `plugins/pro-spdd/PORT-PLAN.md` line 142 (`PLUGIN=$PWD/plugins/pro-spdd`) and the comment at `templates/codex-bootstrap.sh` line 11.
    `MIERUKA_LIFECYCLE_NOTES.md` line 422 is fixed after the move in step 6.
 4. Leave `/Users/ada` (dream SKILL.md) and `/Users/test` (pro-spdd upstream fixtures); they are fictional.
 
-Proof: `git grep -n "/Users/jodybrewster"` prints nothing at the end of step 6, and `git grep -n "gmail.com"` hits manifests only.
+Proof: `git grep -n "/Users/"` prints nothing at the end of step 6, and `git grep -n "gmail.com"` hits manifests only.
 
 ## Step 4: decision log (S3)
 
@@ -66,7 +66,7 @@ Proof: S3.1 to S3.4 by listing the folder and `grep -c "^## " docs/decisions/000
 
 1. Read the three open PRs for exact content: `gh pr view 35 --repo jodybrewster/pro-dev-skillset --json body,files` and `gh pr diff 35`, same for 37 and 38.
    Apply them.
-   PR 35 adds LICENSE content for pro-core (find-skills from vercel-labs/skills, Copyright (c) 2026 Vercel, Inc.), pro-testing (Paul Razvan Berg 2025, Peter Knezek 2026) and pro-pdd (Addy Osmani 2025, ADHD contributors 2026, a lavish bridge note).
+   PR 35 adds LICENSE content for pro-core (find-skills from vercel-labs/skills, Copyright (c) 2026 Vercel, Inc.), pro-testing (Paul Razvan Berg 2025, Peter Knezek 2026) and pro-pdd (agent-skills 2025, ADHD contributors 2026, a lavish bridge note).
    PR 37 adds a pro-nextjs LICENSE crediting `vercel/next.js` (MIT, Copyright (c) 2025 Vercel, Inc.) and repoints the footers on next-best-practices, next-cache-components and next-upgrade (they say "Adapted from vercel-labs/next-skills" today).
    PR 38 makes the find-skills footer visible, adds the original footer to the pro-design `motion` skill and fixes the README license list.
    Do not trust the PR text: read each upstream's LICENSE (`gh api repos/<owner>/<repo>/license`) and copy the copyright line as written.
@@ -75,7 +75,7 @@ Proof: S3.1 to S3.4 by listing the folder and `grep -c "^## " docs/decisions/000
    pro-motion: no SKILL.md in gsap, hyperframes or remotion names an upstream and the plugin arrived whole in c4460d3 (2026-06-23).
    Run `git log --follow` on each file, read the commit body and compare the text with upstream candidates.
    If you find an upstream, add its LICENSE and a footer.
-   If not, add the standard footer (`_Original skill for pro-dev-skillset (Jody Brewster). MIT License._`) and put "no upstream found, evidence: <what you searched>" in the PR.
+   If not, add the standard footer (`_Original skill for pro-dev-skillset. MIT License._`) and put "no upstream found, evidence: <what you searched>" in the PR.
 3. Write `docs/licenses.md`: one row per non-original skill (plugin, skill, upstream repo, license, copyright holder, how it entered) and one summary row per fully original plugin.
    Seed it from the README License section and the RELEASING.md upstream watch lists.
    vercel-labs/agent-browser is Apache-2.0; include its NOTICE if it has one.
@@ -126,7 +126,7 @@ Proof: `node tests/check.mjs versions` and `codex-manifests` pass.
    - a checklist of every spec statement (S1.1 to S10.3), ticked, with the proof next to each;
    - "Supersedes #35, #37 and #38" with one line on what was carried over from each;
    - the moved-sentences table, the pro-motion evidence and the upstream LICENSE lines you copied with their URLs;
-   - the tag commands for Jody after merge, one per plugin at the bumped version: `claude plugin tag plugins/<name> --push -m "<name> v%s"` (all 15);
+   - the tag commands for the maintainer after merge, one per plugin at the bumped version: `claude plugin tag plugins/<name> --push -m "<name> v%s"` (all 15);
    - the verify output, pasted;
    - the footer `Generated with [Claude Code](https://claude.com/claude-code)`, with no co-author line.
 3. Wait for the `validate` workflow and fix it if red.

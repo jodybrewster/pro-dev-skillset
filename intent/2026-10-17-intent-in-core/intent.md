@@ -4,7 +4,7 @@ kind: change
 status: accepted
 risk: medium
 created: 2026-10-17
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: the SDLC ships as one plugin, pro-ai-sdlc
@@ -40,7 +40,7 @@ Effort fields do not change.
 
 ## Out of scope
 
-Deleting the user-scope files (Jody does that after the merge and `claude plugin update`).
+Deleting the user-scope files (the maintainer does that after the merge and `claude plugin update`).
 `/incident`.
 Mieruka changes.
 Codex `.toml` model fields.

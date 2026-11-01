@@ -3,7 +3,7 @@ intent: intent/2026-10-28-pro-dev-setup/intent.md
 intent-status: proposed
 status: draft
 created: 2026-10-28T07:46:14-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: one /pro-dev command for setup and updates
@@ -53,7 +53,7 @@ Nine setup commands and three duplicate commands go away, pro-starter becomes pr
 - R23. The `pro-starter` check in `tests/check.mjs` is renamed for pro-dev-starter and treats pro-nextjs, pro-astro, pro-spdd and pro-legal as opt-in.
 - R24. Routing cases under `tests/cases/` that target a deleted command target its replacement.
 - R25. For one release `plugins/pro-starter/` stays as a shim: a manifest whose only dependency is pro-dev-starter, no commands or skills and a description telling the person to run `/pro-dev update` to switch. The release after removes it.
-- R26. pro-core registers a SessionStart hook in its one `hooks/hooks.json`, running `scripts/pro-dev-nudge.py` beside the existing `dream-nudge.py`. It prints one line, "pro-dev plugins changed since the last /pro-dev run: run /pro-dev update", when the installed registry `version` differs from the `registryVersion` that `/pro-dev install` or `update` last wrote to `.claude/pro-dev.json`. It is silent when the versions match, when the file is missing or when the session is not in a git repo. It never installs or updates anything. (intent open question 6, Jody 2026-10-28)
+- R26. pro-core registers a SessionStart hook in its one `hooks/hooks.json`, running `scripts/pro-dev-nudge.py` beside the existing `dream-nudge.py`. It prints one line, "pro-dev plugins changed since the last /pro-dev run: run /pro-dev update", when the installed registry `version` differs from the `registryVersion` that `/pro-dev install` or `update` last wrote to `.claude/pro-dev.json`. It is silent when the versions match, when the file is missing or when the session is not in a git repo. It never installs or updates anything. (intent open question 6)
 
 ### Non-functional
 
@@ -131,23 +131,23 @@ Draft: [ADR-0006](../../docs/decisions/0006-engine-registry-and-pro-dev.md).
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | Removing a stale install has no CLI path: `claude plugin uninstall --scope project` resolves the project from the working folder, which no longer exists, so R11 would have to edit `~/.claude/plugins/installed_plugins.json`, Claude Code's internal state, outside the repo. The file holds dozens of dead worktree entries today. | REVIEW.md pass 2 (writes outside the project), Jody | resolved (Jody, 2026-10-28): edit the file. `update` lists the dead entries and asks once; on yes it writes a backup beside the file, then removes only `*@pro-dev-skillset` entries whose `projectPath` is missing. If the file's shape is not what the script expects it changes nothing and says so. |
-| 2 | "Update every scope" read literally reaches project installs in other repos (mieruka worktrees) whose versions those repos chose. | intent wording vs. its own success line ("covers the repo"), Jody | resolved (Jody, 2026-10-28): per repo only. R10 holds: user scope plus installs at or under the repo root; installs in other repos are listed in `check` and left alone. Dead entries anywhere are still cleaned by R11. |
-| 3 | `/pro-dev` is a Claude command and Codex loads no plugin commands, so Codex sites keep engine setup in `codex-bootstrap.sh`, which duplicates the lavish install and will drift from the registry. | ADR-0004 Codex parity | resolved (Jody, 2026-10-28): `pro-dev.py` stays harness-neutral (N6); a follow-up intent points `codex-bootstrap.sh` at it. |
+| 1 | Removing a stale install has no CLI path: `claude plugin uninstall --scope project` resolves the project from the working folder, which no longer exists, so R11 would have to edit `~/.claude/plugins/installed_plugins.json`, Claude Code's internal state, outside the repo. The file holds dozens of dead worktree entries today. | REVIEW.md pass 2 (writes outside the project) | resolved: edit the file. `update` lists the dead entries and asks once; on yes it writes a backup beside the file, then removes only `*@pro-dev-skillset` entries whose `projectPath` is missing. If the file's shape is not what the script expects it changes nothing and says so. |
+| 2 | "Update every scope" read literally reaches project installs in other repos (mieruka worktrees) whose versions those repos chose. | intent wording vs. its own success line ("covers the repo") | resolved: per repo only. R10 holds: user scope plus installs at or under the repo root; installs in other repos are listed in `check` and left alone. Dead entries anywhere are still cleaned by R11. |
+| 3 | `/pro-dev` is a Claude command and Codex loads no plugin commands, so Codex sites keep engine setup in `codex-bootstrap.sh`, which duplicates the lavish install and will drift from the registry. | ADR-0004 Codex parity | resolved: `pro-dev.py` stays harness-neutral (N6); a follow-up intent points `codex-bootstrap.sh` at it. |
 | 4 | Every new bridge in any plugin now also bumps pro-core, since its row lives in pro-core's registry. | ADR-0002 version-bump law | resolved: accepted cost of one registry file; recorded in ADR-0006. |
 | 5 | The `bridges` check in `tests/check.mjs` requires each bridge to name a per-plugin command that exists; deleting them would fail it. | tests/check.mjs | resolved: R21 and R22. |
 | 6 | The `pro-starter` check warns when a marketplace plugin is missing from its dependencies, so dropping pro-nextjs and pro-astro would warn. | tests/check.mjs | resolved: R23. |
-| 7 | Deleting `pro-starter` from the marketplace breaks every site whose `.claude/settings.json` enables `pro-starter@pro-dev-skillset`. | RELEASING.md, Jody | resolved (Jody, 2026-10-28): one-release shim (R25) plus the R12 migration in `update`. |
+| 7 | Deleting `pro-starter` from the marketplace breaks every site whose `.claude/settings.json` enables `pro-starter@pro-dev-skillset`. | RELEASING.md | resolved: one-release shim (R25) plus the R12 migration in `update`. |
 | 8 | Default engines install without a question on `install` and `update`. | intent constraint "installs third-party code only when the person runs it" | resolved: the person runs the command and the run prints what it will install first; nothing runs on plugin update or session start. |
 
 ## Open questions
 
 1. Likely needs an ADR: answered yes; drafted as ADR-0006 (proposed).
-2. Too big for one PR? Answered (Jody, 2026-10-28, on the recommendation): two PRs under this intent. The first covers items 1 to 4 (registry, `/pro-dev`, the nudge, deleted setup commands, rename and shim, bootstrap). The second covers item 5 (duplicate commands), which touches different plugins and merges on its own.
-3. A one-release shim for the rename? Answered yes (Jody, 2026-10-28): R25 keeps the shim for one release and `update` performs the switch (R12).
+2. Too big for one PR? Answered (2026-10-28, on the recommendation): two PRs under this intent. The first covers items 1 to 4 (registry, `/pro-dev`, the nudge, deleted setup commands, rename and shim, bootstrap). The second covers item 5 (duplicate commands), which touches different plugins and merges on its own.
+3. A one-release shim for the rename? Answered yes: R25 keeps the shim for one release and `update` performs the switch (R12).
 4. Where the registry lives and its format: answered, one JSON file in pro-core read by `scripts/pro-dev.py` (R2, R3, Alternatives).
 5. Default scope for engine installs: answered, project, as today (Design, System).
-6. A SessionStart hook that prints "plugins changed, run /pro-dev update" when the registry version changes: answered yes (Jody, 2026-10-28); R26. It only prints, so the intent's ban on automatic runs still holds.
+6. A SessionStart hook that prints "plugins changed, run /pro-dev update" when the registry version changes: answered yes; R26. It only prints, so the intent's ban on automatic runs still holds.
 
 ## Acceptance criteria
 

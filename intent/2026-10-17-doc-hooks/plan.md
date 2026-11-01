@@ -2,7 +2,7 @@
 
 This is a small fix with no `spec.md`; the intent states its check.
 Work happens in the `pro-dev-skillset.fix-doc-hooks` worktree on `fix/doc-hooks`, cut from `origin/main`.
-The job ends at an open PR. Jody sends it up and merges.
+The job ends at an open PR. The maintainer sends it up and merges.
 
 ## Step 1: failing tests first
 

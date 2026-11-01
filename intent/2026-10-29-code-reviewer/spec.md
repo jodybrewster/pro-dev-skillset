@@ -3,13 +3,13 @@ intent: intent/2026-10-29-code-reviewer/intent.md
 intent-status: draft
 status: accepted
 created: 2026-10-29T19:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: a detailed code-reviewer agent
 
 Built from `intent.md` in this folder (not yet committed).
-Status: accepted (Jody, 2026-10-30).
+Status: accepted.
 Policies and skills consulted: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, ADRs 0001 to 0009 in `docs/decisions/` (0001, 0002, 0004 and 0006 bear on this change), `docs/codex-parity.md`, `docs/licenses.md`, `tests/check.mjs` (the `agents` check at line 682 and the coverage checks), `tests/cases/components-uncovered.json`, `plugins/pro-quality/skills/requesting-code-review/`, `plugins/pro-quality/agents/*.md` with their `.codex-plugin/agents/*.toml` twins, `plugins/pro-ai-sdlc/agents/reviewer.md`, the [constraint-floor spec](../2026-10-29-constraint-floor/spec.md) and upstream `agents/code-reviewer.md`, `agents/test-engineer.md` and `skills/code-review-and-quality/SKILL.md` in agent-skills at `eb07f19`.
 No `DESIGN.md` or `SECURITY.md` exists; the one project skill (`.claude/skills/skill-creator`) does not touch compliance, security, privacy or design.
 
@@ -79,13 +79,13 @@ Everyone who installs the starter gets the agent on the next update; `pr-check` 
 - R21. `plugins/pro-quality/skills/requesting-code-review/handoff.md` is the single handoff template, with the four fields of R2 and one line per field saying what goes in it and what never does (an author description, a PR body, a session summary or earlier findings). (Intent: Constraints.)
 - R22. `tests/check.mjs` gains a contract check, `handoff`, that reads `handoff.md` and fails when its field list is not exactly `range`, `brief`, `policy` and `risk`, when it contains a placeholder named `description`, `summary` or `findings`, or when `code-reviewer.md` does not name the same four fields.
   The check covers any other handoff template under `plugins/*/` whose file name is `handoff.md`. (Intent: Proposed outcome, the check.)
-- R23. The agent body and the Codex twin end with the upstream footer, "Adapted from addyosmani/agent-skills (MIT)", with the file names it draws on. (Intent: Constraints.)
-- R24. `plugins/pro-quality/commands/review.md` dispatches through `requesting-code-review` with the four handoff fields and acts on Important findings; it no longer says to fill `code-reviewer.md` placeholders or names Critical and Minor. (Found while planning; Jody, 2026-10-29.)
+- R23. The agent body and the Codex twin end with the upstream footer, "Adapted from agent-skills (MIT)", with the file names it draws on. (Intent: Constraints.)
+- R24. `plugins/pro-quality/commands/review.md` dispatches through `requesting-code-review` with the four handoff fields and acts on Important findings; it no longer says to fill `code-reviewer.md` placeholders or names Critical and Minor. (Found while planning.)
 - R25. `plugins/pro-quality/scripts/pr-quality-gate.py` stops pointing at the deleted template and stops injecting the PR title and body as `DESCRIPTION`, which breaks fresh context.
   `pr-gate` deletes this script, so the minimal edit here (recommended) replaces the template lines with the four fields built from the shas the script already computes and keeps the `PR quality gate` heading and the check lines that `tests/quality-hooks.mjs` reads.
-  If `pr-gate` merges first the edit is dropped. (Found while planning; Jody, 2026-10-29.)
+  If `pr-gate` merges first the edit is dropped. (Found while planning.)
 - R26. `plugins/pro-execution/skills/subagent-driven-development/code-quality-reviewer-prompt.md` points at the handoff fields in place of the deleted template and drops the `DESCRIPTION` line.
-  pro-execution goes from 0.6.0 to 0.6.1 in both manifests and its marketplace entry (read from the manifests on 2026-10-29). (Found while planning; Jody, 2026-10-29.)
+  pro-execution goes from 0.6.0 to 0.6.1 in both manifests and its marketplace entry (read from the manifests on 2026-10-29). (Found while planning.)
 
 ### Non-functional
 
@@ -102,7 +102,7 @@ Everyone who installs the starter gets the agent on the next update; `pr-check` 
 - Hook-loading law (ADR-0003): no hook is added, so `hooks/hooks.json` does not change.
 - Codex parity (ADR-0004, `docs/codex-parity.md`): R18 adds the `.toml`; the skill edit stays harness-neutral and names the Codex fallback for the dispatch; the `.codex-plugin/plugin.json` version moves with the Claude one.
 - CLAUDE.md model split: R1 declares `model: opus` for a reviewer.
-- REVIEW.md pass 3 and `docs/licenses.md`: the agent adapts agent-skills text, so `docs/licenses.md` gains a pro-quality row for `code-reviewer` (agent) naming addyosmani/agent-skills as adapted, `plugins/pro-quality/LICENSE` gains "Copyright (c) 2025 Addy Osmani" and the agent ends with the footer (R23).
+- REVIEW.md pass 3 and `docs/licenses.md`: the agent adapts agent-skills text, so `docs/licenses.md` gains a pro-quality row for `code-reviewer` (agent) naming agent-skills as adapted, `plugins/pro-quality/LICENSE` gains "Copyright (c) 2025 Addy Osmani" and the agent ends with the footer (R23).
 - REVIEW.md pass 1: no broken sidecar reference, which R20, R24 to R26 and AC8 check after the template is deleted.
 - Test coverage rules in `tests/`: pro-quality is not in `WORKFLOW_PLUGINS`, so `tests/cases/components-uncovered.json` needs no entry; the `agents` check only warns when an agent has no routing case, so the spec adds one case to keep the warning count flat (AC9).
 - ADR-0006 and the engine registry: the agent is not a bridge skill, so `plugins/pro-core/registry/engines.json` needs no row.
@@ -151,7 +151,7 @@ Reuse: the agent frontmatter and Bash restriction follow `pro-ai-sdlc:reviewer`;
 Plugins install separately, so nothing is imported from pro-ai-sdlc.
 
 The agent holds only generic lenses.
-Project laws, the Important bar, the nit cap and the do-not-report list are read from `REVIEW.md` at review time (Jody, 2026-10-28).
+Project laws, the Important bar, the nit cap and the do-not-report list are read from `REVIEW.md` at review time.
 The handoff has no field for prior findings: a re-run with later commits passes the same four fields with a new base sha.
 Any repeated-finding rule is the caller's job (flagged concern 3).
 
@@ -160,7 +160,7 @@ Any repeated-finding rule is the caller's job (flagged concern 3).
 - Keep the template and add an agent beside it: two sources of review text drift.
   The template's `{DESCRIPTION}` field keeps breaking the fresh-context rule.
 - Fork the upstream agent whole: it mixes security into the same pass, uses four severities, has no failure-scenario rule and ends with a Composition block we drop; adapting the five-lens frame and three lists keeps what is ours.
-- Pass a description "for orientation": that is the leak Jody ruled out.
+- Pass a description "for orientation": that is the leak the maintainer ruled out.
 - `claude -p` as the only dispatch: strongest isolation but no progress in the session; the agent file works under either, so the choice stays with `pr-gate`.
 - Let the reviewer fix what it finds: reviewers that edit stop being fresh eyes and approve their own work.
 - Fold the tests lens into a separate `test-engineer` agent now: two more dispatches per PR for the same diff; the specialist agents intent keeps that question.
@@ -174,15 +174,15 @@ ADR needed: yes, the four-field fresh-context handoff becomes a contract every r
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | `pr-gate` owns pr-check's handoff while this spec owns the contract check on it, so two templates could diverge. | `pr-gate` intent; Jody | resolved (Jody, 2026-10-29): one shared `handoff.md` in this skill that pr-check references and the check reads |
-| 2 | The mutation check edits a file and runs tests, while the agent is read-only (no Edit tool, no `sed` or patch under R15) and a fresh worktree has no `node_modules`. | `pro-ai-sdlc:reviewer` convention; Jody | resolved (Jody, 2026-10-29): the check moves to `pr-check` (pr-gate spec R29) and the agent reads the result (R9); no throwaway worktree |
-| 3 | Convergence wants no finding raised twice, but fresh context bars earlier findings from the handoff. | `review-policy` intent; Jody | open: the caller filters repeats after the reviewer returns and uses a new base sha to limit a re-run to new commits (recommended), or add a fifth handoff field, which breaks the rule |
-| 4 | `pro-ai-sdlc:reviewer` and this agent both run a compliance pass, so a PR that goes through `/review` and `pr-check` is checked twice. | roadmap, "Deltas"; Jody | open: keep both, since `/review` is the SDLC policy gate and this is the gate's reviewer (recommended), or point `/review` at this agent later |
-| 5 | The brainstorm says Opus at high effort while `CLAUDE.md` says medium, high only for a review pass. | CLAUDE.md model split; Jody | resolved (Jody, 2026-10-29): high, as a review pass, set by the dispatcher because agent frontmatter holds the model and not the effort |
-| 6 | constraint-floor, review-policy, risk-tiers and pr-gate each bump pro-quality, so the version numbers collide. | ADR-0002; Jody | open: pick the next minor over main when this change is built and stack the PRs (recommended) instead of fixing 0.13.0 now |
+| 1 | `pr-gate` owns pr-check's handoff while this spec owns the contract check on it, so two templates could diverge. | `pr-gate` intent | resolved: one shared `handoff.md` in this skill that pr-check references and the check reads |
+| 2 | The mutation check edits a file and runs tests, while the agent is read-only (no Edit tool, no `sed` or patch under R15) and a fresh worktree has no `node_modules`. | `pro-ai-sdlc:reviewer` convention | resolved: the check moves to `pr-check` (pr-gate spec R29) and the agent reads the result (R9); no throwaway worktree |
+| 3 | Convergence wants no finding raised twice, but fresh context bars earlier findings from the handoff. | `review-policy` intent | open: the caller filters repeats after the reviewer returns and uses a new base sha to limit a re-run to new commits (recommended), or add a fifth handoff field, which breaks the rule |
+| 4 | `pro-ai-sdlc:reviewer` and this agent both run a compliance pass, so a PR that goes through `/review` and `pr-check` is checked twice. | roadmap, "Deltas" | open: keep both, since `/review` is the SDLC policy gate and this is the gate's reviewer (recommended), or point `/review` at this agent later |
+| 5 | The brainstorm says Opus at high effort while `CLAUDE.md` says medium, high only for a review pass. | CLAUDE.md model split | resolved: high, as a review pass, set by the dispatcher because agent frontmatter holds the model and not the effort |
+| 6 | constraint-floor, review-policy, risk-tiers and pr-gate each bump pro-quality, so the version numbers collide. | ADR-0002 | open: pick the next minor over main when this change is built and stack the PRs (recommended) instead of fixing 0.13.0 now |
 | 7 | The agent reads `CONSTRAINTS.md` but constraint-floor wires only the `pro-ai-sdlc` reviewer to it. | constraint-floor spec R18 | resolved: both read the file as a policy path; this agent adds no interpretation of its rows beyond R17 |
 | 8 | Deleting `code-reviewer.md` removes a forked sidecar of an obra/superpowers skill; the skill's footer and licenses row stay. | `docs/licenses.md` | resolved: the skill keeps its footer and its row while the new agent gets its own row |
-| 9 | Three more callers of the deleted template (R24 to R26) were missing from the first draft. `pr-quality-gate.py` is deleted by `pr-gate`. | AC8; ADR-0002 | resolved (Jody, 2026-10-29): minimal edit to the script now (R25) and pro-execution takes a patch bump |
+| 9 | Three more callers of the deleted template (R24 to R26) were missing from the first draft. `pr-quality-gate.py` is deleted by `pr-gate`. | AC8; ADR-0002 | resolved: minimal edit to the script now (R25) and pro-execution takes a patch bump |
 
 ## Open questions
 
@@ -193,7 +193,7 @@ ADR needed: yes, the four-field fresh-context handoff becomes a contract every r
 5. `test-engineer` as its own agent: answered, not here; the specialist agents intent keeps it.
 6. Likely needs an ADR: answered, yes.
 
-Changed on 2026-10-29 after planning (Jody): the mutation check moves from this agent to pr-check and three more callers of the deleted template are repointed (R24 to R26).
+Changed on 2026-10-29 after planning: the mutation check moves from this agent to pr-check and three more callers of the deleted template are repointed (R24 to R26).
 
 ## Acceptance criteria
 
@@ -206,7 +206,7 @@ Changed on 2026-10-29 after planning (Jody): the mutation check moves from this 
 - AC7. On a throwaway diff that adds a branch no test exercises, a dispatch of the agent with the four fields returns an Important tests-lens finding with a file, a line and a failure scenario plus a report whose first line matches the R13 tally; run once by hand and pasted into the PR.
 - AC8. `grep -rn "code-reviewer.md" plugins docs README.md` finds no reference to the deleted template.
 - AC9. `tests/cases/routing.jsonl` has a case for "review my branch" that expects `requesting-code-review` and the warning count from `node tests/check.mjs` does not rise.
-- AC10. `docs/licenses.md` has a pro-quality row for `code-reviewer` (agent) naming addyosmani/agent-skills as adapted, `plugins/pro-quality/LICENSE` carries the Addy Osmani copyright line and the agent and twin end with the footer.
+- AC10. `docs/licenses.md` has a pro-quality row for `code-reviewer` (agent) naming agent-skills as adapted, `plugins/pro-quality/LICENSE` carries the agent-skills copyright line and the agent and twin end with the footer.
 - AC11. pro-quality's version is equal in `plugins/pro-quality/.claude-plugin/plugin.json`, `plugins/pro-quality/.codex-plugin/plugin.json` and its `.claude-plugin/marketplace.json` entry, with `metadata.version` is bumped once.
 - AC12. `plugins/pro-quality/commands/review.md`, `plugins/pro-quality/scripts/pr-quality-gate.py` and `plugins/pro-execution/skills/subagent-driven-development/code-quality-reviewer-prompt.md` contain no `code-reviewer.md` and no `DESCRIPTION`.
   `node tests/quality-hooks.mjs` passes.

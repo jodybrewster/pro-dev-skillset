@@ -4,13 +4,13 @@ kind: change
 status: draft
 risk: medium
 created: 2026-10-28T17:00:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: specialist reviewer and auditor agents
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: Jody's idea on 2026-10-28, prompted by the four personas in [addyosmani/agent-skills docs/agents.md](https://github.com/addyosmani/agent-skills/blob/main/docs/agents.md) (MIT).
+Author: the maintainer.
+Source: the maintainer's idea on 2026-10-28, prompted by the four personas in [agent-skills docs/agents.md](https://github.com/addyosmani/agent-skills/blob/main/docs/agents.md) (MIT).
 Those four are a starting point, not the final list.
 Status: draft; the set of agents is still open.
 Parked on 2026-10-29 until ranked item 18 in [docs/roadmap.md](../../docs/roadmap.md).

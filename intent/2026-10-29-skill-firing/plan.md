@@ -2,7 +2,7 @@
 
 Built from `spec.md` and `intent.md` in this folder.
 Status: built on 2026-10-29.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-29.
 Branch: `feat/skill-firing`, rebased onto the PR quality gate fix before the first plugin edit.
 

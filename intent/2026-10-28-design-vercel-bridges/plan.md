@@ -2,14 +2,14 @@
 
 Built from `spec.md` (reworked twice 2026-10-28) and `intent.md` in this folder.
 Status: draft.
-Approver: Jody Brewster, because the change carries a secrets rule (`VERCEL_TOKEN`), adds a plugin that deploys and accepts a named risk, so it does not suit auto mode.
+Approver: the maintainer, because the change carries a secrets rule (`VERCEL_TOKEN`), adds a plugin that deploys and accepts a named risk, so it does not suit auto mode.
 Dated: 2026-10-28.
-Reworked 2026-10-28 after Jody kept upstream `deploy-to-vercel` and moved deploying into a new opt-in plugin, `pro-ship`; the security challenge below records the outcome.
+Reworked 2026-10-28 after the maintainer kept upstream `deploy-to-vercel` and moved deploying into a new opt-in plugin, `pro-ship`; the security challenge below records the outcome.
 Reworked a second time 2026-10-28 after the re-challenge of that rework; its answers are in the Security challenge section and applied in steps 0, 4, 5, 5b and 8.
 
 ## Scope of this plan
 
-Hallmark is held per spec Flagged concern 1 until Jody has tried it by hand.
+Hallmark is held per spec Flagged concern 1 until it has been tried by hand.
 This plan builds none of it: not R1 to R4, not the `hallmark` row in R13, not its R19 smoke target, not R20, not the two Hallmark cases in R21, not its R22 row and not the Hallmark parts of AC1, AC2, AC5 and AC6.
 No file in this plan names `hallmark-bridge`, so the `taste-skills-bridge`, `landing-page-design`, `impeccable-bridge` and `emil-design-eng` descriptions are not touched.
 What ships: the `web-design-guidelines` skill and the `react-patterns-bridge` skill in pro-design, the `vercel-skills-bridge` skill in pro-nextjs, the new opt-in pro-ship plugin with `vercel-deploy-bridge`, three registry rows with a new optional `gitExclude` field (R31) and the tests, docs and bumps they need.
@@ -152,13 +152,13 @@ Step 10 runs last and alone, because the manifests, the marketplace files and `d
 The step most likely to go wrong is step 7, the live routing run.
 "Deploy this to Vercel" now competes with three skills: `vercel-deploy-bridge`, the upstream `deploy-to-vercel` distractor and `astro-on-vercel` ("deploys to Vercel").
 The upstream description lists "deploy my app" and "push this live" word for word, so it may win; the fix is in the bridge description, which names Vercel deploys with the guardrails and says it runs the deploy steps itself.
-If the distractor still wins, that is direct evidence for the accepted risk below and goes to Jody before merge rather than into a weaker case.
+If the distractor still wins, that is direct evidence for the accepted risk below and goes to the maintainer before merge rather than into a weaker case.
 "Cut the client bundle on our Next.js home page" overlaps what `vercel-react-best-practices` covers, now also present as a distractor, so `vercel-skills-bridge` or the distractor may take it; the bridge description hands bundle-only asks to `next-skills-bridge`.
 A wrong description could also pull existing cases away from `accessibility-audit`, `screen-critique` or `shadcn-ui-composition`, so the whole suite is rerun, not only the new cases.
 
 The highest-stakes step is step 4.
 A gap in the token or deploy rule can put `VERCEL_TOKEN` into the transcript, stage `.env` with a commit or publish a folder at a public URL.
-Upstream `deploy-to-vercel` stays installed wherever pro-ship's row is answered yes and can fire without the bridge; that risk is accepted by Jody (Security challenge, Accepted risks).
+Upstream `deploy-to-vercel` stays installed wherever pro-ship's row is answered yes and can fire without the bridge; that risk is accepted by the maintainer (Security challenge, Accepted risks).
 The `why` question, `gitExclude` and the do-not-commit line narrow who it reaches; nothing in this plan stops it once a prompt routes straight to the upstream skill in a repo where someone installed it by hand.
 
 Step 0's SHA check can fail if the skills CLI only takes branch names in a tree URL.
@@ -188,12 +188,12 @@ Left out on purpose:
 
 ## Options not taken
 
-- Building the Hallmark parts now behind `default: false`: Jody held them until his trial (spec concern 1).
+- Building the Hallmark parts now behind `default: false`: they are held until the trial by hand (spec concern 1).
 - One registry row for all five vercel-labs skills: mixes owners and puts the deploy skill on every pro-design site (spec Alternatives).
-- Keeping `deploy-to-vercel` in pro-nextjs's `vercel-skills` row (the previous draft of this plan): Jody moved it to opt-in pro-ship.
-- Dropping `deploy-to-vercel` from every row, as the challenge's Blocking item asked: Jody kept it (Accepted risks).
+- Keeping `deploy-to-vercel` in pro-nextjs's `vercel-skills` row (the previous draft of this plan): the maintainer moved it to opt-in pro-ship.
+- Dropping `deploy-to-vercel` from every row, as the challenge's Blocking item asked: the maintainer kept it (Accepted risks).
 - A generic pro-core warning against committing `.claude/skills/<install name>/` for every row: replaced by the narrower `gitExclude` field on the `vercel-deploy` row (R31), with the bridge and the row's `why` as the second layer.
-- Moving `deploy-to-vercel` to user scope so no repo holds it: Jody does not want the skill in every repo, so project scope stays.
+- Moving `deploy-to-vercel` to user scope so no repo holds it: the maintainer does not want the skill in every repo, so project scope stays.
 - Pinning only the `vercel-deploy` row: the three vercel-labs rows share one source, so one pin and one reviewed move cover all of them.
 - Letting `web-design-guidelines` fall back to `curl` on a harness with no web fetch tool: R7 forbids shell commands in the lint.
 - Naming upstream install names after arrows in the router and widening `EXTERNAL`: more allowlist entries to keep in sync for no routing gain.
@@ -238,19 +238,19 @@ From a fresh-context `security-architect` challenge of `plan.md` on 2026-10-28, 
 It covers what the plan adds or leaves open; the spec's challenge still stands.
 Items marked "(verify)" rest on upstream or tool behavior not read for this review.
 
-Verdict: proceed with required changes, once Jody settles the blocking item before steps 3 and 4.
-Outcome 2026-10-28: Jody settled the blocking item by keeping the skill in opt-in pro-ship (Accepted risks); every required change below that applies when the skill stays is taken.
+Verdict: proceed with required changes, once the maintainer settles the blocking item before steps 3 and 4.
+Outcome 2026-10-28: the maintainer settled the blocking item by keeping the skill in opt-in pro-ship (Accepted risks); every required change below that applies when the skill stays is taken.
 
 ### Blocking
 
-- Settled 2026-10-28 (Jody): `deploy-to-vercel` stays, moved into the new opt-in pro-ship plugin outside pro-dev-starter; the risk is recorded under Accepted risks and the item below is kept as the record.
+- Settled 2026-10-28: `deploy-to-vercel` stays, moved into the new opt-in pro-ship plugin outside pro-dev-starter; the risk is recorded under Accepted risks and the item below is kept as the record.
 - [7/10] The plan's only control for upstream `deploy-to-vercel` firing without the bridge is the `vercel-skills` `why` question, which never reaches the people most exposed.
   `.claude/pro-dev.json` is committed by design (ADR-0006) and `engine_state` in `pro-dev.py` sets `wantsInstall` for any optional row whose saved answer is `yes`.
   So a PR that adds that answer, or a teammate in a repo that already holds it, gets the skill from the next `/pro-dev update` with no question and no `why`.
   The install lands in project `.claude/skills/deploy-to-vercel/`; once committed it loads for anyone who opens the repo, including sessions without pro-nextjs and no bridge.
   There "deploy this" matches the upstream description, which runs `git add .` and, with no Vercel login, an unasked `vercel deploy --temporary` that publishes the folder at a public URL.
   Change: drop `deploy-to-vercel` from the `-s` list for the same reason `vercel-cli-with-tokens` was dropped; the bridge owns the deploy steps under R10b or hands off to the `vercel` plugin row.
-  If Jody keeps the skill, record his acceptance by name under Accepted risks and take the eval and ignore-check changes below.
+  If the maintainer keeps the skill, record the acceptance under Accepted risks and take the eval and ignore-check changes below.
 
 ### Required changes
 
@@ -265,7 +265,7 @@ Outcome 2026-10-28: Jody settled the blocking item by keeping the skill in opt-i
 
 ### Accepted risks
 
-- Upstream `deploy-to-vercel` stays installed in pro-ship sites and can fire without the bridge, running `git add .` and an unprompted public `--temporary` deploy (Jody, 2026-10-28, decided to keep it in opt-in pro-ship).
+- Upstream `deploy-to-vercel` stays installed in pro-ship sites and can fire without the bridge, running `git add .` and an unprompted public `--temporary` deploy (decided 2026-10-28 to keep it in opt-in pro-ship).
   The spread path through a committed `.claude/skills/deploy-to-vercel/` is closed by `gitExclude` (R31) for repos where `/pro-dev` installed the row, since `install` and `update` add the folder to the repo's local `.git/info/exclude` and `git add .` respects it.
   It stays open only if someone installs the skill by hand.
 

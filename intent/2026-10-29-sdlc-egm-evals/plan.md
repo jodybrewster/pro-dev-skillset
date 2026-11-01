@@ -2,7 +2,7 @@
 
 Built from `spec.md` and `intent.md` in this folder.
 Status: built on 2026-10-29.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-29.
 Branch: `feat/sdlc-egm-evals`, stacked on `feat/skill-firing` (PR 77).
 
@@ -16,7 +16,7 @@ Branch: `feat/sdlc-egm-evals`, stacked on `feat/skill-firing` (PR 77).
 
 ## Order of work
 
-1. Wait for Jody's pending `; true` edits to the pro-ai-sdlc commands to land on main, then rebase the stack on it.
+1. Wait for the maintainer's pending `; true` edits to the pro-ai-sdlc commands to land on main, then rebase the stack on it.
 2. Two Sonnet subagents in parallel, one per plugin, write the cases and fixtures; each smoke-runs every case once with `--ablation none` to prove it loads and the scaffold works (R1 to R8, R10 to R15).
 3. Add the routing cases and run the keyless gate (R9).
 4. Opus reviews every grader for a trap a plain reply would pass, then runs the 3-run baseline for both plugins (R17, R19).

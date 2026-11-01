@@ -3,15 +3,15 @@ intent: intent/2026-10-28-spec-methods/intent.md
 intent-status: proposed
 status: draft
 created: 2026-10-28T10:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: swappable spec methods, starting with Elephant-Goldfish
 
 Built from `intent.md` in this folder (commit 1e6668d).
-Status: draft, reworked on 2026-10-28 after Jody's direction: "EGM should really be its own plugin. We should figure out a way to use it with larger sdlcs like the ai-sdlc plugin. I'd like to add a review step maybe and be able to customize the goldfish."
-Jody then took the recommended shape: EGM stays Google's own plugin, a goldfish review is offered at both `/spec` and `/plan` and goldfish are customized per repo.
-Jody tries EGM through the built pro-egm plugin rather than by hand (2026-10-28); the name stays in the `pro-*` family.
+Status: draft, reworked on 2026-10-28 after direction that EGM be its own plugin, usable with larger SDLCs like the ai-sdlc plugin, with a review step and customizable goldfish.
+The maintainer then took the recommended shape: EGM stays Google's own plugin, a goldfish review is offered at both `/spec` and `/plan` and goldfish are customized per repo.
+The maintainer tries EGM through the built pro-egm plugin rather than by hand (2026-10-28); the name stays in the `pro-*` family.
 Policies and skills consulted: `CLAUDE.md`, `AGENTS.md`, `REVIEW.md`, `RELEASING.md`, `docs/decisions/0001` to `0006` (ADR-0006 in particular), `docs/version-bump-law.md`, `docs/codex-parity.md`, `docs/licenses.md`, the umbrella intent `intent/2026-10-27-pro-dev-simplify/intent.md`, the sibling intent `intent/2026-10-28-pro-speckit/intent.md` and the finished example `intent/2026-10-28-pro-dev-setup/spec.md`.
 Code read to ground the design: `plugins/pro-core/registry/engines.json` (the three `kind: claude-plugin` companion rows), `plugins/pro-core/scripts/pro-dev.py` (`detected`, `engine_state`, `run_engine`, `covers_repo`), `plugins/pro-core/commands/pro-dev.md`, `plugins/pro-ai-sdlc/` (the `intent`, `spec`, `plan`, `review` and `execute` commands at HEAD, `templates/spec.md`, README and both manifests), `plugins/pro-spdd/` (manifest, commands and skills list), `plugins/pro-dev-starter/.claude-plugin/plugin.json`, `templates/install-companions.sh`, `tests/check.mjs` (the `bridges`, `registry` and `pro-dev-starter` checks and the `BRIDGES` and `OPT_IN` lists), `tests/cases/routing.jsonl`, `.claude-plugin/marketplace.json` and the shape of `claude plugin list --json`.
 No `DESIGN.md`, `SECURITY.md` or compliance skill under `.claude/skills/` exists in this repo.
@@ -43,7 +43,7 @@ No EGM design doc replaces or stands beside `spec.md`.
 
 ### Functional
 
-- R1. A new plugin `plugins/pro-egm/` ships `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` at the same version, `skills/egm-bridge/SKILL.md`, `commands/goldfish.md`, `scripts/goldfish.py`, `goldfish/policy.md`, `goldfish/scope.md`, `goldfish/policy-standard.md`, `goldfish/scope-standard.md`, `sdlc-method.json` and a marketplace entry; it has no hooks and no agents. (Jody: "EGM should really be its own plugin"; intent: "A new pro-egm bridge plugin carries a thin skill")
+- R1. A new plugin `plugins/pro-egm/` ships `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json` at the same version, `skills/egm-bridge/SKILL.md`, `commands/goldfish.md`, `scripts/goldfish.py`, `goldfish/policy.md`, `goldfish/scope.md`, `goldfish/policy-standard.md`, `goldfish/scope-standard.md`, `sdlc-method.json` and a marketplace entry; it has no hooks and no agents. (intent: "A new pro-egm bridge plugin carries a thin skill")
 - R2. `egm-bridge` says when to reach for a goldfish review (a spec or plan with real design choices), how it fits the loop, how to customize goldfish in `.egm/`, that `/pro-dev install` installs `egm@egm` in Claude Code and the two Codex install commands for the person to run; it quotes no EGM skill text. (intent: "a thin skill", constraint "no EGM text in this repo")
 - R3. `plugins/pro-core/registry/engines.json` gains one row: `id` `egm`, `owner` `pro-egm`, `bridges` `["egm-bridge"]`, `kind` `claude-plugin`, `default` `true`, `detect` `{ "plugin": "egm@egm" }`, `install` `["claude", "plugin", "install", "egm@egm", "--scope", "project"]` and `update` `["claude", "plugin", "update", "egm@egm", "--scope", "project"]`; the registry `version` goes up by one. (intent: "a registry row so /pro-dev install installs egm@egm")
 - R4. A registry row may carry an optional `marketplace` object `{ "name": "<name>", "source": "<owner>/<repo>" }`.
@@ -61,7 +61,7 @@ No EGM design doc replaces or stands beside `spec.md`.
 - R11. pro-egm's `sdlc-method.json` declares `requires` `egm@egm` and two hand-offs:
   - `spec`: after `spec.md` is drafted and before it is committed, offer `/pro-egm:goldfish {target} --stage spec`.
   - `plan`: after `plan.md` is drafted and before it is committed, offer `/pro-egm:goldfish {target} --stage plan`.
-  (Jody: "add a review step maybe"; settled 2026-10-28 as both stages)
+  (settled 2026-10-28 as both stages)
 - R12. `/pro-egm:goldfish <file> [--stage spec|plan]` runs `goldfish.py resolve`, shows the resolved reviewers, standards and reading list and then runs `/egm:egm-review-loop` with `TargetFile` the file, `SemanticTarget` `full file` and the resolved `Reviewers`, `Standards` and `GoldfishContext`, so EGM asks for nothing it already has.
   When `--stage` is omitted it is `spec` for a file named `spec.md` and `plan` for `plan.md`; any other file needs `--stage`.
 - R13. `goldfish.py resolve --stage <stage> --target <path>` prints the review inputs as JSON.
@@ -69,7 +69,7 @@ No EGM design doc replaces or stands beside `spec.md`.
   Otherwise it uses pro-egm's defaults:
   - `spec`: `zoom_out` (`zoom-out-standard`), `design_critic` (`feature-spec-standard`) and the starter `policy` and `scope` goldfish.
   - `plan`: `implementation_readiness` (`implementation-readiness-standard`), `codebase_details` (`implementation-readiness-standard`) and the starter `scope` goldfish.
-  The reading list is always the target's sibling `intent.md`, `spec.md` when the target is a plan and whichever of `REVIEW.md`, `CLAUDE.md` and `AGENTS.md` exist at the root. (Jody: "be able to customize the goldfish")
+  The reading list is always the target's sibling `intent.md`, `spec.md` when the target is a plan and whichever of `REVIEW.md`, `CLAUDE.md` and `AGENTS.md` exist at the root.
 - R14. In `.egm/goldfish.json`, a reviewer or standard is either an EGM shortname (lowercase letters, digits, `_` and `-`) or a repo-relative path to a regular file under `.egm/`; `goldfish.py` refuses an absolute path, a path with `..`, a symlink or a file outside `.egm/` and names the bad entry. (security challenge, required change 4 carried to the new paths)
 - R15. `/pro-egm:goldfish init` copies the starter goldfish and their standards into `.egm/reviewers/` and `.egm/standards/` and writes a `.egm/goldfish.json` that lists the defaults with those copies in place of the plugin's; it never overwrites an existing file.
 - R16. The starter goldfish are this repo's own text.
@@ -194,13 +194,13 @@ Intent E's pro-speckit adds its own `sdlc-method.json` with no change to pro-ai-
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | `egm@egm` lives in its own marketplace, which a registry row cannot register: a row has one `install` argv and the existing `claude-plugin` rows lean on `templates/install-companions.sh` to add `claude-plugins-official`. Without a fix `/pro-dev install` fails on the `egm` row on every fresh machine. | ADR-0006, `plugins/pro-core/scripts/pro-dev.py`, Jody | settled 2026-10-28 (Jody took the recommendations): the optional `marketplace` row field (R4, R5) with `source` limited to `owner/repo` and checked against a registered marketplace of the same name, recorded in the new ADR as an amendment to ADR-0006's row shape. |
-| 2 | The intent lets an EGM design or spec-kit spec "stand in for spec.md", but `/spec` exists to check the change against the repo's policies and `/plan` finds its input by the presence of `spec.md`. | `plugins/pro-ai-sdlc/commands/spec.md`, REVIEW.md pass 3, Jody | settled 2026-10-28: no stand-in; EGM reviews our own `spec.md` and `plan.md` (R11, R12). Intent E decides separately how a spec-kit spec relates. |
-| 3 | pro-ai-sdlc is Claude Code only, so the hand-offs never appear in Codex, while EGM also ships for Codex and `/pro-dev` installs only through `claude plugin install`. | ADR-0004, umbrella item G, Jody | settled 2026-10-28: the bridge prints the two Codex install commands and how to pass the `.egm/` files to `egm-review-loop` (R2); registry install for Codex waits on item G. |
-| 4 | EGM writes `goldfish_review_report.md` in the working directory, while `/spec` and `/plan` commit only their one file. | intent success line, `plugins/pro-ai-sdlc/commands/spec.md` step 5, Jody | settled 2026-10-28: the report stays untracked; open findings are copied into the spec or plan (R17), so no command stages another file. |
-| 5 | EGM's goldfish agents declare `model: inherit` and a loop runs up to five rounds of several reviewers, while the model split asks for an explicit model on every subagent and Jody watches weekly usage. | `~/.claude/CLAUDE.md` model split, `CLAUDE.md` Model split, Jody | settled 2026-10-28: accept `inherit` (it is Opus in `/spec` and `/plan`, the reviewer role) and say in the offer that it runs several subagents on the session model (N4). |
-| 6 | `RELEASING.md` says a meta-plugin is bumped when a plugin it depends on is bumped, but PR 63 bumped pro-ai-sdlc without bumping the starter; this change bumps pro-ai-sdlc and pro-core, both pro-dev-starter dependencies. | RELEASING.md, Jody | settled 2026-10-28: bump pro-dev-starter by a patch in the same PR (R24). |
-| 7 | A repo's custom goldfish are prompt files EGM hands to subagents; on a contributor's branch `.egm/` could carry a persona that tells a reviewer to read secrets or a path that points outside the repo. | REVIEW.md pass 2, Jody | settled 2026-10-28: paths are confined to `.egm/` (R14) and the resolved list is shown before the run (R12); the review is only offered at `/spec` and `/plan`, on the author's own draft, never at `/review` on someone else's PR. |
+| 1 | `egm@egm` lives in its own marketplace, which a registry row cannot register: a row has one `install` argv and the existing `claude-plugin` rows lean on `templates/install-companions.sh` to add `claude-plugins-official`. Without a fix `/pro-dev install` fails on the `egm` row on every fresh machine. | ADR-0006, `plugins/pro-core/scripts/pro-dev.py` | settled 2026-10-28 (the maintainer took the recommendations): the optional `marketplace` row field (R4, R5) with `source` limited to `owner/repo` and checked against a registered marketplace of the same name, recorded in the new ADR as an amendment to ADR-0006's row shape. |
+| 2 | The intent lets an EGM design or spec-kit spec "stand in for spec.md", but `/spec` exists to check the change against the repo's policies and `/plan` finds its input by the presence of `spec.md`. | `plugins/pro-ai-sdlc/commands/spec.md`, REVIEW.md pass 3 | settled 2026-10-28: no stand-in; EGM reviews our own `spec.md` and `plan.md` (R11, R12). Intent E decides separately how a spec-kit spec relates. |
+| 3 | pro-ai-sdlc is Claude Code only, so the hand-offs never appear in Codex, while EGM also ships for Codex and `/pro-dev` installs only through `claude plugin install`. | ADR-0004, umbrella item G | settled 2026-10-28: the bridge prints the two Codex install commands and how to pass the `.egm/` files to `egm-review-loop` (R2); registry install for Codex waits on item G. |
+| 4 | EGM writes `goldfish_review_report.md` in the working directory, while `/spec` and `/plan` commit only their one file. | intent success line, `plugins/pro-ai-sdlc/commands/spec.md` step 5 | settled 2026-10-28: the report stays untracked; open findings are copied into the spec or plan (R17), so no command stages another file. |
+| 5 | EGM's goldfish agents declare `model: inherit` and a loop runs up to five rounds of several reviewers, while the model split asks for an explicit model on every subagent and the maintainer watches weekly usage. | `~/.claude/CLAUDE.md` model split, `CLAUDE.md` Model split | settled 2026-10-28: accept `inherit` (it is Opus in `/spec` and `/plan`, the reviewer role) and say in the offer that it runs several subagents on the session model (N4). |
+| 6 | `RELEASING.md` says a meta-plugin is bumped when a plugin it depends on is bumped, but PR 63 bumped pro-ai-sdlc without bumping the starter; this change bumps pro-ai-sdlc and pro-core, both pro-dev-starter dependencies. | RELEASING.md | settled 2026-10-28: bump pro-dev-starter by a patch in the same PR (R24). |
+| 7 | A repo's custom goldfish are prompt files EGM hands to subagents; on a contributor's branch `.egm/` could carry a persona that tells a reviewer to read secrets or a path that points outside the repo. | REVIEW.md pass 2 | settled 2026-10-28: paths are confined to `.egm/` (R14) and the resolved list is shown before the run (R12); the review is only offered at `/spec` and `/plan`, on the author's own draft, never at `/review` on someone else's PR. |
 
 ADR needed: yes, it sets the contract every future method plugin follows and widens ADR-0006's row shape with a third-party `marketplace` field.
 Drafted as [ADR-0007](../../docs/decisions/0007-spec-method-plugins.md) (proposed).
@@ -235,8 +235,8 @@ A second challenge runs on the plan, since `goldfish.py` and the custom goldfish
 1. Needs intent B's registry; does C wait for B? Answered: no wait. B merged in PR 65 (commit 97558ea, marketplace 1.51.0) and `engines.json`, `pro-dev.py` and the `kind: claude-plugin` rows exist on `main`.
 2. The exact hand-off points. Answered 2026-10-28: a goldfish review at `/spec` and at `/plan` (R11) plus the `/spdd-story` offer at `/intent` for pro-spdd (R18).
 3. Where an EGM design doc lives relative to `intent/<date>-<slug>/`. Answered 2026-10-28: there is no separate EGM design doc; EGM reviews `spec.md` and `plan.md` in place.
-4. Likely needs an ADR: answered yes; drafted as ADR-0007 with Jody's reversal condition.
-5. The default reviewers per stage (R13) and the starter goldfish (R16): built as specified; Jody tunes them in `.egm/goldfish.json` after first use through pro-egm. Candidates already raised: a `docs` goldfish at the plan stage and an optional security goldfish. Owner: Jody.
+4. Likely needs an ADR: answered yes; drafted as ADR-0007 with the maintainer's reversal condition.
+5. The default reviewers per stage (R13) and the starter goldfish (R16): built as specified; the maintainer tunes them in `.egm/goldfish.json` after first use through pro-egm. Candidates already raised: a `docs` goldfish at the plan stage and an optional security goldfish. Owner: the maintainer.
 
 ## Acceptance criteria
 

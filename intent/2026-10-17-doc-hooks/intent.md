@@ -4,7 +4,7 @@ kind: bug
 status: accepted
 risk: medium
 created: 2026-10-17
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: the pro-quality doc hooks judge the right repo and stop blocking legitimate edits
@@ -49,7 +49,7 @@ Every session in every repo with `pro-quality` installed, from the next release 
 
 ## Constraints
 
-Nothing is merged, tagged or published by anyone but Jody.
+Nothing is merged, tagged or published by anyone but the maintainer.
 The version-bump law applies: `pro-quality` 0.9.5 and marketplace metadata 1.44.0.
 A blocking hook needs a case that shows it blocking and one that shows it allowing (REVIEW.md).
 

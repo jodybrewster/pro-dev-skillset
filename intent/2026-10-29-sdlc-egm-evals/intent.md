@@ -4,19 +4,19 @@ kind: change
 status: accepted
 risk: low
 created: 2026-10-29T15:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: evals for pro-ai-sdlc and pro-egm
 
-Author: Jody Brewster (pro-dev-skillset).
-Source: Jody, 2026-10-29: "pro-pdd is getting old and I'm moving to more ai-sdlc, do we have evals graders there?" then "yes have evals for this and the EGM plugin".
+Author: the maintainer.
+Source: a 2026-10-29 decision to move from pro-pdd toward ai-sdlc and to add evals for pro-ai-sdlc and the EGM plugin.
 Status: accepted on 2026-10-29.
 Created: 2026-10-29.
 
 ## Problem
 
-pro-ai-sdlc is becoming Jody's main loop and pro-egm plugs a Goldfish review into it, but neither has an eval.
+pro-ai-sdlc is becoming the maintainer's main loop and pro-egm plugs a Goldfish review into it, but neither has an eval.
 Their tests cover plumbing only: the hook scripts (`tests/sdlc-hooks.mjs`), the `/execute` scripts (`tests/execute.mjs`), the goldfish script (`tests/goldfish.mjs`) and the `sdlc-contract` check.
 Nothing checks that `/spec` writes statements a command can check, that `/plan` ties every step to them, that `/review` catches a planted bug, that `/execute` refuses an unapproved plan or that the agents get used when they should.
 The four pro-ai-sdlc agents have no routing case either.
@@ -34,4 +34,4 @@ The four pro-ai-sdlc agents have no routing case either.
 
 Low.
 The suites ship inside the two plugins and bump them.
-Jody has uncommitted edits to four pro-ai-sdlc commands on main (the `; true` guards on their context lines); the baseline is taken after those land so it measures the commands he is keeping.
+The maintainer has uncommitted edits to four pro-ai-sdlc commands on main (the `; true` guards on their context lines); the baseline is taken after those land so it measures the commands he is keeping.

@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit e68fb3c) and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster; the hook runs at the end of every session on every site with pro-quality, so the engineer's sign-off is the approval and no other approver is needed.
+Approver: the maintainer; the hook runs at the end of every session on every site with pro-quality, so the engineer's sign-off is the approval and no other approver is needed.
 Dated: 2026-10-28.
 
 The default mode is `nudge`, approved with this plan on 2026-10-28.
@@ -60,12 +60,12 @@ Relative paths, symlinked temp dirs and a session `cwd` inside a subdirectory of
 A crash here would print a Python traceback at every stop on every site, so the script keeps its catch-all guard and the garbage-payload case.
 The branch `fix/doc-hooks-review` (open now) also bumps pro-quality and the marketplace and edits `tests/check.mjs`.
 Whichever lands second rebases and takes the next version numbers; the `check.mjs` hunks are in different checks and should merge cleanly.
-Sites lose the forced handoff on update; the release note names `PRO_DEV_VALIDATION=block` (spec flagged concern 3, still Jody's call).
+Sites lose the forced handoff on update; the release note names `PRO_DEV_VALIDATION=block` (spec flagged concern 3, still the maintainer's call).
 Nothing is irreversible: the old behavior is one setting away.
 
 ## Options not taken
 
-- Keep blocking and only fix the path filter: still forces a full handoff after every small edit, which is what Jody asked to stop.
+- Keep blocking and only fix the path filter: still forces a full handoff after every small edit, which is what the maintainer asked to stop.
 - Report every dirty file, not only the session's: that is what made the handoffs list unrelated work.
 - Keep counting Codex's `apply_patch`: pro-quality's Codex manifest loads skills only, so this hook never runs under Codex; dropping it removes dead code.
 - A per-repo mode file under `.pro-dev/`: that folder is self-ignoring, so the setting could not be shared; the settings `env` block works per repo or per user.
@@ -96,10 +96,10 @@ Filled in when the build is finished, before sign-off.
 - AC2: pass, per the checks above.
 - AC3: pass. In a real session on 2026-10-28, a turn that wrote only a scratch file outside the repo ended with no hook output and the session's state file recorded `"paths": []`.
   A turn that added and removed a blank line in `intent/README.md` ended with the transcript recording one Stop `systemMessage`, "pro-quality: this session changed 1 file in pro-dev-skillset. Run /validate for a checklist.", and no block.
-  Jody missed that line on screen, so the turn was repeated on `docs/README.md` and he saw "pro-quality: this session changed 2 files in pro-dev-skillset. Run /validate for a checklist." with no forced checklist.
+  That line was missed on screen, so the turn was repeated on `docs/README.md` and the output showed "pro-quality: this session changed 2 files in pro-dev-skillset. Run /validate for a checklist." with no forced checklist.
   The first live check, in an earlier session, failed because it ran 0.9.6: the demo/app project-scope install of pro-quality shadowed the user-scope 0.10.0 even though /plugin showed 0.10.0.
   It passed once the demo/app install was updated to 0.10.0 too; that shadowing feeds intent B's `/pro-dev update`.
-- Sign-off: Jody Brewster, 2026-10-28, after seeing the nudge line in the live check.
+- Sign-off: the maintainer, 2026-10-28, after seeing the nudge line in the live check.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 

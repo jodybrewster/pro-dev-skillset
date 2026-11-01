@@ -53,7 +53,7 @@ Each statement below is checkable by a command, a grep or a file that exists.
 
 ## 6. You-isms
 
-- S6.1 `git grep -n "/Users/jodybrewster"` prints nothing.
+- S6.1 `git grep -n "/Users/"` prints nothing.
 - S6.2 `.claude/commands/research.md` and `lead-research.md` use a path relative to the repo root.
 - S6.3 The two README examples (lines 104 and 121) use `<path-to-pro-dev-skillset>`.
 - S6.4 `git grep -n "gmail.com"` hits only `author` or `owner` fields in manifests.
@@ -82,7 +82,7 @@ Each statement below is checkable by a command, a grep or a file that exists.
 ## 10. Gate and handoff
 
 - S10.1 Nothing is merged by the executor and no tag is pushed.
-- S10.2 The PR body lists the exact `claude plugin tag plugins/<name> --push` commands for Jody to run after merge, one per plugin.
+- S10.2 The PR body lists the exact `claude plugin tag plugins/<name> --push` commands for the maintainer to run after merge, one per plugin.
 - S10.3 Commit messages carry no co-author lines; prose added follows the hq writing rules.
 
 ## Out of scope
@@ -90,7 +90,7 @@ Each statement below is checkable by a command, a grep or a file that exists.
 - Hook warn mode, a per-hook switch and a decision log for blocking hooks (the next brief).
 - `claude plugin eval` suites per hook-bearing plugin (the brief after that).
 - Upstream re-sync of the forked skills and dating the quarterly watch.
-- Pinning GitHub Actions by SHA, activating the branch ruleset (Jody does that in settings), adding routing cases for the 32 uncovered skills.
+- Pinning GitHub Actions by SHA, activating the branch ruleset (the maintainer does that in settings), adding routing cases for the 32 uncovered skills.
 
 ## Not fully checkable
 

@@ -2,7 +2,7 @@
 
 Built from `spec.md` (commit 604f92b) and `intent.md` in this folder.
 Status: draft.
-Approver: Jody Brewster; the change adds a row kind that runs a third-party Python CLI, widens `pro-dev.py`'s run path and records ADR-0008; it is not an auto-mode change.
+Approver: the maintainer; the change adds a row kind that runs a third-party Python CLI, widens `pro-dev.py`'s run path and records ADR-0008; it is not an auto-mode change.
 Dated: 2026-10-28.
 
 ## Dependency
@@ -75,9 +75,9 @@ No file under `plugins/pro-ai-sdlc/` changes (R13).
    f. Flags: every `.claude/skills/speckit-*/SKILL.md` carries `disable-model-invocation: true`; `.claude/settings.json` is absent or has no hook; the `=` form of `--integration-options` with both options in one string is parsed as two options.
    g. Upgrade: commit, edit `.specify/memory/constitution.md`, run `specify integration upgrade claude` with the same options; the constitution hash is unchanged and no managed file churns; then edit a managed script and confirm the upgrade stops, names it and exits non-zero without `--force`.
    h. Uninstall: `specify integration uninstall claude` on unedited skills removes every `speckit-*` folder; with one skill edited it keeps that file and names it; `.specify/` stays.
-   i. Determinism (R20): repeat item e in two clean repos with different names and parent paths, one on Jody's Mac and one in a Linux container (`python:3.12` with uv), hash every file under `.claude/skills/speckit-*/SKILL.md`, `.specify/scripts/**` and `.specify/templates/**` and diff the two lists; pin only the files byte-identical in both and list any left out under Departures.
+   i. Determinism (R20): repeat item e in two clean repos with different names and parent paths, one on the maintainer's Mac and one in a Linux container (`python:3.12` with uv), hash every file under `.claude/skills/speckit-*/SKILL.md`, `.specify/scripts/**` and `.specify/templates/**` and diff the two lists; pin only the files byte-identical in both and list any left out under Departures.
    j. Confirm no generated file embeds the repo path, repo name, user name, date or CLI version string.
-   If any result contradicts the spec, stop, amend `spec.md` and `ADR-0008` first and get Jody's yes before step 2.
+   If any result contradicts the spec, stop, amend `spec.md` and `ADR-0008` first and get the maintainer's yes before step 2.
 1. Base: confirm the installers PR has merged (`pro-dev.py --owner` exists, `scripts/pro-dev-owner.py` ships in pro-egm and the `installers` check is in `tests/check.mjs`), branch from the new `main` in a worktree and fix the version numbers from the marketplace.
 2. `pro-dev.py` run path for `uv-tool` rows, with the `tests/pro-dev.mjs` cases written first against a fixture registry:
    - `detect: { "uvTool": "<tool name>" }` reads `direct_url.json` under `uv tool dir` and compares `url` and `vcs_info.commit_id` with the URL and SHA parsed from the row's own `--from` argv; the pin then lives in one place (R7).
@@ -203,7 +203,7 @@ grep -rnP '\x{2014}' plugins/pro-speckit docs/decisions/0008-spec-kit-uv-tool.md
 
 Counts as finished, with the new `tests/pro-dev.mjs` and `tests/check.mjs` cases for the security changes among the passing ones: `✓ <n> checks · 0 failures`, every routing case resolving, no `FAIL` line from the two test scripts, `✔ Validation passed` once for the marketplace and once for each of the 18 plugin folders, an empty diff for `plugins/pro-ai-sdlc` against the merge base (AC7 names `bc7c3ef`, which PR 67 has already moved past), no output from `cmp` and no output from either grep.
 
-Live check, after the PR is pushed, in a scratch repo outside this checkout with a scratch `CLAUDE_CONFIG_DIR`, `UV_TOOL_DIR` and `UV_TOOL_BIN_DIR` so Jody's own setup is not touched:
+Live check, after the PR is pushed, in a scratch repo outside this checkout with a scratch `CLAUDE_CONFIG_DIR`, `UV_TOOL_DIR` and `UV_TOOL_BIN_DIR` so the maintainer's own setup is not touched:
 
 1. `git init` a scratch repo with one commit; add the marketplace from GitHub at the PR branch (or after merge if Claude Code cannot add a branch ref) and install `pro-core` and `pro-speckit` at project scope.
 2. AC6 first: with `uv` hidden from `PATH`, `/pro-speckit:install` prints the uv docs line and runs nothing; with an uncommitted file it refuses `spec-kit`; with an empty `.specify/` it refuses `spec-kit`.
@@ -260,8 +260,8 @@ Verdict: proceed with required changes; nothing blocking.
 
 ### Accepted risks
 
-- One machine-wide `specify` CLI shared by every repo, with `uvx` as the fallback (Jody, ADR-0008).
-- Dependency ranges `--exclude-newer` still leaves open (Jody, ADR-0008).
+- One machine-wide `specify` CLI shared by every repo, with `uvx` as the fallback (ADR-0008).
+- Dependency ranges `--exclude-newer` still leaves open (ADR-0008).
 
 ## Done
 
@@ -271,7 +271,7 @@ Filled in when the build is finished, before sign-off.
 - Marketplace clone commit used by the live check: 4c4eeb08727643284c89ded66a6a8a2989f769ae (a `git archive` of the branch head, before the review fixes, which touch only prompt text and the shim path check).
 - Checks run: `node tests/check.mjs` 27 checks, 0 failures, 38 warnings; `node tests/eval.mjs --dry` 80 cases over 94 skills plus 7 distractors; `node tests/pro-dev.mjs` 188 cases; `node tests/methods.mjs` 21 cases; `claude plugin validate . --strict` passed; the per-plugin strict loop passed for all 20 plugins.
 - AC1: pass for the setup path, run through `pro-dev-owner.py` and `pro-dev.py` in a scratch config with scratch uv folders: after `answer spec-kit yes`, `run all install` installed `specify-cli` with `direct_url.json` at commit 43486672fe826d230d884815be7cc2026469a6ba and `specify init` wrote 10 `speckit-*` skills, each with `disable-model-invocation: true`, plus `.specify/`. The `/pro-dev install` conversation itself was not driven live.
-- AC2: not run; typing the `/speckit-*` commands needs an interactive session (left for Jody's first use).
+- AC2: not run; typing the `/speckit-*` commands needs an interactive session (left for the maintainer's first use).
 - AC3: covered by the `tests/methods.mjs` pro-speckit case (the `intent` offer prints and the other stages print nothing); not run in a live `/intent`.
 - AC4: not run live; the update path and the at-pin no-op are covered by `tests/pro-dev.mjs`; step 0 showed the constitution's hash unchanged by `specify integration upgrade`.
 - AC5: step 0 showed `specify integration uninstall claude` removes every unedited `speckit-*` folder; `/pro-speckit:remove` itself was not run live.

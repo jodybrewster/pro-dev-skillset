@@ -4,12 +4,12 @@ kind: change
 status: accepted
 risk: low
 created: 2026-10-28T06:45:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: quiet validation hook
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, item 6 and intent A of [the pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md).
 Status: accepted.
 Created: 2026-10-28.
@@ -19,7 +19,7 @@ Created: 2026-10-28.
 pro-quality's validation Stop hook blocks the end of a turn and makes the session write a full handoff whenever the session used Write or Edit and the working tree is dirty.
 It fires on writes outside the repo, such as Claude memory notes, and it reports uncommitted work the session never touched.
 In one session on 2026-10-27 it blocked three times though no plugin content changed.
-Jody: "the validation stop hook is too much, we need to tone it down somehow. I keep getting stop hook errors like above".
+The validation stop hook is too much and needs toning down; it keeps raising stop hook errors.
 
 ## Proposed outcome
 

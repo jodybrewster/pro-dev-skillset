@@ -1,6 +1,6 @@
 # Research: pro-ship scope
 
-Research Jody brought on 2026-10-28, kept as written for the brainstorm that shapes `intent.md` in this folder.
+Research the maintainer brought on 2026-10-28, kept as written for the brainstorm that shapes `intent.md` in this folder.
 The research's own caveats apply: it read the README and PRs 46, 48, 54 and 65, not `RELEASING.md`, `CLAUDE.md` or the plugin manifests.
 Notes from this repo's state on 2026-10-28 are in `## Notes against the repo` at the end.
 
@@ -21,7 +21,7 @@ Notes from this repo's state on 2026-10-28 are in `## Notes against the repo` at
 ### 1. What your repo tells us about where pro-ship fits
 
 - **The marketplace is organised by lifecycle phase.** The README describes "one continuous software lifecycle… Define → Plan → Spec → Build → Verify → Review → Security → Ship." Ship is the only phase whose plugin has not been built yet.
-- **The phase already has placeholder skills.** The Ship row lists `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs` and `deprecation-and-migration`. They match skill names in `addyosmani/agent-skills` (MIT), which your router already references with † markers. That repo's index describes `ci-cd-and-automation` as "Automated quality gates on every change" and `shipping-and-launch` as "Pre-launch checklist, monitoring, rollback plan". Fork these two as the starting content, the same way pro-pdd forked `interview-me` and `idea-refine`.
+- **The phase already has placeholder skills.** The Ship row lists `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs` and `deprecation-and-migration`. They match skill names in `agent-skills` (MIT), which your router already references with † markers. That repo's index describes `ci-cd-and-automation` as "Automated quality gates on every change" and `shipping-and-launch` as "Pre-launch checklist, monitoring, rollback plan". Fork these two as the starting content, the same way pro-pdd forked `interview-me` and `idea-refine`.
 - **"Collections" in your repo are meta-plugins made of dependencies.** `pro-starter` is "meta-plugin: dependencies only". PR #65 (merged Oct 28, 2026) renamed it to `pro-dev-starter` (2.0.0) "without pro-nextjs or pro-astro", and `pro-starter` "stays one release as a shim". So "part of the starter" means adding `pro-ship` to `pro-dev-starter`'s `dependencies` array. It does not mean putting files inside it.
 - **Your existing plugins already cover parts of shipping. pro-ship should route to them, not duplicate them:**
   - `pro-core`: the `/gh` GitHub workflow command.
@@ -53,7 +53,7 @@ Notes from this repo's state on 2026-10-28 are in `## Notes against the repo` at
 | `commit-commands@claude-plugins-official` | `/commit`, `/commit-push-pr`, `/clean_gone` | Don't rebuild commit or PR creation. Add the conventional-commit policy and PR-readiness checks on top |
 | `pr-review-toolkit`, `code-review` (official) | Multi-agent PR review | Your `pro-quality` review plus these are enough. pro-ship only checks *readiness* (CI green, release notes, migrations) |
 | `anthropics/claude-code-action@v1` | @claude mentions, automated PR review, scheduled runs in Actions | Have `/pipeline` *generate* a workflow that uses it (optional), not reimplement it |
-| `addyosmani/agent-skills` `ci-cd-and-automation`, `shipping-and-launch` | Generic CI quality gates, launch checklist, staged rollouts | Fork as the base content (MIT), then specialise for your stack |
+| `agent-skills` `ci-cd-and-automation`, `shipping-and-launch` | Generic CI quality gates, launch checklist, staged rollouts | Fork as the base content (MIT), then specialise for your stack |
 | `jmagly/aiwg` `twelve-factor` plugin (`/twelve-factor:twelve-factor-audit`, `twelve-factor-reviewer` agent) | Pass/partial/fail 12-factor audit with JSON output | It exists, but its README calls its evidence status "design intent" and ClaudePluginHub rates it 54/100. Write your own, with concrete Node/Next.js and Python checks |
 | Your `pro-security`, `pro-legal`, `pro-ai-sdlc`, `pro-quality` | Security audit, legal release gate, PR babysitting, release-notes writer | Route to them from `/ship`; never duplicate |
 
@@ -65,7 +65,7 @@ Notes from this repo's state on 2026-10-28 are in `## Notes against the repo` at
 plugins/pro-ship/
 ├── .claude-plugin/plugin.json        # name, version, deps: pro-core (^), optional: pro-security
 ├── .codex-plugin/plugin.json         # Codex parity, per repo convention
-├── LICENSE                           # MIT + addyosmani/agent-skills attribution for forked skills
+├── LICENSE                           # MIT + agent-skills attribution for forked skills
 ├── skills/
 │   ├── using-pro-ship/SKILL.md       # router: maps "ship it" intents to the skills below
 │   ├── ship/SKILL.md                 # /pro-ship:ship  – preflight orchestrator (disable-model-invocation)
@@ -164,7 +164,7 @@ Use the original 12 factors plus Kevin Hoffman's *Beyond the Twelve-Factor App* 
 2. **v0.1 (MVP, about a week):**
    - `ship`, `twelve-factor` (+ auditor agent), `pipeline` (generate/audit, AWS OIDC + Vercel templates), `release` (release-please path first).
    - The `release-gate` hook.
-   - Fork `ci-cd-and-automation` and `shipping-and-launch` from addyosmani as reference material.
+   - Fork `ci-cd-and-automation` and `shipping-and-launch` from agent-skills as reference material.
    - Add `tests/check.mjs` contract cases and routing evals.
 3. **v0.2:** `repo-hygiene`, `deploy-strategy`, `rollback`, the commit and workflow-lint hooks, and `documentation-and-adrs` / `deprecation-and-migration`, which the README already lists for this phase.
 4. **v0.3:** `observability`, `smoke`, `migrations`, `supply-chain`, `web-budgets`.
@@ -196,4 +196,4 @@ Written 2026-10-28 after PR 68, for the brainstorm.
 - pro-ai-sdlc's `production-gate` and pro-legal's release gate already react to `git tag` and `gh release create`; a pro-ship release gate makes three, so they need one shared prompt.
 - This repo puts slash commands in `commands/`; the research's "prefer skills/" advice is a choice to make before v0.1, since `disable-model-invocation` skills cannot be chained by the model (the EGM lesson in `CLAUDE.md`).
 - Every plugin that owns registry rows gets its own installer (intent `2026-10-28-plugin-installers`), so any pro-ship engine needs `/pro-ship:install`.
-- Jody's own adds from the same day: GitHub practices (branch and PR hygiene, conventional commits, rulesets, CODEOWNERS, Dependabot) and portable, twelve-factor apps; both map to the research's `repo-hygiene` and `twelve-factor`.
+- The maintainer's own adds from the same day: GitHub practices (branch and PR hygiene, conventional commits, rulesets, CODEOWNERS, Dependabot) and portable, twelve-factor apps; both map to the research's `repo-hygiene` and `twelve-factor`.

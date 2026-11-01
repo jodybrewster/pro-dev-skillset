@@ -2,7 +2,7 @@
 
 Built from `spec.md` and `intent.md` in this folder.
 Status: approved.
-Approver: Jody Brewster.
+Approver: the maintainer.
 Dated: 2026-10-27.
 
 ## Files that change

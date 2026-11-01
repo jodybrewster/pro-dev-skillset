@@ -6,7 +6,7 @@ risk: medium
 outcome: O6
 opportunity: pro-nextjs ships three skills adapted from vercel-labs/next-skills, a repository that never carried a license file
 created: 2026-10-16
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: pro-nextjs bridges the MIT Next.js skills instead of carrying unlicensed text
@@ -19,7 +19,7 @@ The `docs/licenses.md` rows for the three skills are open for that reason.
 
 ## Decision
 
-Jody decided on 2026-10-16 that pro-nextjs bridges the MIT skills in vercel/next.js and installs them at install time, the way pro-testing bridges qa-skills and pro-design bridges the design libraries.
+The maintainer decided on 2026-10-16 that pro-nextjs bridges the MIT skills in vercel/next.js and installs them at install time, the way pro-testing bridges qa-skills and pro-design bridges the design libraries.
 
 ## Upstream evidence, read on 2026-10-16
 

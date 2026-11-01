@@ -3,7 +3,7 @@ intent: intent/2026-10-28-execute-command/intent.md
 intent-status: proposed
 status: draft
 created: 2026-10-28T07:45:52-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Spec: /execute builds an approved plan in its own worktree
@@ -50,7 +50,7 @@ pro-ai-sdlc is a Claude Code only plugin, so `/execute` targets Claude Code and 
 
 ### Non-functional
 
-- N1. The command prose is written for Claude Code, since pro-ai-sdlc is Claude Code only (Jody, 2026-10-28); it may name Claude Code's own tools, such as its worktree tool. This supersedes the intent's constraint that the prose stay harness-neutral.
+- N1. The command prose is written for Claude Code, since pro-ai-sdlc is Claude Code only; it may name Claude Code's own tools, such as its worktree tool. This supersedes the intent's constraint that the prose stay harness-neutral.
 - N2. Every stop leaves the main checkout untouched: no branch switch, no stash, no file written outside the worktree and the plan in it.
 - N3. A run with no env files and no lockfile (this repo) works the same as one with both, with the skipped steps named in the output.
 
@@ -95,29 +95,29 @@ ADR needed: no, a new opt-in command is cheap to reverse and sets no rule other 
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | Codex does not load plugin commands, so `/execute` has no Codex path, the same as the other six pro-ai-sdlc commands; the global rule says the loop works "from Claude Code alone" while ADR-0004 asks for parity on skill-bearing plugins only. | ADR-0004, Jody | resolved: pro-ai-sdlc is a Claude Code only plugin (Jody, 2026-10-28). The plan should say whether its `.codex-plugin/` manifest and agent `.toml` files stay or go in a later intent. |
+| 1 | Codex does not load plugin commands, so `/execute` has no Codex path, the same as the other six pro-ai-sdlc commands; the global rule says the loop works "from Claude Code alone" while ADR-0004 asks for parity on skill-bearing plugins only. | ADR-0004 | resolved: pro-ai-sdlc is a Claude Code only plugin. The plan should say whether its `.codex-plugin/` manifest and agent `.toml` files stay or go in a later intent. |
 | 2 | The intent lists "routing cases" as affected, but `tests/cases/routing.jsonl` only targets skills and pro-ai-sdlc has none, so there is nothing a routing case can point at. | `tests/eval.mjs`, intent | resolved: no routing cases in this change, since pro-ai-sdlc stays command-only (follows concern 1). |
-| 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | deferred: R7 checks ignore status after the copy; the `security-architect` challenge moves to a later intent (Jody, 2026-10-28) and does not block `/plan`. |
+| 3 | Copying secrets into a second working tree widens where they live. A nested `.gitignore` or a global excludes file could ignore a file in the main checkout but not in the worktree. | REVIEW.md pass 2, intent constraint | deferred: R7 checks ignore status after the copy; the `security-architect` challenge moves to a later intent and does not block `/plan`. |
 | 4 | Installing dependencies runs package lifecycle scripts with the copied secrets present in the tree. | REVIEW.md pass 2 | deferred: same risk as installing in the main checkout; the later security intent decides whether `--ignore-scripts` or installing before the copy is worth it. |
 | 5 | The success criterion names `intent/2026-10-28-quiet-validation-hook/plan.md`, but that plan was already built in PR 60. Its Status still reads `approved` so R2 refuses it. | intent "Success looks like" | open: pick an unbuilt approved plan for the live check. Decide whether `/execute` or the Done sign-off should move a plan's Status to `implemented`. |
-| 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | resolved: R4 uses the harness's tool only when it can base on `origin/<default branch>` and falls back to a sibling folder rather than an unignored `.worktrees/` (Jody, 2026-10-28). |
-| 7 | The model split in `CLAUDE.md` says Opus orchestrates and Sonnet builds, while R18 makes Opus the builder for `/execute`. | `CLAUDE.md` model split, Jody | resolved: Jody chose Opus as the builder on 2026-10-28; the plan should note whether `CLAUDE.md` and the hq record need a line for this exception. |
+| 6 | `using-git-worktrees` prefers the harness's native worktree tool and an in-repo `.worktrees/`, which this repo does not ignore, while this repo's habit is a sibling folder; a native tool may base the branch on `HEAD` rather than `origin/main`. | pro-execution `using-git-worktrees`, memory on basing off `origin/main` | resolved: R4 uses the harness's tool only when it can base on `origin/<default branch>` and falls back to a sibling folder rather than an unignored `.worktrees/`. |
+| 7 | The model split in `CLAUDE.md` says Opus orchestrates and Sonnet builds, while R18 makes Opus the builder for `/execute`. | `CLAUDE.md` model split | resolved: the maintainer chose Opus as the builder on 2026-10-28; the plan should note whether `CLAUDE.md` and the hq record need a line for this exception. |
 
 ## Open questions
 
 1. Worktree location.
    Answered in R4: the harness's worktree tool when it can base the branch on `origin/<default branch>`, otherwise a sibling `../<repo>.<slug>` made with `git worktree add`.
-   Jody took the recommendation on 2026-10-28.
+   The recommendation was taken on 2026-10-28.
 2. Which env file names count.
    Answered in R5: `.env`, `.env.*`, `.dev.vars` and `.dev.vars.*`, git-ignored only; `config/*.local.*` is left out until a repo needs it.
 3. Pause after the baseline?
    Answered in R20: no pause; it stops only on failure, because the plan's approval is the gate and the PR is the next human checkpoint.
-   Jody took the recommendation on 2026-10-28.
+   The recommendation was taken on 2026-10-28.
 4. Build in the current session or dispatch subagents per step?
    Answered in R18 and R19: Opus builds in the current session and dispatches subagents when needed.
-   Jody chose Opus as the builder on 2026-10-28 (concern 7).
+   Opus was chosen as the builder on 2026-10-28 (concern 7).
 5. Security challenge for copying secrets.
-   Deferred to a later intent (Jody, 2026-10-28); it covers concerns 3 and 4 and does not block `/plan`.
+   Deferred to a later intent; it covers concerns 3 and 4 and does not block `/plan`.
 
 ## Acceptance criteria
 

@@ -4,12 +4,12 @@ kind: change
 status: proposed
 risk: high
 created: 2026-10-28T07:30:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: one /pro-dev command for setup and updates
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, intent B of the [pro-dev simplify umbrella](../2026-10-27-pro-dev-simplify/intent.md), items 1 to 5.
 Status: proposed.
 Created: 2026-10-28.
@@ -22,7 +22,7 @@ The engines behind the bridges are installed by seven separate commands: `/pro-s
 `claude plugin update` brings new bridge skills but never the engines they point at, so a bridge added in a release does nothing until someone finds and runs the right command.
 pro-starter depends on pro-nextjs and pro-astro, though stack plugins are meant to be opt-in per project.
 Two plugins ship a `/review` command, and `/api-docs` and `/lead-research` duplicate `/document` and `/research`.
-Jody: "I need a general slash command to init everything after I've installed all of the plugins I want, then an update command after I update the plugins."
+The want is a general slash command to init everything after the wanted plugins are installed, then an update command after the plugins are updated.
 Then: "no more like /pro-dev install and pro-dev update".
 And: "pro-starter should be renamed to pro-dev-starter as well."
 

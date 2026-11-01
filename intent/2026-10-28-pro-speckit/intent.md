@@ -4,12 +4,12 @@ kind: change
 status: done
 risk: medium
 created: 2026-10-28T07:05:00-0400
-author: Jody Brewster
+author: the maintainer
 ---
 
 # Intent: GitHub spec-kit as its own plugin
 
-Author: Jody Brewster (pro-dev-skillset).
+Author: the maintainer.
 Source: idea, intent E of the pro-dev simplify umbrella (`intent/2026-10-27-pro-dev-simplify/intent.md`).
 Status: done; shipped in PR #71 (2c6500f).
 Created: 2026-10-28.
@@ -17,8 +17,8 @@ Created: 2026-10-28.
 ## Problem
 
 pro-dev-skillset has two spec-driven methods, pro-ai-sdlc and pro-spdd.
-Jody wants to try GitHub's [spec-kit](https://github.com/github/spec-kit) (MIT) next to them and switch methods by installing and uninstalling plugins.
-Jody: "can we add github spec kit to its own plugin as well as an intent?"
+The maintainer wants to try GitHub's [spec-kit](https://github.com/github/spec-kit) (MIT) next to them and switch methods by installing and uninstalling plugins.
+The ask is for spec-kit in its own plugin as well as an intent.
 Earlier the same day: "Having four different spec driven methods means I can try them out easily by installing and uninstalling the plugins but I can control how they work together as well."
 spec-kit is not a Claude plugin.
 It is a Python CLI, `specify`, that writes `/speckit-*` skills into each project's `.claude/skills/` and its own files under `.specify/`.
