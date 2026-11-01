@@ -813,6 +813,164 @@ export function runShipHookCases() {
         }
       }
     }
+
+    // ---- ship-gate.py: the preflight record gate (R31, R33 to R37) -----------------------
+    {
+      const SHIP_GATE = join(ROOT, "plugins", "pro-ship", "scripts", "ship-gate.py");
+      const srun = (command, { cwd, env, raw = null, session = "s1" } = {}) => {
+        const e = env || newEnv();
+        const input = raw !== null ? raw : JSON.stringify({ tool_name: "Bash", session_id: session, cwd, tool_input: { command } });
+        const t0 = Date.now();
+        const p = spawnSync("python3", [SHIP_GATE], { input, encoding: "utf8", timeout: 30_000, env: { ...env0, CLAUDE_GUARD_DIR: e.gdir, PRO_DEV_STATE_DIR: e.sdir } });
+        let json = null;
+        try { json = p.stdout.trim() ? JSON.parse(p.stdout) : null; } catch { /* not json */ }
+        let log = "";
+        try { log = readFileSync(join(e.gdir, "warn.log"), "utf8"); } catch { /* none */ }
+        const h = json?.hookSpecificOutput || {};
+        return { status: p.status, json, stdout: p.stdout, stderr: p.stderr, log, text: json?.systemMessage ?? h.permissionDecisionReason ?? "", deny: h.permissionDecision === "deny", ask: h.permissionDecision === "ask", ms: Date.now() - t0 };
+      };
+      const writeRecord = (repo, obj) => {
+        mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+        writeFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), typeof obj === "string" ? obj : JSON.stringify(obj));
+      };
+      const goFor = (repo, over = {}) => writeRecord(repo, { schema: 1, produced_by: "pro-ship:ship", head: sha(repo), status: "pass", ...over });
+      const sEnf = () => newEnv({ mode: "enforce" });
+      const sRepo = newRepo();
+      const s0 = sha(sRepo);
+      const sNogit = join(sandbox, "sg-nogit");
+      mkdirSync(sNogit, { recursive: true });
+      const noDecision = (r) => r.status === 0 && !r.stdout.trim() && !r.deny && !r.ask;
+
+      // AC7: enforce denies once, the identical retry passes, a fresh GO is silent
+      let e = sEnf();
+      let r = srun("git tag v1.2.0", { cwd: sRepo, env: e });
+      add("sg1 enforce denies git tag with no record", "deny", r, r.deny && r.text.includes(`[ship-gate] no fresh GO for ${s0.slice(0, 8)} (missing). Run /pro-ship:ship.`) && /deny/.test(r.log) && r.ms < 5000);
+      r = srun("git tag v1.2.0", { cwd: sRepo, env: e });
+      add("sg2 the identical retry passes", "silent", r, noDecision(r));
+      goFor(sRepo);
+      r = srun("git tag v1.2.0", { cwd: sRepo, env: sEnf() });
+      add("sg3 a fresh GO is silent in enforce", "silent", r, noDecision(r) && r.log === "");
+      goFor(sRepo, { status: "partial" });
+      r = srun("git tag v1.2.0", { cwd: sRepo, env: sEnf() });
+      add("sg4 a partial record is a fresh GO", "silent", r, noDecision(r));
+      rmSync(join(sRepo, ".pro-dev"), { recursive: true, force: true });
+      e = newEnv();
+      r = srun("git tag v1.2.0", { cwd: sRepo, env: e });
+      const lines = r.log.trim().split("\n").filter(Boolean);
+      add("sg5 warn mode allows with one message and one warn.log line", "message", r, !r.deny && !!r.json?.systemMessage && /warn mode: allowed/.test(r.text) && /\(missing\)/.test(r.text) && lines.length === 1 && /\twarn\t/.test(lines[0]));
+      r = srun("git tag v1.2.0", { cwd: sRepo, env: e });
+      add("sg6 warn mode is silent the second time", "silent", r, noDecision(r) && r.log.trim().split("\n").length === 1);
+
+      // causes, in order
+      for (const [id, want, setup] of [
+        ["sg10 unreadable JSON", "unreadable", () => writeRecord(sRepo, "{nope")],
+        ["sg11 a JSON array", "unreadable", () => writeRecord(sRepo, "[1]")],
+        ["sg12 schema 2", "unreadable", () => goFor(sRepo, { schema: 2 })],
+        ["sg13 produced_by from another tool", "unreadable", () => goFor(sRepo, { produced_by: "other" })],
+        ["sg14 a head for another commit", "stale", () => goFor(sRepo, { head: "0".repeat(40) })],
+        ["sg15 status fail", "no-go", () => goFor(sRepo, { status: "fail" })],
+      ]) {
+        setup();
+        r = srun("git tag v9", { cwd: sRepo, env: sEnf() });
+        add(id, `deny (${want})`, r, r.deny && r.text.includes(`(${want})`));
+      }
+      rmSync(join(sRepo, ".pro-dev"), { recursive: true, force: true });
+
+      // once per commit: a new commit denies again in the same session
+      e = sEnf();
+      const sRepo2 = newRepo();
+      srun("git tag a1", { cwd: sRepo2, env: e });
+      commit(sRepo2, "b.txt");
+      r = srun("git tag a2", { cwd: sRepo2, env: e });
+      add("sg20 a new commit denies again in the same session", "deny", r, r.deny && r.text.includes(sha(sRepo2).slice(0, 8)));
+
+      // AC8: no decision on these
+      for (const [id, cmd] of [
+        ["sg30 git tag -l", "git tag -l"], ["sg31 git tag -d", "git tag -d v1"], ["sg32 git tag --list", "git tag --list 'v*'"],
+        ["sg33 git tag -v", "git tag -v v1"], ["sg34 git tag with no args", "git tag"], ["sg35 git tag -n", "git tag -n"],
+        ["sg36 npm publish --dry-run", "npm publish --dry-run"], ["sg37 vercel without a production flag", "vercel"],
+        ["sg38 vercel deploy", "vercel deploy"], ["sg39 echo of git tag", 'echo "git tag v1"'],
+        ["sg40 commit message with the words", 'git commit -m "npm publish and git tag v1"'],
+        ["sg41 heredoc body", "git commit -F - <<'EOF'\ngit tag v1\nnpm publish\nEOF"],
+        ["sg42 gh release list", "gh release list"], ["sg43 gh release create --help", "gh release create --help"],
+        ["sg44 cargo publish --dry-run", "cargo publish --dry-run"], ["sg45 fly deploy --help", "fly deploy --help"],
+        ["sg46 git status", "git status"], ["sg47 netlify deploy without --prod", "netlify deploy"],
+        ["sg48 electron-builder without publish always", "electron-builder --publish never"],
+        ["sg49 npm install", "npm install"], ["sg50 single-quoted words", "echo 'x && npm publish'"],
+        ["sg51 uv publish --dry-run", "uv publish --dry-run"], ["sg52 electron-forge publish --dry-run", "electron-forge publish --dry-run"],
+        ["sg53 git tag -d of a tag named publish", "git tag -d publish"],
+      ]) {
+        r = srun(cmd, { cwd: sRepo, env: sEnf() });
+        add(id, "no decision", r, noDecision(r) && r.log === "");
+      }
+
+      // R33: every family denies with no record (a fresh env each)
+      for (const [id, cmd] of [
+        ["sg60 git tag annotated", 'git tag -a v3 -m "release"'], ["sg61 git tag -am", "git tag -am msg v3"],
+        ["sg62 gh release create", "gh release create v3 --notes x"],
+        ["sg63 npm publish", "npm publish"], ["sg64 pnpm publish", "pnpm publish --access public"],
+        ["sg65 yarn publish", "yarn publish"], ["sg66 yarn npm publish", "yarn npm publish"], ["sg67 bun publish", "bun publish"],
+        ["sg68 cargo publish", "cargo publish"], ["sg69 twine upload", "twine upload dist/*"],
+        ["sg70 python -m twine upload", "python3 -m twine upload dist/*"],
+        ["sg71 gem push", "gem push pkg.gem"], ["sg72 uv publish", "uv publish"], ["sg73 poetry publish", "poetry publish"],
+        ["sg74 vercel --prod", "vercel --prod"], ["sg75 vercel deploy --prod", "vercel deploy --prod"],
+        ["sg76 vercel --target production", "vercel --target production"],
+        ["sg77 fly deploy", "fly deploy"], ["sg78 flyctl deploy", "flyctl deploy --remote-only"],
+        ["sg79 netlify deploy --prod", "netlify deploy --prod"], ["sg80 wrangler deploy", "wrangler deploy"],
+        ["sg81 npx wrangler deploy", "npx wrangler deploy"],
+        ["sg82 electron-builder --publish always", "electron-builder --publish always"],
+        ["sg83 electron-forge publish", "electron-forge publish"],
+        ["sg84 cd then publish", `cd ${sRepo} && npm publish`], ["sg85 second segment", "git status && git tag v4"],
+        ["sg86 bash -c", "bash -c 'npm publish'"], ["sg87 env prefix", "NODE_ENV=production npm publish"],
+        ["sg88 git -C", `git -C ${sRepo} tag v5`],
+      ]) {
+        r = srun(cmd, { cwd: id.startsWith("sg88") ? sandbox : sRepo, env: sEnf() });
+        add(id, "deny", r, r.deny && /no fresh GO for/.test(r.text));
+      }
+
+      // R34: the commit the command names
+      const first = sha(sRepo2);
+      commit(sRepo2, "c.txt");
+      goFor(sRepo2);
+      r = srun(`git tag v6 ${first}`, { cwd: sRepo2, env: sEnf() });
+      add("sg90 git tag <commit> checks that commit, not HEAD", "deny (stale)", r, r.deny && r.text.includes(first.slice(0, 8)) && /\(stale\)/.test(r.text));
+      r = srun("git tag v6", { cwd: sRepo2, env: sEnf() });
+      add("sg91 HEAD with a fresh GO is silent", "silent", r, noDecision(r));
+      goFor(sRepo2, { head: first });
+      r = srun(`git tag v6 ${first}`, { cwd: sRepo2, env: sEnf() });
+      add("sg92 the named commit with a fresh GO is silent", "silent", r, noDecision(r));
+      r = srun(`gh release create v6 --target ${first}`, { cwd: sRepo2, env: sEnf() });
+      add("sg93 gh release create --target <sha> checks that sha", "silent", r, noDecision(r));
+      r = srun("gh release create v6 --target main", { cwd: sRepo2, env: sEnf() });
+      add("sg94 a branch target checks HEAD", "deny (stale)", r, r.deny && r.text.includes(sha(sRepo2).slice(0, 8)));
+      r = srun("git tag v7 no-such-ref", { cwd: sRepo2, env: sEnf() });
+      add("sg95 an unresolvable commit is could-not-run", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+
+      // could not run (AC10, R37)
+      r = srun("", { raw: "{not json", env: sEnf() });
+      add("sg100 a malformed payload exits 0 with no output and a could-not-run line", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+      r = srun("", { raw: "[1,2]", env: sEnf() });
+      add("sg101 a non-object payload", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+      r = srun("", { raw: "", env: sEnf() });
+      add("sg102 an empty payload", "silent", r, noDecision(r));
+      r = srun("npm publish", { cwd: sNogit, env: sEnf() });
+      add("sg103 a non-git cwd", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+      r = srun("cd '$SOMEWHERE' && npm publish", { cwd: sRepo, env: sEnf() });
+      add("sg104 an unresolvable cd", "allow", r, noDecision(r) && /could-not-run/.test(r.log));
+      r = srun("", { env: sEnf(), raw: JSON.stringify({ tool_name: "Bash", cwd: sRepo, tool_input: {} }) });
+      add("sg105 a payload with no command", "silent", r, noDecision(r));
+
+      // mode: mode.ship-gate wins over mode
+      const me = newEnv({ mode: "warn" });
+      writeFileSync(join(me.gdir, "mode.ship-gate"), "enforce\n");
+      const sRepo3 = newRepo();
+      r = srun("git tag v1", { cwd: sRepo3, env: me });
+      add("sg110 mode.ship-gate enforce beats mode warn", "deny", r, r.deny);
+      const me2 = newEnv({ mode: "enforce" });
+      writeFileSync(join(me2.gdir, "mode.ship-gate"), "warn\n");
+      r = srun("git tag v1", { cwd: sRepo3, env: me2 });
+      add("sg111 mode.ship-gate warn beats mode enforce", "message", r, !r.deny && !!r.json?.systemMessage);
+    }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
