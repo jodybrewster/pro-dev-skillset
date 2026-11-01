@@ -69,6 +69,12 @@
       "agreed": 0,
       "disputed": 0,
       "range": null
+    },
+    "verifier": {
+      "agent": "pro-ai-sdlc:verifier",
+      "status": "done",
+      "verdict": "pass",
+      "head": "HEAD"
     }
   },
   "result": "pass",

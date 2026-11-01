@@ -96,3 +96,4 @@
 {"prompt": "Is my Electron app safe to ship? Look at the BrowserWindow settings, the CSP and whether Fuses are flipped.", "expect": "electron-security-audit", "notOneOf": ["security-audit", "security-architect"], "note": "Electron hardening checklist with file and line"}
 {"prompt": "We just picked Postgres over Mongo for the new service. Write that decision up so nobody re-argues it, and tell me which of our docs this branch made stale.", "expect": "documentation-and-adrs", "notOneOf": ["pr-check"], "note": "pro-ship ADR and per-change doc judgment"}
 {"prompt": "ship it, are we good to release?", "expect": "ship", "notOneOf": ["pr-check"], "note": "pro-ship go/no-go before a release"}
+{"prompt": "We just deployed to production. Record the deploy and walk me through the post-deploy checks.", "expect": "deployed", "notOneOf": ["ship"], "note": "pro-ship deploy record and post-deploy checks"}

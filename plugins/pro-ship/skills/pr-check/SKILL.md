@@ -186,12 +186,38 @@ Choose from the agents the host offers:
 
 - Code review: `pro-quality:code-reviewer` (plus every other reviewer in `demands.reviewers`), else `pro-ai-sdlc:reviewer`, else record `not-installed` (not `could-not-run`) in `--reviewers`.
 - Security review, only on surface: `pro-security:security-architect` in diff mode.
+- Verifier: `pro-ai-sdlc:verifier`, when `python3 "$CHECK" find pro-ai-sdlc agents/verifier.md` prints a path.
+  Hand it the same four fields as the reviewers (ADR-0012) and nothing else.
+  It runs the repo's verify command and exercises the change, so start it in the same turn as the reviewers and let it run beside them.
+  It writes nothing.
 
 Save the code reviewer's report verbatim to `.pro-dev/ship/review-code.md`.
 
 When the host cannot dispatch subagents, say so.
 Apply each reviewer's own skill in this session instead, record the reviewer as `inline` and note that the context was not fresh.
 An `inline` security review does not satisfy the push gate.
+
+### Verifier pass
+
+A verifier result counts for HEAD only when its `HEAD:` line is HEAD, or an ancestor of HEAD with nothing but files under the top-level `intent/` changed since (`pr-check.py stamp` decides, `docs/pr-check-stamp.md` has the rule).
+When `/execute` already ran the verifier in this session and its report is in front of you, reuse it instead of dispatching a second one.
+Check that its `HEAD:` line is HEAD or that only `intent/` files changed since it: `git diff --name-status --no-renames <its head> HEAD` lists paths that all start with `intent/`.
+Otherwise dispatch a new one.
+Never reuse a report from another session or one you cannot see.
+
+Build the `verifier` record from the report's own lines, never from your reading of its prose:
+
+- `head`: the 40 hex sha on its first line, `HEAD: <sha>`.
+- `verdict`: the last line, `VERDICT: pass`, `VERDICT: fail` or `VERDICT: incomplete`.
+  A report with no `HEAD:` line, no verdict line or a non-hex sha is `could-not-run` with `verdict` and `head` null.
+- Done: `{"agent": "pro-ai-sdlc:verifier", "status": "done", "verdict": <verdict>, "head": <sha>}`.
+- The `find` above printed `not-installed`: `{"agent": null, "status": "not-installed", "verdict": null, "head": null}`.
+  `stamp` looks for the agent file itself and refuses this record when the file is there.
+- The dispatch failed or the host cannot dispatch subagents: `status` `could-not-run`.
+  The verifier is never run inline, so the result is `incomplete`.
+
+A counted verdict of `fail` makes the result `fail`.
+Every other state but a counted `pass` or `not-installed` makes it `incomplete`.
 
 ### Tally lines
 
@@ -217,7 +243,7 @@ When either report file is missing or empty the step refuses with an error: the 
 The `codex` record holds `agent` (`codex:code-reviewer` or null), `status`, `reason`, `blocking` (always 0), `important`, `agreed`, `disputed` and `range`.
 A Codex run that never started has `important`, `agreed` and `disputed` at 0.
 
-Build the `--reviewers` JSON with keys `code` and `security`, plus `codex` when the trigger was asked.
+Build the `--reviewers` JSON with keys `code`, `security` and `verifier`, plus `codex` when the trigger was asked.
 Each of `code` and `security` holds `agent`, `status`, `blocking`, `important` and `range`.
 `docs/pr-check-stamp.md` lists the allowed values.
 
@@ -252,6 +278,7 @@ pr-check on 3f9c2ab (base 81d04e7)
   code review done   reviewer: 0 blocking, 2 important
   codex       done   codex: 3 important, 1 agreed, 1 disputed
   security    skipped-no-surface
+  verifier    done   pass at 3f9c2ab
 result: pass
 stamp: .pro-dev/ship/pr-check.json
 PR body draft: .pro-dev/ship/pr-body.md
@@ -270,7 +297,7 @@ gh pr edit <number> --add-label risk:high
 
 Another tier gets no label.
 Say "confirm" for every claim in the draft that was not checked.
-A `not-installed` code reviewer, a `could-not-run`, a timeout or a surviving mutation makes the result `incomplete`. The report says which.
+A `not-installed` code reviewer, a verifier that did not pass for this HEAD, a `could-not-run`, a timeout or a surviving mutation makes the result `incomplete`. The report says which.
 
 ## No script
 

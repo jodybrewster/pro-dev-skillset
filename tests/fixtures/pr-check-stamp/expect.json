@@ -68,5 +68,12 @@
       "cause": null
     },
     "push_gate": "accept"
+  },
+  "result-incomplete-verifier.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "not-passing"
+    },
+    "push_gate": "fall-through"
   }
 }

@@ -51,6 +51,7 @@ Pre-existing findings do not block.
 ## Learning from repeats
 
 When the same kind of mistake is flagged a second time, add a line to the agent file's "Things Claude gets wrong" and say that you did.
+The review command keeps a ledger of findings by class under `.pro-dev/review/` and proposes that line when a class shows up on a second change.
 If the change makes a line of the agent file or `ARCHITECTURE.md` untrue, flag that too.
 
 <!-- Design smells: uncomment this block to have the reviewer flag them as findings, not nits.

@@ -12,7 +12,10 @@ If something is broken, your job is to show it clearly so the main session can f
 
 ## 1. Find out what changed and what was meant to change
 
+- Run `git rev-parse HEAD` first and keep the full sha: the report starts with it.
 - Run `git status --short --branch` and `git log --oneline -10`.
+- Count the tracked files with uncommitted changes (`git status --porcelain --untracked-files=no`) and the untracked files git does not ignore (`git ls-files --others --exclude-standard`).
+  Untracked files can change what passes, so the report states their count, but CI stays the backstop for them.
 - Find the base: `git merge-base HEAD origin/main` (fall back to `main`, then `master`), then `git diff --stat <base>...HEAD` and `git diff <base>...HEAD`, plus any uncommitted changes from `git diff HEAD`.
 - Find the plan: the path the caller gave you, else the newest `intent/*/plan.md` or `plan.md` the diff relates to, else `plans/*.md`.
   Read it and the `spec.md` or `intent.md` beside it if present.
@@ -54,7 +57,18 @@ pro-quality's `code-reviewer` walks the same list; this agent does not depend on
 
 ## 5. Report
 
-Keep it short and factual, in this order:
+Begin the report with these three lines, before the numbered sections and with nothing above them:
+
+```
+HEAD: <the full 40 hex sha from git rev-parse HEAD>
+Uncommitted tracked changes: none | <n> files
+Untracked files not ignored: <n>
+```
+
+The pr-check stamp binds a pass to that sha, so a report without the `HEAD:` line counts for nothing.
+When tracked files have uncommitted changes the verdict is `VERDICT: incomplete`, whatever else passed, because the result describes a tree that is not the commit.
+
+Then keep it short and factual, in this order:
 
 1. Verify command: the exact command, pass or fail and the relevant output lines.
 2. Changed behavior: what you ran and what you saw.
@@ -65,5 +79,7 @@ Keep it short and factual, in this order:
 
 End with one line: `VERDICT: pass`, `VERDICT: fail` or `VERDICT: incomplete`.
 Missing scenarios for new behavior make the verdict at best `VERDICT: incomplete`; a test that cannot fail makes it `VERDICT: fail`.
+Uncommitted tracked changes make it `VERDICT: incomplete`.
+You still write nothing: the header comes from read-only git commands.
 
 Test lens adapted from agent-skills (agents/test-engineer.md), MIT, Copyright (c) 2025 Addy Osmani.

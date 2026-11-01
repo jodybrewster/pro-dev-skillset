@@ -4,6 +4,7 @@
 The record writes it to `.pro-dev/ship/preflight.md`.
 The sections come in this order.
 Leave out Rollout plan when no target is `deploy-on-merge` or `manual-deploy`.
+Leave out After the deploy on a NO-GO.
 
 ````markdown
 ## Ship decision: GO | GO (1 accepted risk) | NO-GO (2 Blockers)
@@ -87,6 +88,8 @@ For every shipped service:
 - Legal review: [report, verbatim, or "not installed"]
 - Web performance audit: [report, verbatim, with its mode, or "not run: no UI files"]
 - Accessibility audit: [report, verbatim, or the six checks marked confirm]
+### After the deploy
+[Only on a GO: "Once it is deployed, run /pro-ship:deployed to record the deploy and walk the post-deploy checks."]
 ````
 
 ## Rules

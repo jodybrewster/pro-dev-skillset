@@ -37,7 +37,9 @@ Deploy record (intent: "After a deploy, one command writes a deploy record").
 
 - R1. `ship.py deployed --target <id> --env <env> [--url <url>] [--commit <sha>] [--outcome succeeded|failed|rolled-back] [--deployed-at <iso>] [--checks <json file>]` writes the deploy record of `docs/loop-records.md` to `.pro-dev/ship/deploys/<evidence_key>.json` and prints the path.
   `--commit` defaults to HEAD and must name a commit that exists; `--outcome` defaults to `succeeded`.
+  `--url` must be an `http` or `https` URL and `--env` only `a-z`, `0-9` and `-`; anything else is refused, because mieruka shows the URL as a link.
 - R2. `ship.py deployed --from-github --target <id> [--env production]` reads the newest deployment for that environment and its newest status from `gh api` with a timeout and fills `commit`, `url` (the status's `environment_url`), `deployed_at` and `outcome` from them; `source` is `github`.
+  The env is URL-encoded in the query and an `environment_url` that is not `http` or `https` is dropped to null.
   When gh is missing, not signed in or times out it prints why and writes nothing.
 - R3. `--target` must match a target that `ship.py targets` returns and contain only `a-z`, `0-9` and `-`; otherwise it refuses and lists the target ids.
   `target_kind` and `rollback` come from that target.
@@ -52,13 +54,17 @@ Verifier pass in the stamp (intent: "The pr-check stamp that lets `gh pr create`
 
 - R8. The verifier's report begins with `HEAD: <full sha>` from `git rev-parse HEAD` and states whether tracked files had uncommitted changes.
   When they did, its verdict is `incomplete`.
+  It also reports the number of untracked files git does not ignore, because they can change what passes; CI stays the backstop for them.
   It still writes nothing.
 - R9. pr-check dispatches `pro-ai-sdlc:verifier` in the same turn as the reviewers when pro-ai-sdlc is installed (found with `find_sibling` on `agents/verifier.md`), with the four-field handoff (ADR-0012).
   When a verifier report is already in the session from `/execute`, it is reused if R11 holds for it.
 - R10. `pr-check.py stamp` accepts `verifier` inside `--reviewers` as `{agent, status, verdict, head}`; `status` is `done`, `not-installed` or `could-not-run` and `verdict` is `pass`, `fail`, `incomplete` or null.
   The stamp stores it under `reviewers.verifier`.
-- R11. A verifier result counts for the stamp's HEAD when its `head` equals HEAD, or when every file changed between its `head` and HEAD is under `intent/` and its `head` is an ancestor of HEAD, so `/execute`'s last `plan.md` commit does not void it.
+- R11. A verifier result counts for the stamp's HEAD when its `head` equals HEAD, or when its `head` is an ancestor of HEAD and every path in `git diff --name-status --no-renames <head> HEAD`, the deleted side included, starts with the top-level `intent/`, so `/execute`'s last `plan.md` commit does not void it.
+  A symlink, a mode change or a submodule entry in that set voids it.
+  `head` must be 40 lowercase hex before it reaches any git call.
 - R12. `compute_result` gives `fail` for a counted verifier with verdict `fail`; `pass` needs the verifier `not-installed` or counted with verdict `pass`; any other verifier state, a missing `verifier` key included, gives `incomplete`.
+  `stamp` runs `find_sibling` for `agents/verifier.md` itself and refuses `not-installed` when the verifier is found; a `done` result needs `agent` to be `pro-ai-sdlc:verifier`.
   pr-gate's freshness rule does not change, because it reads only `result`.
 - R13. `docs/pr-check-stamp.md`, its fixtures and the `stamp-contract` check describe the new field and rule in the same commit.
 - R14. `/execute` runs `/pro-ship:pr-check` after its last commit and before `gh pr create` when pro-ship is installed, passing its verifier report along.
@@ -67,11 +73,18 @@ Format and lint after each edit (intent: "After each edit the repo's own formatt
 
 - R15. A `PostToolUse` hook in pro-quality, `format-on-edit.py`, runs on `Write`, `Edit` and `MultiEdit`.
   It reads only `tool_input.file_path` from the payload.
-- R16. It acts only on a regular file inside the repo root, not under `.git/`, `node_modules/` or a path git ignores; a symbolic link is skipped.
-- R17. The formatter is the first match for the file's extension: a `Format` yaml block in `CLAUDE.md` or `AGENTS.md` (`format: {<glob>: <command>}` with `{file}` standing for the path), then Biome (`biome.json` or `biome.jsonc` and `node_modules/.bin/biome`), then Prettier (a Prettier config or a `prettier` key in `package.json`, plus `node_modules/.bin/prettier`), then Ruff (`[tool.ruff]` in `pyproject.toml` or `ruff.toml`, plus `ruff` in `.venv/bin` or on PATH), then `gofmt` for `.go` and `rustfmt` for `.rs` when on PATH.
-  The linter is the same block's `lint` map, then ESLint (an ESLint config and `node_modules/.bin/eslint`) for JavaScript and TypeScript, then Ruff's `check`.
+- R16. It acts only on a regular file whose real path is under the repo root's real path, not under `.git/`, `node_modules/` or a path git ignores; a symbolic link is skipped and a relative `file_path` is resolved against the payload's `cwd`.
+- R17. The formatter is the first match for the file's extension: Biome (`biome.json` or `biome.jsonc` and `node_modules/.bin/biome`), then Prettier (opted-in repos only, see R18; a Prettier config or a `prettier` key in `package.json`, plus `node_modules/.bin/prettier`), then Ruff (`[tool.ruff]` in `pyproject.toml` or `ruff.toml`, plus `ruff` in `.venv/bin` or on PATH), then `gofmt` for `.go` and `rustfmt` for `.rs` when on PATH.
+  The linter is ESLint (opted-in repos only; an ESLint config and `node_modules/.bin/eslint`) for JavaScript and TypeScript, then Ruff's `check`.
 - R18. It never downloads a tool: no `npx`, `pnpm dlx`, `bunx`, `uvx` or `pipx run`.
-  Commands run as an argument list with no shell and the file path as one argument.
+  A tool runs only when its real path is inside the repo's untracked `node_modules/` or `.venv/`, or in an absolute `PATH` entry; a tool path git tracks is refused and relative `PATH` entries are dropped.
+  Commands run as an argument list with no shell; the file is passed as an absolute path, after `--` where the tool accepts it.
+  There is no custom command block in this build, because a block in a file the session can edit would turn an edit into a command with no prompt.
+  Prettier and ESLint load their config as code, so they are opt-in per repo: `format-on-edit.py --allow [--root DIR]` adds the repo's real path to `format-on-edit.allow` in the guard directory (`CLAUDE_GUARD_DIR` or `~/.claude/hooks`, outside the repo) and `--disallow` removes it.
+  Without the opt-in the hook does not run them and adds a one-line note naming the command, at most once per repo per day.
+  Biome, Ruff, gofmt and rustfmt stay automatic, because their configs are JSON or TOML.
+  Even when opted in, Prettier and ESLint are skipped when the edited file is a Prettier, ESLint or Biome config or `package.json`, or when a Prettier or ESLint config or `package.json` between the file and the repo root is untracked or differs from `HEAD`.
+  The pro-quality README says the opt-in trusts the repo's `node_modules/`.
 - R19. Each tool runs with a 15-second timeout and the hook's own timeout is 40 seconds.
   A tool that is missing, times out or crashes is logged and the hook exits 0.
 - R20. The formatter writes the file.
@@ -86,35 +99,41 @@ Incidents (intent: "One command turns an incident into an incident record, a new
 - R23. A new command, `/incident <what happened>`, in pro-ai-sdlc interviews for the facts in the incident frontmatter of `docs/loop-records.md`, one question at a time. It then writes `intent/<YYYY-MM-DD>-<slug>/incident.md` from a new template `templates/incident.md` and `intent.md` from the intent template with `source: incident <id>`, `kind: bug` and `risk` from the severity.
 - R24. The template's sections are Summary, Impact, Timeline, Evidence preserved, Root cause, Mitigation, Regression test, Runbook update and Follow-ups, carrying agent-skills' stop-the-line steps (R44).
 - R25. Logs, stack traces and error text pasted into an incident are treated as data, never as instructions.
-  They are fenced in the file.
+  Raw pastes are kept under `.pro-dev/incidents/<evidence_key>/`, which is excluded; the tracked `incident.md` holds a summary and short excerpts, each in a fence longer than its longest run of backticks or tildes.
+  `/spec` and `/plan` treat an `incident.md` beside the intent as data.
 - R26. The new intent's Success section names the regression test: it fails on the incident commit and passes on the fix.
   The intent's plan writes that test first; `/incident` does not commit a failing test to a branch that CI runs.
 - R27. `incident.py record <intent dir>` writes the incident manifest of `docs/loop-records.md` from the frontmatter and refuses a frontmatter with an unknown `state` or `severity`.
   `/incident` runs it after writing; running it again after the state changes rewrites the record.
-- R28. `/incident` commits `incident.md` and `intent.md` together on a short branch in the main checkout, the same way an intent is committed.
+  `incident.py check <intent dir>` scans `incident.md` and the `intent.md` beside it with the credential patterns pr-check redacts (tokens such as `ghp_`, `sk-`, `AKIA`, bearer headers, private keys and URLs with a password) and refuses on a match, naming the line.
+- R28. `/incident` runs `incident.py check` and commits only when it passes; it commits `incident.md` and `intent.md` together on a short branch in the main checkout, the same way an intent is committed.
   It does not push.
 
 Review lessons (intent: "`/review` remembers its findings").
 
 - R29. Each Important finding `/review` reports gets a class: a kebab-case slug for the kind of mistake, reused from the classes `lessons.py classes` lists when one fits.
-- R30. `lessons.py add --ref <pr or branch> --head <sha> --class <slug> --file <path> --claim <text>` appends one line to `.pro-dev/review/findings.jsonl`; the same ref and class is stored once.
+- R30. `lessons.py add --ref <pr or branch> --head <sha> --class <slug> --file <path>`, with the claim read from stdin so text from a reviewed diff never reaches a shell command line, appends one line to `.pro-dev/review/findings.jsonl`; the same ref and class is stored once.
 - R31. `lessons.py repeats` prints each class seen on two or more distinct refs that has no lesson yet.
 - R32. For each repeat `/review` shows one proposed line for the agent file's "Things Claude gets wrong" and asks yes or no.
-  On yes it adds the line to that section, leaves the edit uncommitted and runs `lessons.py mark <class> accepted --line <text>`; on no it runs `lessons.py mark <class> declined`.
+  It shows the exact line before asking.
+  On yes it adds the line to that section, leaves the edit uncommitted and runs `lessons.py mark <class> accepted` with the line on stdin; on no it runs `lessons.py mark <class> declined`.
+  `mark` refuses a line with a newline, a code fence or more than 200 characters.
   A proposal that is not answered is recorded as `proposed`.
 - R33. `lessons.py mark` writes the review-lesson manifest of `docs/loop-records.md`.
   A declined class is not proposed again.
 - R34. `/review` still never posts, approves or edits anything other than the ledger, the lesson records and, on a yes, the one agent-file line.
-  Its `allowed-tools` adds only the `lessons.py` script and the edit of the agent file.
+  Its `allowed-tools` adds exactly `Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py":*)` and pre-approves no `Edit`, `Write` or `MultiEdit`, so the agent-file edit goes through the permission prompt and the person sees it; a check in `tests/check.mjs` fails otherwise, because `/review` reads untrusted diffs.
 
 Visual check of UI steps (intent: "When a plan names a mock, `/execute` screenshots each UI step").
 
 - R35. The plan template gains an optional header line `Mock: <path or URL>` and an optional `(ui: <route>)` tag on a step.
-- R36. For a plan with a `Mock:` line, `/execute` captures each `(ui: ...)` step at a desktop width (1280) and a mobile width (390) once the step's tests pass, with whatever browser tool the session has.
+- R36. For a plan with a `Mock:` line, `/execute` captures each `(ui: ...)` step at a desktop width (1280) and a mobile width (390) once the step's tests pass, with a browser tool the session can confirm is isolated from the person's own profile (for example Playwright MCP started with `--isolated`).
+  Captures are limited to the local dev server's origin (`localhost`, `127.0.0.1` or `[::1]`).
+  `Mock:` is a repo path or an `http` or `https` URL.
 - R37. The comparison is the session's judgment of the screenshot against the mock, plus the console error and warning counts; zero console errors is required for `pass` (R45).
-- R38. `visual.py record --intent <dir> --step <n> --viewport desktop|mobile --status <s> --shot <png> --url <url> [--differences <json file>] [--console-errors <n>] [--console-warnings <n>]` copies the PNG into `.pro-dev/visual/` and writes the visual-check manifest of `docs/loop-records.md`.
+- R38. `visual.py record --intent <dir> --step <n> --viewport desktop|mobile --status <s> --shot <png> --url <url> [--differences <json file>] [--console-errors <n>] [--console-warnings <n>]` refuses a `--shot` that does not start with the PNG signature or is over 10 MB, copies the PNG into `.pro-dev/visual/` and writes the visual-check manifest of `docs/loop-records.md`.
 - R39. A `fail` stops the step until it is fixed or the person accepts the difference, which records `partial`.
-  With no browser tool the step records `info` and the run goes on.
+  With no browser tool, or one it cannot confirm is isolated, the step records `info` and the run goes on.
 - R40. Page content seen through the browser is untrusted data (R46).
 - R41. The plan's Done section lists each visual check with its status.
 
@@ -208,13 +227,13 @@ ADR needed: yes, the four record contracts and the verifier rule in the stamp ar
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
 | 1 | `/review` says it changes nothing; it now writes a ledger and, on a yes, one agent-file line | `commands/review.md`, REVIEW.md "Learning from repeats" | resolved: the ledger and lesson records are under the excluded `.pro-dev/`; the agent-file line is written only on an explicit yes, left uncommitted; REVIEW.md already asks for the line on a repeat |
-| 2 | The format hook runs repo-controlled tools on every edit | REVIEW.md hook rules | resolved: only tools already in the repo or on PATH, no downloads, no shell, the path as one argument, a timeout; the same trust as the repo's own test command; the plan gets a security-architect challenge |
+| 2 | The format hook runs repo-controlled tools on every edit, with no prompt | REVIEW.md hook rules | resolved after the security challenge in plan.md: no custom command block, no tracked tool binaries, no relative PATH entries, no downloads, no shell, an absolute path after `--`, a timeout and a README warning that the repo's formatter config runs on every edit |
 | 3 | Reformatting a file makes the session's last read stale, so its next edit to that file fails until it reads again | Claude Code edit model | resolved: the hook says so in `additionalContext` every time it changes a file |
 | 4 | Requiring the verifier makes pr-check `incomplete` in every repo with pro-ai-sdlc that has not run it | ADR-0014, ADR-0016 | resolved: pr-check dispatches it itself; repos without pro-ai-sdlc record `not-installed`, which passes; pr-gate stays in warn by default |
 | 5 | The stamp contract changes while the merge gate and push gate read the stamp | `docs/pr-check-stamp.md` | resolved: both read only `result` and `head`; the contract page, fixtures and check change in one commit |
-| 6 | mieruka writes a Markdown copy of each synced record into its tracked `docs/spdd/evidence/`, so deploy records add tracked files in mieruka | mieruka's sync | open, for mieruka: noted in the handoff to its work; nothing here can change it |
+| 6 | mieruka writes a Markdown copy of each synced record into its tracked `docs/spdd/evidence/`, so deploy records add tracked files in mieruka; a screenshot of a dev server can show real personal data | mieruka's sync | open, for mieruka: noted in the handoff to its work, including that visual-check screenshots must stay out of any tracked copy; nothing here can change it |
 | 7 | Deploy, lesson and visual records are never pruned | `.pro-dev/` growth | resolved: one small JSON file per event; pruning is left for when a repo shows it matters |
-| 8 | Incident text and web pages are untrusted input into a session that can write files | REVIEW.md, agent-skills security boundaries | resolved: fenced as data in the file, R25 and R46 |
+| 8 | Incident text and web pages are untrusted input into a session that can write files; pasted logs can hold secrets that a tracked `incident.md` would push | REVIEW.md, agent-skills security boundaries | resolved: raw pastes stay excluded, the tracked file is scanned for credentials before commit, fences are longer than their content (R25, R27, R28, R46) |
 
 ## Open questions
 
@@ -223,13 +242,13 @@ ADR needed: yes, the four record contracts and the verifier rule in the stamp ar
 
 ## Acceptance criteria
 
-- AC1. In a throwaway repo, `ship.py deployed --target web --env production --url https://example.test` writes a `deploy` record whose fields match `docs/loop-records.md`, with `preflight.state` `missing`.
+- AC1. In a throwaway repo, `ship.py deployed --target web --env production --url https://example.test` writes a `deploy` record whose fields match `docs/loop-records.md`, with `preflight.state` `missing`; a `javascript:` URL is refused.
 - AC2. With a stubbed `gh`, `ship.py deployed --from-github --target web` fills commit, URL and outcome from the deployment.
-- AC3. `pr-check.py stamp` gives `incomplete` with no verifier, `pass` with a counted passing verifier, `fail` with a counted failing one, `pass` with `not-installed` and `pass` when the only change since the verifier's head is under `intent/`.
-- AC4. The format hook formats a `.ts` file in a repo with Prettier installed, reports lint findings from ESLint, does nothing for a file outside the repo, an ignored file or a symlink, never calls `npx` and exits 0 on a broken payload.
-- AC5. `incident.py record` writes a `doc` / `incident` record with the status for each state and refuses an unknown state.
-- AC6. `lessons.py` stores a class once per ref, lists it as a repeat on the second ref and writes a `review-lesson` record on `mark`; a declined class is not listed again.
-- AC7. `visual.py record` copies the PNG and writes a `visual_drift` / `ui-step` record.
+- AC3. `pr-check.py stamp` gives `incomplete` with no verifier, `pass` with a counted passing verifier, `fail` with a counted failing one, `pass` with `not-installed` when no verifier is found, a refusal of `not-installed` when one is, `pass` when the only change since the verifier's head is under `intent/` and `incomplete` when a file was renamed into `intent/` since then.
+- AC4. The format hook formats a `.ts` file in a repo with Prettier installed, reports lint findings from ESLint, does nothing for a file outside the repo, an ignored file, a symlink or a file under a symlinked folder, refuses a tracked tool binary, never calls `npx` and exits 0 on a broken payload.
+- AC5. `incident.py record` writes a `doc` / `incident` record with the status for each state and refuses an unknown state; `incident.py check` refuses an `incident.md` holding a `ghp_` token.
+- AC6. `lessons.py` stores a class once per ref, lists it as a repeat on the second ref and writes a `review-lesson` record on `mark`; a declined class is not listed again; `mark` refuses a line with a newline or a fence.
+- AC7. `visual.py record` copies the PNG and writes a `visual_drift` / `ui-step` record; it refuses a file that is not a PNG.
 - AC8. `MIERUKA_ROOT=<checkout> node tests/mieruka-sync.mjs` loads one record of each new type with no sync error.
 - AC9. `/incident`, `/review` with a repeat, `/pro-ship:deployed` and `/execute` with a mock each run once by hand in a scratch repo, recorded in the plan's Done section.
 - AC10. Every check in `CLAUDE.md`'s "Verifying your work" passes.

@@ -15,6 +15,11 @@
     "test:bridge-smoke": "node tests/bridge-install-smoke.mjs",
     "test:doc-hooks": "node tests/doc-hooks.mjs",
     "test:handoff": "node tests/handoff.mjs",
-    "test:execute": "node tests/execute.mjs"
+    "test:execute": "node tests/execute.mjs",
+    "test:ship-deploy": "node tests/ship-deploy.mjs",
+    "test:format-hook": "node tests/format-hook.mjs",
+    "test:incident": "node tests/incident.mjs",
+    "test:lessons": "node tests/lessons.mjs",
+    "test:visual": "node tests/visual.mjs"
   }
 }

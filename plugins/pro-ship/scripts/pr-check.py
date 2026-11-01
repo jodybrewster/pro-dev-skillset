@@ -517,6 +517,68 @@ def find_sibling(root: str, plugin: str, filename: str) -> str:
     return "not-installed"
 
 
+def committed_settings(root: str) -> str:
+    """The HEAD copy of the repo's .claude/settings.json; empty when it is missing or git fails.
+    The working copy and settings.local.json are never read, so a session cannot edit its way past the verifier."""
+    try:
+        p = sh(["git", "show", "HEAD:.claude/settings.json"], root, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return p.stdout if p.returncode == 0 else ""
+
+
+def enabled_plugins(root: str) -> dict:
+    """enabledPlugins as {key: (value, source)} from the user settings, then the committed project
+    settings, later winning."""
+    merged: dict = {}
+    sources = ((lambda: read(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings"),
+               (lambda: committed_settings(root), "committed project settings"))
+    for load, label in sources:
+        try:
+            data = json.loads(load())
+        except ValueError:
+            continue
+        ep = data.get("enabledPlugins") if isinstance(data, dict) else None
+        if isinstance(ep, dict):
+            merged.update({k: (v, label) for k, v in ep.items()})
+    return merged
+
+
+def verifier_state(root: str) -> tuple[bool, str | None]:
+    """(available, disabled_by): whether pro-ai-sdlc's verifier can be dispatched, and which settings
+    source disabled an install that would otherwise have counted (None when none did).
+    Available means the in-place sibling or an install record (project or local scope covering root,
+    then user scope) whose plugin settings do not disable.
+    The repo's own plugins/ folder never counts, it proves a file and not an install."""
+    rel = os.path.join("agents", "verifier.md")
+    if os.path.isfile(os.path.join(os.path.dirname(OWN_ROOT), "pro-ai-sdlc", rel)):
+        return True, None
+    installed = read_installed()
+    mkt = own_marketplace(installed)
+    enabled = enabled_plugins(root)
+    disabled_by = None
+    for key, recs in installed.items():
+        name, _, m = key.partition("@")
+        if name != "pro-ai-sdlc" or (mkt and m != mkt) or not isinstance(recs, list):
+            continue
+        off = enabled.get(key, (None, None))
+        for r in recs:
+            if not isinstance(r, dict) or not r.get("installPath") or not os.path.isfile(os.path.join(str(r["installPath"]), rel)):
+                continue
+            if not (r.get("scope") == "user" or (r.get("scope") in ("project", "local") and r.get("projectPath")
+                                                 and is_under(root, os.path.realpath(str(r["projectPath"]))))):
+                continue
+            if off[0] is False:
+                disabled_by = off[1]
+                continue
+            return True, None
+    return False, disabled_by
+
+
+def verifier_available(root: str) -> bool:
+    return verifier_state(root)[0]
+
+
 def run_floor(root: str, base: str | None, timeout: int) -> tuple[str, str]:
     guard = find_sibling(root, "pro-quality", "floor-guard.py")
     if guard == "not-installed":
@@ -754,6 +816,83 @@ def reviewer_record(raw, which: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Verifier pass (R8 to R12): pro-ai-sdlc:verifier's result for the stamp's HEAD
+# ---------------------------------------------------------------------------
+
+VERIFIER_AGENT = "pro-ai-sdlc:verifier"
+VERIFIER_STATUS = ("done", "not-installed", "could-not-run")
+VERIFIER_VERDICT = ("pass", "fail", "incomplete")
+SHA_RE = re.compile(r"[0-9a-f]{40}")
+NO_VERIFIER = {"agent": None, "status": "could-not-run", "verdict": None, "head": None}
+
+
+def verifier_record(raw, root: str) -> dict:
+    """reviewers.verifier as {agent, status, verdict, head}. A missing record is could-not-run, which
+    gives incomplete. Which plugin layout answers `verifier_available` decides whether `not-installed` is
+    believed: the session cannot declare the verifier absent while it can be dispatched. Tests pick
+    the layout by running a copy of this script in a folder with or without a pro-ai-sdlc sibling."""
+    if raw is None:
+        return dict(NO_VERIFIER)
+    if not isinstance(raw, dict):
+        raise Refuse("pr-check: reviewers.verifier must be an object")
+    status, verdict = raw.get("status", "could-not-run"), raw.get("verdict")
+    agent, vhead = raw.get("agent"), raw.get("head")
+    if status not in VERIFIER_STATUS:
+        raise Refuse(f"pr-check: reviewers.verifier.status must be one of {', '.join(VERIFIER_STATUS)}")
+    if verdict is not None and verdict not in VERIFIER_VERDICT:
+        raise Refuse(f"pr-check: reviewers.verifier.verdict must be one of {', '.join(VERIFIER_VERDICT)} or null")
+    if agent is not None and not isinstance(agent, str):
+        raise Refuse("pr-check: reviewers.verifier.agent must be a string or null")
+    # Checked before any git call sees it, so a value such as `--output=x` never reaches an argv.
+    if vhead is not None and not (isinstance(vhead, str) and SHA_RE.fullmatch(vhead)):
+        raise Refuse("pr-check: reviewers.verifier.head must be 40 lowercase hex characters or null")
+    if status == "done" and agent != VERIFIER_AGENT:
+        raise Refuse(f"pr-check: a done verifier result needs agent {VERIFIER_AGENT}")
+    disabled_by = None
+    if status == "not-installed":
+        available, disabled_by = verifier_state(root)
+        if available:
+            raise Refuse("pr-check: reviewers.verifier.status not-installed is refused, pro-ai-sdlc's verifier is installed and enabled. Dispatch it.")
+    rec = {"agent": agent, "status": status, "verdict": verdict, "head": vhead}
+    if disabled_by:
+        rec["disabled_by"] = disabled_by
+    return rec
+
+
+def verifier_counts(root: str, v: dict, head: str) -> bool:
+    """R11: the result counts for HEAD when it ran on HEAD, or on an ancestor with only top-level
+    intent/ paths changed since (the deleted side of a rename included, so --no-renames). A symlink,
+    a mode change or a submodule in that set voids it."""
+    vhead = v.get("head")
+    if v.get("status") != "done" or v.get("agent") != VERIFIER_AGENT or not vhead:
+        return False
+    if vhead == head:
+        return True
+    try:
+        if sh(["git", "merge-base", "--is-ancestor", vhead, head], root).returncode != 0:
+            return False
+        names = sh(["git", "diff", "--name-status", "--no-renames", "-z", vhead, head], root)
+        raw = sh(["git", "diff", "--raw", "--no-renames", "-z", vhead, head], root)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if names.returncode != 0 or raw.returncode != 0:
+        return False
+    toks = names.stdout.split("\0")
+    # name-status -z is status, path, status, path ...; the last token is empty.
+    if len(toks) % 2 != 1 or any(not t.startswith("intent/") for t in toks[1:-1:2]):
+        return False
+    # raw -z is ":<old mode> <new mode> <old sha> <new sha> <status>", path, ...
+    for t in raw.stdout.split("\0")[:-1]:
+        if t.startswith(":"):
+            f = t[1:].split(" ")
+            if len(f) < 5 or {f[0], f[1]} & {"120000", "160000"}:
+                return False
+            if f[0] != "000000" and f[1] != "000000" and f[0] != f[1]:
+                return False
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Codex second review (ADR-0018): trigger, agreement and the stamp record
 # ---------------------------------------------------------------------------
 
@@ -897,10 +1036,14 @@ def codex_record(raw) -> dict:
             "important": counts[1], "agreed": counts[2], "disputed": counts[3], "range": rng}
 
 
-def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None) -> str:
-    """The result rule of docs/pr-check-stamp.md; the first match wins."""
+def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None,
+                   verifier_counted: bool = False) -> str:
+    """The result rule of docs/pr-check-stamp.md; the first match wins. verifier_counted is
+    verifier_counts() for reviewers.verifier (R12)."""
+    v = reviewers.get("verifier") or NO_VERIFIER
     if (any(c.get("status") == "fail" for c in checks) or floor == "findings"
-            or any(reviewers[k]["blocking"] > 0 for k in ("code", "security"))):
+            or any(reviewers[k]["blocking"] > 0 for k in ("code", "security"))
+            or (verifier_counted and v.get("verdict") == "fail")):
         return "fail"
     if missing:
         return "incomplete"
@@ -910,7 +1053,8 @@ def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, mi
             and floor in ("pass", "not-installed", "not-found")
             and mutation_ok
             and reviewers["code"]["status"] in ("done", "inline")
-            and reviewers["security"]["status"] in ("done", "inline", "skipped-no-surface")):
+            and reviewers["security"]["status"] in ("done", "inline", "skipped-no-surface")
+            and (v.get("status") == "not-installed" or (verifier_counted and v.get("verdict") == "pass"))):
         return "pass"
     return "incomplete"
 
@@ -964,6 +1108,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     if not isinstance(revs, dict):
         raise Refuse("pr-check: --reviewers must be a JSON object with code and security")
     reviewers = {k: reviewer_record(revs.get(k), k) for k in ("code", "security")}
+    reviewers["verifier"] = verifier_record(revs.get("verifier"), root)
     if "codex" in revs:
         reviewers["codex"] = codex_record(revs["codex"])
     try:
@@ -999,7 +1144,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         "floor": floor,
         "mutation": mutation,
         "reviewers": reviewers,
-        "result": compute_result(checks, floor, mutation, reviewers, missing),
+        "result": compute_result(checks, floor, mutation, reviewers, missing, verifier_counts(root, reviewers["verifier"], head)),
         "sources": run.get("sources") if isinstance(run.get("sources"), dict) else {"floor-guard": "not-installed"},
     }
     if risk is not None:
