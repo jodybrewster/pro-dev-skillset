@@ -13,6 +13,8 @@ It ships workflow intelligence to Claude Code sessions.
 The longer version, the Mieruka bridge and the two use cases it is testing are in [docs/overview.md](./docs/overview.md).
 
 Work enters through an intent: `intent/<date>-<slug>/` holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
+Nothing is pushed straight to `main`: every change, intents and specs included, is its own pull request that the agent merges once its checks pass, with no approval needed.
+Intents and specs are written in the main checkout on a short branch, never in a worktree; a worktree starts at the plan stage.
 A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md](./RELEASING.md).
 
 ## How work flows here
