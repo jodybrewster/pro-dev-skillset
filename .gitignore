@@ -21,3 +21,4 @@ evals/results/
 plugins/*/evals/results/
 tests/loop-results/
 .mieruka/
+tests/e2e-results/

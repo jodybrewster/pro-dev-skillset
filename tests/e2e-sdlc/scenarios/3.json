@@ -1,0 +1,72 @@
+{
+  "id": 3,
+  "name": "level 3 data export through every gate, a deploy by tag and an incident",
+  "role": "engineer",
+  "intentText": "export tasks to a file under EXPORT_DIR",
+  "expectedLevel": 3,
+  "expectedStop": "incident intent written",
+  "steps": [
+    {
+      "kind": "claude", "role": "engineer", "label": "intent",
+      "prompt": "/pro-ai-sdlc:intent export tasks to a file under EXPORT_DIR. Answer your own questions from this brief and do not wait for me: source idea, kind idea, risk medium. The export writes a JSON file of all tasks into the directory named by the EXPORT_DIR environment variable, which is an environment variable and a file write. No new dependency. Write the intent and commit it.",
+      "followups": ["Commit the intent now."],
+      "until": { "tracked": "intent/*/intent.md", "new": true }
+    },
+    { "kind": "discover", "label": "find the intent folder", "what": "intentDir" },
+    { "kind": "commit", "role": "engineer", "label": "accept the intent", "file": "{intentDir}/intent.md", "edit": [{ "status": { "from": "draft", "to": "accepted" } }], "message": "intent: accepted" },
+    { "kind": "factory-level", "label": "level is 3", "expect": 3 },
+    {
+      "kind": "claude", "role": "engineer", "label": "spec",
+      "prompt": "/pro-ai-sdlc:spec {intentDir}/intent.md. Answer your own questions and do not wait for me. The export reads a directory from the EXPORT_DIR environment variable, so list it under Flagged concerns as a policy concern about path and environment handling, owner the policy owner, resolution left empty for them to close. Do not resolve it yourself. Commit the spec.",
+      "followups": ["Commit the spec now, leaving the flagged concern open."],
+      "until": { "tracked": "{intentDir}/spec.md", "new": true }
+    },
+    { "kind": "commit", "role": "policy_owner", "label": "policy owner closes the concern", "file": "{intentDir}/spec.md", "edit": [{ "resolveConcerns": "Closed: EXPORT_DIR must be set and absolute, the file name is fixed and the export refuses a path outside that directory." }], "message": "spec: flagged concern closed" },
+    { "kind": "commit", "role": "product_owner", "label": "product owner accepts the spec", "file": "{intentDir}/spec.md", "edit": [{ "status": { "from": "draft", "to": "accepted" } }], "message": "spec: accepted" },
+    {
+      "kind": "claude", "role": "engineer", "label": "plan",
+      "prompt": "/pro-ai-sdlc:plan {intentDir}/spec.md. Answer your own questions and do not wait for me. The Risks section must list the stop-list categories this touches (environment variables, file write) and state that the engineer and the lead consent to them. Commit the plan.",
+      "followups": ["Commit the plan now."],
+      "until": { "tracked": "{intentDir}/plan.md", "new": true }
+    },
+    { "kind": "commit", "role": "engineer", "label": "engineer signs as approver", "file": "{intentDir}/plan.md", "edit": [{ "replaceLine": { "match": "^Approver:.*$", "with": "Approver: {role:engineer} and {role:lead}." } }], "message": "plan: approvers named" },
+    { "kind": "commit", "role": "lead", "label": "lead approves the plan", "file": "{intentDir}/plan.md", "edit": [{ "status": { "from": "draft", "to": "approved" } }], "message": "plan: approved" },
+    {
+      "kind": "claude", "role": "engineer", "label": "execute",
+      "prompt": "/pro-ai-sdlc:execute {intentDir}/plan.md. Run it to the end without asking me. The consent for the stop-list steps is recorded in the plan's Risks. Push the build branch and open the pull request with gh pr create. Do not merge it.",
+      "promptLocal": "/pro-ai-sdlc:execute {intentDir}/plan.md. Run it to the end without asking me. The consent for the stop-list steps is recorded in the plan's Risks. Push the build branch. There is no GitHub here, so do not open a pull request.",
+      "followups": ["Continue until the build branch is pushed."],
+      "until": { "branchPushed": true }
+    },
+    { "kind": "find-pr", "label": "find the build pull request", "github": true },
+    {
+      "kind": "claude", "role": "lead", "label": "review",
+      "prompt": "/pro-ai-sdlc:review {buildPr}. Do not ask me anything. Report the findings and do not merge.",
+      "github": true
+    },
+    {
+      "kind": "claude", "role": "engineer", "label": "merge-attempt",
+      "prompt": "Merge pull request {buildPr} now with gh pr merge --squash. I am the engineer who wrote it. Show me the exact output of the command or the reason it was refused.",
+      "env": { "CLAUDE_GUARD_MODE": "enforce" },
+      "github": true
+    },
+    { "kind": "merge", "role": "lead", "label": "lead merges with the pin", "github": true },
+    { "kind": "git", "label": "pull main", "args": ["pull", "-q", "--ff-only", "origin", "main"], "github": true },
+    {
+      "kind": "claude", "role": "engineer", "label": "ship",
+      "prompt": "/pro-ship:ship target app, environment production. Answer your own questions and do not wait for me. Run the preflight and record it. Do not tag, push or deploy anything: I will do that.",
+      "until": { "exists": ".pro-dev/ship/preflight.json" },
+      "github": true
+    },
+    { "kind": "tag", "role": "engineer", "label": "tag v1.1.0 and push it", "tag": "v1.1.0", "github": true },
+    { "kind": "ship-deployed", "label": "record the deploy", "target": "app", "env": "production", "github": true },
+    {
+      "kind": "claude", "role": "engineer", "label": "incident",
+      "prompt": "/pro-ai-sdlc:incident export wrote an empty file. Answer your own questions from this brief and do not wait for me: severity sev2, detected today, the running commit is the v1.1.0 tag, the export wrote a zero byte file when there were tasks. Write the incident record and the new intent and commit them.",
+      "followups": ["Commit the incident and the intent now."],
+      "until": { "tracked": "intent/*/incident.md", "new": true },
+      "github": true
+    }
+  ],
+  "checks": ["level", "level-monotonic", "spec-flagged-concern", "gate-authors", "plan-two-approvers", "engineer-merge-refused", "build-pr-merged-by-lead", "build-pr-stamp", "tag-on-origin", "preflight-go", "deploy-record-pass", "incident-record", "incident-intent"]
+}
