@@ -35,6 +35,7 @@ A diff with no signal at medium or above is low.
 Each signal has a floor and a strength, strong or weak.
 Documentation (`.md`, `.mdx`, `.txt`, `.rst`, anything under `docs/`) and lockfiles never raise a tier through path, dependency or size signals.
 A `.md` file under `.github/workflows/`, `hooks/` or `.claude/` is not excused.
+The `policy-files` paths below are never excused either, Markdown included.
 Path signals other than `workflows` and `hook-scripts`, the security and legal surface signals and `env-var-read` skip test files, `tests/` and fixtures directories and Markdown.
 
 High, by path:
@@ -42,6 +43,7 @@ High, by path:
 - `workflows`: `.github/workflows/`.
 - `iac`: Terraform, Dockerfiles, compose files, `k8s/`, `helm/` and the like.
 - `hook-scripts`: a `hooks/` directory that holds a `hooks.json` (or is `.claude/hooks/`), `hooks.json`, `.husky/`, `.githooks/`, lefthook config, `.claude/settings*.json` and any script a tracked `hooks.json` runs, read from the base tree too so a deleted or renamed script still counts. A React `src/hooks/` folder is not a hook directory.
+- `policy-files`: `REVIEW.md`, `CLAUDE.md`, `AGENTS.md` or `CONSTRAINTS.md` at any depth, anything under `.claude/` or `.pro-dev/`, and anything under `intent/` outside the change's own intent folder (the folder of `--intent` when given). With no `--intent`, an `intent/**/intent.md` counts only when the diff edits a `status:`, `level:` or `risk:` line, and a brand new intent folder does not count. These files set the rules the gates read, so a Markdown edit to them is not a docs change. `paths.low` never lowers it.
 - `auth`: path segments such as `auth`, `login`, `oauth`, `session`, `permissions`, `rbac`, `middleware`.
 - `payments`: `payments`, `billing`, `stripe`.
 - `migrations`: `migrations/`, `prisma/schema.prisma`, `schema.sql`, `drizzle/`.
@@ -90,7 +92,7 @@ It never changes who approves the merge.
 A repo can tune the classifier with an optional `## Risk tiers` section in `REVIEW.md` holding one fenced block of flat keys and lists of strings.
 
 - `paths.high` and `paths.medium` add globs.
-- `paths.low` excuses globs from path signals, but never lowers `workflows` or `hook-scripts`.
+- `paths.low` excuses globs from path signals, but never lowers `workflows`, `hook-scripts` or `policy-files`.
 - `thresholds` sets `files_medium`, `files_high`, `lines_medium`, `lines_high`, `areas_medium` and `no_test_lines`.
 - `tiers.<tier>.checks` and `tiers.<tier>.reviewers` change the demands table.
 

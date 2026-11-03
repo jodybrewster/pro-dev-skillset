@@ -612,10 +612,45 @@ def env_var_signals(repo, head_sha, files):
     return [signal("env-var-read", "medium", "weak", hit_files, "new environment variable read: " + ", ".join(sorted(names)))]
 
 
-# --- declared risk (R14) ---------------------------------------------------------------------
+# --- policy files (R19) -------------------------------------------------------------------
 
 INTENT_RE = re.compile(r"intent/[^/]+/intent\.md\Z")
 
+
+POLICY_NAMES = {"review.md", "claude.md", "agents.md", "constraints.md"}
+POLICY_LINE_RE = re.compile(r"\s*(?:status|level|risk)\s*:")
+
+
+def own_intent_dir(repo, intent):
+    """The repo-relative folder of --intent, or None when it is not given or lies outside the repo."""
+    if not intent:
+        return None
+    rel = posixpath.dirname(os.path.relpath(os.path.realpath(os.path.join(repo, intent)), repo).replace(os.sep, "/"))
+    return None if rel.startswith("..") or rel in ("", ".") else rel
+
+
+def policy_file_signals(files, repo=".", intent=None):
+    """policy-files, high and strong: files that set the rules the gates read. Markdown is not excused here."""
+    own = own_intent_dir(repo, intent)
+    hit = []
+    for path, f in files.items():
+        low = path.lower()
+        segs = segments(low)
+        if segs[-1] in POLICY_NAMES or ".claude" in segs[:-1] or ".pro-dev" in segs[:-1]:
+            hit.append(path)
+        elif segs[0] == "intent" and len(segs) > 1:
+            if own is not None:
+                if not (path == own or path.startswith(own + "/")):
+                    hit.append(path)
+            elif (INTENT_RE.search(path) and f["status"] != "A"
+                  and any(POLICY_LINE_RE.match(l) for l in f["added"] + f["removed"])):
+                hit.append(path)
+    if not hit:
+        return []
+    return [signal("policy-files", "high", "strong", hit, "policy file changed: it sets rules the gates enforce")]
+
+
+# --- declared risk (R14) ---------------------------------------------------------------------
 
 def declared_from(text):
     """The risk: value of a front matter block, or None when absent or not low, medium or high."""
@@ -782,7 +817,7 @@ def classify(repo, base=None, head="HEAD", intent=None):
     hooks = hook_script_paths(repo, head_sha, tree) | hook_script_paths(repo, base_sha, base_tree)
     hook_dirs = {posixpath.dirname(p) for p in tree | base_tree if p.rsplit("/", 1)[-1] == "hooks.json"}
     signals = (path_signals(files, hooks, policy, hook_dirs) + dependency_signals(files)
-               + policy_signals(files, policy)
+               + policy_signals(files, policy) + policy_file_signals(files, repo, intent)
                + test_signals(files, th["no_test_lines"]) + size_signals(files, th))
     found, notes = surface_signals(repo, patch)
     signals += found
