@@ -2795,6 +2795,17 @@ CASES.push(
   },
 );
 
+CASES.push({
+  id: "command-roles-block",
+  run: (s, pluginRoot) => {
+    const md = read(join(pluginRoot, "commands", "pro-dev.md"));
+    const need = ["`## Roles` section", "git config user.name", "product_owner:", "platform_owner:",
+      "do not touch it", "factory.py\" roles", ".claude/test-lock"];
+    const miss = need.filter((n) => !md.includes(n));
+    return miss.length ? bad(`pro-dev.md lacks: ${miss.join(", ")}`) : ok();
+  },
+});
+
 export function runProDevCases({ pluginRoot = DEFAULT_PLUGIN_ROOT, only = null } = {}) {
   const selected = only ? CASES.filter((c) => c.id.includes(only)) : CASES;
   const out = { skipped: null, selected, results: [] };

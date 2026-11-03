@@ -90,6 +90,10 @@ Print a short report, then one line naming the next command to run.
   When the directory exists, count its memory files with `ls` and measure its `MEMORY.md` with `wc -l`; flag more than 200 lines as needs attention with `/dream dry-run` as the next step.
   Confirm pro-core's installed `hooks/hooks.json` registers `scripts/dream-flag.py` on `Stop` and `scripts/dream-nudge.py` on `SessionStart`; Claude Code loads no other hook file, so a missing entry never fires.
   Recommend `/dream dry-run` when consolidation is due or the index is over budget.
+- Roles: print the role map from `REVIEW.md`.
+  When pro-ai-sdlc is installed, run `python3 "<aiSdlcInstallPath>/scripts/factory.py" roles --repo .` and print its output; exit 2 means the block is unreadable, so report that as needs attention.
+  Otherwise print the raw `## Roles` block as it stands.
+  When `REVIEW.md` has no `## Roles` section, say `/pro-dev install` adds one.
 - Mieruka ships its own plugin; mention it only if the repo uses it.
 - Verdict: `healthy` or `needs attention`, with the memory line.
 - The upstream catalog diffs are not part of `check`.
@@ -200,11 +204,33 @@ The "How work flows here" section says, in short sentences, one per line:
 - Create `intent/` with a short `README.md` that says what an intent folder holds (intent.md, spec.md, plan.md), unless `intent/` exists.
 - If the repo has no `REVIEW.md`, write one from the template at `<aiSdlcInstallPath>/templates/REVIEW.md`, replacing the generated-files placeholder with the paths found in the inspection.
   If it has one, leave it alone.
+- Make sure `REVIEW.md` has a `## Roles` section.
+  When it is missing, append this block with the output of `git config user.name` in all five roles; when it is present, do not touch it, even if the names differ or it is empty.
+  If `git config user.name` prints nothing, write the heading and the block with `TODO` in each role and say so.
+  The block is read by `factory.py roles` in pro-ai-sdlc, so keep this exact shape:
+
+  ````markdown
+  ## Roles
+
+  ```yaml
+  roles:
+    product_owner:
+      - <git user name>
+    engineer:
+      - <git user name>
+    lead:
+      - <git user name>
+    policy_owner:
+      - <git user name>
+    platform_owner:
+      - <git user name>
+  ```
+  ````
 - If `.claude/settings.json` does not exist, write team settings: `permissions.allow` for the read-only git commands and the repo's build, test and lint commands.
   Add `permissions.deny` for reading `.env`, `.env.*` and `secrets/` and for forced git pushes.
   If it exists, show the entries to merge and do not edit it.
   The guard hooks are not written here; the plugins supply them.
-- Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/`, `.claude/.fix-task` and `.claude/fix-mode`; append only the missing lines.
+- Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/`, `.claude/.fix-task`, `.claude/fix-mode` and `.claude/test-lock`; append only the missing lines.
 - `.claude/pro-dev.json` is meant to be committed so a team shares its optional-engine choices; do not ignore it.
 
 ### Required documents
