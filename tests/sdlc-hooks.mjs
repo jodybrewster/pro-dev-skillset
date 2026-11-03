@@ -75,6 +75,26 @@ export function runSdlcHookCases() {
     add("pt5 no marker, a test edit is allowed", "allow", r, r.status === 0 && !r.stdout);
     r = run("protect-tests.py", edit(free, join(free, "a_test.go")), { mode: "enforce", env: { SDLC_TASK_KIND: "fix" } });
     add("pt8 SDLC_TASK_KIND=fix locks a Go test file", "block", r, r.status === 2);
+    // test lock written by /execute: listed files frozen, new test files free
+    const lock = join(sandbox, "lock");
+    mkdirSync(join(lock, ".claude"), { recursive: true });
+    mkdirSync(join(lock, "tests"), { recursive: true });
+    writeFileSync(join(lock, ".claude", "test-lock"), "tests/a.js\nsrc/b.test.js\n");
+    r = run("protect-tests.py", edit(lock, join(lock, "tests", "a.js")));
+    add("pt9 warn mode flags an edit to a locked test and allows", "warn", r, warned(r));
+    r = run("protect-tests.py", edit(lock, join(lock, "src", "b.test.js")), { mode: "enforce" });
+    add("pt10 enforce mode blocks an edit to a locked test", "block", r, r.status === 2);
+    r = run("protect-tests.py", edit(lock, join(lock, "tests", "new.js")), { mode: "enforce" });
+    add("pt11 a test file not in the lock stays free", "allow", r, r.status === 0 && !r.stdout);
+    r = run("protect-tests.py", edit(lock, join(lock, "src", "c.js")), { mode: "enforce" });
+    add("pt12 a source file stays free under a test lock", "allow", r, r.status === 0 && !r.stdout);
+    // CLAUDE_GUARD_MODE beats a mode file
+    r = run("protect-tests.py", edit(lock, join(lock, "tests", "a.js")), { mode: "warn", env: { CLAUDE_GUARD_MODE: "enforce" } });
+    add("pt13 env enforce beats a warn mode file", "block", r, r.status === 2);
+    r = run("protect-tests.py", edit(lock, join(lock, "tests", "a.js")), { mode: "enforce", env: { CLAUDE_GUARD_MODE: "warn" } });
+    add("pt14 env warn beats an enforce mode file", "warn", r, warned(r));
+    r = run("protect-tests.py", edit(lock, join(lock, "tests", "a.js")), { mode: "enforce", env: { CLAUDE_GUARD_MODE: "bogus" } });
+    add("pt15 an invalid env value falls back to the mode file", "block", r, r.status === 2);
     r = run("protect-tests.py", null, { raw: "not json", mode: "enforce" });
     add("pt6 a malformed payload is allowed", "allow", r, r.status === 0);
     r = run("protect-tests.py", null, { raw: "" , mode: "enforce" });

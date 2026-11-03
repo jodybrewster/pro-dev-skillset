@@ -154,5 +154,9 @@
   {
     "id": "pro-ai-sdlc/skill:doubt-driven-development",
     "reason": "a positive eval needs a live /execute build with a subagent dispatch; covered by the doubt check and the manual trial"
+  },
+  {
+    "id": "pro-ai-sdlc/command:auto",
+    "reason": "unattended factory phase; covered by tests/factory.mjs and the live e2e, not a routing case"
   }
 ]

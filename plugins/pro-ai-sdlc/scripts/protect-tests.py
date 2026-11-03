@@ -4,6 +4,8 @@
 When the project has a .claude/fix-mode marker (found by walking up from the
 edited file), edits to *.test.*, *.spec.*, tests/**, e2e/** and __tests__/**
 are flagged, so a fix cannot weaken the failing test it has to pass.
+A .claude/test-lock file (one path per line, relative to the root) written by
+/execute freezes the listed test files the same way; new test files stay free.
 warn mode (default): log, tell the session, allow. enforce mode: exit 2.
 """
 import os
@@ -30,6 +32,27 @@ def find_root(path: str, cwd: str):
         d = parent
 
 
+def locked(root: str, path: str) -> bool:
+    try:
+        with open(os.path.join(root, ".claude", "test-lock"), encoding="utf-8") as fh:
+            lines = [ln.strip() for ln in fh if ln.strip()]
+    except OSError:
+        return False
+    target = os.path.realpath(path)
+    return any(os.path.realpath(os.path.join(root, ln)) == target for ln in lines)
+
+
+def find_lock_root(path: str):
+    d = os.path.dirname(path)
+    while True:
+        if os.path.isfile(os.path.join(d, ".claude", "test-lock")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+
 def flagged(root: str, path: str):
     base = os.path.basename(path)
     if ".test." in base or ".spec." in base or base.endswith(("_test.py", "_test.go")):
@@ -51,9 +74,13 @@ def main() -> None:
     if not os.path.isabs(path):
         path = os.path.join(cwd, path)
     root = find_root(path, cwd)
+    found = flagged(root, path) if root else None
+    if not found:
+        lock_root = find_lock_root(path)
+        if lock_root and locked(lock_root, path):
+            root, found = lock_root, "locked test file " + os.path.basename(path)
     if not root:
         sys.exit(0)
-    found = flagged(root, path)
     if not found:
         sys.exit(0)
     detail = f"{found} :: {path}"

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // On-demand check for AC13 of intent/2026-10-31-ship-preflight and AC8 of
 // intent/2026-11-01-after-build-loop: a record that `ship.py record` writes and one of each
-// record of docs/loop-records.md (deploy, incident, review lesson, visual check) is loaded by
+// record of docs/loop-records.md (deploy, incident, review lesson, visual check, factory run) is loaded by
 // mieruka's own evidence sync with no error.
 //
 //   MIERUKA_ROOT=<path to a mieruka checkout> node tests/mieruka-sync.mjs
@@ -87,7 +87,7 @@ main: try {
     let j = null;
     try { j = JSON.parse(r.stdout); } catch { /* reported below */ }
     if (r.status !== 0) { console.error(`${name} writer failed (exit ${r.status}):\n${r.stdout}${r.stderr}`); return false; }
-    loop[name] = j?.evidence_key || (r.stdout.match(/(?:deploy|incident|review-lesson|visual)-[a-z0-9-]+/) || [])[0];
+    loop[name] = j?.evidence_key || (r.stdout.match(/(?:deploy|incident|review-lesson|visual|factory)-[a-z0-9-]+/) || [])[0];
     return true;
   };
   const lessonAdd = (ref) => write("-", join(SDLC, "lessons.py"), ["add", "--ref", ref, "--head", head, "--class", "unchecked-timeout", "--file", "src/x.py"], "no timeout on the call");
@@ -95,7 +95,8 @@ main: try {
     && write("incident", join(SDLC, "incident.py"), ["record", `intent/${FOLDER}`])
     && lessonAdd("11") && lessonAdd("12")
     && write("lesson", join(SDLC, "lessons.py"), ["mark", "unchecked-timeout", "accepted"], "Give every subprocess call a timeout.")
-    && write("visual", join(SDLC, "visual.py"), ["record", "--intent", `intent/${FOLDER}`, "--step", "1", "--viewport", "desktop", "--status", "pass", "--shot", "shot.png", "--url", "http://localhost:3000/"]);
+    && write("visual", join(SDLC, "visual.py"), ["record", "--intent", `intent/${FOLDER}`, "--step", "1", "--viewport", "desktop", "--status", "pass", "--shot", "shot.png", "--url", "http://localhost:3000/"])
+    && write("factory", join(SDLC, "factory.py"), ["record", `intent/${FOLDER}`, "--state", "merged", "--sha", head, "--unread-lines", "42"]);
   if (!written) break main;
   for (const [name, key] of Object.entries(loop).filter(([n]) => n !== "-")) {
     if (!key) { console.error(`${name} writer printed no evidence_key`); break main; }
@@ -105,6 +106,7 @@ main: try {
     [loop.incident, "doc", "incident"],
     [loop.lesson, "review", "review-lesson"],
     [loop.visual, "visual_drift", "ui-step"],
+    [loop.factory, "doc", "factory-run"],
   ];
 
   writeFileSync(testFile, `import { it, expect, vi } from 'vitest';
@@ -122,7 +124,7 @@ it('loads a pro-ship preflight record with no sync error', () => {
   const db = new Database(':memory:');
   runMigrations(db);
   const r = syncFromFilesystem(db, SYNC_ROOT);
-  expect(r.records).toBe(5);
+  expect(r.records).toBe(6);
   expect(r.errors ?? []).toEqual([]);
   const rec = getEvidence(db, ${JSON.stringify(key)});
   expect(rec).toBeTruthy();
