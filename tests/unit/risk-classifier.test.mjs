@@ -202,6 +202,26 @@ test("a deleted hook script names the script in the evidence", () => withFixture
   assert.deepEqual(s.evidence, ["plugin/scripts/gate.py"]);
 }));
 
+// policy-files (R19): rule-setting files are high even when they are Markdown.
+function tableWith(title, rows) {
+  for (const [fixture, args, tier, has = [], lacks = []] of rows) {
+    test(`${title}: ${fixture} ${args.join(" ")} is ${tier}`, () => withFixture(fixture, (repo) => {
+      const r = classify(repo, ["--json", ...args]);
+      assert.equal(r.json.tier, tier, JSON.stringify(r.json.signals));
+      for (const id of has) assert.ok(ids(r.json).includes(id), `expected ${id} in ${ids(r.json)}`);
+      for (const id of lacks) assert.ok(!ids(r.json).includes(id), `did not expect ${id}`);
+    }));
+  }
+}
+tableWith("policy files", [
+  ["policy-review-md", [], "high", ["policy-files"]],
+  ["policy-claude-command", [], "high", ["policy-files"]],
+  ["policy-other-intent-level", [], "high", ["policy-files"]],
+  ["policy-other-intent-level", ["--intent", "intent/2026-02-02-b/intent.md"], "high", ["policy-files"]],
+  ["policy-own-intent-folder", ["--intent", "intent/2026-02-02-b/intent.md"], "low", [], ["policy-files"]],
+  ["policy-new-intent-folder", [], "low", [], ["policy-files"]],
+]);
+
 // A feature branch that is pushed has itself as its upstream. The base is the target branch.
 function pushedRepo(fn) {
   const repo = buildRepo(loadFixture("readme-only"), { onFeat: false });
@@ -582,7 +602,7 @@ test("a REVIEW.md added in the same diff does not count", () => withFixture("rea
   git(repo, "commit", "-q", "-m", "review");
   const j = classify(repo, ["--json"]).json;
   assert.equal(j.policy, "defaults");
-  assert.equal(j.tier, "low");
+  assert.deepEqual(ids(j), ["policy-files"], "only the policy-files signal; the added paths.high is not read");
 }));
 
 // Step 9: determinism and speed (N1 to N4, AC8)
