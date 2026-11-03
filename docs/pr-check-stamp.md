@@ -142,6 +142,9 @@ A verifier result counts for the stamp's HEAD when its `status` is `done` and ei
   A symlink (mode 120000), a submodule entry (mode 160000) or a mode change in that diff voids the result.
   This keeps `/execute`'s last `plan.md` commit from voiding a verifier pass and nothing else.
 
+A range that changes only top-level `intent/` paths, such as the factory's brief PR with its `spec.md` and `plan.md`, needs no verifier pass: there is no code to exercise.
+The same symlink, submodule and mode rules apply to that range.
+
 The verifier's report begins with `HEAD: <sha>`, `Uncommitted tracked changes: none | <n> files` and `Untracked files not ignored: <n>`.
 Uncommitted tracked changes make its verdict `incomplete`.
 Untracked files can change what passes and the stamp does not see them, so CI stays the backstop.

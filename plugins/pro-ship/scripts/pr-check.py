@@ -859,6 +859,32 @@ def verifier_record(raw, root: str) -> dict:
     return rec
 
 
+def intent_only(root: str, base: str | None, head: str) -> bool:
+    """True when base..head changes only top-level intent/ paths: an intent, spec or plan with no code,
+    such as the factory's brief PR. The verifier has nothing to exercise there, so its pass is not
+    required. A symlink, a mode change or a submodule voids it, as in verifier_counts."""
+    if not base or base == head:
+        return False
+    try:
+        names = sh(["git", "diff", "--name-status", "--no-renames", "-z", base, head], root)
+        raw = sh(["git", "diff", "--raw", "--no-renames", "-z", base, head], root)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if names.returncode != 0 or raw.returncode != 0:
+        return False
+    toks = names.stdout.split("\0")
+    if len(toks) < 3 or len(toks) % 2 != 1 or any(not t.startswith("intent/") for t in toks[1:-1:2]):
+        return False
+    for t in raw.stdout.split("\0")[:-1]:
+        if t.startswith(":"):
+            f = t[1:].split(" ")
+            if len(f) < 5 or {f[0], f[1]} & {"120000", "160000"}:
+                return False
+            if f[0] != "000000" and f[1] != "000000" and f[0] != f[1]:
+                return False
+    return True
+
+
 def verifier_counts(root: str, v: dict, head: str) -> bool:
     """R11: the result counts for HEAD when it ran on HEAD, or on an ancestor with only top-level
     intent/ paths changed since (the deleted side of a rename included, so --no-renames). A symlink,
@@ -1037,9 +1063,9 @@ def codex_record(raw) -> dict:
 
 
 def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None,
-                   verifier_counted: bool = False) -> str:
+                   verifier_counted: bool = False, verifier_needed: bool = True) -> str:
     """The result rule of docs/pr-check-stamp.md; the first match wins. verifier_counted is
-    verifier_counts() for reviewers.verifier (R12)."""
+    verifier_counts() for reviewers.verifier (R12); verifier_needed is False for an intent-only range."""
     v = reviewers.get("verifier") or NO_VERIFIER
     if (any(c.get("status") == "fail" for c in checks) or floor == "findings"
             or any(reviewers[k]["blocking"] > 0 for k in ("code", "security"))
@@ -1054,7 +1080,8 @@ def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, mi
             and mutation_ok
             and reviewers["code"]["status"] in ("done", "inline")
             and reviewers["security"]["status"] in ("done", "inline", "skipped-no-surface")
-            and (v.get("status") == "not-installed" or (verifier_counted and v.get("verdict") == "pass"))):
+            and (not verifier_needed or v.get("status") == "not-installed"
+                 or (verifier_counted and v.get("verdict") == "pass"))):
         return "pass"
     return "incomplete"
 
@@ -1144,7 +1171,8 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         "floor": floor,
         "mutation": mutation,
         "reviewers": reviewers,
-        "result": compute_result(checks, floor, mutation, reviewers, missing, verifier_counts(root, reviewers["verifier"], head)),
+        "result": compute_result(checks, floor, mutation, reviewers, missing, verifier_counts(root, reviewers["verifier"], head),
+                                 not intent_only(root, base, head)),
         "sources": run.get("sources") if isinstance(run.get("sources"), dict) else {"floor-guard": "not-installed"},
     }
     if risk is not None:
