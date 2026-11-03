@@ -17,6 +17,7 @@ import { runGitSafeCases } from "./git-safe.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
+import { runFactoryCases } from "./factory.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
@@ -1151,6 +1152,21 @@ checks["execute-scripts"] = () => {
   }
   if (!results.length) failures.push("tests/execute.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`execute ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// pro-ai-sdlc factory.py, the host side of the software factory. It picks the intent,
+// verifies each PR on a head it fetched itself and merges, so a check that passes what it
+// should stop is the failure to catch. The case table lives in tests/factory.mjs.
+checks["factory-scripts"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runFactoryCases();
+  if (skipped) {
+    warnings.push(`factory script cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/factory.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`factory ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

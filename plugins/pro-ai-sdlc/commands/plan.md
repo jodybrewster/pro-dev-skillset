@@ -1,7 +1,7 @@
 ---
 description: "Write plan.md beside a spec: the files touched, the order of work, the tests that prove it, risks, rejected options and proof of done. Interrogates the plan before it is committed. Usage: /plan [path to spec.md]"
 argument-hint: "[path to spec.md]  (default: the newest spec without a plan.md)"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Glob, Grep, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Glob, Grep, Write
 ---
 
 ## Context
@@ -77,6 +77,13 @@ On no, or with nothing printed, go straight to the next step, so the command run
 After a goldfish review, keep the fixes EGM applied to the draft.
 For each Blocker or Major finding still open, write one line of your own under Risks in your words with no quoted file content; show those lines before committing.
 The review writes `goldfish_review_report.md` in the working directory; leave it untracked and name its path in the report.
+
+### Level (before the commit)
+
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level <dir> --write`, where `<dir>` is the intent folder.
+Report the level and its reasons in one line.
+If it exits 3 the level was raised in the file: the commit below also stages that intent.md.
+The level is only ever raised; never edit it down by hand.
 
 ### 5. Show it and commit after confirmation
 

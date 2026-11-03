@@ -1,13 +1,13 @@
 # Loop records after the build
 
-This page is the one contract for the four records the loop writes after a build: the deploy record, the incident record, the review lesson and the visual check.
+This page is the one contract for the five records the loop writes: the deploy record, the incident record, the review lesson, the visual check and the factory run record.
 mieruka and any other reader build against this page.
 The decision behind it is [ADR-0023](./decisions/0023-loop-records.md).
 The spec is `intent/2026-11-01-after-build-loop/spec.md`.
 The preflight record that comes before a deploy has its own page, [ship-preflight.md](./ship-preflight.md).
 Nothing here changes it.
 
-Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0.
+Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0.
 
 ## Shared rules
 
@@ -137,6 +137,43 @@ Written by `visual.py record` when `/execute` compares a UI step with the mock t
 Local copy: `.pro-dev/visual/<evidence_key>.json`, with the screenshot beside it as `<evidence_key>.png`.
 
 `detail_json` holds `step` (the plan step number), `title`, `viewport` (an object `{name, width}`: `desktop` at 1280 or `mobile` at 390), `mock` (the path or URL in the plan), `screenshot` (the PNG's path relative to the repo root), `url` (the page captured), `console` (`{errors, warnings}` counts), `differences` (a list of strings), `head` and `created`.
+
+## The factory run record
+
+Written by `factory.py` when it runs an accepted level 1 intent headless, and by nothing else: the session inside the container never writes it.
+The decision behind it is [ADR-0024](./decisions/0024-escalation-levels.md).
+
+| Field | Value |
+|---|---|
+| `kind` | `doc` |
+| `artifact_kind` | `factory-run` |
+| `artifact_key` | the intent folder name, for example `2026-11-03-fix-greeting` |
+| `evidence_key` | `factory-<intent folder name>` |
+| `status` | `info` while running, `pass` once merged, `partial` when the run stopped and the level was raised, `fail` on an error |
+| `summary` | `level 1: merged <first 12 of sha>, deploy is yours, unread diff: <n> lines`, `stopped: level raised to <n> (<reason>)`, `error: <reason>` or `running: <state>` |
+
+Local copy: `.pro-dev/factory/<evidence_key>.json`, rewritten on every state change.
+The runner's daily counters (`daily.json`) and per-intent lock and log files sit beside it and are not records.
+
+`detail_json` holds:
+
+| Key | Type | Value |
+|---|---|---|
+| `intent` | string | the intent folder path |
+| `level_at_intake` | integer | `1`, the level the run started at |
+| `level_now` | integer | the level after the run; above `1` when a host check raised it |
+| `state` | string | `queued`, `brief`, `build`, `verify`, `merged`, `stopped` or `error` |
+| `reason` | string | why it stopped or failed, empty otherwise |
+| `brief_pr` | integer | the number of the PR that holds the spec and plan, once opened |
+| `build_pr` | integer | the number of the build PR, once opened |
+| `merged_sha` | string | the merge commit of the build PR, once merged |
+| `unread_lines` | integer | added plus removed lines of the merged build PR, which no person read |
+| `cost_usd` | number | what the sessions have cost so far |
+| `broad_token` | boolean | `true` when the run used the maintainer's own `gh` token through `--allow-broad-token` |
+| `started` | string | when the run began |
+| `updated` | string | when the record was last written |
+
+mieruka's card reads `state`, `level_now` and `reason`, so those keep these names.
 
 ## Checking against mieruka
 

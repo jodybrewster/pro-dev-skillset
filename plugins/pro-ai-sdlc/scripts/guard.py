@@ -1,5 +1,6 @@
 """Shared helpers for the pro-ai-sdlc hooks. Imported, not executed.
 
+CLAUDE_GUARD_MODE (warn or enforce) in the environment overrides the files below.
 State lives in GUARD_DIR (default ~/.claude/hooks, override with CLAUDE_GUARD_DIR):
   mode               warn or enforce for every hook (default warn)
   mode.<hook-name>   per-hook override, same values
@@ -20,6 +21,11 @@ def guard_dir() -> str:
 
 
 def mode(hook: str) -> str:
+    # CLAUDE_GUARD_MODE in the environment beats every mode file, so a session
+    # cannot loosen it by writing a file.
+    env = os.environ.get("CLAUDE_GUARD_MODE", "").strip()
+    if env in ("warn", "enforce"):
+        return env
     d = guard_dir()
     for name in ("mode." + hook, "mode"):
         try:

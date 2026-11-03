@@ -81,6 +81,21 @@ Escalate to Important only when the change makes structure worse.
 - A silent fallback that hides an unclear invariant.
 -->
 
+## Roles
+
+Who fills each role.
+Names are git `user.name` values.
+`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" roles` is the canonical parser of this block.
+
+```yaml
+roles:
+  product_owner: [<name>]
+  engineer: [<name>]
+  lead: [<name>]
+  policy_owner: [<name>]
+  platform_owner: [<name>]
+```
+
 <!-- Risk tiers: uncomment this block to tune how pro-ship's risk classifier sorts a change into low, medium or high.
 Every key is optional and shown at its default.
 The approval and local decision columns are fixed and cannot be set here.

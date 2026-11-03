@@ -1,7 +1,7 @@
 ---
 description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<date>-<slug>/intent.md from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
 argument-hint: "<idea or bug, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Read, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Write
 ---
 
 ## Context
@@ -63,6 +63,13 @@ Fill Author and Created from Context and set Status to draft.
 Quote the person where the wording matters.
 Keep the template's section names and order exactly, so tools that read the file find each field.
 Follow the user's writing rules if they have any: by default no em dashes, no Oxford comma and straight quotes.
+
+### Level (before the commit)
+
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level <dir> --write`, where `<dir>` is the intent folder.
+Report the level and its reasons in one line.
+If it exits 3 the level was raised in the file: the commit below includes that file.
+The level is only ever raised; never edit it down by hand.
 
 ### 3. Read it back and commit
 

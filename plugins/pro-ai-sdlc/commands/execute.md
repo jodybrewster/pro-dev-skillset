@@ -51,6 +51,7 @@ Anything else is a stop: print the stage, the reason and what the person can do 
 Keep the worktree.
 An explicit yes given during the run covers that category for the rest of the run and is listed under "Potential concerns" in the PR body.
 A step is already consented only when the plan's `## Risks` has a `Stop-list categories:` line that lists the category for that step and the header's `Approver:` names a person, not an angle-bracket placeholder.
+An `Approver:` that starts with `factory` is never a person: it is no consent for any stop-list step, so every step that fires pauses (an unattended run stops).
 A mention of the category anywhere else in Risks, such as "no migration", is not consent.
 Then print `stop list: <category> on step <N>, consented in Risks` and go on.
 Anything the plan did not name pauses.
@@ -132,6 +133,9 @@ Without the skill, print `classifier could not run: pro-ship not installed` and 
 For each step write or extend the test first, see it fail, then write the code until it passes.
 A step counts as built only when its tests pass and, where the stack has them, type checking and linting pass too (the repo's own commands, found as in the baseline).
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
+After each step's commit, append the test files that commit added or changed to `<worktree>/.claude/test-lock`, one path relative to the worktree per line.
+The `protect-tests` hook then flags any later edit to a listed file; new test files stay free.
+Before the first append make sure `.claude/test-lock` is git-excluded: add the line to the worktree's exclude file (`git rev-parse --git-path info/exclude`) when it is missing, and never stage the lock.
 After the commit of a step marked `irreversible`, run `## Doubt` before the next step.
 At a checkpoint whose group range (since the previous checkpoint) reads high tier on more than the size signal, run it on each undoubted step in that range before the next group.
 When the build has to stray from the plan, add a line under `## Departures from plan` in plan.md in the same commit as the change that departs.

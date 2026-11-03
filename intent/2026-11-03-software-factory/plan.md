@@ -58,7 +58,7 @@ factory.py run (<intent dir> | --next) [--repo DIR] [--max-cost-usd 8] [--model 
     in the record). Records are written only by the runner.
 factory.py record <intent dir> --state S [--reason TEXT] [--pr URL] [--cost USD] ...
     Writes the record through evidence.write_record.
-factory.py verify brief|build <intent dir> --pr N [--repo DIR] [--json]
+factory.py verify brief|build <intent dir> --pr N [--repo DIR] [--json] [--checks-timeout-min N]
     The host-side checks on its own fetch of the PR head; exit 0 pass, 3 raise, 2 could not run.
 ```
 
@@ -66,13 +66,17 @@ Host checks:
 
 | Phase | Check | Fail means |
 |---|---|---|
-| brief | diff is exactly `intent/<dir>/spec.md` and `plan.md`; plan has `Status: approved`, `Stop-list categories: none`, an `Approver:` that starts with `factory`; spec has `Flagged concerns` with no rows | raise to 2 |
-| build | `gh pr checks` all pass (no checks configured: run the repo's verify command in a fresh container) | stop, level 2 |
+| brief | diff is exactly `intent/<dir>/spec.md` and `plan.md`; plan has exactly one `Status:` line (`approved`), exactly one `Stop-list categories:` line (`none`) and exactly one `Approver:` line that starts with `factory`; the spec's `Flagged concerns` section says `None found` or is a table header with no data row (bullets or prose count as concerns) | raise to 2 |
+| both | the PR is bound to the run: head branch is `<slug>-brief` (brief) or `<slug>` (build, the branch `/execute` creates), the author is the token's own user (`gh api user`), the brief PR is not a draft and every commit in the range carries `Factory-Run: <phase> <folder>` | raise to 3 (branch, author) or 2 (draft, trailer) |
+| build | checks read from `gh pr view --json statusCheckRollup`; when the default branch tip has a workflow on `pull_request` or `pull_request_target`, wait up to the checks timeout (default 20 min) for checks to appear and finish, then all must pass; only when no such workflow exists run the repo's verify command in a fresh container on the verified sha | stop, level 2 |
 | build | `risk-classify.py --base origin/<default> --head <fetched head> --intent <dir> --json` exit 0 and no `surface-unavailable` note | raise to the tier |
 | build | no path under `REVIEW.md`, `CLAUDE.md`, `AGENTS.md`, `CONSTRAINTS.md`, `.claude/`, `.pro-dev/`, `.github/`, `intent/` outside its own folder | raise to 3 |
-| build | each test file in the range unchanged after the commit that added it; no change to test config (`package.json` `scripts.test`, jest/vitest/pytest config) | raise to 2 |
+| build | each test file in the range unchanged after the commit that added it; no change to test config (`vite`, `vitest`, `jest` and `playwright` config files, `pytest.ini`, `tox.ini`, `[tool.pytest*]` in `pyproject.toml`, `[tool:pytest]` in `setup.cfg`, any `package.json` `scripts` key and its `jest` or `vitest` fields) | raise to 2 |
+| build | pro-quality's `floor-guard.py --check --base <merge base>` run on the verified head in a throwaway worktree finds nothing | raise to 2 |
 | build | no `floor-allow:` line in any commit message of the range | raise to 2 |
-| both | the PR head equals the head fetched for the checks; merge with `--match-head-commit` | stop |
+| both | the PR head equals the head fetched for the checks; a draft is marked ready by the host after its checks pass; merge with `--match-head-commit` | stop |
+| run | the default branch on origin is the same before and after each session (`git ls-remote`); a move is state error `default branch moved during the session` | error, no merge |
+| run | the default branch requires a pull request (ruleset `pull_request` rule or branch protection with required PR reviews) | refuse before the run |
 
 Level rules (computed level = highest that applies):
 
@@ -189,4 +193,16 @@ Filled in when the build is finished.
 
 ## Departures from plan
 
-None yet.
+- Plugins install at user scope in the container, with `--setting-sources user`, so the clone stays clean and the repo's own settings are ignored.
+- `run` and `roles` take extra flags: `--marketplace-ref`, `--timeout-min`, `--worktree` (roles), `--allow-unprotected` and `--checks-timeout-min` (also on `verify`).
+- Only the security surface note stops a build (`surface-unavailable: security_surface`); other `surface-unavailable` notes do not.
+- Review fixes, as one commit:
+  - The container token cannot move the default branch: the host records the origin sha before each session and stops with state error when it moved; it refuses to run unless the default branch requires a pull request (`--allow-unprotected` is demo only and the record notes `unprotected: true`); `session.sh` writes `enforce` into the container's own `~/.claude/hooks/mode` so every plugin's gates run in enforce.
+  - "No checks reported" is no longer "no CI": no CI is decided from the tip's workflows. With workflows the host waits for checks to appear and finish (a timeout is a stop). Checks come from `statusCheckRollup` because the host's gh 2.21 has no `pr checks --json`.
+  - The PR is bound to the run (branch, author, trailers). `session.sh` finds the PR by the expected head branch and has no newest-PR fallback. `/execute` opens the build PR as a draft, so a draft build PR is accepted and the host marks it ready right before the merge.
+  - The brief checks are strict (one line each, `Flagged concerns` rules) and the test-config list is wider.
+  - `floor-guard.py --check` runs on the build range on the host (the CLI exists; no new check was added).
+  - Each container is named `factory-<folder>-<phase>-<epoch>` and killed on timeout; a phase with no result event counts its whole budget in `daily.json`.
+  - The verify container checks out the sha the host verified (`FACTORY_HEAD`); saved logs redact the API key as well as the token; the image is tagged `pro-dev-factory:<plugin version>` and built when the tag is missing; `--max-runs` and `--max-daily-usd` apply before the cap check.
+  - `run <dir>` resumes a folder whose record has an open build PR: no new session, the host checks and the merge only, no new run counted.
+  - `commands/auto.md` allows `.claude/test-lock` (written by `/execute`, git-excluded) and nothing else under `.claude/`.
