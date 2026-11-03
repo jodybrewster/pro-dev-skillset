@@ -712,6 +712,20 @@ export function runShipCheckCases() {
     inc("s3g a reviewer that could not run gives incomplete", "code cnr", withRun({}, { ...GOOD_REV, code: rv("could-not-run") }));
     inc("s3h reviewers left out give incomplete", "no --reviewers", (() => { const q = prep(); return pc(q.repo, ["stamp", "--base", q.baseSha]); })());
     inc("s3i a missing verifier key gives incomplete (AC3)", "no verifier", withRun({}, { ...GOOD_REV, verifier: "omit" }));
+    // An intent-only range (the factory's brief PR) has no code for the verifier to exercise.
+    const briefRange = (files) => {
+      const repo = mkrepo({ "a.txt": "1\n" });
+      const baseSha = git(repo, "rev-parse", "HEAD").stdout.trim();
+      git(repo, "checkout", "-q", "-b", "brief");
+      const head = commit(repo, files, "brief");
+      mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+      writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...JSON.parse(JSON.stringify(GOOD_RUN)) }));
+      return result(pc(repo, ["stamp", "--base", baseSha, "--reviewers", JSON.stringify(GOOD_REV)]));
+    };
+    add("s3j an intent-only range needs no verifier pass", "pass",
+      briefRange({ "intent/2026-01-01-x/spec.md": "s\n", "intent/2026-01-01-x/plan.md": "p\n" }) === "pass", "");
+    add("s3k an intent change with code still needs the verifier", "incomplete",
+      briefRange({ "intent/2026-01-01-x/spec.md": "s\n", "a.txt": "2\n" }) === "incomplete", "");
 
     add("s4 --accept-mutation turns survived into pass and records accepted", "pass with accepted true",
       (() => { const q = prep({ mutation: { status: "survived", reason: null, file: "a.py", accepted: false } }); const x = stamp(q, GOOD_REV, ["--accept-mutation"]); return result(x) === "pass" && written(q)?.mutation.accepted === true; })(), "");
