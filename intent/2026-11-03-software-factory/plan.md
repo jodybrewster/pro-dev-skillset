@@ -8,7 +8,7 @@ Dated: 2026-11-03.
 ## How it works in one breath
 
 The session proposes, the runner decides.
-`factory.py run` (on the host) picks an accepted level 1 intent, starts a Docker container with a fresh clone and a fresh plugin install, and runs `claude -p "/pro-ai-sdlc:auto brief <dir>"`.
+`factory.py run` (on the host) picks an accepted level 1 intent, starts a Docker container with a fresh clone and a fresh plugin install; there it runs `claude -p "/pro-ai-sdlc:auto brief <dir>"`.
 That session writes `spec.md` and `plan.md` and opens one pull request.
 The runner checks the PR diff is exactly those two files with the expected lines and merges it.
 A second container session runs `/pro-ai-sdlc:auto build <dir>`, which runs `/execute` and `/review` and leaves the build PR open.
