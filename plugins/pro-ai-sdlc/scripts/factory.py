@@ -1219,6 +1219,34 @@ def merge_pr(root, pr, head, folder, token, draft=False):
     return (mc.get("oid") if isinstance(mc, dict) else None) or head
 
 
+def sync_checkout(root, branch):
+    """Fast-forward the person's checkout to the merge when it sits on the default branch with no
+    changes, so tools that read the working tree (mieruka's board) see it. Anything else is left alone."""
+    if git_out(root, "rev-parse", "--abbrev-ref", "HEAD") is None:
+        return
+    current = (git_out(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip()
+    dirty = (git_out(root, "status", "--porcelain", "--untracked-files=no") or "").strip()
+    if current != branch or dirty:
+        return
+    git(root, "fetch", "-q", "origin", timeout=180)
+    git(root, "merge", "-q", "--ff-only", f"origin/{branch}", timeout=60)
+
+
+def hand_over(root, folder, pr, level, reason, token):
+    """A stopped build PR goes to a person: out of draft, so it reads as ready for review, with the
+    reason as a comment. Best effort; the record already holds the reason."""
+    if not pr:
+        return
+    v = gh_json(root, ["pr", "view", str(pr), "--json", "state,isDraft"], token)
+    if v.get("state") != "OPEN":
+        return
+    if v.get("isDraft"):
+        gh(root, ["pr", "ready", str(pr)], token)
+    gh(root, ["pr", "comment", str(pr), "--body",
+              f"The factory stopped this run at level {level} and hands it to a person: {reason}\n\n"
+              f"Review it as the level {level} gates in REVIEW.md say. Factory-Run: {folder}"], token)
+
+
 class Stop(Exception):
     def __init__(self, state, level, reason):
         super().__init__(reason)
@@ -1344,11 +1372,19 @@ def cmd_run(a):
             ensure_image(a.image)
             spent, sha, unread = run_phases(root, a, token, folder, rel, repo_url, branch, resume_pr, start_cost, resume_phase)
             write_record(root, folder, "merged", merged_sha=sha, unread_lines=unread, cost_usd=round(spent, 4))
+            try:
+                sync_checkout(root, branch)
+            except (Refuse, OSError):
+                pass
             print(f"factory: merged {sha[:12]}, deploy is yours, unread diff: {unread} lines", flush=True)
             code = 0
         except Stop as s:
             write_record(root, folder, s.state, s.reason, level_now=s.level)
             if s.state == "stopped":
+                try:
+                    hand_over(root, folder, pr_number(read_detail(root, folder).get("build_pr")), s.level, s.reason, token)
+                except (Refuse, OSError):
+                    pass
                 print(f"factory: stopped level {s.level} ({s.reason})", flush=True)
                 code = 3
             else:
