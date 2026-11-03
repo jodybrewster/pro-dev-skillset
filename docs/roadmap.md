@@ -11,6 +11,14 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
+### Built, waiting on sign-off: the software factory
+
+[intent/2026-11-03-software-factory](../intent/2026-11-03-software-factory/intent.md): escalation levels set by `factory.py level` and only raised, a `## Roles` block in `REVIEW.md` plus a runner that takes a level 1 intent to a merged pull request in a container while the host decides every merge ([ADR-0024](./decisions/0024-escalation-levels.md) proposed).
+Built in #135 to #139; guide in [factory.md](./factory.md), demo in [factory-demo.md](./factory-demo.md).
+Proved live on https://github.com/jodybrewster/factory-demo: two level 1 intents merged with nobody present, one stopped at level 2 for the engineer.
+Waiting on the maintainer: the sign-off, merging mieruka #202 and #203, the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30) and the larger intent of the demo's Act 4.
+Follow-ups: cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
+
 ### Done: the loop after the build
 
 [intent/2026-11-01-after-build-loop](../intent/2026-11-01-after-build-loop/intent.md): a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) accepted).

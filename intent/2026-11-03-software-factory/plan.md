@@ -189,7 +189,24 @@ node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token
 
 ## Done
 
-Filled in when the build is finished.
+Built in #137 (pro-ai-sdlc 0.14.0), #135 (pro-ship 0.12.0, the `policy-files` signal), #136 (pro-core 0.25.0, the roles block), #138 (the e2e harness) and #139 (pro-ship 0.12.1, an intent-only range needs no verifier pass).
+Mieruka's side is mieruka #202 (intent, spec, ADR-0016) and #203 (people, roles, card status, the trigger and the e2e twin), which the owner merges.
+
+Evidence:
+
+- Unit and behaviour tests: `tests/factory.mjs` 122/122, `tests/unit/factory-level.test.mjs` 18/18, `tests/sdlc-hooks.mjs` 38/38, `tests/ship-check.mjs` 231/231, `node tests/check.mjs` 0 failures.
+- AC1: level rules, history max and the negated-dependency case covered by the unit tests.
+- AC2: three live level 1 runs on https://github.com/jodybrewster/factory-demo with a protected main and CI: trim-titles merged in PRs 4 and 5 ($3.32 with one stopped brief), due-dates merged in PRs 6 and 7 by `run --next` with no intervention ($2.56).
+- AC3: the first live build (PR 3) stopped at level 2 when its commits lacked the run's trailer; the host refused to merge it and it waits for the engineer.
+- AC4: the test lock in warn and enforce in `tests/sdlc-hooks.mjs`; the host check that a test is unchanged after it was added in `tests/factory.mjs`.
+- AC5: `node tests/e2e-sdlc.mjs --dry` passes offline (3 scenarios, 31 steps, 35 checks); the live run has not been run.
+- AC6: mieruka's People settings, the level and run state on the card and the 403 by role checked in Chrome and by the twin's always-on tier (8/8).
+- AC7: the guide (`docs/factory.md`) and demo script (`docs/factory-demo.md`) use the output of these runs.
+- AC8: check.mjs, the unit tests and strict validation pass in CI on every PR above.
+
+Found by the live runs and fixed before merge: `gh pr checks --json` is missing in gh 2.21 (checks come from `statusCheckRollup`); `/execute` commits had no trailer (a commit-msg hook in the container adds it); the brief's "None found" with sources was read as concerns; pr-gate blocked the brief PR because the verifier had no code to check.
+
+Sign-off: waits for the maintainer; ADR-0024 moves to accepted then.
 
 ## Departures from plan
 
