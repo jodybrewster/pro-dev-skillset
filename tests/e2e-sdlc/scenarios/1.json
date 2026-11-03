@@ -1,0 +1,21 @@
+{
+  "id": 1,
+  "name": "product owner feature at level 1",
+  "role": "product_owner",
+  "intentText": "list tasks sorted by title",
+  "expectedLevel": 1,
+  "expectedStop": "merged",
+  "steps": [
+    {
+      "kind": "claude", "role": "product_owner", "label": "intent",
+      "prompt": "/pro-ai-sdlc:intent list tasks sorted by title. Answer your own questions from this brief and do not wait for me: source idea, kind idea, risk low, no new dependency, no personal data, no auth, nothing to deploy. Write the intent and commit it.",
+      "followups": ["Commit the intent now."],
+      "until": { "tracked": "intent/*/intent.md", "new": true }
+    },
+    { "kind": "discover", "label": "find the intent folder", "what": "intentDir" },
+    { "kind": "commit", "role": "product_owner", "label": "accept the intent", "file": "{intentDir}/intent.md", "edit": [{ "status": { "from": "draft", "to": "accepted" } }], "message": "intent: accepted" },
+    { "kind": "factory-level", "label": "level is 1", "expect": 1 },
+    { "kind": "factory-run", "label": "factory run", "github": true }
+  ],
+  "checks": ["level", "level-monotonic", "brief-pr-merged", "brief-plan-approved", "build-pr-merged", "main-first-parent", "build-pr-stamp", "record-pass", "no-tag", "no-would-lines"]
+}

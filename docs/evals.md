@@ -163,6 +163,46 @@ First runs on 2026-10-29, Sonnet:
 - With egm@egm: 21 of 23 checks live for $3.52. The two misses were the offer check reading the goldfish command's own text, which quotes the install line; with the check reading only the stage's first turn, the same transcripts pass 23 of 23.
   Four Goldfish reviewers (zoom_out, design_critic, policy, scope) reviewed the spec and raised five distinct major findings, mostly escalations to the intent's author; the suite ended at 18 tests.
 
+## The software factory e2e
+
+`node tests/e2e-sdlc.mjs` runs the escalation levels and the factory from an idea to a merged pull request, a deploy by tag and an incident.
+It runs on the host.
+Level 1 work goes through `factory.py run`, which starts its own Docker sessions.
+Everything a person does at a gate is a `claude -p` turn in the fixture repo or a git commit made as the role name (`git -c user.name=<name>`).
+The fixture is the tiny-tasks repo with a `## Ship` tag-release target and a `## Roles` block holding four different names (product owner, engineer, lead and policy owner; the platform owner is the engineer).
+pro-core, pro-ai-sdlc, pro-ship, pro-quality and pro-security are installed at project scope from the marketplace at `--ref`.
+
+| Scenario | Who | Path |
+|---|---|---|
+| 1 | product owner | "list tasks sorted by title", level 1, `factory.py run`, merged |
+| 2 | engineer | "a task with an empty title is accepted", level 1, the first build commit adds a test and no `src/` change, merged |
+| 3 | engineer, policy owner, product owner, lead | "export tasks to a file under EXPORT_DIR", level 3: spec flags a concern, the policy owner closes it, the product owner accepts, a plan with two approver names, `/execute`, `/review`, the lead's merge with `--match-head-commit`, `/pro-ship:ship`, tag `v1.1.0`, `ship.py deployed`, then `/incident` writes an intent with source incident and level 2 or more |
+
+```bash
+export ANTHROPIC_API_KEY=...
+export FACTORY_GH_TOKEN=...                          # scoped to the throwaway repos; or pass --allow-broad-token for a demo
+node tests/e2e-sdlc.mjs --dry                        # every step and check, nothing spent, no GitHub, works offline
+node tests/e2e-sdlc.mjs --scenario 1 --allow-broad-token
+node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token --max-cost-usd 30
+node tests/e2e-sdlc.mjs --local                      # bare remote, no GitHub, stops at the first step that needs a pull request
+```
+
+Flags: `--scenario 1,2,3` (default all), `--ref` (default the current branch, which must be pushed), `--local`, `--allow-broad-token`, `--keep` (keep the repo and the work folder), `--max-cost-usd` (default 30), `--model` (default sonnet for the role turns), `--owner` (GitHub user or org for the throwaway repo), `--dry`.
+
+The GitHub origin is a private repo `sdlc-e2e-<yyyymmdd-hhmmss>` created on the host with `gh repo create` and deleted in `finally`, only when the name matches `^sdlc-e2e-\d{8}-\d{6}$` and this run created it.
+At the start the run deletes leftover `sdlc-e2e-*` repos older than a day under the same pattern.
+The container gets `FACTORY_GH_TOKEN` and the maintainer's own token only with `--allow-broad-token`.
+Tokens travel in the environment of child processes and are scrubbed from every saved output.
+The role turns run with a private `HOME` so the maintainer's Claude settings and hook mode files are not touched.
+Transcripts and `checks.json` land in `tests/e2e-results/`, which git ignores.
+
+The checks are in `tests/e2e-sdlc/checks.mjs`, deterministic and read with git, gh and files only.
+`checkScenario(repoDir, scenario)` returns `[{ name, pass, detail }]`, and mieruka's twin imports the same module.
+The unit tests (`tests/unit/e2e-sdlc.test.mjs`) run `--dry` and check the scenario files.
+
+Rough cost on Sonnet for the role turns plus the factory's Opus sessions: $5 to $8 for each level 1 scenario and $8 to $14 for scenario 3, about $20 to $30 for all three.
+It is on demand only: run it for a change to the factory, the levels, the roles or the gates, and never in CI.
+
 ## Measured changes
 
 ### 2026-10-30: pro-electron ([intent](../intent/2026-10-30-pro-electron/))
