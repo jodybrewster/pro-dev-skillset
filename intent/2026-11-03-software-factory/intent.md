@@ -20,11 +20,13 @@ Every change goes through the same intent, spec and plan gates, whether it is a 
 A small bug or a small ask waits on a person three times before anything is built.
 The risk tiers decide only at merge time, so the front of the loop cannot tell a trivial change from a dangerous one.
 The loop has no named roles beyond "the engineer" and "a lead", so whoever wrote an intent can also accept it and an engineer can close a security concern in their own spec.
-There is no end-to-end proof that the loop runs from an intent to a deploy, and mieruka has no notion of who may act at a gate.
+There is no end-to-end proof that the loop runs from an intent to a deploy.
+Mieruka has no notion of who may act at a gate.
 
 ## Proposed outcome
 
-A small intent, accepted by a named role, runs from intent to a merged pull request with nobody present, and stops at the right person the moment it turns out larger.
+A small intent, accepted by a named role, runs from intent to a merged pull request with nobody present.
+It stops at the right person the moment it turns out larger.
 A larger intent escalates and the maintainer reviews it at the gates the escalation level names.
 Three escalation levels are picked at intake and only ever raised:
 
@@ -37,7 +39,8 @@ Three escalation levels are picked at intake and only ever raised:
 Roles come from the AI-native SDLC playbook (https://claude.com/resources/articles/the-ai-native-sdlc-playbook): product owner, engineer, lead or code owner, policy owner and platform owner, named in a role map in `REVIEW.md`.
 A solo repo puts one name in every role.
 
-It works standalone with pro-ai-sdlc, pro-ship and pro-quality installed, and it works in mieruka, which gains a human roles setting and gate buttons that know who may press them.
+It works standalone with pro-ai-sdlc, pro-ship and pro-quality installed.
+It also works in mieruka, which gains a human roles setting and gate buttons that know who may press them.
 An end-to-end eval builds a throwaway repo, installs the plugins and runs three intents in different role scenarios through to deploy; a twin of it runs the same scenarios through mieruka.
 A step-by-step guide and a demo script let the maintainer learn it, check each step and show it.
 
@@ -53,7 +56,7 @@ A step-by-step guide and a demo script let the maintainer learn it, check each s
 
 - Very simple: reuse `/execute`, `/review`, `/pr-babysit`, `risk-classify.py`, `merge-gate.py` and the records; add the fewest new commands and no services.
 - agent-skills (`../agent-skills`) is the baseline; its steps are adopted in full and a dropped one is written down with a reason.
-- A level is set by a script, never by a model, and only goes up.
+- A level is set by a script, never by a model; it only goes up.
 - Intent text from outside the role map is data and starts at level 2.
 - A test is locked once written during a build.
 - The agent may act up to the production gate and never pass it: deploy stays a person's step at every level.
@@ -70,8 +73,8 @@ A step-by-step guide and a demo script let the maintainer learn it, check each s
 
 ## Success looks like
 
-- Two small intents, a feature from the product owner and a bug from the engineer, reach merged pull requests with no person in the session, and the record says "deploy is yours".
-- A larger intent stops at the policy owner, the engineer and the lead in turn, and cannot merge without them.
+- Two small intents, a feature from the product owner and a bug from the engineer, reach merged pull requests with no person in the session; the record says "deploy is yours".
+- A larger intent stops at the policy owner, the engineer and the lead in turn; it cannot merge without them.
 - `node tests/e2e-sdlc.mjs` passes its three scenarios and mieruka's twin passes the same checks.
 - The maintainer follows the guide on a fresh repo and every validation step shows what the guide says.
 
