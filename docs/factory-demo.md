@@ -95,3 +95,40 @@ node tests/e2e-sdlc.mjs --dry
 
 Expected: `dry: 3 scenarios, 31 steps, 35 checks, 0 problems, cap $30, nothing spent`.
 The live run builds its own throwaway repo and deletes it afterwards; quote the cost before you start it.
+
+## Clean up everything for a retest
+
+A retest starts from nothing; leftovers give misleading results, above all on mieruka's board.
+Run these in order, then check each line under Validate.
+
+1. Stop the factory loop (ctrl-c) and any mieruka dev server you started for the demo, by its own process id only:
+   ```bash
+   lsof -tiTCP:<port> -sTCP:LISTEN    # then kill that pid
+   ```
+2. Remove the demo's local-scope plugins:
+   ```bash
+   cd ~/Projects/<demo> && for p in pro-ai-sdlc pro-ship pro-quality pro-security; do claude plugin uninstall "$p@pro-dev-skillset" --scope local; done
+   ```
+3. Move the local checkout to the Trash (it holds the demo's `.pro-dev/` records and mieruka's `.mieruka/` cards):
+   ```bash
+   mv ~/Projects/<demo> ~/.Trash/<demo>-$(date +%F)
+   ```
+4. Delete the GitHub repo yourself; deletion is permanent, so the agent never runs it:
+   ```bash
+   gh auth refresh -h github.com -s delete_repo    # once, adds the scope
+   gh repo delete jodybrewster/<demo> --yes
+   ```
+   To keep it for reference instead: `gh repo archive jodybrewster/<demo> --yes`.
+5. Remove the factory images (`docker images pro-dev-factory`, then `docker rmi pro-dev-factory:<tag>`); the next run builds the current one.
+6. Pick a new demo name for the retest, so nothing on GitHub or on disk carries over.
+
+Validate:
+
+- `ls ~/Projects | grep <demo>` prints nothing.
+- `gh repo view jodybrewster/<demo>` says the repo is not found (or archived, if you kept it).
+- `python3 -c "import json,os; print([k for k,v in json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))['plugins'].items() for e in v if '<demo>' in e.get('projectPath','')])"` prints `[]`.
+- `docker images pro-dev-factory` lists no image older than the plugin version you will test.
+- mieruka shows no `<demo>` project.
+
+The factory-demo-kit intent turns steps 2 to 6 into `demo/factory/remove-demo.sh`.
+

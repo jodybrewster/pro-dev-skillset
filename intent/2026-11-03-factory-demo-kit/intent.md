@@ -25,7 +25,7 @@ A half-cleaned demo gives misleading results on mieruka's board.
 
 `demo/factory/new-demo.sh <name>` creates a private GitHub repo and a local checkout with everything the demo needs, ready for `factory.py run --next` and for the larger intent of the demo script.
 `demo/factory/remove-demo.sh <name>` archives the GitHub repo, uninstalls the local-scope plugins and moves the checkout to the Trash.
-`docs/factory-demo.md` starts from the script.
+`docs/factory-demo.md` starts from the script and ends with its section "Clean up everything for a retest", which the remove script follows step for step: stop the loop and any demo mieruka server, uninstall the local plugins, move the checkout to the Trash, archive the repo and print its delete command, remove old factory images, then check each one.
 
 ## Constraints
 
