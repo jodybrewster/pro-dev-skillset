@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-11-04: the factory retest is over and four intents wait for acceptance.
+Last updated 2026-11-04: the next run drives mieruka's board in a browser, after mieruka's trace reader.
 
 A fresh session starts here: read "Now", then the intent folder it names.
 The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
@@ -11,19 +11,20 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
-### Next session: rerun the SDLC as an automated happy path
+### Next session: rerun the SDLC by driving mieruka's board
 
 The retest of 2026-11-04 is over: the release went out but no card reached Done, as written below.
 In order, each through the loop:
 
 1. The maintainer accepts or corrects the four intents, then answers their open questions: whether `pro-pdd`, `pro-spdd` and `pro-speckit` are being retired, plus the version a rollback release takes.
-2. mieruka's own intents, which the owner merges: the trace reads change cards and sessions run outside mieruka, plus screenshots shown as images in the trace panel. The first defines the log format the capture intent writes.
-3. [factory-session-capture](../intent/2026-11-04-factory-session-capture/intent.md): every factory and terminal session leaves a trace tied to its card.
-4. [sdlc-happy-path-run](../intent/2026-11-04-sdlc-happy-path-run/intent.md): one command runs the happy path to Done, with a screenshot per stage and role changes. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`.
-5. [rollback-path](../intent/2026-11-04-rollback-path/intent.md): a rollback route through the loop and an automated scenario, after the happy path works.
-6. [sdlc-git-commands](../intent/2026-11-04-sdlc-git-commands/intent.md): slash commands recommend each git step and the person decides. It changes ADR-0025's rule on who runs the tag, so settle it before that ADR's sign-off.
-7. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes. It has not run since release-versioning.
-8. The maintainer signs off the software factory and release-versioning; ADR-0024 and ADR-0025 move to accepted.
+2. mieruka's trace reader, which the owner merges: its `session-trace-every-path` intent reads change cards and session logs written outside mieruka and defines the log format. Its spec is a draft with no plan yet.
+3. [sdlc-happy-path-run](../intent/2026-11-04-sdlc-happy-path-run/intent.md): the happy path to Done with a screenshot per stage and role changes, driven through the board in a browser. Claude in Chrome drives the first run and a Playwright script follows from what worked. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`.
+4. [factory-session-capture](../intent/2026-11-04-factory-session-capture/intent.md), reduced to level 1 container runs: each one writes mieruka's log format, tied to its card.
+5. mieruka's `trace-evidence-screenshots` intent, which the owner merges: screenshots shown as images in the trace panel.
+6. [rollback-path](../intent/2026-11-04-rollback-path/intent.md): a rollback route through the loop and an automated scenario, after the happy path works.
+7. [sdlc-git-commands](../intent/2026-11-04-sdlc-git-commands/intent.md): slash commands recommend each git step and the person decides. It changes ADR-0025's rule on who runs the tag, so settle it before that ADR's sign-off.
+8. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes. It has not run since release-versioning.
+9. The maintainer signs off the software factory and release-versioning; ADR-0024 and ADR-0025 move to accepted.
 
 ### Done: the retest of 2026-11-04
 
