@@ -52,19 +52,32 @@ repo that holds the current directory):
   prepare X.Y.Z [--target ID]      write the release version into the manifest and, in manual
                                    mode, the changelog: {files, skipped}. Working tree only; it
                                    never commits, tags or pushes.
-  deployed --target ID --env ENV [--url U] [--commit SHA] [--outcome succeeded|failed|rolled-back]
-           [--deployed-at ISO] [--checks FILE]
+  checks [--target ID]             the post-deploy checks for the target's kind: {kind, items,
+                                   refused, documented_use}.
+  clean-run --tag TAG --target ID --step tests|use
+                                   run the tests or the Ship block's documented_use on a clean
+                                   copy of the tag in a container with no mount, no token and no
+                                   env file: {step, tag, command, image, exit, tail}. It never
+                                   falls back to the host.
+  deployed --target ID [--env ENV] --deployed-at ISO [--url U] [--commit SHA]
+           [--outcome succeeded|failed|rolled-back] [--checks FILE]
+  deployed --from-tag TAG --target ID [--env ENV] [--checks FILE]
   deployed --from-github --target ID [--env production]
                                    write the deploy record of docs/loop-records.md to
                                    .pro-dev/ship/deploys/<evidence_key>.json (plus the ignored
                                    mieruka copy) and print {path, mieruka, why, status,
                                    evidence_key}. It records a deploy that happened and never
                                    runs one. --from-github reads the newest deployment and its
-                                   newest status for ENV through gh. Only http and https URLs
-                                   are kept; ENV is a-z, 0-9 and - and URL-encoded in the query.
+                                   newest status for ENV through gh. --from-tag fills the commit
+                                   and the time from a release tag; the time comes from the first
+                                   of the GitHub deployment, the GitHub release, the tag's workflow
+                                   run, the tagger date and the commit date that answers. The time
+                                   the record is written is never the deploy time. Only http and
+                                   https URLs are kept; ENV is a-z, 0-9 and - and URL-encoded in
+                                   the query.
 
 Python 3 standard library only. The only network calls are the gh calls in scope,
-coverage and deployed --from-github and git ls-remote in version, each with a timeout. Nothing here deploys, tags, publishes or pushes.
+coverage, protection and deployed --from-github or --from-tag and git ls-remote in version, each with a timeout. Nothing here deploys, tags, publishes or pushes.
 """
 from __future__ import annotations
 
@@ -1012,7 +1025,15 @@ def check(root: str, sha: str) -> dict:
 SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 OUTCOMES = ("succeeded", "failed", "rolled-back")
 CHECK_STATUSES = ("pass", "finding", "confirm")
-DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks")
+DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks", "--from-tag")
+LIBRARY_KINDS = ("tag-release", "publish", "desktop")
+LIBRARY_CHECKS = ["tests on a clean checkout of the tag", "documented use runs", "rollback dry run"]
+SERVICE_CHECKS = ["health endpoint", "error rate", "latency", "critical user flow", "logs", "rollback mechanism"]
+SERVICE_WORDS = ["health", "error rate", "latency", "logs"]
+SERVICE_CHECK = re.compile(r"\bhealth\b|\berror[ -]rate\b|\blatency\b|\blogs?\b", re.I)
+CLEAN_RUN_TIMEOUT = 900
+DOCUMENTED_USE_CAP = 400
+IMAGE_NAME = re.compile(r"[a-z0-9][a-z0-9._/:@-]{0,200}")
 GITHUB_OUTCOMES = {"success": "succeeded", "failure": "failed", "error": "failed"}
 
 
@@ -1080,7 +1101,65 @@ def github_facts(root: str, env: str) -> dict:
             "deployed_at": parse_time(when, "the deployment time")}
 
 
+def tag_time(root: str, tag: str, commit: str, env: str) -> tuple[datetime, str]:
+    """(time, source) from the first source that answers. A gh failure moves on to the next rung."""
+    def ask(path: str, what: str):
+        try:
+            return gh_json(root, ["api", path], what)
+        except Refuse:
+            return None
+
+    def usable(value) -> datetime | None:
+        if not isinstance(value, str) or not value:
+            return None
+        try:
+            return parse_time(value, "a time")
+        except Refuse:
+            return None
+    # Only a finished deployment of this environment says when this release went out; a preview does not.
+    deps = ask(f"repos/{{owner}}/{{repo}}/deployments?sha={commit}&environment={quote(env, safe='')}&per_page=1", "reading the deployments")
+    dep = deps[0] if isinstance(deps, list) and deps and isinstance(deps[0], dict) else {}
+    if isinstance(dep.get("id"), int):
+        sts = ask(f"repos/{{owner}}/{{repo}}/deployments/{dep['id']}/statuses?per_page=1", "reading the deployment status")
+        st = sts[0] if isinstance(sts, list) and sts and isinstance(sts[0], dict) else {}
+        when = usable(st.get("created_at")) if st.get("state") == "success" else None
+        if when:
+            return when, "github-deployment"
+    rel = ask(f"repos/{{owner}}/{{repo}}/releases/tags/{quote(tag, safe='')}", "reading the release")
+    when = usable(rel.get("published_at")) if isinstance(rel, dict) else None
+    if when:
+        return when, "release"
+    runs = ask(f"repos/{{owner}}/{{repo}}/actions/runs?head_sha={commit}&event=push&per_page=20", "reading the workflow runs")
+    listed = runs.get("workflow_runs") if isinstance(runs, dict) else None
+    for run in listed if isinstance(listed, list) else []:
+        if isinstance(run, dict) and run.get("head_branch") == tag:
+            when = usable(run.get("created_at"))
+            if when:
+                return when, "tag-push-run"
+    tagger = git_lines(root, "for-each-ref", "--format=%(taggerdate:iso-strict)", f"refs/tags/{tag}")
+    when = usable(tagger[0].strip()) if tagger else None
+    if when:
+        return when, "tagger-date"
+    stamp = git_lines(root, "log", "-1", "--format=%cI", commit)
+    when = usable(stamp[0].strip()) if stamp else None
+    if when:
+        return when, "commit-date"
+    raise Refuse(f"ship: no time could be read for {tag}")
+
+
+def deploy_env(given: str | None, target: dict, from_github: bool) -> tuple[str | None, str]:
+    """(env, env_source): the person's word, the target's, or the kind's default."""
+    if given:
+        return given, "given"
+    if isinstance(target.get("env"), str) and target["env"]:
+        return target["env"], "target"
+    if target.get("kind") in LIBRARY_KINDS:
+        return "release", "default"
+    return ("production", "default") if from_github else (None, "")
+
+
 def cmd_deployed(root: str, args: list[str]) -> dict:
+    refuse_headless("deployed")
     rest = [a for a in args if a != "--from-github"]
     from_github = len(rest) != len(args)
     for i, a in enumerate(rest):
@@ -1089,16 +1168,22 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
     opt = {n[2:].replace("-", "_"): flag(rest, n) for n in DEPLOY_FLAGS}
     tid = opt["target"]
     if not tid:
-        raise Refuse("ship: usage: deployed --target <id> --env <env> [--url U] [--commit SHA] "
-                     "[--outcome succeeded|failed|rolled-back] [--deployed-at ISO] [--checks FILE] | "
+        raise Refuse("ship: usage: deployed --target <id> [--env <env>] --deployed-at ISO [--url U] [--commit SHA] "
+                     "[--outcome succeeded|failed|rolled-back] [--checks FILE] | "
+                     "deployed --from-tag <tag> --target <id> [--env <env>] [--checks FILE] | "
                      "deployed --from-github --target <id> [--env production]")
     known = {t["id"]: t for t in targets(root) if isinstance(t, dict) and isinstance(t.get("id"), str)}
     if not SAFE_NAME.match(tid) or tid not in known:
         listed = ", ".join(sorted(known)) or "none found"
         raise Refuse(f"ship: --target {tid!r} is not a target of this repo. Targets: {listed}")
-    env = opt["env"] or ("production" if from_github else None)
+    from_tag = opt["from_tag"]
+    if from_github and from_tag:
+        raise Refuse("ship: --from-github and --from-tag are separate sources")
+    if from_tag and not tag_parts(from_tag):
+        raise Refuse("ship: --from-tag needs a release tag such as v1.2.3 or name--v1.2.3")
+    env, env_source = deploy_env(opt["env"], known[tid], from_github)
     if not env:
-        raise Refuse("ship: --env is required (production, staging, preview or another name)")
+        raise Refuse("ship: --env is required (production, staging, preview or another name), or set env on the target in the Ship block")
     if not SAFE_NAME.match(env) or len(env) > 40:
         raise Refuse("ship: --env may use only a-z, 0-9 and - (lowercase)")
     if from_github:
@@ -1106,7 +1191,17 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
             if opt[n]:
                 raise Refuse(f"ship: --from-github fills the facts itself; drop --{n.replace('_', '-')}")
         facts = github_facts(root, env)
-        source = "github"
+        source, time_source = "github", "github"
+    elif from_tag:
+        for n in ("url", "commit", "outcome", "deployed_at"):
+            if opt[n]:
+                raise Refuse(f"ship: --from-tag fills the facts itself; drop --{n.replace('_', '-')}")
+        commit = rev(root, from_tag)
+        if not commit:
+            raise Refuse(f"ship: {from_tag} is not a tag of this repo")
+        when, time_source = tag_time(root, from_tag, commit, env)
+        facts = {"commit": commit, "url": None, "outcome": "succeeded", "deployed_at": when}
+        source = "tag"
     else:
         url = None
         if opt["url"]:
@@ -1119,21 +1214,31 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
         outcome = opt["outcome"] or "succeeded"
         if outcome not in OUTCOMES:
             raise Refuse(f"ship: --outcome must be one of {', '.join(OUTCOMES)}")
-        when = parse_time(opt["deployed_at"], "--deployed-at") if opt["deployed_at"] else datetime.now().astimezone()
+        if not opt["deployed_at"]:
+            raise Refuse("ship: the deploy time is required; the time this record is written is not it. "
+                         "Pass --deployed-at <ISO>, --from-tag <tag> or --from-github.")
+        when = parse_time(opt["deployed_at"], "--deployed-at")
         facts = {"commit": commit, "url": url, "outcome": outcome, "deployed_at": when}
-        source = "manual"
+        source, time_source = "manual", "given"
     checks = read_checks(opt["checks"]) if opt["checks"] else []
+    if known[tid].get("kind") in LIBRARY_KINDS:
+        wrong = [c["item"] for c in checks if SERVICE_CHECK.search(c["item"])]
+        if wrong:
+            raise Refuse(f"ship: a {known[tid]['kind']} target has no server to check, so {clean(wrong[0], 80)!r} does not apply. "
+                         f"It takes: {', '.join(LIBRARY_CHECKS)}.")
     commit, outcome, when = facts["commit"], facts["outcome"], facts["deployed_at"]
     pre = check(root, commit)
     pre_rec = read_json(os.path.join(root, ".pro-dev", "ship", "preflight.json")) if pre["cause"] != "missing" else None
     pre_key = pre_rec.get("evidence_key") if isinstance(pre_rec, dict) and isinstance(pre_rec.get("evidence_key"), str) else None
     findings = sum(1 for c in checks if c["status"] == "finding")
     confirms = sum(1 for c in checks if c["status"] == "confirm")
-    status = "fail" if outcome != "succeeded" else ("partial" if findings or confirms else "pass")
+    unchecked = bool(from_tag) and not checks
+    status = "fail" if outcome != "succeeded" else ("partial" if findings or confirms or unchecked else "pass")
     short = commit[:12]
     if outcome == "succeeded":
         tail = [plural(findings, "finding")] if findings else []
         tail += [plural(confirms, "check") + " to confirm"] if confirms else []
+        tail += ["no checks ran"] if unchecked else []
         summary = f"{env}: deployed {short}" + "".join(f", {t}" for t in tail)
     else:
         summary = f"{env}: {'deploy failed' if outcome == 'failed' else 'rolled back'} {short}"
@@ -1143,7 +1248,7 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
         "target": tid, "target_kind": known[tid].get("kind"), "env": env, "url": facts["url"],
         "commit": commit, "deployed_at": when.isoformat(timespec="seconds"),
         "created": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "source": source, "outcome": outcome,
+        "source": source, "time_source": time_source, "env_source": env_source, "outcome": outcome,
         "preflight": {"state": "fresh" if pre["cause"] is None else pre["cause"], "evidence_key": pre_key},
         "checks": checks, "rollback": known[tid].get("rollback") or None,
     }
@@ -2086,6 +2191,162 @@ def cmd_baseline(root: str, args: list[str], version: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# checks and clean-run (R15, R16 and the security challenge)
+# ---------------------------------------------------------------------------
+
+def readme_example(root: str) -> dict:
+    """The README's first usage example, as text that is shown and never run."""
+    path = safe_file(root, "README.md")
+    text = read(path) if path else ""
+    lines, blocks, usage, inside, cur, block_usage = text.splitlines(), [], False, False, [], False
+    for ln in lines:
+        if ln.strip().startswith("```"):
+            if inside:
+                blocks.append(("\n".join(cur), block_usage))
+                cur = []
+            else:
+                block_usage = usage
+            inside = not inside
+        elif inside:
+            cur.append(ln)
+        elif re.match(r"^#{1,6}\s", ln):
+            usage = bool(re.search(r"usage|quick ?start|getting started|example", ln, re.I))
+    pick = next((b for b, u in blocks if u and b.strip()), next((b for b, _ in blocks if b.strip()), None))
+    if not pick:
+        return {"source": "none", "text": "", "commit": None, "runnable": False}
+    last = git_lines(root, "log", "-1", "--format=%h", "--", "README.md")
+    shown = "\n".join(clean(ln) for ln in pick.splitlines()[:10])
+    return {"source": "readme", "text": shown, "commit": clean(last[0], 12) if last else None, "runnable": False}
+
+
+def shown_whole(command: str) -> bool:
+    """The person confirms what is shown, so a command that cleaning would change never runs."""
+    return clean(command, DOCUMENTED_USE_CAP) == command
+
+
+def cmd_checks(root: str, args: list[str]) -> dict:
+    target = choose_target(root, flag(args, "--target"))
+    if not target:
+        raise Refuse("ship: this repo has no ship target")
+    if target.get("kind") not in LIBRARY_KINDS:
+        return {"kind": target.get("kind"), "items": SERVICE_CHECKS, "refused": [], "documented_use": None}
+    named = target.get("documented_use")
+    use = ({"source": "ship-block", "text": clean(named, DOCUMENTED_USE_CAP), "commit": None, "runnable": shown_whole(named)}
+           if isinstance(named, str) and named.strip() else readme_example(root))
+    return {"kind": target.get("kind"), "items": LIBRARY_CHECKS, "refused": SERVICE_WORDS, "documented_use": use}
+
+
+def tests_command(root: str, target: dict, sha: str) -> str:
+    """The test command, run from the target's own folder when it is worked out from a manifest there."""
+    named = target.get("test_command")
+    if isinstance(named, str) and named.strip():
+        return named
+    base = target.get("path") or "."
+    inner = tests_for(root, base, sha)
+    return inner if os.path.normpath(base) == "." else f"cd {shlex.quote(os.path.normpath(base))} && {inner}"
+
+
+def tests_for(root: str, base: str, sha: str) -> str:
+    pkg = show_at(root, sha, os.path.normpath(os.path.join(base, "package.json")))
+    try:
+        scripts = (json.loads(pkg).get("scripts") or {}) if pkg else {}
+    except (ValueError, AttributeError):
+        scripts = {}
+    if isinstance(scripts, dict) and scripts.get("test"):
+        lock = show_at(root, sha, os.path.normpath(os.path.join(base, "package-lock.json")))
+        try:
+            packages = json.loads(lock).get("packages", {}) if lock else {}
+        except (ValueError, AttributeError):
+            packages = {"unreadable": True}
+        return "npm ci && npm test" if any(k for k in packages) else "npm test"
+    if show_at(root, sha, os.path.normpath(os.path.join(base, "pyproject.toml"))) is not None:
+        return "pytest"
+    if show_at(root, sha, os.path.normpath(os.path.join(base, "Cargo.toml"))) is not None:
+        return "cargo test"
+    raise Refuse("ship: no test command could be worked out; set test_command on the target in the Ship block")
+
+
+def check_image(root: str, target: dict) -> str:
+    """The image to run in, proved present. No docker or no image is a refusal, never a failed test."""
+    named = target.get("check_image")
+    if named is not None and (not isinstance(named, str) or not IMAGE_NAME.fullmatch(named)):
+        raise Refuse("ship: check_image in the Ship block is not an image name")
+    stays = "the check stays for the person to confirm"
+    try:
+        if named:
+            r = sh(["docker", "image", "inspect", named], root, timeout=30)
+            if r.returncode != 0:
+                raise Refuse(f"ship: docker has no image {named} or is not answering; {stays}")
+            return named
+        r = sh(["docker", "images", "pro-dev-factory", "--format", "{{.Repository}}:{{.Tag}}"], root, timeout=30)
+    except FileNotFoundError:
+        raise Refuse(f"ship: docker is not installed, so the clean run could not happen; {stays}")
+    except (OSError, subprocess.SubprocessError) as e:
+        raise Refuse(f"ship: docker could not run ({e}); {stays}")
+    if r.returncode != 0:
+        raise Refuse(f"ship: docker is not answering, so the clean run could not happen; {stays}")
+    images = [ln.strip() for ln in r.stdout.splitlines() if ln.strip() and not ln.endswith("<none>")]
+    if not images:
+        raise Refuse(f"ship: no pro-dev-factory image and no check_image on the target; {stays}")
+    return images[0]
+
+
+def cmd_clean_run(root: str, args: list[str]) -> dict:
+    """Unread code runs only here: the tag's files go in on stdin, so the container sees no host path,
+    no token and no env file. The network is off, because Docker Desktop can reach the host and the
+    LAN from the default bridge; a target whose tests must install says so with test_network: true."""
+    refuse_headless("clean-run")
+    tag, step = flag(args, "--tag"), flag(args, "--step")
+    if not tag or not tag_parts(tag):
+        raise Refuse("ship: clean-run needs --tag with a release tag")
+    if step not in ("tests", "use"):
+        raise Refuse("ship: --step must be tests or use")
+    sha = rev(root, tag)
+    if not sha:
+        raise Refuse(f"ship: {tag} is not a tag of this repo")
+    target = choose_target(root, flag(args, "--target"))
+    if not target:
+        raise Refuse("ship: this repo has no ship target")
+    if step == "use":
+        command = target.get("documented_use")
+        if not isinstance(command, str) or not command.strip():
+            raise Refuse("ship: no documented_use on the target in the Ship block, so nothing runs; the README example stays for the person to confirm")
+        if not shown_whole(command):
+            raise Refuse("ship: documented_use holds more than the person is shown, so it does not run; shorten it in the Ship block")
+    else:
+        command = tests_command(root, target, sha)
+    image = check_image(root, target)
+    script = 'mkdir -p /tmp/clean && cd /tmp/clean && tar xf - && exec sh -c "$1"'
+    needs_net = step == "tests" and target.get("test_network") is True
+    if step == "tests" and not needs_net and re.search(r"\b(?:npm ci|npm install|pip install|cargo)\b", command):
+        raise Refuse("ship: these tests install packages and the network is off. Set test_network: true on the target in the Ship block "
+                     "to allow it, knowing unread code can then reach the network; until then the check stays for the person to confirm")
+    name = f"ship-clean-{os.getpid()}-{int(datetime.now().timestamp())}"
+    argv = ["docker", "run", "-i", "--rm", "--name", name, "--entrypoint", "sh", "--cap-drop", "ALL",
+            "--security-opt", "no-new-privileges", *([] if needs_net else ["--network", "none"]),
+            image, "-c", script, "clean-run", command]
+    archive = subprocess.Popen(["git", "archive", "--format=tar", sha], cwd=root, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    try:
+        limit = int(os.environ.get("SHIP_CLEAN_RUN_TIMEOUT") or CLEAN_RUN_TIMEOUT)
+        r = subprocess.run(argv, cwd=root, stdin=archive.stdout, capture_output=True, text=True, errors="replace", timeout=limit)
+    except subprocess.TimeoutExpired:
+        try:  # killing the client leaves the container and the unread code running
+            subprocess.run(["docker", "kill", name], cwd=root, capture_output=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            pass
+        raise Refuse(f"ship: the clean run timed out after {limit}s and its container was killed")
+    except OSError as e:
+        raise Refuse(f"ship: docker could not run ({e}); the check stays for the person to confirm")
+    finally:
+        archive.stdout.close()
+        archive.wait()
+    if r.returncode == 125:
+        raise Refuse("ship: docker could not start the container; the check stays for the person to confirm")
+    tail = "\n".join(clean(ln) for ln in (r.stdout + r.stderr).splitlines()[-10:])
+    return {"step": step, "tag": tag, "command": clean(command, 400), "image": image, "exit": r.returncode, "tail": tail}
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -2122,6 +2383,10 @@ def main(argv: list[str]) -> int:
             emit(cmd_changelog(root, rest))
         elif cmd == "prepare":
             emit(cmd_prepare(root, rest))
+        elif cmd == "checks":
+            emit(cmd_checks(root, rest))
+        elif cmd == "clean-run":
+            emit(cmd_clean_run(root, rest))
         elif cmd == "check":
             if len(rest) != 1:
                 raise Refuse("ship: usage: check <sha>")

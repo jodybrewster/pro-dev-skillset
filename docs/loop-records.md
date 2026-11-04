@@ -40,6 +40,7 @@ Otherwise it writes nothing there and prints why.
 ## The deploy record
 
 Written by `ship.py deployed` after a deploy happened; it never runs a deploy.
+The time the record is written is never the deploy time, so a record with no time is refused.
 
 | Field | Value |
 |---|---|
@@ -47,7 +48,7 @@ Written by `ship.py deployed` after a deploy happened; it never runs a deploy.
 | `artifact_kind` | `deploy` |
 | `artifact_key` | the target `id` from the Ship block or detection |
 | `evidence_key` | `deploy-<target id>-<first 12 of commit>-<UTC time as YYYYMMDDTHHMMSSZ, lowercased>` |
-| `status` | `pass` when the deploy succeeded and every post-deploy check passed; `partial` when it succeeded and a check is a `finding` or still `confirm`; `fail` when the deploy failed or was rolled back |
+| `status` | `pass` when the deploy succeeded and every post-deploy check passed; `partial` when it succeeded and a check is a `finding` or still `confirm` or when `--from-tag` ran with no checks; `fail` when the deploy failed or was rolled back |
 | `summary` | starts with the env and the result, for example `production: deployed 3f2a9c1b4d5e, 1 check to confirm` |
 | `head` | top-level, the full sha that was deployed |
 
@@ -59,18 +60,28 @@ Local copy: `.pro-dev/ship/deploys/<evidence_key>.json`, one file per deploy; no
 |---|---|---|
 | `target` | string | the target `id` |
 | `target_kind` | string | the target `kind`, for example `deploy-on-merge` |
-| `env` | string | `production`, `staging`, `preview` or another name the person gives |
+| `env` | string | the name the person gives, else the target's `env`; a `tag-release`, `publish` or `desktop` target with neither records `release` |
+| `env_source` | string | `given`, `target` or `default`, optional |
 | `url` | string or null | the deployed URL |
 | `commit` | string | the same sha as `head` |
 | `deployed_at` | string | when the deploy finished |
+| `time_source` | string | where that time came from: `github-deployment`, `release`, `tag-push-run`, `tagger-date`, `commit-date`, `given` or `github`, optional |
 | `created` | string | when the record was written |
-| `source` | string | `manual` when the person gave the facts, `github` when they came from a GitHub deployment |
+| `source` | string | `manual` when the person gave the facts, `github` when they came from a GitHub deployment, `tag` when they came from a release tag |
 | `outcome` | string | `succeeded`, `failed` or `rolled-back` |
 | `preflight` | object | `{state, evidence_key}`: `state` is `fresh`, `missing`, `unreadable`, `stale` or `no-go` by the freshness rule in ship-preflight.md for `commit`; `evidence_key` is the preflight's key or null |
 | `checks` | array | `{item, status, evidence}`; `status` is `pass`, `finding` or `confirm` |
 | `rollback` | object or null | `{triggers, steps, rto}` copied from the target |
 
 mieruka's deploy panel reads `url`, `env` and `commit`, so those keep these names.
+`env_source` and `time_source` are optional additions, so `schema` stays 1.
+
+The checks follow the target's kind (`ship.py checks --target <id>`):
+
+| Kind | Checks |
+|---|---|
+| `tag-release`, `publish`, `desktop` | tests on a clean checkout of the tag, the documented use runs and a rollback dry run; a health, error rate, latency or log check is refused |
+| `deploy-on-merge`, `manual-deploy` | health, error rate, latency, the critical user flow, logs and the rollback mechanism |
 
 ## The incident record
 
