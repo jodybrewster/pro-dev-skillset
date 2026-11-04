@@ -65,6 +65,8 @@ Forked content keeps its footer and its row in [docs/licenses.md](./docs/license
 Run before every commit and push.
 All must pass - do not commit if any fail.
 
+pr-check timeout: 900
+
 ```bash
 # 1. Static checks: manifests, frontmatter, version-bump law, routing cases,
 #    Codex parity (codex-parity + codex-manifests checks run automatically)

@@ -265,6 +265,7 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 - Step 1: `tag_command` is null while `question` waits for an answer, since the number depends on it.
 - Step 1: `scope` gains `base_tag` and, with no `tag_pattern`, ignores a tag series no target owns; `v1.0.0` and `1.0.0` are one series (security review of the diff).
 - Step 1: a commit's own breaking mark or `feat` prefix raises the intent it touches (security review of the diff).
+- Step 1: `CLAUDE.md` gains `pr-check timeout: 900`, because `node tests/check.mjs` passes the 300 second default and every pr-check read `incomplete`.
 - Step 2: `/execute` reads the changelog mode from the repo by hand instead of through `ship.py`: the rule is short, `python3` is not pre-approved and no dependency on pro-ship is needed.
 
 ## Noticed but not touched
