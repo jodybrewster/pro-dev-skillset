@@ -17,7 +17,8 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 Built in #135 to #139; guide in [factory.md](./factory.md), demo in [factory-demo.md](./factory-demo.md).
 Proved live on https://github.com/jodybrewster/factory-demo: two level 1 intents merged with nobody present, one stopped at level 2 for the engineer.
 Waiting on the maintainer: the sign-off, merging mieruka #202 and #203, the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30) and the larger intent of the demo's Act 4.
-Follow-ups: cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
+Next: [release-versioning](../intent/2026-11-03-release-versioning/intent.md), the gaps the demo's first release exposed (version, changelog, post-deploy checks by target kind, deploy facts, tag protection).
+Follow-ups: plans that a later change makes untrue (the reviewer's doc-freshness check), cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
 
 ### Done: the loop after the build
 
