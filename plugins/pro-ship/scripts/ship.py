@@ -26,6 +26,15 @@ repo that holds the current directory):
   check SHA                        the freshness verdict the gates use:
                                    {fresh, cause, status, head}. The contract is
                                    docs/ship-preflight.md.
+  version [--target ID] [--base REF]
+                                   the next version from the changes since the last release
+                                   tag: {state, target, last_tag, last_version, declared, bump,
+                                   next, next_if_not_breaking, tag, tag_command, base_candidate,
+                                   counts, changes, unclassified, reasons, notes, sentence,
+                                   question}. It writes nothing; its one network call is
+                                   git ls-remote for tags that collide.
+  changelog                        how the changelog is kept: {mode, why, path, unreleased,
+                                   groups}. mode is manual, generated or none.
   deployed --target ID --env ENV [--url U] [--commit SHA] [--outcome succeeded|failed|rolled-back]
            [--deployed-at ISO] [--checks FILE]
   deployed --from-github --target ID [--env production]
@@ -38,7 +47,7 @@ repo that holds the current directory):
                                    are kept; ENV is a-z, 0-9 and - and URL-encoded in the query.
 
 Python 3 standard library only. The only network calls are the gh calls in scope,
-coverage and deployed --from-github, each with a timeout. Nothing here deploys, tags, publishes or pushes.
+coverage and deployed --from-github and git ls-remote in version, each with a timeout. Nothing here deploys, tags, publishes or pushes.
 """
 from __future__ import annotations
 
@@ -46,6 +55,7 @@ import glob
 import json
 import os
 import re
+import shlex
 import signal
 import subprocess
 import sys
@@ -59,6 +69,14 @@ SHA = re.compile(r"^[0-9a-f]{40}$")
 MARKER = re.compile(
     r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)\s*-->")
 SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
+# The whole name of a release tag. git accepts names that hold a command substitution, so a tag
+# reaches a command, a gh path or a record only after a full match of this.
+RELEASE_TAG = re.compile(r"(?:([a-z0-9][a-z0-9._-]{0,63})(--|@))?(v?)(\d+)\.(\d+)\.(\d+)", re.ASCII)
+VERSION = re.compile(r"\d+\.\d+\.\d+", re.ASCII)
+INTENT_FOLDER = re.compile(r"\d{4}-\d{2}-\d{2}-[a-z0-9-]{1,60}", re.ASCII)
+CONTROL = re.compile("\x1b\\[[0-?]*[ -/]*[@-~]|\x1b.?|[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb\U000e0000-\U000e007f]")
+TEXT_CAP = 200
+LS_REMOTE_TIMEOUT = 10
 TRUSTED_ASSOCIATIONS = ("OWNER", "MEMBER", "COLLABORATOR")
 # `gh pr list` cannot print authorAssociation, so a login is checked against the repo's
 # collaborator permission instead; these levels can push to the repo.
@@ -549,13 +567,44 @@ def targets(root: str) -> list[dict]:
 # scope (R5, R6)
 # ---------------------------------------------------------------------------
 
-def release_tag(root: str, head: str, pattern: str | None = None) -> str | None:
-    """The newest release tag reachable from HEAD, as a commit sha."""
-    for tag in release_tags(root, pattern, "--merged", head, "--sort=-creatordate"):
-        sha = rev(root, tag)
-        if sha:
-            return sha
+def tag_parts(tag: str):
+    """(prefix, version tuple) of a valid release tag, or None for any other name."""
+    m = RELEASE_TAG.fullmatch(tag)
+    if not m:
+        return None
+    return (m.group(1) or "") + (m.group(2) or "") + m.group(3), tuple(int(m.group(i)) for i in (4, 5, 6))
+
+
+def tag_series(tag: str) -> str:
+    """Which numbering a valid tag belongs to: v1.0.0 and 1.0.0 are one series, name--v1.0.0 another."""
+    m = RELEASE_TAG.fullmatch(tag)
+    return (m.group(1) or "") + (m.group(2) or "")
+
+
+def release_base_tag(root: str, head: str, pattern: str | None, ids: list[str] | None = None) -> str | None:
+    """The tag a release range starts at: each series' highest version, then the newest of those.
+
+    A later lightweight v0.0.1 or 0.0.1 moves nothing, an invalid name is not a tag and, with no
+    tag_pattern, a series no target owns moves nothing while the plain series or a target's exists."""
+    tags = [t for t in release_tags(root, pattern, "--merged", head, "--sort=-creatordate") if tag_parts(t)]
+    own = {""} | {f"{i}{sep}" for i in (ids or []) for sep in ("--", "@")}
+    if not pattern and any(tag_series(t) in own for t in tags):
+        tags = [t for t in tags if tag_series(t) in own]
+    best: dict[str, str] = {}
+    for tag in tags:
+        s = tag_series(tag)
+        if s not in best or tag_parts(tag)[1] > tag_parts(best[s])[1]:
+            best[s] = tag
+    for tag in tags:
+        if best[tag_series(tag)] == tag and rev(root, tag):
+            return tag
     return None
+
+
+def release_tag(root: str, head: str, pattern: str | None = None, ids: list[str] | None = None) -> str | None:
+    """release_base_tag as a commit sha."""
+    tag = release_base_tag(root, head, pattern, ids)
+    return rev(root, tag) if tag else None
 
 
 def github_deploy(root: str) -> str | None:
@@ -598,8 +647,10 @@ def cmd_scope(root: str, args: list[str]) -> dict:
     pattern = tag_pattern(data)
     deploy_kind = any(t["kind"] in ("deploy-on-merge", "manual-deploy") for t in tg)
     base, source = None, "none"
+    ids = [t["id"] for t in tg if isinstance(t.get("id"), str)]
+    base_tag = release_base_tag(root, head, pattern, ids)
     if not deploy_kind:
-        base = release_tag(root, head, pattern)
+        base = release_tag(root, head, pattern, ids)
         source = "tag" if base else "none"
         kind = "tag"
     else:
@@ -609,12 +660,12 @@ def cmd_scope(root: str, args: list[str]) -> dict:
         else:
             order = [wanted] if wanted in ("github", "tag") else ["github", "tag"]
             for src in order:
-                cand = github_deploy(root) if src == "github" else release_tag(root, head, pattern)
+                cand = github_deploy(root) if src == "github" else release_tag(root, head, pattern, ids)
                 if cand and rev(root, cand):
                     base, source = rev(root, cand), src
                     break
-    return {"kind": kind, "base": base, "head": head, "range": f"{base}..{head}" if base else None,
-            "last_deploy_source": source, "targets": tg}
+    return {"kind": kind, "base": base, "base_tag": base_tag if source == "tag" else None, "head": head,
+            "range": f"{base}..{head}" if base else None, "last_deploy_source": source, "targets": tg}
 
 
 # ---------------------------------------------------------------------------
@@ -1084,6 +1135,554 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# version and changelog (release-versioning R1 to R8, R10)
+# ---------------------------------------------------------------------------
+
+NUMBER_WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+GENERATED_LINE = re.compile(r"generated|do not edit|not to be edited|don't edit", re.I)
+GENERATOR_WORDS = re.compile(r"release-please|semantic-release")
+
+
+def clean(text, cap: int = TEXT_CAP) -> str:
+    """Repo text on its way to a person or a prompt: no control or escape characters, one line, capped."""
+    out = CONTROL.sub(" ", str(text if text is not None else ""))
+    out = re.sub(r"\s+", " ", out).strip()
+    return out if len(out) <= cap else out[:cap - 3].rstrip() + "..."
+
+
+def safe_file(root: str, rel: str) -> str | None:
+    """The absolute path of a regular file in the repo when no part of the way there is a symlink."""
+    here = os.path.realpath(root)
+    parts = [p for p in os.path.normpath(rel).split(os.sep) if p not in ("", ".")]
+    if ".." in parts or not parts:
+        return None
+    for part in parts:
+        here = os.path.join(here, part)
+        if os.path.islink(here):
+            return None
+    return here if os.path.isfile(here) else None
+
+
+def show_at(root: str, sha: str, rel: str) -> str | None:
+    """A file as git holds it at a commit; never the working tree, so never through a symlink."""
+    try:
+        r = sh(["git", "show", f"{sha}:{rel}"], root)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def plain_frontmatter(text: str) -> dict:
+    """Plain `key: value` lines between the first two --- lines (the rule factory.py reads by)."""
+    lines = (text or "").replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        return {}
+    out = {}
+    for ln in lines[1:]:
+        if ln.strip() == "---":
+            return out
+        m = re.match(r"^([a-z_]+):\s*(.*?)\s*$", ln)
+        if m:
+            out[m.group(1)] = re.sub(r"\s+#.*$", "", m.group(2)).strip("\"'")
+    return {}
+
+
+def toml_table(text: str, tables: tuple[str, ...]) -> dict:
+    """{table: {key: value}} for the named tables. tomllib when it can read the file, else a line read."""
+    try:
+        import tomllib
+        data = tomllib.loads(text)
+        out = {}
+        for name in tables:
+            node = data
+            for part in name.split("."):
+                node = node.get(part, {}) if isinstance(node, dict) else {}
+            out[name] = node if isinstance(node, dict) else {}
+        return out
+    except Exception:
+        pass
+    out, current = {}, None
+    for ln in text.splitlines():
+        head = re.match(r"^\s*\[([^\[\]]+)\]\s*$", ln)
+        if head:
+            current = head.group(1).strip() if head.group(1).strip() in tables else None
+            continue
+        kv = re.match(r"^\s*(name|version)\s*=\s*[\"']([^\"']*)[\"']", ln)
+        if current and kv:
+            out.setdefault(current, {})[kv.group(1)] = kv.group(2)
+    return out
+
+
+def manifest_facts(name: str, text: str) -> tuple[object, object]:
+    """(name, version) from the text of a package.json, pyproject.toml or Cargo.toml."""
+    if name == "package.json":
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return None, None
+        return (data.get("name"), data.get("version")) if isinstance(data, dict) else (None, None)
+    tables = ("project", "tool.poetry") if name == "pyproject.toml" else ("package",)
+    found = toml_table(text, tables)
+    for table in tables:
+        if isinstance(found.get(table), dict) and found[table].get("version") is not None:
+            return found[table].get("name"), found[table].get("version")
+    return None, None
+
+
+def read_manifest(root: str, target: dict | None, notes: list[str]) -> dict | None:
+    """The declared version of the target. A symlink is absent; a value that is not X.Y.Z stays out."""
+    base = (target or {}).get("path") or "."
+    for name in ("package.json", "pyproject.toml", "Cargo.toml"):
+        rel = os.path.normpath(os.path.join(base, name))
+        if not os.path.lexists(os.path.join(root, rel)):
+            continue
+        path = safe_file(root, rel)
+        if not path:
+            notes.append(f"{clean(rel)} is a symlink or leaves the repo, so it was not read")
+            continue
+        label, version = manifest_facts(name, read(path))
+        if version is None:
+            continue
+        valid = isinstance(version, str) and bool(VERSION.fullmatch(version))
+        if not valid:
+            notes.append(f"{clean(rel)} declares a version that is not X.Y.Z, so it was not used")
+        return {"file": clean(rel), "version": version if valid else None, "valid": valid,
+                "name": clean(label, 60) if isinstance(label, str) and label else None}
+    return None
+
+
+def changelog_mode(root: str) -> tuple[str, str, str | None]:
+    """(mode, why, path): the Ship block key, then generator markers, then the file itself."""
+    data, _ = ship_block(root)
+    key = data.get("changelog") if isinstance(data, dict) else None
+    if key is not None and key not in ("manual", "generated", "none"):
+        raise Refuse("ship: changelog in the Ship block must be manual, generated or none")
+    path = "CHANGELOG.md" if safe_file(root, "CHANGELOG.md") else None
+    linked = not path and os.path.lexists(os.path.join(root, "CHANGELOG.md"))
+    if key:
+        return key, "the Ship block's changelog key", path
+    if os.path.isdir(os.path.join(root, ".changeset")):
+        return "generated", ".changeset/", path
+    for marker in ("release-please-config.json", "cliff.toml"):
+        if exists(root, marker):
+            return "generated", marker, path
+    rc = sorted(glob.glob(os.path.join(glob.escape(root), ".releaserc*")))
+    if rc:
+        return "generated", clean(os.path.basename(rc[0])), path
+    for rel in workflow_files(root):
+        if GENERATOR_WORDS.search(read(os.path.join(root, rel))):
+            return "generated", clean(rel), path
+    if not path:
+        return "none", "CHANGELOG.md is a symlink or not a file, so it was not read" if linked else "no CHANGELOG.md", None
+    text = read(os.path.join(root, path))
+    first = next((ln for ln in text.splitlines() if ln.strip()), "")
+    if GENERATED_LINE.search(first):
+        return "generated", "the first line of CHANGELOG.md", path
+    if unreleased_span(text):
+        return "manual", "CHANGELOG.md has an Unreleased heading", path
+    return "none", "CHANGELOG.md has no Unreleased heading", path
+
+
+def unreleased_span(text: str) -> tuple[int, int] | None:
+    """(heading line, line after the section) of the Unreleased section, or None."""
+    lines = text.splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^##\s+\[?unreleased\]?\s*$", ln.strip(), re.I)), None)
+    if start is None:
+        return None
+    end = next((j for j in range(start + 1, len(lines)) if re.match(r"^##\s", lines[j])), len(lines))
+    return start, end
+
+
+def cmd_changelog(root: str, args: list[str]) -> dict:
+    if args:
+        raise Refuse("ship: usage: changelog")
+    mode, why, path = changelog_mode(root)
+    lines, groups = [], []
+    if path:
+        text = read(os.path.join(root, path))
+        span = unreleased_span(text)
+        for ln in (text.splitlines()[span[0] + 1:span[1]] if span else []):
+            head = re.match(r"^###\s+(.+?)\s*$", ln)
+            if head:
+                groups.append(clean(head.group(1), 40))
+            elif ln.strip():
+                lines.append(clean(ln))
+    return {"mode": mode, "why": why, "path": path, "unreleased": lines, "groups": groups}
+
+
+def remote_tags(root: str, notes: list[str]) -> list[str]:
+    """Tag names on origin. An unreadable remote is a note, never a failure."""
+    if not git_lines(root, "remote"):
+        return []
+    try:
+        r = sh(["git", "ls-remote", "--tags", "origin"], root, timeout=LS_REMOTE_TIMEOUT)
+    except (OSError, subprocess.SubprocessError):
+        r = None
+    if r is None or r.returncode != 0:
+        notes.append("the tags on origin could not be read, so only local tags were compared")
+        return []
+    names = [ln.split("refs/tags/", 1)[1] for ln in r.stdout.splitlines() if "refs/tags/" in ln]
+    return [n[:-3] if n.endswith("^{}") else n for n in names]
+
+
+def choose_target(root: str, wanted: str | None) -> dict | None:
+    found = [t for t in targets(root) if isinstance(t, dict)]
+    if wanted:
+        for t in found:
+            if t.get("id") == wanted:
+                return t
+        raise Refuse(f"ship: --target {clean(wanted, 60)!r} is not a target of this repo")
+    return next((t for t in found if t.get("kind") in ("tag-release", "publish", "desktop")), found[0] if found else None)
+
+
+def target_series(tags: list[str], target: dict | None, others: list[str] | None = None) -> str | None:
+    """Which series belongs to the target: its own name, else the plain one, else the newest tag's
+    unless another target owns that one."""
+    series = [tag_series(t) for t in tags]
+    ident = (target or {}).get("id")
+    for s in series:
+        if ident and s in (f"{ident}--", f"{ident}@"):
+            return s
+    if "" in series:
+        return ""
+    owned = {f"{i}{sep}" for i in (others or []) if i != ident for sep in ("--", "@")}
+    return next((s for s in series if s not in owned), None)
+
+
+def new_tag_prefix(data, target: dict | None) -> str:
+    pat = tag_pattern(data) or ""
+    ident = (target or {}).get("id")
+    if "--v" not in pat or not ident:
+        return "v"
+    if not RELEASE_TAG.fullmatch(f"{ident}--v0.0.0"):
+        raise Refuse("ship: this target's id cannot form a release tag; it must start with a lowercase letter or digit and use only a-z, 0-9, ., _ and -")
+    return f"{ident}--v"
+
+
+def bump_to(last: tuple[int, int, int], kind: str, reasons: list[str] | None = None) -> str:
+    major, minor, patch = last
+    if kind == "breaking" and major == 0:
+        if reasons is not None:
+            reasons.append("0.x: breaking bumps minor")
+        kind = "feature"
+    if kind == "breaking":
+        return f"{major + 1}.0.0"
+    return f"{major}.{minor + 1}.0" if kind == "feature" else f"{major}.{minor}.{patch + 1}"
+
+
+def bump_name(last: tuple[int, int, int], nxt: str) -> str:
+    a, b, _ = (int(x) for x in nxt.split("."))
+    return "major" if a != last[0] else ("minor" if b != last[1] else "patch")
+
+
+def tag_command(tag: str, sha: str, version: str) -> str | None:
+    if not RELEASE_TAG.fullmatch(tag) or not SHA.fullmatch(sha) or not VERSION.fullmatch(version):
+        return None
+    return shlex.join(["git", "tag", "-a", tag, sha, "-m", f"Release {version}"])
+
+
+def number_word(n: int, word: str, many: str | None = None) -> str:
+    said = NUMBER_WORDS[n] if n < len(NUMBER_WORDS) else str(n)
+    return f"{said} {word if n == 1 else (many or word + 's')}"
+
+
+def join_plain(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def intent_facts(root: str, folder: str) -> dict:
+    """The most severe kind and breaking value the intent has had on HEAD's history."""
+    rel = f"intent/{folder}/intent.md"
+    shas = git_lines(root, "log", "--format=%H", "HEAD", "--", rel)
+    kinds, ever_breaking, tip_fields, title = set(), False, None, None
+    for sha in shas:  # newest first, so the first readable text is the tip
+        text = show_at(root, sha, rel)
+        if text is None:
+            continue
+        fm = plain_frontmatter(text)
+        if tip_fields is None:
+            tip_fields = fm
+            head = re.search(r"^#\s+(?:Intent:\s*)?(.+?)\s*$", text, re.M)
+            title = clean(head.group(1)) if head else None
+        kinds.add(fm.get("kind"))
+        ever_breaking = ever_breaking or fm.get("breaking") == "true"
+    tip_fields = tip_fields or {}
+    base = "feature" if kinds & {"idea", "change"} else ("fix" if "bug" in kinds else "unknown")
+    if ever_breaking:
+        kind = "breaking"
+    elif tip_fields.get("breaking") == "false" and base != "unknown":
+        kind = base
+    else:
+        kind = "unknown"
+    return {"kind": kind, "if_not": "feature" if base == "unknown" else base, "subject": title or folder}
+
+
+def commit_kind(subject: str, body: str) -> tuple[str, str]:
+    """(kind, kind when not breaking) from a Conventional Commit subject. Only feat, fix, a bang and a
+    BREAKING CHANGE footer say anything; any other subject is unknown, so the person is asked."""
+    m = re.match(r"^([a-z]+)(\([^)]*\))?(!)?:", subject)
+    if re.search(r"(?m)^BREAKING[ -]CHANGE:", body) or (m and m.group(3)):
+        return "breaking", "fix"
+    if m and m.group(1) == "feat":
+        return "feature", "feature"
+    if m and m.group(1) == "fix":
+        return "fix", "fix"
+    return "unknown", "fix"
+
+
+SEVERITY = {"breaking": 3, "feature": 2, "fix": 1}
+FIELD, RECORD = "\x1f", "\x1e"
+
+
+def merge_kind(root: str, first: str, sha: str) -> tuple[str, str]:
+    """The most severe kind among the commits a merge brought in; the merge's own subject says nothing.
+    Fields are split on NUL, which a commit message cannot hold."""
+    r = sh(["git", "log", "--no-merges", "--format=%s%x00%b%x00", f"{first}..{sha}"], root, timeout=60)
+    parts = r.stdout.split("\0") if r.returncode == 0 else []
+    kinds = [commit_kind(parts[i].strip(), parts[i + 1]) for i in range(0, len(parts) - 1, 2)]
+    if_not = "feature" if any(i == "feature" for _, i in kinds) else "fix"
+    seen = {k for k, _ in kinds}
+    if "breaking" in seen:
+        return "breaking", if_not
+    if not seen or "unknown" in seen:
+        return "unknown", if_not
+    return max(seen, key=lambda k: SEVERITY[k]), if_not
+
+
+def release_commit(root: str, parent: str | None, sha: str, files: list[str], manifest: str | None) -> bool:
+    """A release change holds the manifest's own version line and maybe the changelog, nothing else.
+    A dependency's version line in the same file does not count."""
+    if not parent or not manifest or manifest not in files or set(files) - {manifest, "CHANGELOG.md"}:
+        return False
+    old, new = show_at(root, parent, manifest), show_at(root, sha, manifest)
+    if old is None or new is None:
+        return False
+    name = os.path.basename(manifest)
+    was, now = manifest_facts(name, old)[1], manifest_facts(name, new)[1]
+    if not isinstance(was, str) or not isinstance(now, str) or was == now:
+        return False
+    lines = git_lines(root, "diff", "-U0", parent, sha, "--", manifest)
+    body = [ln for ln in lines if ln[:1] in "+-" and not ln.startswith(("+++", "---"))]
+    return len(body) == 2 and body[0][1:].replace(was, now) == body[1][1:]
+
+
+def range_changes(root: str, base: str | None, notes: list[str], manifest: str | None = None) -> tuple[list[dict], list[str]]:
+    """Each change in base..HEAD along the first parent, so a merge counts as one change.
+
+    A change belongs to an intent when it touches that intent's folder. A commit's own breaking mark
+    or feat prefix is never hidden by the intent it touches: the more severe one wins. One git log
+    covers the walk, so a long range stays fast."""
+    spec = f"{base}..HEAD" if base else "HEAD"
+    try:  # no free text in the walk; messages come apart on NUL, which they cannot hold
+        r = sh(["git", "log", "--first-parent", "-m", "--name-only", f"--format={RECORD}%H{FIELD}%P{FIELD}", spec], root, timeout=60)
+        m = sh(["git", "log", "--first-parent", "--format=%H%x00%s%x00%b%x00", spec], root, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        raise Refuse("ship: git log over the release range failed")
+    if r.returncode != 0 or m.returncode != 0:
+        raise Refuse("ship: git log over the release range failed")
+    fields = m.stdout.split("\0")
+    messages = {fields[i].strip(): (fields[i + 1], fields[i + 2]) for i in range(0, len(fields) - 2, 3)}
+    changes, unclassified, by_folder = [], [], {}
+    built: set[str] = set()
+    touched: list[str] = []
+    for rec in reversed(r.stdout.split(RECORD)):
+        if not rec.strip():
+            continue
+        sha, parents, names = (rec.split(FIELD) + ["", ""])[:3]
+        subject, body = messages.get(sha.strip(), ("", ""))
+        files = [f for f in names.splitlines() if f.strip()]
+        first = parents.split()[0] if parents.split() else None
+        if release_commit(root, first, sha, files, manifest):
+            continue
+        folders = []
+        for f in files:
+            parts = f.split("/")
+            if parts[0] == "intent" and len(parts) > 2 and parts[1] not in folders:
+                folders.append(parts[1])
+        good = []
+        for folder in folders:
+            if INTENT_FOLDER.fullmatch(folder):
+                good.append(folder)
+            else:
+                note = f"skipped an intent folder with an invalid name: {clean(folder, 80)}"
+                if note not in notes:
+                    notes.append(note)
+        own, own_if_not = merge_kind(root, first, sha) if len(parents.split()) > 1 else commit_kind(subject, body)
+        if any(not f.startswith("intent/") for f in files):
+            built.update(good)
+        for folder in good:
+            if folder not in by_folder:
+                f = intent_facts(root, folder)
+                by_folder[folder] = {"subject": f["subject"], "kind": f["kind"], "if_not": f["if_not"],
+                                     "source": "intent", "intent": folder}
+                changes.append(by_folder[folder])
+                touched.append(folder)
+            change = by_folder[folder]
+            if own == "breaking" or (change["kind"] != "unknown" and SEVERITY.get(own, 0) > SEVERITY.get(change["kind"], 0)):
+                change["kind"] = own
+            if own_if_not == "feature":
+                change["if_not"] = "feature"
+        if not good and any(not f.startswith("intent/") for f in files):
+            label = clean(subject) or sha[:7]
+            changes.append({"subject": label, "kind": own, "if_not": own_if_not, "source": "commit", "intent": None})
+            if own == "unknown":
+                unclassified.append(label)
+    for folder in touched:
+        if folder not in built:
+            notes.append(f"intent {clean(folder, 80)} is in the range but no commit there changes anything outside intent/; it still counts")
+    return changes, unclassified
+
+
+def first_release_candidate(root: str, declared: dict | None, notes: list[str]) -> dict | None:
+    """R7: the parent of the oldest commit that added a path under intent/, else the newest commit
+    whose manifest holds the declared version. None when neither holds the declared version."""
+    head_file = declared["file"] if declared else None
+    want = declared["version"] if declared else None
+
+    def holds(sha: str) -> bool:
+        if not head_file or not want:
+            return True
+        text = show_at(root, sha, head_file)
+        return bool(text) and manifest_facts(os.path.basename(head_file), text)[1] == want
+    added = git_lines(root, "log", "--diff-filter=A", "--format=%H", "--reverse", "--", "intent/")
+    sha = rev(root, f"{added[0]}^") if added else None
+    if added and not sha:
+        notes.append("the oldest intent is in the first commit, so no earlier commit can be the release")
+    if sha and not holds(sha):
+        notes.append("the commit before the first intent does not hold the declared version")
+        return None
+    if not sha and not added:
+        sha = next((c for c in git_lines(root, "log", "--format=%H", "-n", "200", "HEAD") if holds(c)), None)
+    if not sha:
+        return None
+    line = git_lines(root, "log", "-1", "--format=%h%x00%cs%x00%s", sha)
+    short, date, subject = (line[0].split("\0") + ["", "", ""])[:3] if line else ("", "", "")
+    return {"sha": sha, "short": clean(short, 12), "date": clean(date, 10), "subject": clean(subject)}
+
+
+def refuse_collision(next_version: str, tag: str, tags: list[str]) -> None:
+    """Refuse a version that is not above every release tag of its series."""
+    want = tuple(int(x) for x in next_version.split("."))
+    same = [t for t in tags if tag_parts(t) and tag_series(t) == tag_series(tag)]
+    top = max(same, key=lambda t: tag_parts(t)[1]) if same else None
+    if top and want <= tag_parts(top)[1]:
+        raise Refuse(f"ship: the next version {next_version} is not above the existing release tag {top}. "
+                     "Fetch the tags and look at what was released.")
+
+
+def cmd_version(root: str, args: list[str]) -> dict:
+    for a in args:
+        if a.startswith("--") and a not in ("--target", "--base"):
+            raise Refuse(f"ship: version: unknown option {a}")
+    head = rev(root, "HEAD")
+    if not head:
+        raise Refuse("ship: this repo has no commits")
+    data, _ = ship_block(root)
+    target = choose_target(root, flag(args, "--target"))
+    pattern = tag_pattern(data)
+    notes: list[str] = []
+    every = release_tags(root, pattern)
+    bad = [t for t in every if not tag_parts(t)]
+    merged = [t for t in release_tags(root, pattern, "--merged", head, "--sort=-creatordate") if tag_parts(t)]
+    if bad:
+        notes.append(f"{plural(len(bad), 'tag')} with a name that is not a release tag ignored: "
+                     + ", ".join(clean(t, 60) for t in bad[:3]))
+    series = target_series(merged, target, [t.get("id") for t in targets(root)])
+    mine = [t for t in merged if tag_series(t) == series]
+    last_tag = max(mine, key=lambda t: tag_parts(t)[1]) if mine else None
+    last = tag_parts(last_tag)[1] if last_tag else None
+    declared = read_manifest(root, target, notes)
+    public_declared = {k: declared[k] for k in ("file", "version", "valid")} if declared else None
+    base_arg = flag(args, "--base")
+    base = rev(root, base_arg) if base_arg else None
+    if base_arg and not base:
+        raise Refuse("ship: --base is not a commit of this repo")
+    tag_style = tag_parts(last_tag)[0] if last_tag else new_tag_prefix(data, target)
+    known = [t for t in every if tag_parts(t)] + [t for t in remote_tags(root, notes) if tag_parts(t)]
+    out = {"state": "proposal", "target": (target or {}).get("id"), "last_tag": last_tag,
+           "last_version": ".".join(str(x) for x in last) if last else None, "declared": public_declared,
+           "bump": None, "next": None, "next_if_not_breaking": None, "tag": None, "tag_command": None,
+           "base_candidate": None, "counts": {"breaking": 0, "feature": 0, "fix": 0, "unknown": 0},
+           "changes": [], "unclassified": [], "reasons": [], "notes": notes, "sentence": None, "question": None}
+
+    if not last_tag and not base:
+        return first_release(root, out, declared, target, tag_style, known, head)
+
+    start = base or rev(root, last_tag)
+    if not last and declared and declared["valid"]:
+        last = tuple(int(x) for x in declared["version"].split("."))
+        out["last_version"] = declared["version"]
+    last = last or (0, 0, 0)
+    changes, out["unclassified"] = range_changes(root, start, notes, declared["file"] if declared else None)
+    out["changes"] = [{k: c[k] for k in ("subject", "kind", "source", "intent")} for c in changes]
+    for c in changes:
+        out["counts"][c["kind"]] += 1
+    counts = out["counts"]
+    since = last_tag or (git_lines(root, "log", "-1", "--format=%h", start) or [""])[0]
+    if not changes:
+        out["state"] = "nothing"
+        out["sentence"] = f"Nothing to release since {since}."
+        return out
+    top = "breaking" if counts["breaking"] or counts["unknown"] else ("feature" if counts["feature"] else "fix")
+    out["next"] = bump_to(last, top, out["reasons"])
+    out["bump"] = bump_name(last, out["next"])
+    if counts["unknown"]:
+        rest = [c["if_not"] if c["kind"] == "unknown" else c["kind"] for c in changes]
+        low = "breaking" if "breaking" in rest else ("feature" if "feature" in rest else "fix")
+        out["next_if_not_breaking"] = bump_to(last, low)
+    out["tag"] = f"{tag_style}{out['next']}"
+    refuse_collision(out["next"], out["tag"], known)
+    # No command while the number still depends on the person's answer.
+    out["tag_command"] = None if counts["unknown"] else tag_command(out["tag"], head, out["next"])
+    said = []
+    if counts["breaking"]:
+        said.append(number_word(counts["breaking"], "breaking change"))
+    if counts["feature"]:
+        said.append(number_word(counts["feature"], "feature"))
+    if counts["fix"]:
+        said.append(number_word(counts["fix"], "fix", "fixes"))
+    if counts["unknown"]:
+        said.append(number_word(counts["unknown"], "change") + " that may be breaking")
+    out["sentence"] = f"{out['tag']} ({out['bump']}): {join_plain(said)} since {since}"
+    if counts["unknown"]:
+        names = [c["subject"] for c in changes if c["kind"] == "unknown"]
+        shown = join_plain([f'"{clean(n, 60)}"' for n in names[:3]]) + (" and more" if len(names) > 3 else "")
+        out["question"] = (f"{shown} {'does' if len(names) == 1 else 'do'} not say whether {'it breaks' if len(names) == 1 else 'they break'} anything. "
+                           f"Is any of it breaking? Yes keeps {out['next']}; no makes it {out['next_if_not_breaking']}.")
+    return out
+
+
+def first_release(root: str, out: dict, declared: dict | None, target: dict | None, style: str, known: list[str], head: str) -> dict:
+    """R6 to R8: no release tag reachable from HEAD."""
+    out["state"] = "first-release"
+    usable = declared and declared["valid"]
+    version = declared["version"] if usable else "0.1.0"
+    out["next"] = version
+    out["tag"] = f"{style}{version}"
+    refuse_collision(version, out["tag"], known)
+    if not usable:
+        out["sentence"] = f"{out['tag']}: no earlier release was found, so the whole history is the first release"
+        out["tag_command"] = tag_command(out["tag"], head, version)
+        out["question"] = f"No earlier release was found. Release the whole history as {out['tag']}?"
+        return out
+    name = declared.get("name") or clean((target or {}).get("id"), 60) or "This project"
+    cand = first_release_candidate(root, declared, out["notes"])
+    has_intents = bool(git_lines(root, "log", "--diff-filter=A", "--format=%H", "-n", "1", "--", "intent/"))
+    out["base_candidate"] = cand
+    if not cand:
+        out["sentence"] = f"{name} says {version}, but no commit before the first intent holds that version"
+        out["question"] = f"{name} says {version}. Which commit was out as {version}? Pick one by subject or treat the whole history as the first release."
+        return out
+    out["tag_command"] = tag_command(out["tag"], cand["sha"], version)
+    out["sentence"] = f"{name} says {version} and has no release tag yet"
+    named = f'{cand["short"]}, {cand["date"]}, "{clean(cand["subject"], 80)}"'
+    which = "the commit before the first intent" if has_intents else "the newest commit holding that version"
+    out["question"] = (f"{name} says {version}. Tag {which} ({named}) as {out['tag']}, "
+                       "pick another commit by subject or treat the whole history as the first release?")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -1114,6 +1713,10 @@ def main(argv: list[str]) -> int:
             emit(cmd_record(root, rest))
         elif cmd == "deployed":
             emit(cmd_deployed(root, rest))
+        elif cmd == "version":
+            emit(cmd_version(root, rest))
+        elif cmd == "changelog":
+            emit(cmd_changelog(root, rest))
         elif cmd == "check":
             if len(rest) != 1:
                 raise Refuse("ship: usage: check <sha>")
