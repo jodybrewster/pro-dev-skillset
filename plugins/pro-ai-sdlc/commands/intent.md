@@ -44,6 +44,9 @@ Rules for the interview:
 - Do not design the solution.
   Record approaches only as open questions or constraints.
 - Kind (bug, idea or change) and risk (low, medium or high) go in the frontmatter; ask if they are not clear.
+- Breaking goes in the frontmatter too.
+  For `idea` or `change`, ask once whether anyone relying on today's behaviour would have to change; the size of the change does not matter.
+  For `bug`, write `breaking: false` unless the person says otherwise.
 - For a ticket or an incident, record the source ID in Source and link the evidence under Evidence.
 - Anything still unknown goes under Open questions rather than being guessed.
   Never invent numbers or users.

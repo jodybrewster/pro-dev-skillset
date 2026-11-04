@@ -8,6 +8,9 @@
 # The token also needs read access to the marketplace repo, or that repo must be public.
 set -eu
 
+# ship.py refuses its release steps (prepare, version --agree, deployed) in a headless session.
+export FACTORY_SESSION=1
+
 repo_url=${1:?repo url}
 mkt_ref=${2:?marketplace ref}
 phase=${3:?phase}

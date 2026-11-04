@@ -62,7 +62,7 @@ A problem noticed outside the current step is never fixed in that step.
 Write one line (the file, what was seen and why it was left) under `## Noticed but not touched` in plan.md, in the step's commit.
 Stage the step's files by path and never use `git add -A`, `git add .` or `git commit -a`.
 Before each commit compare `git diff --cached --name-only` with the step's files.
-The plan file itself is always allowed in a step's commit.
+The plan file itself and the changelog line of stage 5b are always allowed in a step's commit.
 A staged file the step did not name is unstaged with `git restore --staged <path>`, or kept with a line under `## Departures from plan` saying why.
 
 ## Doubt
@@ -141,6 +141,22 @@ At a checkpoint whose group range (since the previous checkpoint) reads high tie
 When the build has to stray from the plan, add a line under `## Departures from plan` in plan.md in the same commit as the change that departs.
 Steps the plan marks as independent may go to builder subagents in parallel when the pro-execution `subagent-driven-development` skill is available; give each a self-contained prompt and name its model and effort.
 Broad code search may go to the `researcher` agent.
+
+### 5b. Write the changelog line
+
+Do this as part of the last step of the plan, before that step's commit.
+Read the mode from the repo, in this order: a `changelog:` key in the Ship block of `CLAUDE.md` or `AGENTS.md`, then a `.changeset/` folder, `release-please-config.json`, `cliff.toml`, `.releaserc*`, a release workflow naming release-please or semantic-release or a first line in `CHANGELOG.md` saying it is generated or not to be edited; then `CHANGELOG.md` with an Unreleased heading is `manual` and anything else is `none`.
+
+- `generated`: never create or edit the file; a generator owns it.
+- `manual`: add one line under `## [Unreleased]` in the same change, written around what a user of the project sees and never copied from a commit subject.
+  `idea` and `change` go under Added or Changed, `bug` under Fixed, plus Deprecated, Removed and Security by judgment.
+- `none` with a manifest (`package.json`, `pyproject.toml` or `Cargo.toml`): create `CHANGELOG.md` in Keep a Changelog form with an Unreleased section holding that line.
+- `none` with a `CHANGELOG.md` that has no Unreleased heading: add the section above its first version heading and change nothing else.
+- `none` with no manifest and no `CHANGELOG.md`: skip this stage and say why.
+
+A breaking intent's line also gets a `Migration:` line saying what a consumer has to change.
+Change only the Unreleased section; a past entry, a version heading and the manifest's version belong to the release.
+Do not change the intent's frontmatter, which the factory treats as a level 2 stop.
 
 ### 6. Check the UI steps against the mock
 

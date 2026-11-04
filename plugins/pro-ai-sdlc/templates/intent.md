@@ -1,6 +1,7 @@
 ---
 source: <idea | ticket <ID> | incident <ID>>
 kind: <bug | idea | change>
+breaking: <true | false>
 status: draft
 risk: <low | medium | high>
 level: <1 | 2 | 3>
@@ -56,6 +57,8 @@ Lifecycle:
   draft     the person corrects what the interview got wrong
   accepted  the person accepts it in person; a spec pass can start
   rejected  dropped; the reason is written into the file
+Breaking: true when a consumer that relied on today's behaviour has to change, whatever the size of the diff.
+  `ship.py version` turns kind and breaking into the next version; a missing value is assumed breaking and the person is asked.
 Level: set by `factory.py level --write` when the intent, spec or plan is written and only ever raised, never lowered.
   1 lets the software factory run it unattended, 2 and 3 keep a person in the loop.
 Location: intent/<YYYY-MM-DD>-<slug>/intent.md, with spec.md and plan.md beside it.
