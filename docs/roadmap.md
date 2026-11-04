@@ -16,7 +16,7 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 The retest of 2026-11-04 is over: the release went out but no card reached Done, as written below.
 In order, each through the loop:
 
-1. The maintainer accepts the four intents, or corrects them, and answers their open questions: whether `pro-pdd`, `pro-spdd` and `pro-speckit` are being retired, plus the version a rollback release takes.
+1. The maintainer accepts or corrects the four intents, then answers their open questions: whether `pro-pdd`, `pro-spdd` and `pro-speckit` are being retired, plus the version a rollback release takes.
 2. mieruka's own intents, which the owner merges: the trace reads change cards and sessions run outside mieruka, plus screenshots shown as images in the trace panel. The first defines the log format the capture intent writes.
 3. [factory-session-capture](../intent/2026-11-04-factory-session-capture/intent.md): every factory and terminal session leaves a trace tied to its card.
 4. [sdlc-happy-path-run](../intent/2026-11-04-sdlc-happy-path-run/intent.md): one command runs the happy path to Done, with a screenshot per stage and role changes. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`.
@@ -42,11 +42,12 @@ Findings not yet in an intent:
 - `/ship` gives reviewers the first and last uncovered commit. That range pulls in covered commits and stops before a covered fix, so a fixed finding came back as Important.
 - A small pull request with no intent makes `ship.py version` propose a major version until someone answers.
 - A pr-check stamp can never cover the sign-off commit, so a signed-off pull request reads as uncovered.
-- `/ship` recorded legal as `could-not-run` where the plugin was not installed, and condensed a specialist report that should be verbatim.
+- `/ship` recorded legal as `could-not-run` where the plugin was not installed. It also condensed a specialist report that should be verbatim.
 - `factory.py level` raises to 3 on stop-list words in the text of an intent that only discusses them.
 - A rerun of `/pro-ship:deployed` for a tag overwrites the earlier record, so its history is lost.
 - `/execute`'s test-file freeze forces extra test files in review fixes. `protect-tests` in enforce mode would block a legitimately reversed test, which is input to the 2026-11-13 enforce decision.
-- `## Done` goes stale after later commits, and the demo fixture has no `AGENTS.md`.
+- `## Done` goes stale after later commits.
+- The demo fixture has no `AGENTS.md`.
 
 ### Built, waiting on sign-off: the software factory
 
