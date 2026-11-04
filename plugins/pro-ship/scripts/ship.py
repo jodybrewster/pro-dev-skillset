@@ -59,6 +59,10 @@ repo that holds the current directory):
                                    copy of the tag in a container with no mount, no token and no
                                    env file: {step, tag, command, image, exit, tail}. It never
                                    falls back to the host.
+  protection [--target ID]         are release tags protected and does CI run on tags:
+                                   {tags_protected, via, missing, ci_on_tags, factory_repo, notes}.
+                                   tags_protected is yes, partial, no or unknown; yes needs an
+                                   active tag ruleset restricting creation, update and deletion.
   deployed --target ID [--env ENV] --deployed-at ISO [--url U] [--commit SHA]
            [--outcome succeeded|failed|rolled-back] [--checks FILE]
   deployed --from-tag TAG --target ID [--env ENV] [--checks FILE]
@@ -81,6 +85,7 @@ coverage, protection and deployed --from-github or --from-tag and git ls-remote 
 """
 from __future__ import annotations
 
+import fnmatch
 import glob
 import json
 import os
@@ -412,7 +417,7 @@ def workflow_files(root: str) -> list[str]:
 def workflow_facts(text: str) -> dict:
     """What a workflow triggers on and whether it names a deploy step. Text rules, no yaml engine."""
     lines = [strip_comment(ln) for ln in text.splitlines()]
-    facts = {"push_branch": False, "push_tags": False, "release": False, "deploy": False}
+    facts = {"push_branch": False, "push_tags": False, "push_unfiltered": False, "release": False, "deploy": False}
     start = next((i for i, ln in enumerate(lines) if re.match(r"^(on|\"on\"|'on'|true)\s*:", ln)), None)
     body = lines
     if start is not None:
@@ -425,6 +430,7 @@ def workflow_facts(text: str) -> dict:
         if head:  # on: push  or  on: [push, release]
             words = re.findall(r"[a-z_]+", head)
             facts["push_branch"] = "push" in words
+            facts["push_unfiltered"] = "push" in words
             facts["release"] = "release" in words
         for n, ln in enumerate(block[1:], 1):
             ind = len(ln) - len(ln.lstrip())
@@ -448,6 +454,7 @@ def workflow_facts(text: str) -> dict:
                     facts["push_branch"] = True
             elif "tags" not in keys:
                 facts["push_branch"] = True
+                facts["push_unfiltered"] = True
     facts["deploy"] = any(DEPLOY_WORDS.search(ln) for ln in body if re.match(r"^\s*(-\s*)?(run|uses|name)\s*:", ln) or
                           re.match(r"^\s*-\s*(run|uses)\s*:", ln))
     return facts
@@ -2347,6 +2354,121 @@ def cmd_clean_run(root: str, args: list[str]) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# protection (R20, R21 and the security challenge)
+# ---------------------------------------------------------------------------
+
+TAG_RULES = ("creation", "update", "deletion")
+
+
+TAG_SHAPES = ("v1.2.3", "v0.1.0", "v10.20.30", "1.2.3", "0.1.0", "10.20.30")
+
+
+def tag_probes(tag_glob: str | None, tags: list[str], ids: list[str]) -> list[str]:
+    """Names to test a ruleset with: the repo's real release tags and each target's own shape where
+    the pattern admits it. The sample shapes count only when the repo has no tag to go by."""
+    real = [t for t in tags if tag_parts(t)]
+    shaped = [f"{i}{sep}1.2.3" for i in ids for sep in ("--v", "@")]
+    if tag_glob:
+        real += [s for s in shaped if fnmatch.fnmatchcase(s, tag_glob) and RELEASE_TAG.fullmatch(s)]
+        return real or [s for s in TAG_SHAPES if fnmatch.fnmatchcase(s, tag_glob)] or list(TAG_SHAPES[:3])
+    return real or list(TAG_SHAPES[:3])
+
+
+def ref_glob(pattern: str) -> str:
+    return pattern[len("refs/tags/"):] if pattern.startswith("refs/tags/") else pattern
+
+
+def include_covers(pattern: str, probes: list[str]) -> bool:
+    p = ref_glob(pattern)
+    return p == "~ALL" or all(fnmatch.fnmatchcase(x, p) for x in probes)
+
+
+def exclude_overlaps(pattern: str, probes: list[str]) -> bool:
+    """Anything not provably apart counts: it may start like a release tag or start with a wildcard."""
+    p = ref_glob(pattern)
+    literal = re.split(r"[*?\[]", p, maxsplit=1)[0]
+    return (p == "~ALL" or not literal or any(x[0] == literal[0] for x in probes)
+            or any(fnmatch.fnmatchcase(x, p) for x in probes))
+
+
+def ruleset_verdict(rs: dict, probes: list[str], factory_repo: bool) -> tuple[int, list[str]] | None:
+    """(rank, what lacks) for one tag ruleset, or None when it does not cover the release tags."""
+    cond = (rs.get("conditions") or {}).get("ref_name") or {} if isinstance(rs.get("conditions"), dict) else {}
+    include = [p for p in cond.get("include") or [] if isinstance(p, str)]
+    exclude = [p for p in cond.get("exclude") or [] if isinstance(p, str)]
+    if not any(include_covers(p, probes) for p in include):
+        return None
+    types = {r.get("type") for r in rs.get("rules") or [] if isinstance(r, dict)}
+    missing = [k for k in TAG_RULES if k not in types]
+    if rs.get("enforcement") != "active":
+        missing.append("active")
+    if any(exclude_overlaps(p, probes) for p in exclude):
+        missing.append("exclude")
+    actors = rs.get("bypass_actors")
+    # In a factory repo only the repository admin role may bypass; an unreadable list proves nothing.
+    if factory_repo and (not isinstance(actors, list) or any(
+            not isinstance(a, dict) or (a.get("actor_type"), a.get("actor_id")) != ("RepositoryRole", 5) for a in actors)):
+        missing.append("bypass")
+    return (0 if missing else 1), missing
+
+
+def cmd_protection(root: str, args: list[str]) -> dict:
+    data, _ = ship_block(root)
+    choose_target(root, flag(args, "--target"))
+    pattern = tag_pattern(data)
+    review = read(os.path.join(root, "REVIEW.md"))
+    out = {"tags_protected": "unknown", "via": None, "missing": [], "ci_on_tags": "unknown",
+           "factory_repo": bool(re.search(r"^##\s+Roles\s*$", review, re.M)), "notes": []}
+    wf = workflow_files(root)
+    out["ci_on_tags"] = "yes" if any(workflow_facts(read(os.path.join(root, rel)))[k] for rel in wf for k in ("push_tags", "push_unfiltered")) else "no"
+    probes = tag_probes(pattern, release_tags(root, pattern), [t["id"] for t in targets(root) if isinstance(t.get("id"), str)])
+    try:
+        listed = gh_json(root, ["api", "repos/{owner}/{repo}/rulesets"], "reading the rulesets")
+    except Refuse as e:
+        out["notes"].append(clean(str(e)))
+        return out
+    best = None
+    for item in listed if isinstance(listed, list) else []:
+        if not isinstance(item, dict) or item.get("target") != "tag" or not isinstance(item.get("id"), int):
+            continue
+        try:
+            rs = gh_json(root, ["api", f"repos/{{owner}}/{{repo}}/rulesets/{item['id']}"], "reading a ruleset")
+        except Refuse as e:
+            out["notes"].append(clean(str(e)))
+            continue
+        verdict = ruleset_verdict(rs, probes, out["factory_repo"]) if isinstance(rs, dict) else None
+        if verdict and (best is None or verdict[0] > best[0][0]):
+            best = (verdict, rs)
+    if best:
+        (rank, missing), rs = best
+        out["tags_protected"] = "yes" if rank else "partial"
+        out["missing"] = missing
+        actors = rs.get("bypass_actors")
+        out["via"] = {"kind": "ruleset", "name": clean(rs.get("name"), 80),
+                      "bypass": ["unknown"] if not isinstance(actors, list) else
+                      [clean(f"{a.get('actor_type')}:{a.get('actor_id')}", 60) for a in actors if isinstance(a, dict)]}
+        return out
+    if out["notes"]:
+        return out
+    try:
+        classic = gh_json(root, ["api", "repos/{owner}/{repo}/tags/protection"], "reading tag protection")
+    except Refuse as e:
+        if not re.search(r"\b(?:404|410)\b", str(e)):  # those two mean the classic API has nothing to say
+            out["notes"].append(clean(str(e)))
+            return out
+        classic = []
+    hits = [c for c in classic if isinstance(c, dict) and isinstance(c.get("pattern"), str) and include_covers(c["pattern"], probes)] if isinstance(classic, list) else []
+    if hits:
+        out["tags_protected"] = "partial"
+        out["missing"] = ["update"]
+        out["via"] = {"kind": "classic", "name": clean(hits[0]["pattern"], 80), "bypass": []}
+        return out
+    out["tags_protected"] = "no"
+    out["via"] = {"kind": "none", "name": None, "bypass": []}
+    return out
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -2383,6 +2505,8 @@ def main(argv: list[str]) -> int:
             emit(cmd_changelog(root, rest))
         elif cmd == "prepare":
             emit(cmd_prepare(root, rest))
+        elif cmd == "protection":
+            emit(cmd_protection(root, rest))
         elif cmd == "checks":
             emit(cmd_checks(root, rest))
         elif cmd == "clean-run":

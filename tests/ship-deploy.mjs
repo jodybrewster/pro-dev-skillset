@@ -24,6 +24,9 @@ d="$GH_STUB_DIR"
 echo "$*" >> "$d/calls.log"
 if [ -n "$GH_STUB_FAIL" ]; then echo "HTTP 502: bad gateway" >&2; exit 1; fi
 case "$1 $2" in
+  "api repos/{owner}/{repo}/rulesets") if [ -n "$GH_STUB_RULES_FAIL" ]; then echo "HTTP 403: Resource not accessible" >&2; exit 1; fi; cat "$d/rulesets.json" ;;
+  "api repos/{owner}/{repo}/rulesets/"*) cat "$d/ruleset.json" ;;
+  "api repos/{owner}/{repo}/tags/protection") if [ -n "$GH_STUB_CLASSIC_FAIL" ]; then echo "HTTP 502: bad gateway" >&2; exit 1; fi; if [ -f "$d/classic.json" ]; then cat "$d/classic.json"; else echo "HTTP 404" >&2; exit 1; fi ;;
   "api repos/{owner}/{repo}/deployments?sha="*) if [ -f "$d/tag-deploys.json" ]; then cat "$d/tag-deploys.json"; else echo "[]"; fi ;;
   "api repos/{owner}/{repo}/releases/tags/"*) if [ -f "$d/release.json" ]; then cat "$d/release.json"; else echo "HTTP 404" >&2; exit 1; fi ;;
   "api repos/{owner}/{repo}/actions/runs?"*) if [ -f "$d/runs.json" ]; then cat "$d/runs.json"; else echo '{"workflow_runs":[]}'; fi ;;
@@ -115,6 +118,7 @@ export function runShipDeployCases() {
     fromTagCases();
     checksCases();
     cleanRunCases();
+    protectionCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
@@ -453,6 +457,98 @@ export function runShipDeployCases() {
     add("clean-run/no documented_use refuses, so README text never runs", "exit 1", r.status === 1 && /documented_use/.test(r.stderr), r.stdout + r.stderr);
     r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
     add("clean-run/no test command refuses and names the key", "exit 1", r.status === 1 && /test_command/.test(r.stderr), r.stdout + r.stderr);
+  }
+
+  // R20, AC9 and the over-reporting item.
+  function protectionCases() {
+    const repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    const run = (rs, more = {}, env = {}) => {
+      const d = stubDir({ "rulesets.json": rs === undefined ? [] : [{ id: 5, target: "tag" }], "ruleset.json": rs ?? {}, ...more });
+      return ship(repo, ["protection"], { env: { GH_STUB_DIR: d, ...env } });
+    };
+    const full = (over = {}) => ({ id: 5, name: "tags", target: "tag", enforcement: "active", conditions: { ref_name: { include: ["refs/tags/v*"], exclude: [] } },
+      rules: [{ type: "creation" }, { type: "update" }, { type: "deletion" }], bypass_actors: [{ actor_type: "RepositoryRole", actor_id: 5 }], ...over });
+    let r = run(full());
+    add("protection/AC9 a full active ruleset is yes and lists its bypass", "yes", r.json?.tags_protected === "yes" && r.json.via.kind === "ruleset" && r.json.via.bypass[0] === "RepositoryRole:5" && r.json.missing.length === 0, r.stdout + r.stderr);
+    r = run(full({ rules: [{ type: "deletion" }] }));
+    add("protection/deletion only is partial", "partial naming creation and update", r.json?.tags_protected === "partial" && r.json.missing.join() === "creation,update", r.stdout + r.stderr);
+    r = run(full({ enforcement: "evaluate" }));
+    add("protection/evaluate mode is partial", "partial", r.json?.tags_protected === "partial" && r.json.missing.join() === "active", r.stdout + r.stderr);
+    r = run(full({ conditions: { ref_name: { include: ["refs/tags/v*"], exclude: ["refs/tags/v*"] } } }));
+    add("protection/an exclude that cancels is partial", "partial", r.json?.tags_protected === "partial" && r.json.missing.join() === "exclude", r.stdout + r.stderr);
+    r = run(full({ conditions: { ref_name: { include: ["refs/tags/release-*"], exclude: [] } } }));
+    add("protection/a ruleset on other tags is no", "no", r.json?.tags_protected === "no", r.stdout + r.stderr);
+    r = run(full({ conditions: { ref_name: { include: ["~ALL"], exclude: [] } } }));
+    add("protection/an all-tags ruleset covers", "yes", r.json?.tags_protected === "yes", r.stdout + r.stderr);
+    for (const [exc, why] of [["refs/tags/v1.*", "a version range"], ["refs/tags/v*.*.*", "the whole shape"], ["refs/tags/*", "everything"]]) {
+      r = run(full({ conditions: { ref_name: { include: ["~ALL"], exclude: [exc] } } }));
+      add(`protection/an exclude of ${why} is partial`, "partial", r.json?.tags_protected === "partial" && r.json.missing.includes("exclude"), r.stdout + r.stderr);
+    }
+    r = run(full({ conditions: { ref_name: { include: ["~ALL"], exclude: ["refs/tags/nightly-*"] } } }));
+    add("protection/an exclude that is provably apart stays yes", "yes", r.json?.tags_protected === "yes", r.stdout + r.stderr);
+    r = run(full({ conditions: { ref_name: { include: ["refs/tags/v*.*.*"], exclude: [] } } }));
+    add("protection/include v*.*.* covers real tags", "yes", r.json?.tags_protected === "yes", r.stdout + r.stderr);
+    for (const inc of ["refs/tags/vx", "refs/tags/v?"]) {
+      r = run(full({ conditions: { ref_name: { include: [inc], exclude: [] } } }));
+      add(`protection/include ${inc} does not cover real tags`, "no", r.json?.tags_protected === "no", r.stdout + r.stderr);
+    }
+    {
+      const pat = (tags, ship_extra = "") => {
+        const m = mkrepo({ "CLAUDE.md": LIB_BLOCK(ship_extra) });
+        for (const tg of tags) git(m, "tag", tg);
+        return (rs) => ship(m, ["protection"], { env: { GH_STUB_DIR: stubDir({ "rulesets.json": [{ id: 5, target: "tag" }], "ruleset.json": rs }) } });
+      };
+      let go = pat(["pro-ship--v1.0.0"], 'tag_pattern: "*--v*"\n');
+      let q = go(full({ conditions: { ref_name: { include: ["~ALL"], exclude: ["refs/tags/pro-ship--*"] } } }));
+      add("protection/an exclude of a real tag series is partial", "partial", q.json?.tags_protected === "partial" && q.json.missing.includes("exclude"), q.stdout + q.stderr);
+      go = pat(["api--v1.0.0"], 'tag_pattern: "*--v*"\n');
+      q = go(full({ conditions: { ref_name: { include: ["refs/tags/lib--*"], exclude: [] } } }));
+      add("protection/a ruleset on another series does not cover the real tags", "no", q.json?.tags_protected === "no", q.stdout + q.stderr);
+      go = pat(["api--v1.0.0"]);
+      q = go(full({ conditions: { ref_name: { include: ["refs/tags/v*"], exclude: [] } } }));
+      add("protection/no pattern: real tags decide, not samples", "no", q.json?.tags_protected === "no", q.stdout + q.stderr);
+      go = pat([], 'tag_pattern: "*--v*"\n');
+      q = go(full({ conditions: { ref_name: { include: ["refs/tags/lib--*"], exclude: [] } } }));
+      add("protection/no tag yet: the target's own shape decides", "no", q.json?.tags_protected === "no", q.stdout + q.stderr);
+      q = go(full({ conditions: { ref_name: { include: ["refs/tags/library--*"], exclude: [] } } }));
+      add("protection/no tag yet: a ruleset on the target's shape covers", "yes", q.json?.tags_protected === "yes", q.stdout + q.stderr);
+    }
+    r = run(undefined, {}, { GH_STUB_CLASSIC_FAIL: "1" });
+    add("protection/a classic endpoint failure is unknown", "unknown and a note", r.json?.tags_protected === "unknown" && /502/.test(r.json.notes[0]), r.stdout + r.stderr);
+    {
+      const fr = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "REVIEW.md": "# R\n\n## Roles\n" });
+      const go = (rs) => ship(fr, ["protection"], { env: { GH_STUB_DIR: stubDir({ "rulesets.json": [{ id: 5, target: "tag" }], "ruleset.json": rs }) } });
+      let f1 = go(full());
+      add("protection/the admin role as bypass stays yes in a factory repo", "yes", f1.json?.tags_protected === "yes" && f1.json.factory_repo === true, f1.stdout + f1.stderr);
+      f1 = go(full({ bypass_actors: [{ actor_type: "Integration", actor_id: 99 }] }));
+      add("protection/another bypass actor is partial in a factory repo", "partial", f1.json?.tags_protected === "partial" && f1.json.missing.join() === "bypass", f1.stdout + f1.stderr);
+      const rs = full(); delete rs.bypass_actors;
+      f1 = go(rs);
+      add("protection/an unreadable bypass list is partial in a factory repo", "partial and unknown", f1.json?.tags_protected === "partial" && f1.json.via.bypass[0] === "unknown", f1.stdout + f1.stderr);
+    }
+    r = run(undefined);
+    add("protection/AC9 nothing at all is no", "no", r.json?.tags_protected === "no" && r.json.via.kind === "none", r.stdout + r.stderr);
+    r = run(undefined, { "classic.json": [{ pattern: "v*" }] });
+    add("protection/classic tag protection is at most partial", "partial", r.json?.tags_protected === "partial" && r.json.via.kind === "classic", r.stdout + r.stderr);
+    r = run(undefined, {}, { GH_STUB_RULES_FAIL: "1" });
+    add("protection/AC9 a 403 is unknown with the reason", "unknown, exit 0", r.status === 0 && r.json.tags_protected === "unknown" && /403/.test(r.json.notes[0]), r.stdout + r.stderr);
+    add("protection/no workflow on tags reads no", "no", r.json?.ci_on_tags === "no" && r.json.factory_repo === false, r.stdout + r.stderr);
+    const wf = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "REVIEW.md": "# R\n\n## Roles\n\n```yaml\nroles: {}\n```\n" });
+    mkdirSync(join(wf, ".github", "workflows"), { recursive: true });
+    writeFileSync(join(wf, ".github", "workflows", "rel.yml"), "on:\n  push:\n    tags: ['v*']\njobs: {}\n");
+    r = ship(wf, ["protection"], { env: { GH_STUB_DIR: stubDir({ "rulesets.json": [] }) } });
+    add("protection/ci_on_tags and factory_repo read the repo", "yes and true", r.json?.ci_on_tags === "yes" && r.json.factory_repo === true, r.stdout + r.stderr);
+    for (const [name, text] of [["on: push", "on: push\njobs: {}\n"], ["on: [push, pull_request]", "on: [push, pull_request]\njobs: {}\n"], ["an unfiltered push block", "on:\n  push:\n  pull_request:\njobs: {}\n"]]) {
+      const u = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+      mkdirSync(join(u, ".github", "workflows"), { recursive: true });
+      writeFileSync(join(u, ".github", "workflows", "ci.yml"), text);
+      const q = ship(u, ["protection"], { env: { GH_STUB_DIR: stubDir({ "rulesets.json": [] }) } });
+      add(`protection/${name} runs on tags`, "yes", q.json?.ci_on_tags === "yes", q.stdout + q.stderr);
+    }
+    const b = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    mkdirSync(join(b, ".github", "workflows"), { recursive: true });
+    writeFileSync(join(b, ".github", "workflows", "ci.yml"), "on:\n  push:\n    branches: [main]\njobs: {}\n");
+    add("protection/a branch-only push does not", "no", ship(b, ["protection"], { env: { GH_STUB_DIR: stubDir({ "rulesets.json": [] }) } }).json?.ci_on_tags === "no", "");
   }
 }
 
