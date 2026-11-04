@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-10-31: P0 and P1 shipped, the twelve shipped intents marked `done` and item 15 is next.
+Last updated 2026-11-04: the factory retest is over and four intents wait for acceptance.
 
 A fresh session starts here: read "Now", then the intent folder it names.
 The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
@@ -11,26 +11,50 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
-### Next session: retest the factory with versioning
+### Next session: rerun the SDLC as an automated happy path
 
+The retest of 2026-11-04 is over: the release went out but no card reached Done, as written below.
 In order, each through the loop:
 
-1. [release-versioning](../intent/2026-11-03-release-versioning/intent.md): built in the PRs from #149 on, proposed ADR-0025 waits for sign-off: versions, changelog, post-deploy checks by target kind, deploy facts, tag protection.
-2. Build [factory-demo-kit](../intent/2026-11-03-factory-demo-kit/intent.md): one command makes a fresh demo, one removes it; a first build sits unpushed on the local branch `build/factory-demo-kit` in the worktree `../pro-dev-skillset.f-kit`. The first demo is removed (repo deleted, checkout in the Trash).
-3. Retest on a fresh demo: two level 1 intents run with `factory.py run --next`, the larger intent of Act 4 walked through every role, a release that `/pro-ship:ship` versions by itself and cards that reach Done on mieruka's board.
-4. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes.
-5. The maintainer signs off the software factory; ADR-0024 moves to accepted.
+1. The maintainer accepts the four intents, or corrects them, and answers their open questions: whether `pro-pdd`, `pro-spdd` and `pro-speckit` are being retired, plus the version a rollback release takes.
+2. mieruka's own intents, which the owner merges: the trace reads change cards and sessions run outside mieruka, plus screenshots shown as images in the trace panel. The first defines the log format the capture intent writes.
+3. [factory-session-capture](../intent/2026-11-04-factory-session-capture/intent.md): every factory and terminal session leaves a trace tied to its card.
+4. [sdlc-happy-path-run](../intent/2026-11-04-sdlc-happy-path-run/intent.md): one command runs the happy path to Done, with a screenshot per stage and role changes. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`.
+5. [rollback-path](../intent/2026-11-04-rollback-path/intent.md): a rollback route through the loop and an automated scenario, after the happy path works.
+6. [sdlc-git-commands](../intent/2026-11-04-sdlc-git-commands/intent.md): slash commands recommend each git step and the person decides. It changes ADR-0025's rule on who runs the tag, so settle it before that ADR's sign-off.
+7. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes. It has not run since release-versioning.
+8. The maintainer signs off the software factory and release-versioning; ADR-0024 and ADR-0025 move to accepted.
 
-For mieruka, its own intents (the owner merges): shipped intents sit in Build waiting for "the builder to open a PR" when their PR used another branch name; two servers on one project create duplicate cards; each card spawns `factory.py` for its level.
+### Done: the retest of 2026-11-04
+
+[release-versioning](../intent/2026-11-03-release-versioning/intent.md) and [factory-demo-kit](../intent/2026-11-03-factory-demo-kit/intent.md) are built.
+A fresh demo ran two level 1 intents unattended, one level 3 intent through every role and a v1.1.0 release that `/pro-ship:ship` versioned and `/pro-ship:deployed` recorded.
+The tests and the documented use passed on a clean checkout of the tag.
+No card reached Done, because the rollback check never passed and the deploy record stayed `partial`.
+The maintainer stopped the run there; the demo is removed.
+
+Findings not yet in an intent:
+
+- `/intent` says no pull request while the docs say an intent is accepted through one.
+- A role is only `user.name`, so a missed switch acts as the wrong person without warning. Squash merges credit the GitHub account.
+- A demo session overrode reviewers from Opus to Sonnet. Opus found an Important finding and two high test gaps the Sonnet runs had not. Small sample, but no gate caught the override.
+- A bare `/review` can reach the wrong reviewer.
+- `/ship` gives reviewers the first and last uncovered commit. That range pulls in covered commits and stops before a covered fix, so a fixed finding came back as Important.
+- A small pull request with no intent makes `ship.py version` propose a major version until someone answers.
+- A pr-check stamp can never cover the sign-off commit, so a signed-off pull request reads as uncovered.
+- `/ship` recorded legal as `could-not-run` where the plugin was not installed, and condensed a specialist report that should be verbatim.
+- `factory.py level` raises to 3 on stop-list words in the text of an intent that only discusses them.
+- A rerun of `/pro-ship:deployed` for a tag overwrites the earlier record, so its history is lost.
+- `/execute`'s test-file freeze forces extra test files in review fixes. `protect-tests` in enforce mode would block a legitimately reversed test, which is input to the 2026-11-13 enforce decision.
+- `## Done` goes stale after later commits, and the demo fixture has no `AGENTS.md`.
 
 ### Built, waiting on sign-off: the software factory
 
 [intent/2026-11-03-software-factory](../intent/2026-11-03-software-factory/intent.md): escalation levels set by `factory.py level` and only raised, a `## Roles` block in `REVIEW.md` plus a runner that takes a level 1 intent to a merged pull request in a container while the host decides every merge ([ADR-0024](./decisions/0024-escalation-levels.md) proposed).
 Built in #135 to #139; guide in [factory.md](./factory.md), demo in [factory-demo.md](./factory-demo.md).
 Proved live on https://github.com/jodybrewster/factory-demo: two level 1 intents merged with nobody present, one stopped at level 2 for the engineer.
-Waiting on the maintainer: the sign-off, merging mieruka #202 and #203, the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30) and the larger intent of the demo's Act 4.
-Next: [release-versioning](../intent/2026-11-03-release-versioning/intent.md), the gaps the demo's first release exposed (version, changelog, post-deploy checks by target kind, deploy facts, tag protection).
-Follow-ups: a failed build on a merged brief has no retry path, because `run --next` and `run <dir>` refuse an intent that already has a spec and the session's unpushed work dies with the container; evidence on the kanban in mieruka for each step of a run (the trace UI with screenshots mieruka already has); a captured session trace per run (agent timeline, events, cost and tokens) so anyone can see the right agents were called; plans that a later change makes untrue (the reviewer's doc-freshness check), cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
+Waiting on the maintainer: the sign-off, merging mieruka #202 and #203 and the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30).
+Follow-ups: a failed build on a merged brief has no retry path, because `run --next` and `run <dir>` refuse an intent that already has a spec and the session's unpushed work dies with the container; plans that a later change makes untrue (the reviewer's doc-freshness check), cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
 
 ### Done: the loop after the build
 
