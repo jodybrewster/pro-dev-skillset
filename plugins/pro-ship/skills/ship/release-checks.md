@@ -75,16 +75,21 @@ Without pro-design, write `confirm` and list the six checks for the person:
 
 Each missing item is a Recommended fix.
 `/ship` never edits a document.
+The one exception is `ship.py prepare`, which edits the manifest and the changelog when the person asks, after the GO.
 
 - README updated for new setup steps, env vars or commands.
 - API documentation current for changed endpoints.
 - An ADR for any architectural decision in the range.
 - The changelog picked up the release: a release-please config with no open release PR, or a `CHANGELOG.md` with no entry for the version.
+- The changelog is updated for the range: `ship.py changelog --check <base> <head>`.
+  Each intent in `missing` and each in `no_migration` is a Recommended fix.
+  A `confirm` item asks whether the deprecation window was kept (the `deprecation-and-migration` skill).
+  A `mode_change` is a Recommended fix naming both modes, because a switch to `generated` stops these checks.
 - User-facing documentation updated, when there is any.
 
 ## Version
 
-A tag or release version that differs from the version in the manifests the repo ships is a Blocker.
+A tag or release version that differs from the version in the manifests the repo ships is a Blocker: `ship.py version --agree <version>` proves the manifest, the changelog and the tag name agree.
 In this marketplace the version-bump check in `tests/check.mjs` stands in for it through the repo's own checks.
 
 ## Publish

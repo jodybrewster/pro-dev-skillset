@@ -61,14 +61,35 @@ Print `sentence`, `question` and `tag_command` verbatim and never build or edit 
 - `state: first-release`: there is no release tag yet.
   Print `question` as it is, with the three answers: tag that commit as the declared version, pick another commit by subject or treat the whole history as the first release.
   Never list bare hashes.
-  Rerun with `--base <the commit they chose>` to see what ships after it.
+  A baseline skips review, so first ask in these words: "Was this exact commit already released to people? Tagging it this way means it gets no review."
+  Only on the person's own yes, run `python3 "$SHIP" version --baseline <version> --commit <that commit> --already-out` and print its `tag_command` verbatim.
+  Never pass `--already-out` because a command refused without it.
+  Once they have pushed the tag, start this skill again: the first real release then has a range.
+  When they say the whole history is the first release, nothing was out before it, so this is a real release of unreviewed work.
+  Carry on with this skill using the empty tree `4b825dc642cb6eb9a060e54bf8d69288fbee4904` as the base, so the first commit is reviewed too: `coverage` takes it and reviewers get it as the start of the range.
+  Write the verdict and go to "After the GO".
 - `state: nothing`: say so; there is no version to propose.
 - `notes`: say each one once, as they are.
 
 The size of a diff never changes the bump, so a small change that breaks a caller is still major.
 When `version` refuses, say why and ask the person for the base.
-`/ship` never tags; the person runs the tag command after the release change has merged.
-`tag_command` names the commit `version` ran on, so run `version` again on the merged commit and print that one; it is null while `question` waits for an answer.
+`/ship` never tags, never commits and never pushes.
+
+### After the GO: the release change
+
+Once the verdict below is GO on this HEAD and the person has accepted the version:
+
+1. Offer `python3 "$SHIP" prepare <version> [--target <id>]`; it edits files, so ask first.
+   It writes the version into the one manifest and, in `manual` mode, turns Unreleased into the version.
+   It refuses a generated changelog, a dirty tree, a symlink, an existing tag and a bad version.
+2. The person commits those files and merges them through a pull request, with no other change in it.
+3. On the merged commit run `python3 "$SHIP" version --agree <version> --commit <merged commit> --carry [--target <id>]`.
+   A `finding` on `manifest`, `changelog` or `tag` for a `tag-release` or `publish` target is a Blocker.
+   A `finding` on `go` means something besides the release lines landed since the GO: rerun this skill on that commit.
+4. Print its `tag_command` verbatim for the person to run, then `git push origin <tag>` as theirs too.
+   With no `tag_command`, there is nothing to tag yet.
+
+`changelog --check <base> <head>` feeds the Documentation items in release-checks.md.
 
 ## Coverage
 
