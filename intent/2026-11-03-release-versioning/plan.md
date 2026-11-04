@@ -261,8 +261,13 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 
 ## Departures from plan
 
-None yet.
+- Step 1: a release change (only the manifest's version line and the changelog) is not counted as a change, so rerunning `version` on the merged commit gives the same number.
+- Step 1: `tag_command` is null while `question` waits for an answer, since the number depends on it.
+- Step 1: `scope` gains `base_tag` and, with no `tag_pattern`, ignores a tag series no target owns; `v1.0.0` and `1.0.0` are one series (security review of the diff).
+- Step 1: a commit's own breaking mark or `feat` prefix raises the intent it touches (security review of the diff).
+- Step 2: `/execute` reads the changelog mode from the repo by hand instead of through `ship.py`: the rule is short, `python3` is not pre-approved and no dependency on pro-ship is needed.
 
 ## Noticed but not touched
 
-None yet.
+- `ship.py` `intent_facts` does not follow a renamed intent folder: `git log --follow` reads similar intents as renames and mixes their severity. A build that renames a folder already raises level 3 as a policy path.
+- The tag rule rejects `@scope/pkg@1.2.3`, the shape changesets uses, so such a repo reads as having no release tag and `version` asks; the rule is the one the security challenge named.
