@@ -35,6 +35,16 @@ Run shell commands with the paths written out where you can, so each one can be 
 Merge only with `gh pr merge` and never through `gh api`.
 Never run `git reset --hard` or commit to the default branch outside stages 1 and 2; if the checkout does not fast-forward, say so in plain words and stop.
 
+## Tidying up
+
+Leave the worktree before removing it, because a shell left inside a deleted folder loses the next command.
+Run these as separate commands, in this order, each starting with `cd <repo root> &&`:
+
+1. `git pull --ff-only`
+2. `git worktree remove <worktree>`
+3. `git branch -D <branch>`
+4. `git push origin --delete <branch>`
+
 ## Stages
 
 Pick up from where the change is: skip a stage whose result already exists, so a stopped delivery can run again.
@@ -82,9 +92,8 @@ Ask `Ready, checks passed. Merge it?` with the options `Merge it`, `Not yet` and
 - Not yet: say it stays open and that `/deliver <dir>` picks it up, then stop.
 - Merge it: fill the plan's `- Sign-off:` line in the worktree with `<Author>, <date>, said merge in chat`, commit and push it and wait for the checks with `gh pr checks <n> --watch`.
   If the pull request is a draft, run `gh pr ready <n>`.
-  Read the head with `gh pr view <n> --json headRefOid`.
-  From the repo root run `git worktree remove <worktree>` first, because `--delete-branch` cannot delete a branch a worktree holds.
-  Then, still from the repo root, run `gh pr merge <n> --squash --match-head-commit <sha> --delete-branch` and `git pull --ff-only`.
+  Read the head with `gh pr view <n> --json headRefOid`, then run `gh pr merge <n> --squash --match-head-commit <sha>`; leave out `--delete-branch`, which fails while a worktree holds the branch.
+  Tidy up as in "Tidying up".
 
 ### 6. Release
 
@@ -101,7 +110,7 @@ Ask `This would be version <X.Y.Z>. Publish it? This can't be taken back.` with 
 - Yes, publish it:
   1. `git worktree add ../<root name>.release-<X.Y.Z> -b release-<X.Y.Z> origin/<default branch>`.
   2. `python3 "<pro-ship scripts>/ship.py" prepare <X.Y.Z> --root <that worktree>`, then commit what it wrote with `git commit -m "release: <X.Y.Z>"`, push, open the pull request with `gh pr create` and wait for the checks.
-  3. From the repo root remove the worktree, then run `gh pr merge <n> --squash --match-head-commit <sha> --delete-branch` and `git pull --ff-only`.
+  3. Merge it with `gh pr merge <n> --squash --match-head-commit <sha>` and tidy up as in "Tidying up".
   4. `python3 "<pro-ship scripts>/ship.py" version --agree <X.Y.Z> --commit <merged commit> --carry`. A finding is a blocker: say what it is and stop.
   5. Run its `tag_command` as printed, then `git push origin <tag>`.
 
@@ -123,3 +132,4 @@ Then ask `Is it working? Here's what to check.` with the options `Yes, it's work
 - No, something's wrong: record the same way with that check as a `finding`, show the rollback steps in plain words and offer `/incident`. The rollback stays the person's call.
 
 Never merge, tag or publish on any answer other than the yes for that step.
+However a delivery stops, end with one plain sentence that says where it stands.
