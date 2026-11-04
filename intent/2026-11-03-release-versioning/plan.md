@@ -86,7 +86,8 @@ Rules the code follows:
 - Headless sessions never run `prepare`, `version --agree`, `version --baseline`, `clean-run` or `deployed`.
   `session.sh` exports `FACTORY_SESSION=1` and ship.py refuses those subcommands when it is set; the host's branch protection and level checks remain the real control, since a steered session can unset a variable.
 - Clean checkout: `clean-run` pipes `git archive <tag>` into `docker run -i --rm --entrypoint sh --cap-drop ALL --security-opt no-new-privileges <image>` and untars inside the container.
-  No host path is mounted, no `-e` or `--env-file` is passed, so no token and no env file reach it; the network stays on because `npm ci` needs it and the container holds nothing worth sending.
+  No host path is mounted, no `-e` or `--env-file` is passed, so no token and no env file reach it.
+  The network is off, because Docker Desktop can reach the host and the LAN from the default bridge; tests that install need `test_network: true` in the Ship block, a policy file the factory cannot touch without level 3.
   The image is the target's `check_image` or else the newest local `pro-dev-factory` image; no docker or no image is a refusal and the skill records `confirm` with the command for the person.
   It never falls back to the host.
 - Test command: the target's `test_command` in the Ship block, else `npm ci && npm test`, `npm test`, `pytest` or `cargo test` from the manifest; none is a refusal naming the key.
@@ -249,7 +250,7 @@ A repo with a `## Roles` block gets a Blocker the person can accept by name, bec
 
 Filled in when the build is finished, before sign-off.
 
-- Build commit: <sha>
+- Build commit: the merge of step 5 on main; each step is its own pull request from #149 on.
 - Checks run: <each command with its real result>
 - Definition of done: <met or the items not met>
 - Visual: none
@@ -266,7 +267,16 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 - Step 1: `scope` gains `base_tag` and, with no `tag_pattern`, ignores a tag series no target owns; `v1.0.0` and `1.0.0` are one series (security review of the diff).
 - Step 1: a commit's own breaking mark or `feat` prefix raises the intent it touches (security review of the diff).
 - Step 1: `CLAUDE.md` gains `pr-check timeout: 900`, because `node tests/check.mjs` passes the 300 second default and every pr-check read `incomplete`.
+- Step 1: `merge_kind` reads the commits a merge brought in, so a merge commit's own subject never decides the kind; messages are read split on NUL so a separator in a body shifts nothing.
+- Step 1: `version` counts every intent touched in the range as R3 says and adds a note when no commit there changes anything outside `intent/`.
 - Step 2: `/execute` reads the changelog mode from the repo by hand instead of through `ship.py`: the rule is short, `python3` is not pre-approved and no dependency on pro-ship is needed.
+
+- Step 3: `--baseline` needs `--already-out` on every commit, passed only on the person's own yes, and refuses an unreadable origin; the whole-history answer goes through a normal preflight from the empty tree so the first commit is reviewed; `version` never offers HEAD as the commit (security review).
+- Step 3: `changelog --check` counts a line while it is still under Unreleased and matches a build in a separate commit on the words of the intent's title, since R12 gives no other link between an entry and an intent.
+- Step 3: `prepare` takes `--target` so it follows `version --target`.
+- Step 4: `clean-run` names its container so a timeout can kill it and refuses a command longer than what the person is shown.
+- Step 4: `tests/fixtures/ship-version/` is not added; the tests build their repos inline like `tests/ship-deploy.mjs`.
+- Step 5: in a factory repo any bypass actor but the repository admin role is `partial`; an unreadable bypass list proves nothing.
 
 ## Noticed but not touched
 

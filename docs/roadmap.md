@@ -15,7 +15,7 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 In order, each through the loop:
 
-1. Build [release-versioning](../intent/2026-11-03-release-versioning/intent.md): spec and ADR-0025 merged (#146); the plan is a draft with its security challenge recorded (two blocking items, seven required changes) and needs them folded in before the build: versions, changelog, post-deploy checks by target kind, deploy facts, tag protection.
+1. [release-versioning](../intent/2026-11-03-release-versioning/intent.md): built in the PRs from #149 on, proposed ADR-0025 waits for sign-off: versions, changelog, post-deploy checks by target kind, deploy facts, tag protection.
 2. Build [factory-demo-kit](../intent/2026-11-03-factory-demo-kit/intent.md): one command makes a fresh demo, one removes it; a first build sits unpushed on the local branch `build/factory-demo-kit` in the worktree `../pro-dev-skillset.f-kit`. The first demo is removed (repo deleted, checkout in the Trash).
 3. Retest on a fresh demo: two level 1 intents run with `factory.py run --next`, the larger intent of Act 4 walked through every role, a release that `/pro-ship:ship` versions by itself and cards that reach Done on mieruka's board.
 4. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes.
@@ -30,7 +30,7 @@ Built in #135 to #139; guide in [factory.md](./factory.md), demo in [factory-dem
 Proved live on https://github.com/jodybrewster/factory-demo: two level 1 intents merged with nobody present, one stopped at level 2 for the engineer.
 Waiting on the maintainer: the sign-off, merging mieruka #202 and #203, the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30) and the larger intent of the demo's Act 4.
 Next: [release-versioning](../intent/2026-11-03-release-versioning/intent.md), the gaps the demo's first release exposed (version, changelog, post-deploy checks by target kind, deploy facts, tag protection).
-Follow-ups: plans that a later change makes untrue (the reviewer's doc-freshness check), cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
+Follow-ups: evidence on the kanban in mieruka for each step of a run (the trace UI with screenshots mieruka already has); a captured session trace per run (agent timeline, events, cost and tokens) so anyone can see the right agents were called; plans that a later change makes untrue (the reviewer's doc-freshness check), cache the level per intent in mieruka (each card spawns `factory.py`), a scoped GitHub identity for the factory instead of `--allow-broad-token`.
 
 ### Done: the loop after the build
 
