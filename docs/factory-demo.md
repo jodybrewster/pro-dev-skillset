@@ -55,7 +55,7 @@ While it runs, show:
 
 - `docker ps`: the session runs in a container on a fresh clone, not in your checkout.
 - The brief pull request on GitHub: only `spec.md` and `plan.md`, `Approver: factory, level 1`, `Stop-list categories: none`.
-- The build pull request: the test commit comes before the fix, every commit carries `Factory-Run: build <folder>`, CI is green.
+- The build pull request: each step's tests and code in one commit, seen failing first in the session log, every commit carries `Factory-Run: build <folder>`, CI is green.
 - `cat .pro-dev/factory/factory-<folder>.json`: status, summary, cost.
 
 The point to make: the session proposed both pull requests; the runner on this machine checked them from its own fetch and did the merges.

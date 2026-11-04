@@ -40,7 +40,7 @@ git config --global credential.https://github.com.helper \
 mkdir -p "$HOME/.factory-hooks"
 cat > "$HOME/.factory-hooks/commit-msg" <<HOOK
 #!/bin/sh
-git interpret-trailers --in-place --if-exists doNothing --trailer "Factory-Run: ${phase} ${dir#intent/}" "\$1"
+git interpret-trailers --in-place --if-exists replace --trailer "Factory-Run: ${phase} ${dir#intent/}" "\$1"
 HOOK
 chmod +x "$HOME/.factory-hooks/commit-msg"
 git config --global core.hooksPath "$HOME/.factory-hooks"
