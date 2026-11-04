@@ -393,7 +393,10 @@ exec "${realGit}" "$@"
     repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": JSON.stringify({ name: "t", version: "1.5.0" }) });
     commit(repo, "more", { "a.txt": "1\n" });
     r = ship(repo, ["version"]);
-    add("first/R7 no intent folder picks the newest commit holding the version", "HEAD", r.json?.base_candidate?.sha === git(repo, "rev-parse", "HEAD").stdout.trim(), show(r));
+    add("first/R7 no intent folder picks the newest commit before HEAD holding the version", "the parent", r.json?.base_candidate?.sha === git(repo, "rev-parse", "HEAD~1").stdout.trim(), show(r));
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": JSON.stringify({ name: "t", version: "1.5.0" }) });
+    r = ship(repo, ["version"]);
+    add("first/HEAD is never the offered commit", "no candidate and a question", r.json?.base_candidate === null && r.json.tag_command === null && /Which commit/.test(r.json.question), show(r));
 
     repo = mkrepo();
     r = ship(repo, ["version"]);

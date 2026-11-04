@@ -1535,7 +1535,8 @@ def range_changes(root: str, base: str | None, notes: list[str], manifest: str |
 
 def first_release_candidate(root: str, declared: dict | None, notes: list[str]) -> dict | None:
     """R7: the parent of the oldest commit that added a path under intent/, else the newest commit
-    whose manifest holds the declared version. None when neither holds the declared version."""
+    before HEAD whose manifest holds the declared version. None when neither holds it. HEAD is never
+    offered: it may hold work nobody released, and tagging it this way skips review."""
     head_file = declared["file"] if declared else None
     want = declared["version"] if declared else None
 
@@ -1552,7 +1553,7 @@ def first_release_candidate(root: str, declared: dict | None, notes: list[str]) 
         notes.append("the commit before the first intent does not hold the declared version")
         return None
     if not sha and not added:
-        sha = next((c for c in git_lines(root, "log", "--format=%H", "-n", "200", "HEAD") if holds(c)), None)
+        sha = next((c for c in git_lines(root, "log", "--format=%H", "-n", "200", "HEAD")[1:] if holds(c)), None)
     if not sha:
         return None
     line = git_lines(root, "log", "-1", "--format=%h%x00%cs%x00%s", sha)
