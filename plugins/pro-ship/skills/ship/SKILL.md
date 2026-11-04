@@ -91,6 +91,14 @@ Once the verdict below is GO on this HEAD and the person has accepted the versio
 
 `changelog --check <base> <head>` feeds the Documentation items in release-checks.md.
 
+## Tag protection
+
+For a `tag-release` or `publish` target run `python3 "$SHIP" protection` once per run and say the result once: are release tags protected, by what, who can bypass it and whether CI runs on tags.
+`yes` means an active tag ruleset restricts creation, update and deletion and no exclude could reach a release tag; `partial` names what lacks in `missing`; `unknown` says why in `notes`.
+In a factory repo any bypass actor but the repository admin role is `partial` too.
+With `factory_repo` false this is one Recommended fix when the answer is not `yes` and never a Blocker.
+With `factory_repo` true, anything but `yes` is a Blocker the person can accept by name, because a factory pushes to this repo and a tag can land on any commit.
+
 ## Coverage
 
 `python3 "$SHIP" coverage <base> <head>` maps every commit to the PR that merged it and prints `prs`, `covered` and `uncovered`.
