@@ -131,7 +131,7 @@ Run these in order, then check each line under Validate.
    gh auth refresh -h github.com -s delete_repo    # once, adds the scope
    gh repo delete jodybrewster/<demo> --yes
    ```
-   To keep it for reference instead: `gh repo archive jodybrewster/<demo> --yes`.
+   To keep it for reference instead: `gh repo archive jodybrewster/<demo> -y`.
 5. Remove the factory images (`docker images pro-dev-factory`, then `docker rmi pro-dev-factory:<tag>`); the next run builds the current one.
 6. Pick a new demo name for the retest, so nothing on GitHub or on disk carries over.
 

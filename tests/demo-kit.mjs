@@ -138,7 +138,7 @@ export function runDemoKitCases() {
     add("r3 remove succeeds", "exit 0", r.status === 0, brief(r));
     add("r4 remove uninstalls the four local plugins", "four", ["pro-ai-sdlc", "pro-ship", "pro-quality", "pro-security"].every((p) => rl.includes(`claude plugin uninstall ${p}@pro-dev-skillset --scope local`)), rl.join("\n"));
     add("r5 remove moves the checkout to the Trash", "moved", !existsSync(dest) && existsSync(join(home, ".Trash", `demo-one-${new Date().toLocaleDateString("sv")}`)), brief(r));
-    add("r6 remove archives the repo", "archived", rl.includes("gh repo archive o/demo-one --yes"), rl.join("\n"));
+    add("r6 remove archives the repo", "archived", rl.includes("gh repo archive o/demo-one -y"), rl.join("\n"));
     add("r7 remove never calls gh repo delete but prints it", "no delete", !rl.some((c) => /^gh repo delete/.test(c)) && /gh repo delete o\/demo-one --yes/.test(r.stdout), rl.join("\n"));
     const code = readFileSync(REMOVE, "utf8").split("\n").filter((l) => !/^\s*(#|echo)/.test(l)).join("\n");
     add("r8 neither script runs kill, pkill or eval", "none", !/\b(kill|pkill|killall|eval)\b/.test(code) && !/\b(kill|pkill|killall|eval)\b/.test(readFileSync(NEW, "utf8").split("\n").filter((l) => !/^\s*(#|echo)/.test(l)).join("\n")), "");
