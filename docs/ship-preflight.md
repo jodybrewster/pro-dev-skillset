@@ -12,7 +12,7 @@ When a rule here changes, change every copy and the fixtures in the same commit.
 
 ## Who writes and who reads
 
-- One writer: `plugins/pro-ship/scripts/ship.py record`.
+- One writer: `plugins/pro-ship/scripts/ship.py`, through `record` after a review and through `version --agree --carry` and `version --baseline` as described in "Records with no review of their own".
 - Reader 1: `plugins/pro-ship/scripts/ship-gate.py`, a `PreToolUse` hook on tags, releases, publishes and production deploys.
 - Reader 2: `plugins/pro-ship/scripts/merge-gate.py`, which adds one line about the record to the message it already shows.
 - Reader 3: `plugins/pro-legal/scripts/release-gate.py`, which may skip its own legal deny (see "The legal skip rule").
@@ -143,9 +143,31 @@ Anything the script cannot prove is uncovered.
 
 ## Tags
 
-A tag counts as a release tag when its name holds a semver `vX.Y.Z` or `X.Y.Z`: `v1.2.3`, `1.2.3`, `name--v1.2.3` and `name@1.2.3` all do.
-The Ship block's `tag_pattern` (a git glob such as `*--v*`) replaces that rule for both `targets` and the base of `scope`.
-When `scope` returns a null base, the skill asks the person for the base and never guesses one.
+A tag counts as a release tag when its whole name is `v1.2.3`, `1.2.3`, `name--v1.2.3` or `name@1.2.3`, because git accepts names that hold a command substitution.
+The Ship block's `tag_pattern` (a git glob such as `*--v*`) narrows which of those count, for the base of `scope` and for `version`.
+A tag detected only to tell the target's kind may be looser, because no name leaves that check.
+The base of `scope` is each series' highest version and then the newest of those; `base_tag` names it.
+When `scope` returns a null base, `version` settles it for a release target and the skill asks for a base only when that cannot answer, never guessing one.
+
+## Version and changelog items
+
+The Documentation and Version sections of the release checks gain:
+
+- `ship.py changelog --check <base> <head>`: `missing`, `no_migration`, `confirm` and `mode_change`, each a Recommended fix or a question.
+- `ship.py version --agree <version>`: the manifest, the changelog and the tag name agree; a `finding` on a `tag-release` or `publish` target is a Blocker.
+- `ship.py protection`: release tags and CI on tags, said once. It is a Recommended fix, or a Blocker the person can accept by name in a repo with a `## Roles` block.
+
+The rules are [ADR-0025](./decisions/0025-release-versions.md).
+
+## Records with no review of their own
+
+Two commands write this record for a commit no reviewer ran on; the detail says so:
+
+- `version --agree X.Y.Z --commit Z --carry` writes it for Z with `detail.carried_from` only when Z differs from the GO head by exactly the bytes `prepare` writes: the manifest's version line and the changelog heading.
+- `version --baseline X.Y.Z --commit B` writes it for B with `detail.baseline: true` only when no release tag exists locally or on origin and B is on HEAD's history.
+  HEAD needs `--already-out`, because a whole history that was never released gets a normal preflight.
+
+Both refuse in a factory session (`FACTORY_SESSION` is set by `session.sh`).
 
 ## The mieruka drop
 

@@ -189,7 +189,9 @@ Validate: each commit at a gate is authored by the role that owns it; `factory.p
 
 ## Step 10: deploy and record it
 
-`/pro-ship:ship` writes the GO or NO-GO preflight; tag and push the release, then `/pro-ship:deployed`.
+`/pro-ship:ship` proposes the version in plain words and writes the GO or NO-GO preflight.
+After a GO it offers `ship.py prepare <version>` for the release change; once that has merged, `ship.py version --agree <version> --commit <merged> --carry` prints the tag command.
+Tag and push the release yourself, then run `/pro-ship:deployed`, which walks the checks for the target's kind and takes the time from the tag.
 Validate: a deploy record under `.pro-dev/ship/deploys/`.
 When something breaks, `/incident` writes `incident.md` and a new intent at level 2 or higher.
 

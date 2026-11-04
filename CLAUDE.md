@@ -120,6 +120,7 @@ targets:
       rto: "one release cycle"
 tag_pattern: "*--v*"
 last_deploy: tag
+changelog: generated
 ```
 
 ## Things Claude gets wrong
