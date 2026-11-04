@@ -19,6 +19,9 @@ const LIB_BLOCK = (extra = "") => `# x\n\n## Ship\n\n\`\`\`yaml\ntargets:\n  - i
 const intent = ({ kind = "idea", breaking = "false", title = "A change" } = {}) =>
   `---\nsource: idea\nkind: ${kind}\n${breaking === null ? "" : `breaking: ${breaking}\n`}status: accepted\n---\n\n# Intent: ${title}\n\n## Problem\n\nx\n`;
 
+const PKG = (v) => `{\n  "name": "t",\n  "config": {\n    "version": "keep"\n  },\n  "version": "${v}"\n}\n`;
+const LOG2 = "# Changelog\n\n## [Unreleased]\n\n### Added\n\n- Sort\n\n## [1.0.0] - 2026-01-01\n\n- Old\n\n[Unreleased]: https://example.test/compare/v1.0.0...HEAD\n[1.0.0]: https://example.test/releases/v1.0.0\n";
+
 export function runShipVersionCases() {
   const out = { skipped: null, results: [] };
   if (spawnSync("python3", ["--version"], { stdio: "ignore" }).error) return { ...out, skipped: "python3 not found on PATH" };
@@ -91,6 +94,11 @@ exec "${realGit}" "$@"
     firstReleaseCases();
     commitCases();
     changelogCases();
+    checkCases();
+    prepareCases();
+    agreeCases();
+    twoTargets();
+    baselineCases();
     add("all/no git tag or git push ran", "no forbidden calls", !existsSync(log), existsSync(log) ? readFileSync(log, "utf8") : "");
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
@@ -483,6 +491,258 @@ exec "${realGit}" "$@"
     add("changelog/a symlinked changelog is not read and says so", "none, no path and a reason", r.json?.mode === "none" && r.json.path === null && /symlink/.test(r.json.why), show(r));
     r = ship(mkrepo({ "CLAUDE.md": LIB_BLOCK(), "CHANGELOG.md": "## [Unreleased]\n\n- ship 2.0.0\u001b[31m now\n" }), ["changelog"]);
     add("changelog/lines come out clean", "no escape", r.json?.unreleased[0] === "- ship 2.0.0 now", show(r));
+  }
+
+  // R12 and the mode change of the security challenge.
+  function checkCases() {
+    const LOG = "# Changelog\n\n## [Unreleased]\n";
+    let repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "CHANGELOG.md": LOG });
+    const base = git(repo, "rev-parse", "HEAD").stdout.trim();
+    commit(repo, "a (#1)", { "intent/2026-01-05-a/intent.md": intent(), "src/a.js": "1\n", "CHANGELOG.md": LOG + "\n### Added\n\n- A\n" });
+    commit(repo, "b (#2)", { "intent/2026-01-05-b/intent.md": intent(), "src/b.js": "1\n" });
+    commit(repo, "c (#3)", { "intent/2026-01-05-c/intent.md": intent({ breaking: "true" }), "src/c.js": "1\n", "CHANGELOG.md": LOG + "\n### Added\n\n- A\n- C\n" });
+    let r = ship(repo, ["changelog", "--check", base, "HEAD"]);
+    add("check/R12 an intent with no entry is missing", "b", r.json?.missing.join() === "2026-01-05-b", show(r));
+    add("check/R12 a breaking entry with no Migration line", "c", r.json?.no_migration.join() === "2026-01-05-c", show(r));
+    add("check/R12 a breaking change asks about the window", "deprecation window", r.json?.confirm.join() === "deprecation window" && r.json.mode_change === null, show(r));
+    const b4 = git(repo, "rev-parse", "HEAD").stdout.trim();
+    commit(repo, "e (#5)", { "intent/2026-01-05-sort/intent.md": intent({ title: "Sort by title" }) });
+    commit(repo, "sort code (#6)", { "src/s.js": "1\n", "CHANGELOG.md": LOG + "\n### Added\n\n- A\n- C\n- Sort tasks by their title\n" });
+    r = ship(repo, ["changelog", "--check", b4, "HEAD"]);
+    add("check/a build in a separate commit is matched on the intent's title", "not missing", r.json?.missing.length === 0, show(r));
+    commit(repo, "drop lines", { "CHANGELOG.md": LOG });
+    r = ship(repo, ["changelog", "--check", base, "HEAD"]);
+    add("check/an entry later deleted from Unreleased is missing again", "a and c too", r.json?.missing.includes("2026-01-05-a") && r.json.missing.includes("2026-01-05-c"), show(r));
+    const rem = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "CHANGELOG.md": LOG });
+    const remb = git(rem, "rev-parse", "HEAD").stdout.trim();
+    commit(rem, "x", { "CHANGELOG.md": LOG + "\n### Removed\n\n- Old thing\n" });
+    r = ship(rem, ["changelog", "--check", remb, "HEAD"]);
+    add("check/R12 a Removed entry asks about the window", "deprecation window", r.json?.confirm.join() === "deprecation window", show(r));
+    commit(repo, "d (#4)", { "intent/2026-01-05-d/intent.md": intent({ breaking: "true" }), "src/d.js": "1\n", "CHANGELOG.md": LOG + "\n- D\n  Migration: use e\n" });
+    r = ship(repo, ["changelog", "--check", base, "HEAD"]);
+    add("check/a Migration line satisfies it", "d is not listed", !r.json?.no_migration.includes("2026-01-05-d") && !r.json?.missing.includes("2026-01-05-d"), show(r));
+
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "CHANGELOG.md": LOG });
+    const b2 = git(repo, "rev-parse", "HEAD").stdout.trim();
+    commit(repo, "x", { "cliff.toml": "" });
+    r = ship(repo, ["changelog", "--check", b2, "HEAD"]);
+    add("check/a switch to generated is reported", "manual to generated", r.json?.mode_change?.from === "manual" && r.json.mode_change.to === "generated", show(r));
+    r = ship(repo, ["changelog", "--check", "nope", "HEAD"]);
+    add("check/an unknown base is refused", "exit 1", r.status === 1, show(r));
+  }
+
+  function released(extra = {}) {
+    const repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": PKG("1.0.0"), "CHANGELOG.md": LOG2, ...extra });
+    git(repo, "tag", "v1.0.0");
+    return repo;
+  }
+
+  // R13, AC6 and the symlink item.
+  function prepareCases() {
+    let repo = released();
+    let r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/AC6 changes exactly the manifest and the changelog", "two files, no commit, no tag",
+      r.status === 0 && r.json.files.join() === "package.json,CHANGELOG.md" && git(repo, "status", "--short").stdout.trim().split("\n").length === 2
+        && git(repo, "tag", "--list").stdout.trim() === "v1.0.0" && git(repo, "log", "--oneline").stdout.trim().split("\n").length === 1, show(r));
+    const pkg = readFileSync(join(repo, "package.json"), "utf8");
+    add("prepare/only the top-level version line changes", "config.version kept", pkg === PKG("1.1.0"), pkg);
+    const log2 = readFileSync(join(repo, "CHANGELOG.md"), "utf8");
+    add("prepare/Unreleased becomes the version with a fresh one above", "both headings, entries kept",
+      /## \[Unreleased\]\n\n## \[1\.1\.0\] - \d{4}-\d{2}-\d{2}\n\n### Added\n\n- Sort/.test(log2), log2);
+    add("prepare/comparison links follow", "both links", /\[Unreleased\]: https:\/\/example\.test\/compare\/v1\.1\.0\.\.\.HEAD\n\[1\.1\.0\]: https:\/\/example\.test\/compare\/v1\.0\.0\.\.\.v1\.1\.0/.test(log2), log2);
+
+    for (const [name, text, re] of [
+      ["pyproject.toml", '[tool.other]\nversion = "9"\n\n[project]\nname = "t"\nversion = "1.0.0"\n', /\[project\]\nname = "t"\nversion = "1\.1\.0"\n/],
+      ["Cargo.toml", '[package]\nname = "t"\nversion = "1.0.0"\n\n[dependencies.x]\nversion = "3"\n', /version = "1\.1\.0"\n\n\[dependencies\.x\]\nversion = "3"/],
+    ]) {
+      repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), [name]: text });
+      git(repo, "tag", "v1.0.0");
+      r = ship(repo, ["prepare", "1.1.0"]);
+      add(`prepare/${name} changes only the named table`, "the one line", r.status === 0 && re.test(readFileSync(join(repo, name), "utf8")), show(r) + readFileSync(join(repo, name), "utf8"));
+    }
+
+    repo = released({ "cliff.toml": "" });
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/AC5 refuses a generated changelog and writes nothing", "exit 1, clean tree", r.status === 1 && /generated/.test(r.stderr) && git(repo, "status", "--short").stdout === "", show(r));
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": PKG("1.0.0") });
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/mode none edits only the manifest", "package.json and a skip", r.json?.files.join() === "package.json" && r.json.skipped[0].file === "CHANGELOG.md", show(r));
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "CHANGELOG.md": "## [Unreleased]\n" });
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/no manifest edits only the changelog", "a skip for the manifest", r.json?.files.join() === "CHANGELOG.md" && r.json.skipped[0].file === "manifest", show(r));
+
+    repo = released();
+    put(repo, { "package.json": PKG("9.9.9") });
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/a dirty tree refuses", "exit 1", r.status === 1 && /uncommitted/.test(r.stderr), show(r));
+    repo = released();
+    for (const bad of ["1.1", "v1.1.0", "1.1.0$(id)", "1.1.0\n", "\uff11.1.0"]) {
+      r = ship(repo, ["prepare", bad]);
+      add(`prepare/a bad version ${JSON.stringify(bad)} refuses`, "exit 1", r.status === 1 && git(repo, "status", "--short").stdout === "", show(r));
+    }
+    r = ship(repo, ["prepare", "1.0.0"]);
+    add("prepare/an existing tag refuses", "exit 1", r.status === 1 && /already exists/.test(r.stderr), show(r));
+    r = ship(repo, ["prepare", "0.9.0"]);
+    add("prepare/a version below the last refuses", "exit 1", r.status === 1 && /not above/.test(r.stderr), show(r));
+
+    // A symlink on the way must never carry a write outside the repo.
+    const outside = join(sandbox, `outside${++n}.txt`);
+    writeFileSync(outside, "keep\n");
+    const linked = (setup) => { const rp = released(); setup(rp); git(rp, "add", "-A"); git(rp, "commit", "-q", "-m", "link"); return rp; };
+    repo = linked((rp) => symlinkSync(outside, join(rp, "CHANGELOG.md.tmp")));
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/a committed CHANGELOG.md.tmp symlink is not written through", "outside file kept", readFileSync(outside, "utf8") === "keep\n", show(r));
+    repo = linked((rp) => { rmSync(join(rp, "CHANGELOG.md")); symlinkSync(outside, join(rp, "CHANGELOG.md")); });
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/a symlinked changelog never writes outside", "outside file kept", readFileSync(outside, "utf8") === "keep\n", show(r));
+    const realDir = mkdtempSync(join(sandbox, "realdir-"));
+    writeFileSync(join(realDir, "package.json"), PKG("1.0.0"));
+    repo = mkrepo({ "CLAUDE.md": LIB_BLOCK("    path: linked\n") });
+    symlinkSync(realDir, join(repo, "linked"));
+    git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "link");
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/a symlinked parent folder refuses", "exit 1 and the file kept", r.status === 1 && /symlink/.test(r.stderr) && readFileSync(join(realDir, "package.json"), "utf8") === PKG("1.0.0"), show(r));
+    repo = linked((rp) => { rmSync(join(rp, "package.json")); symlinkSync(outside, join(rp, "package.json")); });
+    r = ship(repo, ["prepare", "1.1.0"]);
+    add("prepare/a symlinked manifest refuses", "exit 1 and outside kept", r.status === 1 && /symlink/.test(r.stderr) && readFileSync(outside, "utf8") === "keep\n", show(r));
+
+    for (const args of [["prepare", "1.1.0"], ["version", "--agree", "1.1.0"], ["version", "--baseline", "1.0.0", "--commit", "HEAD"]]) {
+      repo = released();
+      r = ship(repo, args, { FACTORY_SESSION: "1" });
+      add(`prepare/${args[0]} ${args[1]} refuses in a factory session`, "exit 1", r.status === 1 && /factory session/.test(r.stderr) && git(repo, "status", "--short").stdout === "", show(r));
+    }
+  }
+
+  function goRecord(repo, head, status = "pass") {
+    mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+    writeFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), JSON.stringify({ schema: 1, head, evidence_key: `ship-preflight-${head.slice(0, 12)}`, status, summary: "GO", detail_json: "{}", produced_by: "pro-ship:ship@0.0.1" }));
+    git(repo, "config", "--local", "core.excludesFile", "/dev/null");
+    writeFileSync(join(repo, ".git", "info", "exclude"), ".pro-dev/\n");
+  }
+
+  // R14, AC6 and the GO bound to the commit that gets tagged.
+  function agreeCases() {
+    let repo = released();
+    ship(repo, ["prepare", "1.1.0"]);
+    let r = ship(repo, ["version", "--agree", "1.1.0"]);
+    add("agree/AC6 passes after prepare", "three passes", r.json?.checks.length === 3 && r.json.checks.every((c) => c.status === "pass") && r.json.tag_command !== null, show(r));
+    r = ship(repo, ["version", "--agree", "1.0.9"]);
+    add("agree/AC6 a version the manifest does not hold fails", "manifest finding and no command", r.json?.checks.find((c) => c.item === "manifest").status === "finding" && r.json.tag_command === null, show(r));
+    repo = released();
+    r = ship(repo, ["version", "--agree", "1.0.0"]);
+    add("agree/a used tag fails", "tag finding", r.json?.checks.find((c) => c.item === "tag").status === "finding" && r.json.tag_command === null, show(r));
+    repo = released();
+    put(repo, { "package.json": PKG("1.1.0") });
+    r = ship(repo, ["version", "--agree", "1.1.0"]);
+    add("agree/a changelog with no heading fails", "changelog finding", r.json?.checks.find((c) => c.item === "changelog").status === "finding", show(r));
+    repo = mkrepo();
+    git(repo, "tag", "v1.0.0");
+    r = ship(repo, ["version", "--agree", "1.1.0"]);
+    add("agree/no manifest reads manifest none and passes", "pass", /manifest: none/.test(r.json?.checks[0].evidence) && r.json.checks[0].status === "pass", show(r));
+
+    const bound = (edit) => {
+      const rp = released();
+      const go = git(rp, "rev-parse", "HEAD").stdout.trim();
+      goRecord(rp, go);
+      ship(rp, ["prepare", "1.1.0"]);
+      edit?.(rp);
+      const z = commit(rp, "release 1.1.0 (#9)");
+      return { rp, go, z, r: ship(rp, ["version", "--agree", "1.1.0", "--commit", z, "--carry"]) };
+    };
+    let x = bound();
+    const go = x.r.json?.checks.find((c) => c.item === "go");
+    add("agree/the release change alone binds to the GO", "go pass and a command for Z", go?.status === "pass" && x.r.json.tag_command === `git tag -a v1.1.0 ${x.z} -m 'Release 1.1.0'`, show(x.r));
+    const chk = ship(x.rp, ["check", x.z]);
+    add("agree/--carry makes the record fresh on Z", "fresh", chk.json?.fresh === true && x.r.json.carried === `ship-preflight-${x.z.slice(0, 12)}`, show(chk));
+    const rec = JSON.parse(readFileSync(join(x.rp, ".pro-dev", "ship", "preflight.json"), "utf8"));
+    add("agree/the carried record names where it came from", "carried_from", JSON.parse(rec.detail_json).carried_from === x.go && rec.produced_by.startsWith("pro-ship:ship@"), JSON.stringify(rec));
+
+    x = bound((rp) => put(rp, { "src/evil.js": "x\n" }));
+    let g = x.r.json?.checks.find((c) => c.item === "go");
+    add("agree/another file in the release fails go", "finding, no command, no carry", g?.status === "finding" && x.r.json.tag_command === null && x.r.json.carried === null && ship(x.rp, ["check", x.z]).json.fresh === false, show(x.r));
+    x = bound((rp) => put(rp, { "CHANGELOG.md": readFileSync(join(rp, "CHANGELOG.md"), "utf8") + "\nstray\n" }));
+    add("agree/a stray changelog line fails go", "finding", x.r.json?.checks.find((c) => c.item === "go").status === "finding", show(x.r));
+    x = bound((rp) => put(rp, { "package.json": PKG("1.1.0").replace('"name": "t"', '"name": "t",\n  "main": "evil.js"') }));
+    add("agree/a stray manifest line fails go", "finding", x.r.json?.checks.find((c) => c.item === "go").status === "finding", show(x.r));
+
+    repo = released();
+    ship(repo, ["prepare", "1.1.0"]);
+    let z = commit(repo, "release");
+    r = ship(repo, ["version", "--agree", "1.1.0", "--commit", z]);
+    add("agree/no GO record fails go", "finding", r.json?.checks.find((c) => c.item === "go").status === "finding" && r.json.tag_command === null, show(r));
+    repo = released();
+    goRecord(repo, git(repo, "rev-parse", "HEAD").stdout.trim(), "fail");
+    ship(repo, ["prepare", "1.1.0"]);
+    z = commit(repo, "release");
+    r = ship(repo, ["version", "--agree", "1.1.0", "--commit", z]);
+    add("agree/a NO-GO does not bind", "finding", r.json?.checks.find((c) => c.item === "go").status === "finding", show(r));
+    r = ship(repo, ["version", "--agree", "1.1.0", "--carry"]);
+    add("agree/--carry needs --commit", "exit 1", r.status === 1, show(r));
+  }
+
+  // Two targets: prepare and agree follow the one asked for.
+  function twoTargets() {
+    const block = LIB_BLOCK("    path: lib\n  - id: other\n    kind: tag-release\n    path: oth\ntag_pattern: \"*--v*\"\n");
+    const repo = mkrepo({ "CLAUDE.md": block, "lib/package.json": PKG("1.0.0"), "oth/package.json": PKG("3.0.0") });
+    git(repo, "tag", "library--v1.0.0");
+    git(repo, "tag", "other--v3.0.0");
+    let r = ship(repo, ["prepare", "3.0.1", "--target", "other"]);
+    add("targets/prepare follows --target", "oth only", r.status === 0 && r.json.files.join() === "oth/package.json" && readFileSync(join(repo, "lib/package.json"), "utf8") === PKG("1.0.0"), show(r));
+    r = ship(repo, ["version", "--agree", "3.0.1", "--target", "other"]);
+    add("targets/--agree follows --target", "the other tag", r.json?.checks[0].status === "pass" && /other--v3\.0\.1/.test(r.json.tag_command || ""), show(r));
+  }
+
+  // The first-release tag gets a record for its own commit.
+  function baselineCases() {
+    let repo = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": PKG("1.0.0") });
+    const old = git(repo, "rev-parse", "HEAD").stdout.trim();
+    commit(repo, "later", { "a.txt": "1\n" });
+    let r = ship(repo, ["version", "--baseline", "1.0.0", "--commit", old, "--already-out"]);
+    add("baseline/writes a record for that commit and its command", "the command and fresh",
+      r.json?.tag_command === `git tag -a v1.0.0 ${old} -m 'Release 1.0.0'` && ship(repo, ["check", old]).json.fresh === true, show(r));
+    const rec = JSON.parse(readFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), "utf8"));
+    const hd = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": PKG("1.0.0") });
+    r = ship(hd, ["version", "--baseline", "1.0.0", "--commit", "HEAD"]);
+    add("baseline/no commit gets a GO without the person's word", "exit 1, no record and no flag named", r.status === 1 && /normal preflight/.test(r.stderr) && !/already-out/.test(r.stderr) && !existsSync(join(hd, ".pro-dev", "ship", "preflight.json")), show(r));
+    commit(hd, "empty on top");
+    r = ship(hd, ["version", "--baseline", "1.0.0", "--commit", "HEAD~1"]);
+    add("baseline/an older commit needs the word too", "exit 1", r.status === 1, show(r));
+    r = ship(hd, ["version", "--baseline", "1.0.0", "--commit", "HEAD", "--already-out"]);
+    add("baseline/--already-out is the person's word", "a record", r.status === 0 && r.json.evidence_key, show(r));
+    {
+      const whole = mkrepo();
+      const root = git(whole, "rev-list", "--max-parents=0", "HEAD").stdout.trim();
+      const hdir = join(sandbox, `ghw${++n}`);
+      mkdirSync(hdir, { recursive: true });
+      writeFileSync(join(hdir, "gh"), '#!/bin/sh\ncase "$1 $2" in "pr list") echo "[]" ;; "api user") echo t ;; *) echo "[]" ;; esac\n');
+      chmodSync(join(hdir, "gh"), 0o755);
+      const c = ship(whole, ["coverage", "4b825dc642cb6eb9a060e54bf8d69288fbee4904", "HEAD"], { PATH: `${hdir}:${stubBin}:${process.env.PATH}` });
+      add("baseline/whole history: coverage from the empty tree holds the first commit", "uncovered", c.status === 0 && c.json.uncovered.includes(root), show(c));
+      symlinkSync(sandbox, join(whole, ".pro-dev"));
+      const g = ship(whole, ["version", "--baseline", "1.0.0", "--commit", "HEAD", "--already-out"]);
+      add("baseline/a symlinked .pro-dev writes nothing", "exit 1", g.status === 1 && /symlink/.test(g.stderr), show(g));
+    }
+    const off = mkrepo({ "CLAUDE.md": LIB_BLOCK(), "package.json": PKG("1.0.0") });
+    const offOld = git(off, "rev-parse", "HEAD").stdout.trim();
+    commit(off, "later", { "a.txt": "1\n" });
+    git(off, "remote", "add", "origin", join(sandbox, "missing.git"));
+    r = ship(off, ["version", "--baseline", "1.0.0", "--commit", offOld, "--already-out"]);
+    add("baseline/an unreadable origin refuses", "exit 1", r.status === 1 && /origin could not be read/.test(r.stderr), show(r));
+    add("baseline/the record says nothing new ships", "baseline true", JSON.parse(rec.detail_json).baseline === true && /nothing new ships/.test(rec.summary), JSON.stringify(rec));
+    git(repo, "tag", "v1.0.0", old);
+    r = ship(repo, ["version", "--baseline", "1.0.0", "--commit", old, "--already-out"]);
+    add("baseline/refuses once a release tag exists", "exit 1", r.status === 1 && /already exists/.test(r.stderr), show(r));
+    repo = mkrepo();
+    git(repo, "checkout", "-q", "-b", "side");
+    const side = commit(repo, "side", { "b.txt": "1\n" });
+    git(repo, "checkout", "-q", "main");
+    r = ship(repo, ["version", "--baseline", "1.0.0", "--commit", side, "--already-out"]);
+    add("baseline/refuses a commit off HEAD's history", "exit 1", r.status === 1 && /history/.test(r.stderr), show(r));
+    r = ship(repo, ["version", "--baseline", "1.0.0", "--already-out"]);
+    add("baseline/needs --commit", "exit 1", r.status === 1, show(r));
   }
 }
 

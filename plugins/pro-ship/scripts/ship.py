@@ -11,7 +11,8 @@ repo that holds the current directory):
                                    release tags. Reads files and tags only.
   scope [--pr N]                   the review range: {kind, base, head, range,
                                    last_deploy_source, targets}. Uses gh.
-  coverage BASE HEAD               map each commit in BASE..HEAD to a merged PR and say
+  coverage BASE HEAD               map each commit in BASE..HEAD (BASE may be the empty tree, for
+                                   a first release of the whole history) to a merged PR and say
                                    whether a passing pr-check marker covers it:
                                    {prs, uncovered, covered}. Uses gh. A marker counts only
                                    on a PR from this repo whose author is the current gh
@@ -33,8 +34,24 @@ repo that holds the current directory):
                                    counts, changes, unclassified, reasons, notes, sentence,
                                    question}. It writes nothing; its one network call is
                                    git ls-remote for tags that collide.
+  version --agree X.Y.Z [--commit SHA] [--carry]
+                                   do the manifest, the changelog and the tag name agree on X.Y.Z:
+                                   {checks, tag_command, carried}. With --commit it reads that
+                                   commit and adds a go check: the commit may differ from the GO
+                                   head only by what prepare writes. --carry then moves the GO
+                                   record to that commit.
+  version --baseline X.Y.Z --commit SHA --already-out
+                                   on a first release, write the record for tagging a commit the
+                                   person says was already out: {evidence_key, tag_command}. A
+                                   whole history that was never released gets a normal preflight
+                                   instead, with the empty tree as its base.
   changelog                        how the changelog is kept: {mode, why, path, unreleased,
                                    groups}. mode is manual, generated or none.
+  changelog --check BASE HEAD      {missing, no_migration, confirm, mode_change} for the intents
+                                   in BASE..HEAD.
+  prepare X.Y.Z [--target ID]      write the release version into the manifest and, in manual
+                                   mode, the changelog: {files, skipped}. Working tree only; it
+                                   never commits, tags or pushes.
   deployed --target ID --env ENV [--url U] [--commit SHA] [--outcome succeeded|failed|rolled-back]
            [--deployed-at ISO] [--checks FILE]
   deployed --from-github --target ID [--env production]
@@ -57,8 +74,10 @@ import os
 import re
 import shlex
 import signal
+import stat
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from urllib.parse import quote, urlparse
 
@@ -66,6 +85,7 @@ GH_TIMEOUT = 30
 PULLS_LOOKUP_CAP = 60
 KINDS = ("deploy-on-merge", "tag-release", "manual-deploy", "desktop", "publish")
 SHA = re.compile(r"^[0-9a-f]{40}$")
+EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 MARKER = re.compile(
     r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)\s*-->")
 SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
@@ -161,6 +181,9 @@ def ensure_excluded(root: str) -> None:
 
 
 def ship_dir(root: str) -> str:
+    for rel in (".pro-dev", os.path.join(".pro-dev", "ship")):
+        if os.path.islink(os.path.join(root, rel)):
+            raise Refuse(f"ship: {rel} is a symlink, so nothing was written")
     d = os.path.join(root, ".pro-dev", "ship")
     os.makedirs(d, exist_ok=True)
     ensure_excluded(root)
@@ -317,10 +340,12 @@ def _map(items, i, indent):
 # targets (R1 to R4)
 # ---------------------------------------------------------------------------
 
-def ship_block(root: str):
-    """The parsed yaml under a heading that starts with Ship, as (data, file), or (None, None)."""
+def ship_block(root: str, at: str | None = None):
+    """The parsed yaml under a heading that starts with Ship, as (data, file), or (None, None).
+    With `at`, the files as git holds them at that commit."""
     for name in ("CLAUDE.md", "AGENTS.md"):
-        lines = read(os.path.join(root, name)).splitlines()
+        text = (show_at(root, at, name) or "") if at else read(os.path.join(root, name))
+        lines = text.splitlines()
         i = 0
         while i < len(lines):
             if re.match(r"^#{1,6}\s+Ship\b", lines[i]):
@@ -720,9 +745,10 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
     if len(args) != 2:
         raise Refuse("ship: usage: coverage <base> <head>")
     base, head = rev(root, args[0]), rev(root, args[1])
-    if not base or not head:
+    whole = args[0] == EMPTY_TREE
+    if not head or not (base or whole):
         raise Refuse("ship: coverage: base or head is not a commit in this repo")
-    commits = git_lines(root, "rev-list", "--reverse", f"{base}..{head}")
+    commits = git_lines(root, "rev-list", "--reverse", head if whole else f"{base}..{head}")
     cset = set(commits)
     listed = gh_json(root, ["pr", "list", "--state", "merged", "--limit", "500",
                             "--json", "number,headRefOid,mergeCommit,body,author,isCrossRepository"], "listing merged PRs")
@@ -1251,6 +1277,27 @@ def read_manifest(root: str, target: dict | None, notes: list[str]) -> dict | No
     return None
 
 
+def changelog_mode_at(root: str, at: str) -> str:
+    """The changelog mode as a commit holds it, for changelog --check."""
+    data, _ = ship_block(root, at)
+    key = data.get("changelog") if isinstance(data, dict) else None
+    if key in ("manual", "generated", "none"):
+        return key
+    names = git_lines(root, "ls-tree", "-r", "--name-only", at)
+    if any(re.fullmatch(r"\.changeset/.*|release-please-config\.json|cliff\.toml|\.releaserc[^/]*", n) for n in names):
+        return "generated"
+    for n in names:
+        if n.startswith(".github/workflows/") and n.endswith((".yml", ".yaml")) and GENERATOR_WORDS.search(show_at(root, at, n) or ""):
+            return "generated"
+    text = show_at(root, at, "CHANGELOG.md")
+    if text is None:
+        return "none"
+    first = next((ln for ln in text.splitlines() if ln.strip()), "")
+    if GENERATED_LINE.search(first):
+        return "generated"
+    return "manual" if unreleased_span(text) else "none"
+
+
 def changelog_mode(root: str) -> tuple[str, str, str | None]:
     """(mode, why, path): the Ship block key, then generator markers, then the file itself."""
     data, _ = ship_block(root)
@@ -1293,9 +1340,66 @@ def unreleased_span(text: str) -> tuple[int, int] | None:
     return start, end
 
 
+def intent_commits(root: str, base: str, head: str) -> dict[str, list[str]]:
+    """{intent folder: the first-parent commits in base..head that touch it}, oldest first."""
+    r = sh(["git", "log", "--first-parent", "-m", "--name-only", f"--format={RECORD}%H", f"{base}..{head}"], root, timeout=60)
+    found: dict[str, list[str]] = {}
+    for rec in reversed(r.stdout.split(RECORD) if r.returncode == 0 else []):
+        lines = [ln for ln in rec.splitlines() if ln.strip()]
+        for f in lines[1:]:
+            parts = f.split("/")
+            if parts[0] == "intent" and len(parts) > 2 and INTENT_FOLDER.fullmatch(parts[1]):
+                shas = found.setdefault(parts[1], [])
+                if lines[0] not in shas:
+                    shas.append(lines[0])
+    return found
+
+
+def changelog_check(root: str, args: list[str]) -> dict:
+    """R12: each intent's changelog entry comes from a commit that touches the intent and the file."""
+    if len(args) != 2:
+        raise Refuse("ship: usage: changelog --check <base> <head>")
+    base, head = rev(root, args[0]), rev(root, args[1])
+    if not base or not head:
+        raise Refuse("ship: changelog --check: base or head is not a commit in this repo")
+    before, after = changelog_mode_at(root, base), changelog_mode_at(root, head)
+    out = {"missing": [], "no_migration": [], "confirm": [],
+           "mode_change": {"from": before, "to": after} if before != after else None}
+    if after != "manual":
+        return out
+    text = show_at(root, head, "CHANGELOG.md") or ""
+    span = unreleased_span(text)
+    now = text.splitlines()[span[0]:span[1]] if span else []
+    any_breaking = False
+    for folder, shas in intent_commits(root, base, head).items():
+        added = []
+        for sha in shas:
+            first = (git_lines(root, "rev-list", "--parents", "-n", "1", sha) or [""])[0].split()[1:2]
+            diff = git_lines(root, "diff", "-U0", first[0] if first else "4b825dc642cb6eb9a060e54bf8d69288fbee4904", sha, "--", "CHANGELOG.md")
+            added += [ln[1:] for ln in diff if ln.startswith("+") and not ln.startswith("+++") and ln[1:].strip()]
+        # A line counts while it is still under Unreleased; a build commit that never touches the
+        # intent folder is matched on the words of the intent's title.
+        kept = [ln for ln in added if ln in now]
+        facts = intent_facts(root, folder, head)
+        words = [w for w in re.findall(r"[a-z]{5,}", facts["subject"].lower())]
+        named = [ln for ln in now if ln.strip().startswith(("-", "*")) and any(w in ln.lower() for w in words)]
+        if not kept and not named:
+            out["missing"].append(folder)
+        if facts["kind"] == "breaking":
+            any_breaking = True
+            if (kept or named) and not any("Migration:" in ln for ln in (kept or now)):
+                out["no_migration"].append(folder)
+    removed = any(re.match(r"^###\s+Removed\b", ln) for ln in now)
+    if any_breaking or removed:
+        out["confirm"].append("deprecation window")
+    return out
+
+
 def cmd_changelog(root: str, args: list[str]) -> dict:
+    if args[:1] == ["--check"]:
+        return changelog_check(root, args[1:])
     if args:
-        raise Refuse("ship: usage: changelog")
+        raise Refuse("ship: usage: changelog | changelog --check <base> <head>")
     mode, why, path = changelog_mode(root)
     lines, groups = [], []
     if path:
@@ -1390,10 +1494,10 @@ def join_plain(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
-def intent_facts(root: str, folder: str) -> dict:
+def intent_facts(root: str, folder: str, tip: str = "HEAD") -> dict:
     """The most severe kind and breaking value the intent has had on HEAD's history."""
     rel = f"intent/{folder}/intent.md"
-    shas = git_lines(root, "log", "--format=%H", "HEAD", "--", rel)
+    shas = git_lines(root, "log", "--format=%H", tip, "--", rel)
     kinds, ever_breaking, tip_fields, title = set(), False, None, None
     for sha in shas:  # newest first, so the first readable text is the tip
         text = show_at(root, sha, rel)
@@ -1573,8 +1677,15 @@ def refuse_collision(next_version: str, tag: str, tags: list[str]) -> None:
 
 def cmd_version(root: str, args: list[str]) -> dict:
     for a in args:
-        if a.startswith("--") and a not in ("--target", "--base"):
+        if a.startswith("--") and a not in ("--target", "--base", "--agree", "--baseline", "--commit", "--carry", "--already-out"):
             raise Refuse(f"ship: version: unknown option {a}")
+    agree, baseline = flag(args, "--agree"), flag(args, "--baseline")
+    if agree and baseline:
+        raise Refuse("ship: --agree and --baseline are separate steps")
+    if agree:
+        return cmd_agree(root, args, agree)
+    if baseline:
+        return cmd_baseline(root, args, baseline)
     head = rev(root, "HEAD")
     if not head:
         raise Refuse("ship: this repo has no commits")
@@ -1684,6 +1795,297 @@ def first_release(root: str, out: dict, declared: dict | None, target: dict | No
 
 
 # ---------------------------------------------------------------------------
+# prepare, agree, baseline (R13, R14 and the security challenge)
+# ---------------------------------------------------------------------------
+
+def refuse_headless(what: str) -> None:
+    """The release steps belong to a person's session. Host checks stay the real control: a steered
+    session can unset a variable."""
+    if os.environ.get("FACTORY_SESSION"):
+        raise Refuse(f"ship: {what} never runs in a factory session; a person runs it")
+
+
+def want_version(text) -> str:
+    if not isinstance(text, str) or not VERSION.fullmatch(text):
+        raise Refuse("ship: the version must be X.Y.Z in digits")
+    return text
+
+
+def prepared_manifest(name: str, text: str, version: str) -> str:
+    """The manifest text with its one version line changed; refuses when it cannot prove that."""
+    if name == "package.json":
+        hits = [m for m in re.finditer(r'^([ \t]*"version"[ \t]*:[ \t]*")[^"\n]*(")', text, re.M)]
+        hits = sorted(hits, key=lambda m: len(m.group(1)))[:1]
+    else:
+        tables = ("project", "tool.poetry") if name == "pyproject.toml" else ("package",)
+        hits, current = [], None
+        pos = 0
+        for ln in text.splitlines(keepends=True):
+            head = re.match(r"^\s*\[([^\[\]]+)\]\s*$", ln)
+            if head:
+                current = head.group(1).strip()
+            elif current in tables and not hits:
+                m = re.compile(r'^([ \t]*version[ \t]*=[ \t]*["\'])[^"\'\n]*(["\'])').match(ln)
+                if m:
+                    hits = [re.compile(r'([ \t]*version[ \t]*=[ \t]*["\'])[^"\'\n]*(["\'])').match(text, pos)]
+            pos += len(ln)
+    if not hits:
+        raise Refuse(f"ship: prepare found no version line in {clean(name)}")
+    m = hits[0]
+    new = text[:m.start()] + m.group(1) + version + m.group(2) + text[m.end():]
+    if manifest_facts(name, new)[1] != version:
+        raise Refuse(f"ship: prepare could not write the version into {clean(name)} and changed nothing")
+    return new
+
+
+def prepared_changelog(text: str, version: str, date: str, tag: str) -> str:
+    """Unreleased becomes the version with a fresh empty Unreleased above it; compare links follow."""
+    span = unreleased_span(text)
+    if not span:
+        raise Refuse("ship: the changelog has no Unreleased heading")
+    lines = text.split("\n")
+    lines[span[0]:span[0] + 1] = [lines[span[0]], "", f"## [{version}] - {date}"]
+    for i, ln in enumerate(lines):
+        m = re.match(r"^\[unreleased\]:\s*(\S*/compare/)(\S+?)\.\.\.(\S+)\s*$", ln, re.I)
+        if m:
+            lines[i:i + 1] = [f"[Unreleased]: {m.group(1)}{tag}...{m.group(3)}", f"[{version}]: {m.group(1)}{m.group(2)}...{tag}"]
+            break
+    return "\n".join(lines)
+
+
+def write_safe(path: str, text: str) -> None:
+    """Replace a file through a new temp file in the same folder; never opens a path a symlink could redirect."""
+    mode = stat.S_IMODE(os.lstat(path).st_mode) if os.path.lexists(path) else 0o644
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".ship-")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            f.write(text)
+        os.chmod(tmp, mode)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def read_exact(path: str) -> str:
+    """The file as written, line endings kept, so a rewrite changes only what it means to."""
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
+def show_exact(root: str, sha: str, rel: str) -> str | None:
+    r = subprocess.run(["git", "show", f"{sha}:{rel}"], cwd=root, capture_output=True, timeout=30)
+    return r.stdout.decode("utf-8", "replace") if r.returncode == 0 else None
+
+
+def release_setting(root: str, target: dict | None, notes: list[str]) -> tuple[str, list[str], str]:
+    """(tag style, every valid release tag local and remote, tag series head) for agree and prepare."""
+    data, _ = ship_block(root)
+    pattern = tag_pattern(data)
+    head = rev(root, "HEAD") or "HEAD"
+    merged = [t for t in release_tags(root, pattern, "--merged", head, "--sort=-creatordate") if tag_parts(t)]
+    series = target_series(merged, target, [t.get("id") for t in targets(root)])
+    mine = [t for t in merged if tag_series(t) == series]
+    last = max(mine, key=lambda t: tag_parts(t)[1]) if mine else None
+    style = tag_parts(last)[0] if last else new_tag_prefix(data, target)
+    known = [t for t in release_tags(root, pattern) if tag_parts(t)] + [t for t in remote_tags(root, notes) if tag_parts(t)]
+    return style, known, last or ""
+
+
+def cmd_prepare(root: str, args: list[str]) -> dict:
+    refuse_headless("prepare")
+    wanted = flag(args, "--target")
+    rest = [a for i, a in enumerate(args) if a != "--target" and (i == 0 or args[i - 1] != "--target")]
+    if len(rest) != 1:
+        raise Refuse("ship: usage: prepare <X.Y.Z> [--target ID]")
+    version = want_version(rest[0])
+    mode, why, _ = changelog_mode(root)
+    if mode == "generated":
+        raise Refuse(f"ship: the changelog is generated ({why}), so the generator owns it and the version it writes. Nothing was changed.")
+    files = dirty_tracked(root)
+    if files:
+        raise Refuse("ship: tracked files have uncommitted changes. Commit or discard them first.")
+    notes: list[str] = []
+    target = choose_target(root, wanted)
+    style, known, last = release_setting(root, target, notes)
+    tag = f"{style}{version}"
+    if not RELEASE_TAG.fullmatch(tag):
+        raise Refuse("ship: that version does not make a valid tag name")
+    if tag in known:
+        raise Refuse(f"ship: the tag {tag} already exists")
+    refuse_collision(version, tag, known)
+    writes, skipped = [], []
+    base = (target or {}).get("path") or "."
+    found = False
+    for name in ("package.json", "pyproject.toml", "Cargo.toml"):
+        rel = os.path.normpath(os.path.join(base, name))
+        if not os.path.lexists(os.path.join(root, rel)):
+            continue
+        path = safe_file(root, rel)
+        if not path:
+            raise Refuse(f"ship: {clean(rel)} is a symlink or leaves the repo, so prepare changed nothing")
+        text = read_exact(path)
+        if manifest_facts(name, text)[1] is None:
+            continue
+        writes.append((path, rel, prepared_manifest(name, text, version)))
+        found = True
+        break
+    if not found:
+        skipped.append({"file": "manifest", "why": "this repo has no package.json, pyproject.toml or Cargo.toml with a version"})
+    if mode == "manual":
+        path = safe_file(root, "CHANGELOG.md")
+        if not path:
+            raise Refuse("ship: CHANGELOG.md is a symlink or leaves the repo, so prepare changed nothing")
+        date = datetime.now().astimezone().strftime("%Y-%m-%d")
+        writes.append((path, "CHANGELOG.md", prepared_changelog(read_exact(path), version, date, tag)))
+    else:
+        skipped.append({"file": "CHANGELOG.md", "why": why})
+    for path, _rel, text in writes:  # every text is built before the first write
+        write_safe(path, text)
+    return {"files": [rel for _p, rel, _t in writes], "skipped": skipped, "notes": notes}
+
+
+def go_binding(root: str, version: str, commit: str, manifest: str | None, tag: str) -> tuple[str, str, dict | None]:
+    """(status, evidence, GO record): the commit is the GO head or differs by exactly what prepare writes."""
+    pre = read_json(os.path.join(root, ".pro-dev", "ship", "preflight.json"))
+    head = pre.get("head") if isinstance(pre, dict) else None
+    if not isinstance(head, str) or not SHA.fullmatch(head) or not str(pre.get("produced_by", "")).startswith("pro-ship:ship"):
+        return "finding", "no GO record to bind the commit to; run /pro-ship:ship", None
+    if pre.get("status") not in ("pass", "partial"):
+        return "finding", f"the record for {head[:12]} is not a GO", None
+    if head == commit:
+        return "pass", f"the GO is for {commit[:12]} itself", pre
+    if not rev(root, head):
+        return "finding", f"the GO head {head[:12]} is not in this repo", None
+    changed = git_lines(root, "diff", "--name-only", "--no-renames", head, commit)
+    extra = [f for f in changed if f not in (manifest, "CHANGELOG.md")]
+    if extra:
+        return "finding", f"{len(extra)} other file(s) changed since the GO on {head[:12]}, first {clean(extra[0], 80)}", None
+    for rel in changed:
+        old, new = show_exact(root, head, rel), show_exact(root, commit, rel)
+        if old is None or new is None:
+            return "finding", f"{clean(rel, 80)} is not in both commits", None
+        if rel == "CHANGELOG.md":
+            m = re.search(rf"^## \[{re.escape(version)}\] - (\d{{4}}-\d{{2}}-\d{{2}})\s*$", new, re.M)
+            try:
+                same = bool(m) and prepared_changelog(old, version, m.group(1), tag) == new
+            except Refuse:
+                same = False
+        else:
+            try:
+                same = prepared_manifest(os.path.basename(rel), old, version) == new
+            except Refuse:
+                same = False
+        if not same:
+            return "finding", f"{clean(rel, 80)} differs from what prepare writes", None
+    return "pass", f"only the release lines changed since the GO on {head[:12]}", pre
+
+
+def write_go_record(root: str, commit: str, summary: str, extra: dict, base: dict | None) -> str:
+    """A preflight record for a commit no reviewer ran on, carrying what makes that safe."""
+    detail = {}
+    if base:
+        try:
+            detail = json.loads(base.get("detail_json") or "{}")
+        except ValueError:
+            detail = {}
+    detail.update(extra)
+    detail["created"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    key = commit[:12]
+    record = {"schema": 1, "head": commit, "evidence_key": f"ship-preflight-{key}", "kind": "review",
+              "artifact_kind": "ship-preflight", "artifact_key": key, "status": (base or {}).get("status", "pass"),
+              "summary": summary, "detail_json": json.dumps(detail), "produced_by": f"pro-ship:ship@{plugin_version()}"}
+    text = json.dumps(record, indent=2) + "\n"
+    d = ship_dir(root)
+    write_safe(os.path.join(d, "preflight.json"), text)
+    mieruka_copy(root, record["evidence_key"], text)
+    return record["evidence_key"]
+
+
+def cmd_agree(root: str, args: list[str], version: str) -> dict:
+    refuse_headless("version --agree")
+    want_version(version)
+    commit_arg, carry = flag(args, "--commit"), "--carry" in args
+    if carry and not commit_arg:
+        raise Refuse("ship: --carry needs --commit")
+    commit = rev(root, commit_arg) if commit_arg else None
+    if commit_arg and not commit:
+        raise Refuse("ship: --commit is not a commit of this repo")
+    notes: list[str] = []
+    target = choose_target(root, flag(args, "--target"))
+    style, known, _last = release_setting(root, target, notes)
+    tag = f"{style}{version}"
+    if not RELEASE_TAG.fullmatch(tag):
+        raise Refuse("ship: that version does not make a valid tag name")
+    declared = read_manifest(root, target, notes)
+    manifest = declared["file"] if declared else None
+    checks = []
+    if manifest:
+        text = show_exact(root, commit, manifest) if commit else read(os.path.join(root, manifest))
+        held = manifest_facts(os.path.basename(manifest), text or "")[1]
+        ok = held == version
+        checks.append({"item": "manifest", "status": "pass" if ok else "finding",
+                       "evidence": f"{clean(manifest, 80)} holds {version}" if ok else f"{clean(manifest, 80)} does not hold {version}"})
+    else:
+        checks.append({"item": "manifest", "status": "pass", "evidence": "manifest: none"})
+    mode, _why, path = changelog_mode(root)
+    if mode == "manual":
+        text = show_exact(root, commit, "CHANGELOG.md") if commit else read(os.path.join(root, path or "CHANGELOG.md"))
+        ok = bool(re.search(rf"^##\s+\[?{re.escape(version)}\]?(\s|$)", text or "", re.M))
+        checks.append({"item": "changelog", "status": "pass" if ok else "finding",
+                       "evidence": f"CHANGELOG.md has a heading for {version}" if ok else f"CHANGELOG.md has no heading for {version}"})
+    else:
+        checks.append({"item": "changelog", "status": "pass", "evidence": f"changelog mode {mode}"})
+    above = not any(tag_series(t) == tag_series(tag) and tag_parts(t)[1] >= tag_parts(tag)[1] for t in known)
+    remote_unread = any("could not be read" in n for n in notes)
+    checks.append({"item": "tag", "status": "finding" if not above else ("confirm" if remote_unread else "pass"),
+                   "evidence": f"{tag} is not above every release tag" if not above else
+                   (f"{tag} is unused locally; the tags on origin could not be read" if remote_unread else f"{tag} is unused and above every release tag")})
+    pre = None
+    if commit:
+        status, evidence, pre = go_binding(root, version, commit, manifest, tag)
+        checks.append({"item": "go", "status": status, "evidence": evidence})
+    clear = all(c["status"] != "finding" for c in checks)
+    carried = None
+    if carry and clear and pre and pre.get("head") != commit:
+        carried = write_go_record(root, commit, f"GO carried from {pre['head'][:12]}: only the release lines changed",
+                                  {"carried_from": pre["head"], "head": commit}, pre)
+    elif carry and clear and pre:
+        carried = pre.get("evidence_key")
+    return {"checks": checks, "tag_command": tag_command(tag, commit or (rev(root, "HEAD") or ""), version) if clear else None,
+            "carried": carried, "notes": notes}
+
+
+def cmd_baseline(root: str, args: list[str], version: str) -> dict:
+    refuse_headless("version --baseline")
+    want_version(version)
+    commit_arg = flag(args, "--commit")
+    commit = rev(root, commit_arg) if commit_arg else None
+    head = rev(root, "HEAD")
+    if not commit or not head:
+        raise Refuse("ship: --baseline needs --commit <a commit of this repo>")
+    if not is_ancestor(root, commit, head):
+        raise Refuse("ship: that commit is not on the history of HEAD")
+    if "--already-out" not in args:
+        raise Refuse("ship: a baseline skips review, so it is only for a commit the person says was already released. "
+                     "Anything else gets a normal preflight.")
+    notes: list[str] = []
+    target = choose_target(root, flag(args, "--target"))
+    style, known, last = release_setting(root, target, notes)
+    if any("could not be read" in n for n in notes):
+        raise Refuse("ship: the tags on origin could not be read, so this cannot be called a first release")
+    if last or known:
+        raise Refuse("ship: a release tag already exists, so this is not a first release")
+    tag = f"{style}{version}"
+    if not RELEASE_TAG.fullmatch(tag):
+        raise Refuse("ship: that version does not make a valid tag name")
+    key = write_go_record(root, commit, f"Baseline {version}: nothing new ships, this names what was already out",
+                          {"verdict": "GO", "baseline": True, "head": commit, "blockers": [], "targets": [{"id": (target or {}).get("id")}]}, None)
+    return {"evidence_key": key, "tag_command": tag_command(tag, commit, version), "notes": notes}
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -1718,6 +2120,8 @@ def main(argv: list[str]) -> int:
             emit(cmd_version(root, rest))
         elif cmd == "changelog":
             emit(cmd_changelog(root, rest))
+        elif cmd == "prepare":
+            emit(cmd_prepare(root, rest))
         elif cmd == "check":
             if len(rest) != 1:
                 raise Refuse("ship: usage: check <sha>")
