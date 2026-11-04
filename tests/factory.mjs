@@ -297,7 +297,7 @@ export function runFactoryCases() {
     // ── verify build ──
     {
       const fx = repoWithOrigin(sandbox, "vbd", { [FOLDER]: { "intent.md": intentText(), "spec.md": SPEC(), "plan.md": PLAN() } },
-        { "package.json": JSON.stringify({ name: "demo", scripts: { test: "node tests/greet.test.js" } }, null, 2) + "\n", "tests/old.test.js": "// old\n" });
+        { "package.json": JSON.stringify({ name: "demo", scripts: { test: "node tests/greet.test.js" } }, null, 2) + "\n", "tests/old.test.js": "// old\n", "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Security\n\n- Old fix\n" });
       const stub = makeStub(sandbox, "vbd", fx.origin);
       let n = 0;
       const check = (id, expect, commits, want, env = stub.env, setup) => {
@@ -346,6 +346,17 @@ export function runFactoryCases() {
       check("v26 a package.json jest field counts", "level 2", [{ files: { ...buildFiles(), "package.json": pkg({ scripts: { test: "node tests/greet.test.js" }, jest: { testMatch: [] } }) } }], { level: 2, re: /test config changed: package\.json/ });
       check("v27 a pytest section in setup.cfg counts", "level 2", [{ files: { ...buildFiles(), "setup.cfg": "[tool:pytest]\naddopts = -x\n" } }], { level: 2, re: /test config changed: setup\.cfg/ });
       check("v28 a pytest section in pyproject.toml counts", "level 2", [{ files: { ...buildFiles(), "pyproject.toml": "[tool.pytest.ini_options]\naddopts = \"-x\"\n" } }], { level: 2, re: /test config changed: pyproject\.toml/ });
+      const LOG = "# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Security\n\n- Old fix\n";
+      check("r1 a build that rewrites its own intent frontmatter", "level 2", [{ files: { ...buildFiles(), [`${DIR}/intent.md`]: intentText().replace("kind: bug", "kind: idea") } }], { level: 2, re: /changed the frontmatter of intent/ });
+      check("r2 a build that changes the intent body only passes", "pass", [{ files: { ...buildFiles(), [`${DIR}/intent.md`]: intentText({ body: "Fix the greeting typo on the home page. More." }) } }], "pass");
+      check("r3 a build that sets a manifest version", "level 2", [{ files: { ...buildFiles(), "package.json": JSON.stringify({ name: "demo", version: "9.0.0", scripts: { test: "node tests/greet.test.js" } }, null, 2) + "\n" } }], { level: 2, re: /changed the version in package\.json/ });
+      check("r4 a build that bumps a Cargo version", "level 2", [{ files: { ...buildFiles(), "Cargo.toml": "[package]\nname = \"d\"\nversion = \"2.0.0\"\n" } }], { level: 2, re: /changed the version in Cargo\.toml/ });
+      check("r5 a new Unreleased line passes", "pass", [{ files: { ...buildFiles(), "CHANGELOG.md": LOG.replace("## [Unreleased]\n", "## [Unreleased]\n\n### Fixed\n\n- The greeting\n") } }], "pass");
+      check("r6 a deleted past entry", "level 2", [{ files: { ...buildFiles(), "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n" } }], { level: 2, re: /CHANGELOG\.md outside Unreleased/ });
+      check("r7 a version heading written ahead of time", "level 2", [{ files: { ...buildFiles(), "CHANGELOG.md": LOG.replace("## [Unreleased]\n", "## [Unreleased]\n\n## [9.0.0] - 2026-02-02\n") } }], { level: 2, re: /CHANGELOG\.md outside Unreleased/ });
+      check("r8 an added generator marker", "level 2", [{ files: { ...buildFiles(), "cliff.toml": "x\n" } }], { level: 2, re: /generator marker: cliff\.toml/ });
+      check("r9 a generated first line", "level 2", [{ files: { ...buildFiles(), "CHANGELOG.md": "<!-- generated, do not edit -->\n" + LOG } }], { level: 2, re: /marked CHANGELOG\.md as generated/ });
+      check("r10 a removed Unreleased heading", "level 2", [{ files: { ...buildFiles(), "CHANGELOG.md": "# Changelog\n\n## [1.0.0] - 2026-01-01\n\n### Security\n\n- Old fix\n" } }], { level: 2, re: /removed the Unreleased heading/ });
       check("v29 a deleted test is a floor-guard hit", "level 2", [{ files: { ...buildFiles(), "tests/old.test.js": null } }], { level: 2, re: /floor-guard found/ });
       check("v30 floor-guard missing stops", "level 2", good, { level: 2, re: /floor-guard unavailable/ }, { ...stub.env, FACTORY_FLOOR_GUARD: join(sandbox, "nope.py") });
       const ob = check("v31 a draft build PR passes the checks and says it is a draft", "pass", good, "pass", stub.env, (k) => {
@@ -367,6 +378,31 @@ export function runFactoryCases() {
       // bare gh failure: a PR the stub does not know
       const r = py(["verify", "build", DIR, "--pr", "999", "--repo", fx.repo], fx.repo, stub.env);
       add("v19 a PR that cannot be fetched is could-not-run, never a pass", "exit 2", r.status === 2, brief(r));
+    }
+
+    // ── release fields on a base with manifests and no changelog ──
+    {
+      const fx = repoWithOrigin(sandbox, "vrf", { [FOLDER]: { "intent.md": intentText(), "spec.md": SPEC(), "plan.md": PLAN() } },
+        { "pyproject.toml": "[project]\nname = \"d\"\nversion = \"1.0.0\"\n", "Cargo.toml": "[package]\nname = \"d\"\nversion = \"1.0.0\"\n", ".changeset/config.json": "{}\n" });
+      const stub = makeStub(sandbox, "vrf", fx.origin);
+      let n = 0;
+      const check = (id, expect, files, want) => {
+        n += 1;
+        makePr(sandbox, fx, stub, n, [{ files: { ...buildFiles(), ...files }, msg: "build: greeting" }]);
+        const r = py(["verify", "build", DIR, "--pr", String(n), "--repo", fx.repo, "--json"], fx.repo, stub.env);
+        const j = jsonOf(r);
+        add(id, expect, want === "pass" ? r.status === 0 && j?.result === "pass" : r.status === 3 && j?.level === want.level && want.re.test((j?.reasons ?? []).join(";")), brief(r));
+      };
+      check("f1 a pyproject version bump", "level 2", { "pyproject.toml": "[project]\nname = \"d\"\nversion = \"2.0.0\"\n" }, { level: 2, re: /changed the version in pyproject\.toml/ });
+      check("f2 a Cargo version bump", "level 2", { "Cargo.toml": "[package]\nname = \"d\"\nversion = \"2.0.0\"\n" }, { level: 2, re: /changed the version in Cargo\.toml/ });
+      check("f3 another Cargo key leaves the version alone", "pass", { "Cargo.toml": "[package]\nname = \"e\"\nversion = \"1.0.0\"\n" }, "pass");
+      check("f4 a new changelog holding only Unreleased passes", "pass", { "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n\n### Fixed\n\n- The greeting\n" }, "pass");
+      check("f5 a new changelog with a version heading", "level 2", { "CHANGELOG.md": "## [Unreleased]\n\n## [9.0.0] - 2026-02-02\n\n- forged\n" }, { level: 2, re: /created CHANGELOG\.md with a version heading/ });
+      check("f6 a new changelog marked generated", "level 2", { "CHANGELOG.md": "<!-- generated -->\n" }, { level: 2, re: /marked CHANGELOG\.md as generated/ });
+      check("f7 a routine changeset in a changesets repo passes", "pass", { ".changeset/brave-lions.md": "x\n" }, "pass");
+      check("f8 a manifest under tests/ is not a release manifest", "pass", { "tests/fixtures/app/package.json": "{\"version\":\"0.1.0\"}\n" }, "pass");
+      check("f9 a .releaserc folder is a marker", "level 2", { ".releaserc/x": "x\n" }, { level: 2, re: /generator marker/ });
+      add("f10 session.sh marks a factory session", "exported", /^export FACTORY_SESSION=1$/m.test(readFileSync(join(ROOT, "plugins", "pro-ai-sdlc", "factory", "session.sh"), "utf8")), "no export");
     }
 
     // ── no CI is decided from the tip, never from "no checks reported" ──

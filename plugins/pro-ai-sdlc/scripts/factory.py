@@ -669,6 +669,83 @@ def is_policy_path(path, rel):
     return low.startswith("intent/") and not low.startswith(rel.lower() + "/")
 
 
+GENERATOR_MARKERS = re.compile(r"^(?:\.changeset/.*|release-please-config\.json|cliff\.toml|\.releaserc[^/]*(?:/.*)?)$")
+GENERATED_LINE = re.compile(r"generated|do not edit|not to be edited|don't edit", re.I)
+
+
+def manifest_version_lines(name, text):
+    """The version a manifest declares as the lines that hold it, so a change to it can be compared."""
+    if text is None:
+        return None
+    if name == "package.json":
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return "unreadable"
+        return data.get("version") if isinstance(data, dict) else None
+    want = ("project", "tool.poetry") if name == "pyproject.toml" else ("package",)
+    return tuple(ln for ln in toml_sections(text, lambda s: s in want) if re.match(r"^version\s*=", ln)) or None
+
+
+def changelog_parts(text):
+    """(lines outside Unreleased, lines of Unreleased or None when it has no such heading)."""
+    lines = (text or "").splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^##\s+\[?unreleased\]?\s*$", ln.strip(), re.I)), None)
+    if start is None:
+        return lines, None
+    end = next((j for j in range(start + 1, len(lines)) if re.match(r"^##\s", lines[j])), len(lines))
+    return lines[:start] + lines[end:], lines[start + 1:end]
+
+
+def changelog_raises(old, new):
+    """A build may add lines under Unreleased and create the file holding only that section."""
+    new_out, new_rel = changelog_parts(new)
+    if old is None:
+        if any(re.match(r"^##\s", ln) for ln in new_out):
+            return [(2, "the build created CHANGELOG.md with a version heading")]
+        return []
+    old_out, old_rel = changelog_parts(old)
+    if old_out != new_out:
+        return [(2, "the build changed CHANGELOG.md outside Unreleased")]
+    if old_rel is not None and new_rel is None:
+        return [(2, "the build removed the Unreleased heading from CHANGELOG.md")]
+    kept = [ln for ln in old_rel or [] if ln.strip()]
+    now = list(new_rel or [])
+    for ln in kept:
+        if ln not in now:
+            return [(2, "the build removed a line from Unreleased in CHANGELOG.md")]
+        now.remove(ln)
+    return []
+
+
+def release_field_raises(root, rel, base, head, files):
+    """[(level, reason)] when a build PR rewrites what a release reads (security challenge of
+    release-versioning): its own intent's frontmatter, a declared version, past changelog entries
+    or the changelog mode. Unreleased lines and the intent's body stay free."""
+    raises = []
+    path = rel + "/intent.md"
+    before, after = show(root, base, path), show(root, head, path)
+    if before is not None and frontmatter(before)[0] != frontmatter(after)[0]:
+        raises.append((2, f"the build changed the frontmatter of {path}"))
+    for status, p in files:
+        name = p.rsplit("/", 1)[-1]
+        if name in ("package.json", "pyproject.toml", "Cargo.toml") and not is_test_path(p):
+            if manifest_version_lines(name, show(root, base, p)) != manifest_version_lines(name, show(root, head, p)):
+                raises.append((2, f"the build changed the version in {p}"))
+        if GENERATOR_MARKERS.match(p) and status == "A":
+            top = p.split("/", 1)[0]
+            had = git(root, "cat-file", "-e", f"{base}:{top}").returncode == 0
+            if not had:
+                raises.append((2, f"the build added a changelog generator marker: {p}"))
+    if any(p == "CHANGELOG.md" for _, p in files):
+        old, new = show(root, base, "CHANGELOG.md"), show(root, head, "CHANGELOG.md")
+        raises += changelog_raises(old, new)
+        first = next((ln for ln in (new or "").splitlines() if ln.strip()), "")
+        if GENERATED_LINE.search(first) and not GENERATED_LINE.search(next((ln for ln in (old or "").splitlines() if ln.strip()), "")):
+            raises.append((2, "the build marked CHANGELOG.md as generated"))
+    return raises
+
+
 TEST_CONFIG_BASE = re.compile(r"^(?:(?:jest|vitest|vite|playwright)\.config\.\w+|vitest\.workspace\.\w+|pytest\.ini|conftest\.py|"
                               r"tox\.ini|\.mocharc(?:\.\w+)?|karma\.conf\.\w+|ava\.config\.\w+)$")
 
@@ -995,6 +1072,7 @@ def check_build(root, rel, head, base, tip, token, pr, image, repo_url, folder, 
     if cfg:
         raises.append((2, "test config changed: " + ", ".join(cfg[:5])))
     raises += floor_guard_raises(root, base, head)
+    raises += release_field_raises(root, rel, base, head, files)
     # 5. floor-allow
     msgs = git_out(root, "log", "--format=%B", f"{base}..{head}") or ""
     if re.search(r"(?mi)^\s*floor-allow\s*:", msgs):

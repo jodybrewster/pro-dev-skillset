@@ -68,7 +68,7 @@ Name the files kept in `.pro-dev/incidents/<evidence key>/` under Evidence prese
 
 Write `<repo root>/intent/<folder>/intent.md` from `${CLAUDE_PLUGIN_ROOT}/templates/intent.md`:
 
-- Frontmatter `source: incident <folder>`, `kind: bug`, `status: draft` and `risk: high` for `sev1` or `risk: medium` for `sev2`.
+- Frontmatter `source: incident <folder>`, `kind: bug`, `breaking: false` unless the person says the fix changes what a consumer relied on, `status: draft` and `risk: high` for `sev1` or `risk: medium` for `sev2`.
 - Problem, Affected users and systems and Evidence come from the interview; Evidence links `incident.md` and never pastes logs.
 - Success looks like names the regression test: a test that fails on the incident commit and passes on the fix and that the incident's `regression_test` field points to once it exists.
 - Open questions holds the root cause if it is not known.
