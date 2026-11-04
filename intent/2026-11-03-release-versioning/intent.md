@@ -8,7 +8,7 @@ created: 2026-11-03T20:30:00-0500
 author: the maintainer
 ---
 
-# Intent: releases carry a version, and /ship proposes the next one
+# Intent: releases carry a version and /ship proposes the next one
 
 Source: idea.
 Status: accepted.
@@ -19,7 +19,8 @@ Related: [software-factory](../2026-11-03-software-factory/intent.md); the agent
 
 The first `/pro-ship:ship` on the factory demo had no earlier release tag, so it asked which commit the release range should start from and listed commit hashes.
 A person cannot answer that without reading git history.
-Nothing in the loop says what version a release is: the factory merges changes but never records whether each one is a feature, a fix or a breaking change, and `/ship` never proposes a version.
+Nothing in the loop says what version a release is: the factory merges changes but never records whether each one is a feature, a fix or a breaking change.
+`/ship` never proposes a version either.
 The agent-skills baseline covers semantic versioning, the tag as the source of truth and a human changelog written in the same change; pro-ship took on none of it and did not write down why.
 
 ## Proposed outcome
