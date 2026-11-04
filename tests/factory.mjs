@@ -513,6 +513,9 @@ export function runFactoryCases() {
       const merges = s.stub.read("gh.log").split("\n").filter((l) => l.startsWith("pr merge"));
       add("e19 a build PR above low stops at level 3 after the brief merged, and is not merged", "stopped 3",
         r.status === 3 && /factory: stopped level 3 \(risk tier high/.test(r.stdout) && rec?.status === "partial" && rec.detail.level_now === 3 && merges.length === 1, brief(r));
+      const handed = s.stub.read("gh.log").split("\n").filter((l) => l.startsWith("pr comment 2"));
+      add("e19b a stopped build PR is handed to a person with a comment naming the level and the reason", "one comment",
+        handed.length === 1 && /level 3/.test(handed[0]), s.stub.read("gh.log"));
     }
     {
       const s = scenario("run6");
