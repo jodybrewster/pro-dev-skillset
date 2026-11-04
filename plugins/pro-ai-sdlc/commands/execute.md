@@ -134,6 +134,7 @@ For each step write or extend the test first, see it fail, then write the code u
 A step counts as built only when its tests pass and, where the stack has them, type checking and linting pass too (the repo's own commands, found as in the baseline).
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
 After each step's commit, append the test files that commit added or changed to `<worktree>/.claude/test-lock`, one path relative to the worktree per line.
+A step that only adds failing tests and leaves the code to a later step is built together with that step, so a test has passed once before it is frozen.
 The `protect-tests` hook then flags any later edit to a listed file; new test files stay free.
 Before the first append make sure `.claude/test-lock` is git-excluded: add the line to the worktree's exclude file (`git rev-parse --git-path info/exclude`) when it is missing, and never stage the lock.
 After the commit of a step marked `irreversible`, run `## Doubt` before the next step.

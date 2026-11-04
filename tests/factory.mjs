@@ -402,7 +402,9 @@ export function runFactoryCases() {
       check("f7 a routine changeset in a changesets repo passes", "pass", { ".changeset/brave-lions.md": "x\n" }, "pass");
       check("f8 a manifest under tests/ is not a release manifest", "pass", { "tests/fixtures/app/package.json": "{\"version\":\"0.1.0\"}\n" }, "pass");
       check("f9 a .releaserc folder is a marker", "level 2", { ".releaserc/x": "x\n" }, { level: 2, re: /generator marker/ });
-      add("f10 session.sh marks a factory session", "exported", /^export FACTORY_SESSION=1$/m.test(readFileSync(join(ROOT, "plugins", "pro-ai-sdlc", "factory", "session.sh"), "utf8")), "no export");
+      const sess = readFileSync(join(ROOT, "plugins", "pro-ai-sdlc", "factory", "session.sh"), "utf8");
+      add("f10 session.sh marks a factory session", "exported", /^export FACTORY_SESSION=1$/m.test(sess), "no export");
+      add("f11 the commit hook replaces a trailer a session wrote itself", "replace", /interpret-trailers --in-place --if-exists replace/.test(sess), "not replace");
     }
 
     // ── no CI is decided from the tip, never from "no checks reported" ──
@@ -567,6 +569,21 @@ export function runFactoryCases() {
       const r = py(s.args, s.fx.repo, s.env);
       const rec = record(s.fx);
       add("e21 a container that exits non-zero with no PR is an error record", "error", r.status === 2 && rec?.status === "fail" && /exited 3/.test(rec.summary), brief(r));
+    }
+    for (const [id, text] of [["plain", "factory: stopped level 2 (the test needs a person)\n"], ["stream-json", JSON.stringify({ type: "result", result: "Done.\n\nfactory: stopped level 2 (the test needs a person)" }) + "\n"]]) {
+      const s = scenario(`runstop-${id}`);
+      s.stub.put("brief.out", text + "factory: no pull request found for branch x\n");
+      s.stub.put("brief.rc", "1");
+      const r = py(s.args, s.fx.repo, s.env);
+      const rec = record(s.fx);
+      add(`e21b a session's own stop (${id}) is a stopped record, not an error`, "stopped", r.status === 3 && rec?.status === "partial" && /the test needs a person/.test(rec.summary), brief(r));
+    }
+    {
+      const s = scenario("runstop-low");
+      s.stub.put("brief.out", "factory: stopped level 1 (claims low)\n");
+      s.stub.put("brief.rc", "1");
+      const r = py(s.args, s.fx.repo, s.env);
+      add("e21c a stop never reads below level 2", "level 2", r.status === 3 && /level raised to 2/.test(record(s.fx)?.summary ?? ""), brief(r));
     }
     {
       const s = scenario("run8");

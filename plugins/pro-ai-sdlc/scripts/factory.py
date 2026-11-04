@@ -1246,8 +1246,18 @@ def branch_protected(root, branch):
     return False
 
 
+def session_stop(out):
+    """(level, reason) from the last `factory: stopped level N (reason)` the session said, or None.
+    The line may sit inside the stream-json text, so it ends at a newline, a quote or the end."""
+    hits = re.findall(r'factory: stopped level ([123]) \((.{1,300}?)\)(?=\\n|\\"|"|\s*$)', out, re.M)
+    if not hits:
+        return None
+    level, reason = hits[-1]
+    return max(2, int(level)), re.sub(r"[^\x20-\x7e]", " ", reason)
+
+
 def session(root, a, token, phase, rel, repo_url, budget):
-    """One container run. Returns (pr number or None, cost, log tail, exit code, timed_out)."""
+    """One container run. Returns (pr number or None, cost, log tail, exit code, timed_out, the session's stop)."""
     name = f"factory-{os.path.basename(rel)}-{phase}-{int(time.time())}"
     args = [docker_bin(), "run", "--rm", "--name", name, "-e", "CLAUDE_GUARD_MODE=enforce", "-e", "ANTHROPIC_API_KEY", "-e", "GH_TOKEN",
             "-e", f"FACTORY_BUDGET_USD={budget:.2f}", "-e", f"FACTORY_MODEL={a.model}",
@@ -1264,7 +1274,7 @@ def session(root, a, token, phase, rel, repo_url, budget):
     cost = container_cost(out)
     if cost is None:  # no result event: count the whole phase budget
         cost = budget
-    return (int(prs[-1]) if prs else None), cost, out.strip()[-200:], code, timed_out
+    return (int(prs[-1]) if prs else None), cost, out.strip()[-200:], code, timed_out, session_stop(out)
 
 
 def get_token(root, allow_broad):
@@ -1345,7 +1355,7 @@ def run_phases(root, a, token, folder, rel, repo_url, branch, resume_pr=None, sp
             if remaining <= 0.05:
                 raise Stop("stopped", 1, "the per-run cost cap is used up")
             before = remote_sha(root, branch)
-            pr, cost, tail, code, timed_out = session(root, a, token, phase, rel, repo_url, remaining)
+            pr, cost, tail, code, timed_out, said = session(root, a, token, phase, rel, repo_url, remaining)
             spent += cost
             write_record(root, folder, phase, cost_usd=round(spent, 4))
             # The container's token must not move the default branch; only the host merges.
@@ -1353,6 +1363,8 @@ def run_phases(root, a, token, folder, rel, repo_url, branch, resume_pr=None, sp
                 raise Stop("error", 1, "default branch moved during the session")
             if timed_out:
                 raise Stop("error", 1, f"the {phase} container timed out after {a.timeout_min:g} min and was killed")
+            if pr is None and said:  # the session's own stop; the claim can only stop a run, so it is safe to believe
+                raise Stop("stopped", said[0], said[1])
             if code != 0 and pr is None:
                 raise Stop("error", 1, f"the {phase} container exited {code}: {tail[-120:]}")
             if pr is None:
