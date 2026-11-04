@@ -3,7 +3,7 @@
 
 Appends each path, relative to the worktree, to <worktree>/.claude/test-lock once and keeps
 that file in the worktree's git exclude file. A script so a run with no one at the keyboard
-can do it: shell redirects into .claude/ are refused there, and running a plugin script is not.
+can do it: shell redirects into .claude/ are refused there but a plugin script is not.
 Refuses a path that is absolute or leaves the worktree. Python 3 standard library only.
 """
 from __future__ import annotations

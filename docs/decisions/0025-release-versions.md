@@ -40,12 +40,12 @@ Reverse this if intents stop being the unit of change or if releases move to a g
 
 - Derive the version from the tag and never edit the manifest: package registries read the manifest inside the artifact.
 - Let `/ship` create the tag: a pushed tag is consumed by others and cannot be taken back, so `/ship` stays read-only and the tag waits for a yes in `/deliver`.
-- Keep the tag as a typed step for everyone: it shuts out anyone without a terminal, and the typing adds nothing the yes does not.
+- Keep the tag as a typed step for everyone: it shuts out anyone without a terminal. The typing adds nothing the yes does not.
 - Bump from Conventional Commit subjects: pull request merges do not keep them reliably.
 
 ## Where it is enforced
 
 `plugins/pro-ship/scripts/ship.py` (`version`, `changelog`, `prepare`, `checks`, `protection`, `deployed`) and `tests/ship-version.mjs` and `tests/ship-deploy.mjs`.
-The yes before a tag is enforced in mieruka's chat, where a card answer opens one tag for that version (its `service/chat/managed.ts`), and a card's background runs may not tag or push a tag (its `service/change-policy.ts`).
+The yes before a tag is enforced in mieruka's chat, where a card answer opens one tag for that version (its `service/chat/managed.ts`). A card's background runs may not tag or push a tag (its `service/change-policy.ts`).
 In a terminal it rests on the permission prompt for `git tag`.
 Not enforced yet for the `breaking:` field in intents.

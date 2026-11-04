@@ -16,7 +16,7 @@ The request: $ARGUMENTS
 
 This command is for a person who is not an engineer.
 They say what they want and answer plain questions; the git work happens without them.
-Asking for delivery is the person's approval of the spec and the plan, and every merge and release still waits for their yes.
+Asking for delivery is the person's approval of the spec and the plan. Every merge and release still waits for their yes.
 
 ## How to talk
 
@@ -60,12 +60,12 @@ Otherwise run `/pro-ai-sdlc:intent` through the Skill tool with the request and 
 - Offer no spec methods.
 
 Commit `intent.md` if it is not committed yet (`git add` that one path, then `git commit -m "intent: <slug>"`).
-A level above 1 means a person must be here, and this person is, so it never stops this command.
+A level above 1 means a person must be here. This person is, so it never stops this command.
 
 ### 2. Spec and plan
 
 Run `/pro-ai-sdlc:spec <dir>/intent.md` and then `/pro-ai-sdlc:plan <dir>/spec.md` through the Skill tool, treating the person as having said to go ahead without questions.
-Offer no methods and no capability map, and record assumptions as `unconfirmed`.
+Offer no methods and no capability map. Record assumptions as `unconfirmed`.
 Then in `plan.md` set `Status: approved.` and `Approver: <Author>, by asking for delivery.` and commit that file with `git commit -m "plan: approve <slug>"`.
 
 If the plan's work touches a stop-list category (auth, migrations, payments, deploys, secrets or environment variables), stop and say in plain words that an engineer has to look at it first.
@@ -98,7 +98,7 @@ Ask `Ready, checks passed. Merge it?` with the options `Merge it`, `Not yet` and
 ### 6. Release
 
 Say `Getting the release ready.`
-Run `/pro-ship:ship` through the Skill tool on the merged commit; it reads and records, and never tags.
+Run `/pro-ship:ship` through the Skill tool on the merged commit; it reads and records but never tags.
 On a NO-GO, say in plain words what is blocking and stop.
 Read the version from `python3 "<pro-ship scripts>/ship.py" version`.
 A service that ships on merge has no version: skip the question and go to stage 7.
@@ -119,7 +119,7 @@ A yes to this question is what lets the tag run (ADR-0025): never tag without it
 ### 7. After the release
 
 Get the checks with `python3 "<pro-ship scripts>/ship.py" checks`.
-Run what can be run, following `/pro-ship:deployed`, with `python3 "<pro-ship scripts>/ship.py" clean-run --tag <tag> --target <id> --step tests` and `--step use`, and keep each result.
+Run what can be run, following `/pro-ship:deployed`, with `python3 "<pro-ship scripts>/ship.py" clean-run --tag <tag> --target <id> --step tests` and `--step use`. Keep each result.
 Never run a tag's code on the host.
 When `clean-run` cannot start, the check is the person's to confirm: list what to run.
 Print what the person can check, in plain words, as a short list with the command or link for each.
