@@ -1,6 +1,6 @@
 #!/bin/sh
 # Build a fresh factory demo: the tiny-tasks fixture with fictional people, a private GitHub
-# repo, a v1.0.0 tag, a protected main and the four plugins at local scope.
+# repo, a v1.0.0 tag, a protected main, protected release tags and the four plugins at local scope.
 # Usage: new-demo.sh <name> [--owner <gh owner>] [--dir <parent dir, default ~/Projects>]
 set -eu
 
@@ -122,18 +122,59 @@ The library ships as a tag; a person pushes it.
 targets:
   - id: library
     kind: tag-release
+    documented_use: "node examples/use.js"
+    rollback:
+      triggers:
+        - "the release breaks a caller"
+      steps:
+        - "Delete the release on the consumer side and point it back at the previous tag."
+        - "Revert the release commits on main through a pull request."
+      rto: "one release cycle"
 tag_pattern: "v*"
 last_deploy: tag
 ```
 MD
 
+mkdir -p examples
+cat > examples/use.js <<'JS'
+import { createStore, addTask, listTasks } from '../src/index.js';
+
+const store = createStore();
+addTask(store, 'Water the plants');
+console.log(listTasks(store).length === 1 ? 'one task listed' : 'task list is wrong');
+JS
+
+cat >> README.md <<'MD'
+
+## Usage
+
+```sh
+node examples/use.js
+```
+MD
+
+cat > CHANGELOG.md <<'MD'
+# Changelog
+
+All notable changes to tiny-tasks are written here, in the change that makes them.
+
+## [Unreleased]
+
+## [1.0.0] - 2026-01-01
+
+### Added
+
+- A task list with a store and a formatter.
+MD
+
 mkintent() {
-  slug="$1"; role="$2"; title="$3"; problem="$4"; outcome="$5"; files="$6"; success="$7"
+  slug="$1"; role="$2"; kind="$3"; title="$4"; problem="$5"; outcome="$6"; files="$7"; success="$8"
   mkdir -p "intent/$day-$slug"
   cat > "intent/$day-$slug/intent.md" <<MD
 ---
 source: idea
-kind: idea
+kind: $kind
+breaking: false
 status: accepted
 risk: low
 level: 1
@@ -185,13 +226,13 @@ None.
 MD
 }
 
-mkintent "sorted-by-title" "product owner" "List tasks sorted by title" \
+mkintent "sorted-by-title" "product owner" "idea" "List tasks sorted by title" \
   "Tasks come back in the order they were added, so a long list is hard to scan." \
   "A listing function returns the tasks ordered by title, case-insensitive, without changing the stored order." \
   "The files \`src/index.js\` and \`src/format.js\`." \
   "Adding tasks named b, A and c and asking for the sorted listing returns A, b, c."
 
-mkintent "trim-titles" "engineer" "Trim whitespace around task titles" \
+mkintent "trim-titles" "engineer" "bug" "Trim whitespace around task titles" \
   "A title typed with leading or trailing spaces is stored as typed, so two tasks that look alike differ." \
   "Adding a task stores its title with surrounding whitespace removed." \
   "The file \`src/tasks.js\`." \
@@ -209,6 +250,14 @@ gh api -X PUT "repos/$owner/$name/branches/main/protection" --input - <<'JSON'
  "enforce_admins": true,
  "required_pull_request_reviews": {"required_approving_review_count": 0},
  "restrictions": null}
+JSON
+
+# Release tags: an owner can still push them, nobody else can create, move or delete one.
+gh api -X POST "repos/$owner/$name/rulesets" --input - <<'JSON'
+{"name": "release tags", "target": "tag", "enforcement": "active",
+ "conditions": {"ref_name": {"include": ["refs/tags/v*"], "exclude": []}},
+ "rules": [{"type": "creation"}, {"type": "update"}, {"type": "deletion"}],
+ "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}]}
 JSON
 
 for p in pro-ai-sdlc pro-ship pro-quality pro-security; do

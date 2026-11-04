@@ -5,7 +5,7 @@ The guide behind it is [factory.md](./factory.md).
 
 ## Before the audience arrives
 
-Build a fresh demo with one command; it creates a private repo, the checkout, the roles, CI, a `v1.0.0` tag, a protected main, two accepted intents and the local-scope plugins:
+Build a fresh demo with one command; it creates a private repo, the checkout, the roles, CI, a changelog, a `v1.0.0` tag, a protected main, protected release tags, two accepted intents and the local-scope plugins:
 
 ```bash
 demo/factory/new-demo.sh factory-demo-2 [--owner <gh owner>] [--dir <parent dir>]

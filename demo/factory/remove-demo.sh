@@ -83,7 +83,7 @@ else
 fi
 
 echo "== Validate"
-if ls "$parent" | grep -q -- "$name"; then
+if ls "$parent" | grep -qx -- "$name"; then
   echo "FAIL: $parent still lists $name"
 else
   echo "ok: $parent lists no $name"
@@ -93,7 +93,7 @@ if out="$(gh repo view "$owner/$name" --json isArchived --jq .isArchived 2>&1)";
 else
   echo "repo $owner/$name: $out"
 fi
-python3 -c "import json,os,sys; n=sys.argv[1]; d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))['plugins']; print('local plugin entries:', [k for k,v in d.items() for e in v if n in e.get('projectPath','')])" "$name" || echo "could not read installed_plugins.json"
+python3 -c "import json,os,sys; n=sys.argv[1]; d=json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))['plugins']; print('local plugin entries:', [k for k,v in d.items() for e in v if os.path.basename(e.get('projectPath','')) == n])" "$name" || echo "could not read installed_plugins.json"
 if command -v docker >/dev/null 2>&1; then
   echo "factory images left:"
   docker images pro-dev-factory

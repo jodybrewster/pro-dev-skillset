@@ -26,7 +26,7 @@ case "$1 $2" in
   "repo create")
     git remote add origin "$STUB/origin.git"
     git push -q origin HEAD ;;
-  "api -X") cat > "$STUB/protection.json" ;;
+  "api -X") [ "$3" = POST ] && cat > "$STUB/ruleset.json" || cat > "$STUB/protection.json" ;;
 esac
 exit 0
 `;
@@ -90,6 +90,7 @@ export function runDemoKitCases() {
       "gh repo view o/demo-one",
       "gh repo create o/demo-one --private --source . --push",
       "gh api -X PUT repos/o/demo-one/branches/main/protection --input -",
+      "gh api -X POST repos/o/demo-one/rulesets --input -",
       "claude plugin install pro-ai-sdlc@pro-dev-skillset --scope local",
       "claude plugin install pro-ship@pro-dev-skillset --scope local",
       "claude plugin install pro-quality@pro-dev-skillset --scope local",
@@ -101,6 +102,8 @@ export function runDemoKitCases() {
     add("c3 v1.0.0 is tagged and pushed", "tag on origin", /v1\.0\.0/.test(tags), tags);
     const prot = existsSync(join(stub, "protection.json")) ? JSON.parse(readFileSync(join(stub, "protection.json"), "utf8")) : {};
     add("c4 protection requires a PR, 0 approvals, admins and check test", "payload", prot.enforce_admins === true && prot.required_pull_request_reviews?.required_approving_review_count === 0 && prot.required_status_checks?.contexts?.[0] === "test", JSON.stringify(prot));
+    const rs = existsSync(join(stub, "ruleset.json")) ? JSON.parse(readFileSync(join(stub, "ruleset.json"), "utf8")) : {};
+    add("c4b release tags are protected", "active with all three rules", rs.target === "tag" && rs.enforcement === "active" && (rs.rules || []).map((x) => x.type).join() === "creation,update,deletion" && rs.conditions?.ref_name?.include?.[0] === "refs/tags/v*", JSON.stringify(rs));
     const git = (...a) => spawnSync("git", ["-C", dest, ...a], { encoding: "utf8", env }).stdout.trim();
     add("c5 repo-local git user is the fictional one", "Sam Rivera", git("config", "user.name") === "Sam Rivera" && git("config", "user.email") === "sam@example.com", git("config", "user.name"));
     add("c6 every commit is by Sam Rivera", "one author", git("log", "--format=%an <%ae>", "--all") === "Sam Rivera <sam@example.com>", git("log", "--format=%an", "--all"));
@@ -111,8 +114,11 @@ export function runDemoKitCases() {
     add("c8 CI runs npm test with contents read", "workflow", /npm test/.test(ci) && /contents: read/.test(ci) && /pull_request/.test(ci), ci);
     const claudeMd = readFileSync(join(dest, "CLAUDE.md"), "utf8");
     add("c9 the ship block has a tag-release target", "ship", /kind: tag-release/.test(claudeMd) && /tag_pattern: "v\*"/.test(claudeMd), claudeMd.slice(-200));
+    add("c9b the ship block has a rollback and a documented use that runs", "both", /rollback:/.test(claudeMd) && /documented_use: "node examples\/use\.js"/.test(claudeMd) && spawnSync("node", ["examples/use.js"], { cwd: dest, encoding: "utf8" }).stdout.trim() === "one task listed", claudeMd.slice(-400));
+    add("c9c a changelog with an Unreleased heading", "manual mode", /^## \[Unreleased\]$/m.test(readFileSync(join(dest, "CHANGELOG.md"), "utf8")), "no heading");
     const intents = readdirSync(join(dest, "intent")).filter((n) => /^\d{4}-/.test(n));
     const texts = intents.map((n) => readFileSync(join(dest, "intent", n, "intent.md"), "utf8"));
+    add("c10b each intent records kind and breaking", "idea and bug", texts.every((t) => /^breaking: false$/m.test(t)) && texts.some((t) => /^kind: idea$/m.test(t)) && texts.some((t) => /^kind: bug$/m.test(t)), texts[0]?.slice(0, 120));
     add("c10 two accepted level 1 intents with no new-dependency phrase", "two", intents.length === 2 && texts.every((t) => /status: accepted/.test(t) && /level: 1/.test(t) && !/new dependenc/i.test(t) && /author: Sam Rivera/.test(t)), intents.join(","));
 
     // remove
