@@ -5,10 +5,19 @@ The guide behind it is [factory.md](./factory.md).
 
 ## Before the audience arrives
 
+Build a fresh demo with one command; it creates a private repo, the checkout, the roles, CI, a changelog, a `v1.0.0` tag, a protected main, protected release tags, two accepted intents and the local-scope plugins:
+
+```bash
+demo/factory/new-demo.sh factory-demo-2 [--owner <gh owner>] [--dir <parent dir>]
+```
+
+It refuses a name that exists on GitHub or on disk.
+Then, in the new checkout:
+
 ```bash
 export SDLC="$(ls -d ~/.claude/plugins/cache/pro-dev-skillset/pro-ai-sdlc/*/ | tail -1)"
 export ANTHROPIC_API_KEY=...            # or map it from your own variable
-cd ~/Projects/factory-demo && git pull
+cd ~/Projects/factory-demo-2
 python3 "$SDLC/scripts/factory.py" roles --repo .
 ```
 
@@ -99,6 +108,10 @@ The live run builds its own throwaway repo and deletes it afterwards; quote the 
 ## Clean up everything for a retest
 
 A retest starts from nothing; leftovers give misleading results, above all on mieruka's board.
+Run `demo/factory/remove-demo.sh <name> [--owner <gh owner>] [--dir <parent dir>] [--delete-image]`.
+It follows steps 2 to 5 below, archives the repo instead of deleting it, prints the delete command for you to run and prints each validation.
+It refuses unless the checkout's origin is the named repo and it kills no process.
+The manual steps are the fallback.
 Run these in order, then check each line under Validate.
 
 1. Stop the factory loop (ctrl-c) and any mieruka dev server you started for the demo, by its own process id only:
@@ -129,6 +142,3 @@ Validate:
 - `python3 -c "import json,os; print([k for k,v in json.load(open(os.path.expanduser('~/.claude/plugins/installed_plugins.json')))['plugins'].items() for e in v if '<demo>' in e.get('projectPath','')])"` prints `[]`.
 - `docker images pro-dev-factory` lists no image older than the plugin version you will test.
 - mieruka shows no `<demo>` project.
-
-The factory-demo-kit intent turns steps 2 to 6 into `demo/factory/remove-demo.sh`.
-

@@ -18,6 +18,7 @@ import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
 import { runFactoryCases } from "./factory.mjs";
+import { runDemoKitCases } from "./demo-kit.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
@@ -1168,6 +1169,21 @@ checks["factory-scripts"] = () => {
   }
   if (!results.length) failures.push("tests/factory.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`factory ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// demo/factory/new-demo.sh and remove-demo.sh build and clean up a factory demo. The
+// removal must never delete a GitHub repo or touch a checkout whose origin is not the named
+// repo. The case table lives in tests/demo-kit.mjs.
+checks["demo-kit"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runDemoKitCases();
+  if (skipped) {
+    warnings.push(`demo kit cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/demo-kit.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`demo-kit ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 
