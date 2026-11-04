@@ -64,7 +64,7 @@ mv "$dest" "$trash"
 echo "moved to $trash"
 
 echo "== 4. Archive the GitHub repo"
-gh repo archive "$owner/$name" --yes
+gh repo archive "$owner/$name" -y
 echo "Deleting is permanent, so it is yours to run:"
 echo "  gh auth refresh -h github.com -s delete_repo    # once, adds the scope"
 echo "  gh repo delete $owner/$name --yes"
