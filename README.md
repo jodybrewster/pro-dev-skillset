@@ -84,6 +84,14 @@ Three more methods are opt-in plugins, installed with `claude plugin install <na
 
 [docs/spec-methods.md](./docs/spec-methods.md) compares them side by side, says which to pick and walks through each one step by step.
 
+### The software factory
+
+With `pro-ai-sdlc`, `pro-ship`, `pro-quality` and `pro-security` installed, a small intent runs from acceptance to a merged pull request with nobody at the keyboard.
+A larger one stops for the people who own each gate ([ADR-0024](./docs/decisions/0024-escalation-levels.md)).
+
+- [docs/factory.md](./docs/factory.md): the step-by-step guide, with a validation after each step.
+- [docs/factory-demo.md](./docs/factory-demo.md): a demo script, ending with how to clean up everything for a retest.
+
 ## Dependencies
 
 ### Required
