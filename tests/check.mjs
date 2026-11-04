@@ -23,6 +23,7 @@ import { runShipHookCases } from "./ship-hooks.mjs";
 import { runShipCheckCases } from "./ship-check.mjs";
 import { runShipPreflightCases } from "./ship-preflight.mjs";
 import { runShipDeployCases } from "./ship-deploy.mjs";
+import { runShipVersionCases } from "./ship-version.mjs";
 import { runFormatHookCases } from "./format-hook.mjs";
 import { runIncidentCases } from "./incident.mjs";
 import { runLessonsCases } from "./lessons.mjs";
@@ -1220,6 +1221,16 @@ checks["ship-deploy"] = () => {
   if (skipped) { warnings.push(`ship deploy cases skipped - ${skipped}`); return { failures, warnings }; }
   if (!results.length) failures.push("tests/ship-deploy.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`ship deploy ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// ship-version: the release version proposal (cases in tests/ship-version.mjs, ADR-0025).
+checks["ship-version"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runShipVersionCases();
+  if (skipped) { warnings.push(`ship version cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/ship-version.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ship version ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

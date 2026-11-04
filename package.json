@@ -17,6 +17,7 @@
     "test:handoff": "node tests/handoff.mjs",
     "test:execute": "node tests/execute.mjs",
     "test:ship-deploy": "node tests/ship-deploy.mjs",
+    "test:ship-version": "node tests/ship-version.mjs",
     "test:format-hook": "node tests/format-hook.mjs",
     "test:incident": "node tests/incident.mjs",
     "test:lessons": "node tests/lessons.mjs",
