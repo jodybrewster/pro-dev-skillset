@@ -11,6 +11,18 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 ## Now
 
+### Next session: retest the factory with versioning
+
+In order, each through the loop:
+
+1. Build [release-versioning](../intent/2026-11-03-release-versioning/intent.md) (spec, plan with a security challenge, build): versions, changelog, post-deploy checks by target kind, deploy facts, tag protection.
+2. Build [factory-demo-kit](../intent/2026-11-03-factory-demo-kit/intent.md): one command makes a fresh demo, one removes it.
+3. Retest on a fresh demo: two level 1 intents run with `factory.py run --next`, the larger intent of Act 4 walked through every role, a release that `/pro-ship:ship` versions by itself and cards that reach Done on mieruka's board.
+4. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes.
+5. The maintainer signs off the software factory; ADR-0024 moves to accepted.
+
+For mieruka, its own intents (the owner merges): shipped intents sit in Build waiting for "the builder to open a PR" when their PR used another branch name; two servers on one project create duplicate cards; each card spawns `factory.py` for its level.
+
 ### Built, waiting on sign-off: the software factory
 
 [intent/2026-11-03-software-factory](../intent/2026-11-03-software-factory/intent.md): escalation levels set by `factory.py level` and only raised, a `## Roles` block in `REVIEW.md` plus a runner that takes a level 1 intent to a merged pull request in a container while the host decides every merge ([ADR-0024](./decisions/0024-escalation-levels.md) proposed).
