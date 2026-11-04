@@ -20,7 +20,10 @@ The agent-skills baseline covers semantic versioning, the tag as the source of t
 The next version is proposed by `ship.py version` from the kinds of the intents in the range: a breaking change is major, a feature (`idea` or `change`) minor and a fix (`bug`) patch.
 An intent records `breaking: true | false` beside `kind:`; a missing value is unknown and is assumed breaking until the person answers.
 With no release tag the declared manifest version (package.json, pyproject.toml, Cargo.toml) is offered as the first release.
-The tag is the source of truth for the last version and stays a person's step; `/ship` prints the command and never runs it.
+The tag is the source of truth for the last version.
+`/ship` prints the command and never runs it.
+`/deliver` runs that one command after the person says yes to `This would be version X.Y.Z. Publish it? This can't be taken back.`, so a person who only answers questions in chat needs no terminal.
+The yes covers exactly that version in that session and nothing else may tag: a Build run is refused any tag.
 The manifest is bumped in the release change by `ship.py prepare` and `--agree` proves tag, manifest and changelog agree.
 A human changelog entry is written under Unreleased in the same change as the work; a generated changelog is detected and never edited.
 `/pro-ship:deployed` takes its checks from the target kind: a tag-release, publish or desktop target gets tests on a clean checkout of the tag, a run of the documented use and a rollback dry run and is refused health, error rate, latency and log checks.
@@ -36,10 +39,13 @@ Reverse this if intents stop being the unit of change or if releases move to a g
 ## Alternatives considered
 
 - Derive the version from the tag and never edit the manifest: package registries read the manifest inside the artifact.
-- Let `/ship` create the tag: a pushed tag is consumed by others and cannot be taken back.
+- Let `/ship` create the tag: a pushed tag is consumed by others and cannot be taken back, so `/ship` stays read-only and the tag waits for a yes in `/deliver`.
+- Keep the tag as a typed step for everyone: it shuts out anyone without a terminal, and the typing adds nothing the yes does not.
 - Bump from Conventional Commit subjects: pull request merges do not keep them reliably.
 
 ## Where it is enforced
 
 `plugins/pro-ship/scripts/ship.py` (`version`, `changelog`, `prepare`, `checks`, `protection`, `deployed`) and `tests/ship-version.mjs` and `tests/ship-deploy.mjs`.
+The yes before a tag is enforced in mieruka's chat, where a card answer opens one tag for that version (its `service/chat/managed.ts`), and a card's background runs may not tag or push a tag (its `service/change-policy.ts`).
+In a terminal it rests on the permission prompt for `git tag`.
 Not enforced yet for the `breaking:` field in intents.

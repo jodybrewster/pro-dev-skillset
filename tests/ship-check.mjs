@@ -445,6 +445,13 @@ export function runShipCheckCases() {
     records({ "pro-quality@mkt": [{ scope: "user", installPath: userDir, version: "1" }, { scope: "local", projectPath: sandbox, installPath: projDir, version: "2" }] });
     add("f3b a local record for an ancestor of the repo counts", "the local install", find(repo, lay) === join(projDir, "scripts", "floor-guard.py"), find(repo, lay));
 
+    { const linked = join(sandbox, "linked-wt");
+      git(repo, "worktree", "add", "-q", "-b", "linked-wt", linked);
+      records({ "pro-quality@mkt": [{ scope: "local", projectPath: repo, installPath: projDir, version: "2" }] });
+      add("f3d a local record for the main checkout counts in its linked worktree", "the local install", find(linked, lay) === join(projDir, "scripts", "floor-guard.py"), find(linked, lay));
+      git(repo, "worktree", "remove", "--force", linked);
+      git(repo, "branch", "-q", "-D", "linked-wt"); }
+
     records({ "pro-quality@other": [{ scope: "user", installPath: foreign, version: "1" }] });
     add("f3c a record from another marketplace is ignored", "not-installed", find(repo, lay) === "not-installed", find(repo, lay));
 

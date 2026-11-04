@@ -472,6 +472,17 @@ def is_under(path: str, ancestor: str) -> bool:
     return path == ancestor or path.startswith(ancestor.rstrip(os.sep) + os.sep)
 
 
+def main_checkout(root: str) -> str:
+    """The main checkout of the repo that holds root; root itself when git cannot say."""
+    try:
+        r = sh(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], root)
+        if r.returncode == 0 and r.stdout.strip():
+            return os.path.realpath(os.path.dirname(r.stdout.strip()))
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return root
+
+
 def find_sibling(root: str, plugin: str, filename: str) -> str:
     """Path of <plugin>/scripts/<filename> (or <plugin>/<filename> when it holds a `/`), or "not-installed". Order: in-place sibling, install
     record (project or local record for this repo or an ancestor, then user), the repo's own
@@ -485,6 +496,9 @@ def find_sibling(root: str, plugin: str, filename: str) -> str:
         return inplace
     installed = read_installed()
     mkt = own_marketplace(installed)
+    # An /execute worktree sits beside the checkout a project or local install names, so a
+    # record counts for the repo's main checkout too.
+    roots = (root, main_checkout(root))
     scoped, user = [], []
     for key, recs in installed.items():
         name, _, m = key.partition("@")
@@ -498,7 +512,7 @@ def find_sibling(root: str, plugin: str, filename: str) -> str:
                 continue
             if r.get("scope") in ("project", "local") and r.get("projectPath"):
                 pp = os.path.realpath(str(r["projectPath"]))
-                if is_under(root, pp):
+                if any(is_under(r0, pp) for r0 in roots):
                     scoped.append((len(pp), cand))
             elif r.get("scope") == "user":
                 user.append(cand)
