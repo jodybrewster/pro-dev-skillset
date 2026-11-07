@@ -11,8 +11,12 @@
 // `syncFromFilesystem` against the throwaway root on an in-memory database. The vitest file is
 // removed afterwards and the sync writes only inside the throwaway root, so the mieruka checkout
 // is left as it was. Skips (exit 0) when MIERUKA_ROOT is unset or has no installed web app.
+//
+// The fixture intent has `id: TST-1` and the deployed commit's subject starts `TST-1: `, so the
+// deploy, incident, review round, visual and factory records carry "change_id": "TST-1" and the lesson's seen
+// entries do too (intent/2026-11-07-traceable-ids spec-m3 R13); mieruka must still load them.
 
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -22,6 +26,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SHIP = join(ROOT, "plugins", "pro-ship", "scripts", "ship.py");
 const SDLC = join(ROOT, "plugins", "pro-ai-sdlc", "scripts");
 const FOLDER = "2026-11-02-checkout-500s";
+const CHANGE_ID = "TST-1";
 const SHIP_BLOCK = "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: web\n    kind: deploy-on-merge\n    env: production\n    rollback:\n      triggers: [\"error rate above 2%\"]\n      steps: [\"redeploy the previous build\"]\n      rto: \"10 minutes\"\n```\n";
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("fake image body")]);
 const MIERUKA = process.env.MIERUKA_ROOT;
@@ -55,10 +60,11 @@ main: try {
   writeFileSync(join(repo, "AGENTS.md"), SHIP_BLOCK);
   mkdirSync(join(repo, "intent", FOLDER), { recursive: true });
   writeFileSync(join(repo, "intent", FOLDER, "plan.md"), "plan\n");
+  writeFileSync(join(repo, "intent", FOLDER, "intent.md"), `---\nid: ${CHANGE_ID}\nstatus: accepted\n---\n\n# Intent: checkout\n`);
   writeFileSync(join(repo, "intent", FOLDER, "incident.md"), `---\nid: ${FOLDER}\nstate: open\nseverity: sev2\ndetected: 2026-11-02T10:00:00+00:00\nresolved:\ncommit:\ndeploy:\nregression_test:\n---\n\n# Incident: checkout\n\n## Summary\n\nCheckout returned 500 for 40 minutes.\n`);
   writeFileSync(join(repo, "shot.png"), PNG);
   git(repo, "add", "-A");
-  git(repo, "commit", "-q", "-m", "fixture");
+  git(repo, "commit", "-q", "-m", `${CHANGE_ID}: fixture`);
   const head = git(repo, "rev-parse", "HEAD").stdout.trim();
   // factory.py record --state merged checks the sha against origin's default branch, so the fixture gets one.
   const origin = join(work, "origin.git");
@@ -96,19 +102,25 @@ main: try {
     loop[name] = j?.evidence_key || (r.stdout.match(/(?:deploy|incident|review-lesson|review-round|visual|factory)-[a-z0-9-]+/) || [])[0];
     return true;
   };
-  const lessonAdd = (ref) => write("-", join(SDLC, "lessons.py"), ["add", "--ref", ref, "--head", head, "--class", "unchecked-timeout", "--file", "src/x.py"], "no timeout on the call");
+  const lessonAdd = (ref) => write("-", join(SDLC, "lessons.py"), ["add", "--ref", ref, "--head", head, "--class", "unchecked-timeout", "--file", "src/x.py", "--change-id", CHANGE_ID], "no timeout on the call");
   const written = write("deploy", SHIP, ["deployed", "--target", "web", "--env", "production", "--url", "https://example.test", "--deployed-at", "2026-11-02T10:00:00+00:00"])
     && write("incident", join(SDLC, "incident.py"), ["record", `intent/${FOLDER}`])
     && lessonAdd("11") && lessonAdd("12")
     && write("lesson", join(SDLC, "lessons.py"), ["mark", "unchecked-timeout", "accepted"], "Give every subprocess call a timeout.")
     && write("-", join(SDLC, "lessons.py"), ["raise", "--ref", "feat/x", "--base", head, "--head", head, "--pass", "bugs", "--severity", "important", "--class", "unchecked-timeout", "--file", "src/x.py", "--line", "3"], "no timeout on the call")
-    && write("round", join(SDLC, "lessons.py"), ["round", "--ref", "feat/x", "--base", head, "--head", head, "--round", "1", "--fresh", "ran"])
+    && write("round", join(SDLC, "lessons.py"), ["round", "--ref", "feat/x", "--base", head, "--head", head, "--round", "1", "--fresh", "ran", "--change-id", CHANGE_ID])
     && write("visual", join(SDLC, "visual.py"), ["record", "--intent", `intent/${FOLDER}`, "--step", "1", "--viewport", "desktop", "--status", "pass", "--shot", "shot.png", "--url", "http://localhost:3000/"])
     && write("factory", join(SDLC, "factory.py"), ["record", `intent/${FOLDER}`, "--state", "merged", "--sha", head, "--unread-lines", "42"]);
   if (!written) break main;
   for (const [name, key] of Object.entries(loop).filter(([n]) => n !== "-")) {
     if (!key) { console.error(`${name} writer printed no evidence_key`); break main; }
   }
+  // Every record about the change holds change_id at the top level; the lesson spans changes, so its seen entries hold it.
+  const dropped = (k) => JSON.parse(readFileSync(join(repo, ".mieruka", "evidence", k, "evidence.json"), "utf8"));
+  const noId = ["deploy", "incident", "round", "visual", "factory"].filter((n) => dropped(loop[n]).change_id !== CHANGE_ID);
+  if (noId.length) { console.error(`these records do not hold "change_id": "${CHANGE_ID}": ${noId.join(", ")}`); break main; }
+  const seen = JSON.parse(dropped(loop.lesson).detail_json).seen;
+  if (!seen.length || seen.some((e) => e.change_id !== CHANGE_ID)) { console.error(`the lesson's seen entries do not hold change_id ${CHANGE_ID}: ${JSON.stringify(seen)}`); break main; }
   const expected = [
     [loop.deploy, "deploy", "deploy"],
     [loop.incident, "doc", "incident"],
@@ -158,7 +170,7 @@ it.each(${JSON.stringify(expected)})('loads %s as %s / %s with no sync error', (
   const v = run(join(MIERUKA, "node_modules", ".bin", "vitest"), ["run", testFile], WEB);
   ok = v.status === 0;
   const tail = (v.stdout + v.stderr).split("\n").filter((l) => /Test Files|Tests |FAIL|Error|expected/.test(l)).join("\n");
-  console.log(ok ? `mieruka sync check passed: ${key} loaded as review / ship-preflight, plus ${expected.map((e) => e[2]).join(", ")}` : `mieruka sync check failed\n${tail}`);
+  console.log(ok ? `mieruka sync check passed: ${key} loaded as review / ship-preflight, plus ${expected.map((e) => e[2]).join(", ")}, each record holding change_id ${CHANGE_ID}` : `mieruka sync check failed\n${tail}`);
 } finally {
   cleanup();
 }

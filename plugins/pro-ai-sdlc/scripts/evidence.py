@@ -10,6 +10,10 @@ The mieruka drop is the rule of pro-ship's ship.py mieruka_copy; plugins do not 
 other (ADR-0003), so this is a copy. When one changes, change the other and
 docs/ship-preflight.md in the same commit.
 
+A record may carry an optional top-level change_id, the id of the change it is about
+(docs/loop-records.md). change_id_of reads it from an intent's id: line; write_record drops any
+value that does not match ID_RE, so a branch name or an id: line a diff shaped never reaches mieruka.
+
 Python 3 standard library only. No network calls.
 """
 
@@ -19,6 +23,8 @@ import json
 import os
 import re
 import subprocess
+
+from ids import ID_RE, id_of
 
 KINDS = ("review", "qa_run", "deploy", "a11y", "visual_drift", "doc")
 STATUSES = ("pass", "fail", "partial", "info")
@@ -58,6 +64,48 @@ def rev(root: str, ref: str) -> str | None:
     except (OSError, subprocess.SubprocessError):
         return None
     return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+
+
+def valid_change_id(value) -> str | None:
+    """The value when it is a whole change id such as PDS-50, else None."""
+    return value if isinstance(value, str) and ID_RE.fullmatch(value) else None
+
+
+def default_tip(root: str) -> str:
+    """origin/HEAD, origin/main or origin/master; HEAD with no remote. The rule of factory.default_tip."""
+    try:
+        r = sh(["git", "symbolic-ref", "-q", "refs/remotes/origin/HEAD"], root)
+        ref = r.stdout.strip()[len("refs/remotes/"):] if r.returncode == 0 and r.stdout.strip().startswith("refs/remotes/") else ""
+    except (OSError, subprocess.SubprocessError):
+        ref = ""
+    for cand in ([ref] if ref else []) + ["origin/main", "origin/master"]:
+        if rev(root, cand):
+            return cand
+    return "HEAD"
+
+
+def change_id_of(root: str, intent_dir: str) -> str | None:
+    """The id: of <intent_dir>/intent.md when it is a valid change id, else None.
+
+    The working tree is read first; the default tip only when the working tree has no intent.md.
+    """
+    full = intent_dir if os.path.isabs(intent_dir) else os.path.join(root, intent_dir)
+    path = os.path.join(full, "intent.md")
+    text = None
+    if os.path.isfile(path):
+        try:
+            text = open(path, encoding="utf-8").read()
+        except (OSError, UnicodeError):
+            text = None
+    else:
+        rel = os.path.relpath(os.path.realpath(full), root).replace(os.sep, "/")
+        if not rel.startswith("../") and rel != "..":
+            try:
+                r = sh(["git", "show", f"{default_tip(root)}:{rel}/intent.md"], root)
+                text = r.stdout if r.returncode == 0 else None
+            except (OSError, subprocess.SubprocessError):
+                text = None
+    return valid_change_id(id_of(text)) if text else None
 
 
 def ensure_excluded(root: str) -> None:
@@ -133,6 +181,8 @@ def write_record(root: str, subdir: str, record: dict) -> dict:
         raise Refuse("evidence: detail_json must be a JSON-encoded string")
     if not safe_key(subdir.replace("/", "-")):
         raise Refuse(f"evidence: refusing the folder {subdir!r}")
+    if "change_id" in record and not valid_change_id(record["change_id"]):
+        record = {k: v for k, v in record.items() if k != "change_id"}
     text = json.dumps(record, indent=2) + "\n"
     local = os.path.join(root, ".pro-dev", subdir, key + ".json")
     os.makedirs(os.path.dirname(local), exist_ok=True)

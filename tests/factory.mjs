@@ -236,7 +236,8 @@ export function runFactoryCases() {
       let r = py(["record", DIR, "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
       let rec = record(fx);
       add("r1 queued is info with the keys docs/loop-records.md names", "info", r.status === 0 && rec?.status === "info" && rec.kind === "doc" && rec.artifact_kind === "factory-run"
-        && rec.evidence_key === `factory-${FOLDER}` && rec.artifact_key === FOLDER && typeof rec.detail_json === "string" && rec.detail.level_at_intake === 1 && !!rec.detail.started, brief(r));
+        && rec.evidence_key === `factory-${FOLDER}` && rec.artifact_key === FOLDER && typeof rec.detail_json === "string" && rec.detail.level_at_intake === 1 && !!rec.detail.started
+        && !("change_id" in rec), brief(r));
       r = py(["record", DIR, "--repo", fx.repo, "--state", "build", "--pr", "https://github.com/o/r/pull/9", "--cost", "1.5"], fx.repo, stub.env);
       rec = record(fx);
       add("r2 build keeps started, sets build_pr and cost", "info", rec?.status === "info" && rec.detail.build_pr === "https://github.com/o/r/pull/9" && rec.detail.cost_usd === 1.5 && rec.detail.state === "build", brief(r));
@@ -516,6 +517,32 @@ export function runFactoryCases() {
       const slug = spawnSync("python3", ["-I", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import factory; print(' '.join(factory.slug_of(f) for f in sys.argv[2:]))",
         dirname(FACTORY), "TST-1-demo", "PDS-51-fix-greeting", "2026-01-02-greeting", "AB-123-x"], { encoding: "utf8", env: stub.env });
       add("i8 slug_of strips a date or an id prefix", "demo fix-greeting greeting x", slug.stdout.trim() === "demo fix-greeting greeting x", slug.stdout + slug.stderr);
+    }
+
+    // ── change_id on the factory record (traceable-ids spec-m3 R2, R6, R14, AC3) ──
+    {
+      const withId = (id) => intentText().replace("---\nsource:", `---\nid: ${id}\nsource:`);
+      const fx = repoWithOrigin(sandbox, "cid", {
+        [FOLDER]: { "intent.md": withId("TST-1") },
+        "2026-01-03-lower": { "intent.md": withId("lower-1") },
+        "2026-01-04-tiponly": { "intent.md": withId("TST-4") },
+      });
+      const stub = makeStub(sandbox, "cid", fx.origin);
+      let r = py(["record", DIR, "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
+      let rec = record(fx);
+      add("c1 an intent with id: TST-1 gives change_id TST-1 and the key factory-<folder>", "TST-1",
+        r.status === 0 && rec?.change_id === "TST-1" && rec.evidence_key === `factory-${FOLDER}` && rec.artifact_key === FOLDER, brief(r) + JSON.stringify(rec));
+      r = py(["record", "intent/2026-01-03-lower", "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
+      rec = record(fx, "2026-01-03-lower");
+      add("c2 an id that fails the pattern (lower-1) leaves change_id out", "absent", r.status === 0 && rec && !("change_id" in rec), brief(r) + JSON.stringify(rec));
+      rmSync(join(fx.repo, "intent", "2026-01-04-tiponly", "intent.md"));
+      r = py(["record", "intent/2026-01-04-tiponly", "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
+      rec = record(fx, "2026-01-04-tiponly");
+      add("c3 with no intent.md in the working tree the id comes from the default tip", "TST-4", r.status === 0 && rec?.change_id === "TST-4", brief(r) + JSON.stringify(rec));
+      write(join(fx.repo, DIR, "intent.md"), withId("TST-5"));
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "build"], fx.repo, stub.env);
+      rec = record(fx);
+      add("c4 the working tree wins over the default tip", "TST-5", r.status === 0 && rec?.change_id === "TST-5", brief(r) + JSON.stringify(rec));
     }
 
     // ── run, end to end ──

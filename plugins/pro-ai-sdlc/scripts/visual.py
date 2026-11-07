@@ -165,6 +165,9 @@ def record(a: argparse.Namespace) -> int:
         "detail_json": json.dumps(detail),
         "produced_by": f"pro-ai-sdlc:execute@{evidence.plugin_version()}",
     }
+    change_id = evidence.change_id_of(root, folder)
+    if change_id:
+        rec["change_id"] = change_id
     out = evidence.write_record(root, "visual", rec)
     print(json.dumps({**out, "status": a.status, "evidence_key": key, "screenshot": shot_rel}))
     return 0

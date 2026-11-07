@@ -62,7 +62,7 @@ export function runLessonsCases() {
     const r1 = addF(repo, "12", "unchecked-timeout", "no timeout on the call");
     add("add/stores a finding", "one ledger line", r1.status === 0 && r1.json?.stored === true && ledger(repo).length === 1, r1.stderr);
     const l = ledger(repo)[0];
-    add("add/line fields", "ref head class file claim created", l && l.ref === "12" && l.head === SHA1 && l.class === "unchecked-timeout" && l.file === "src/x.py" && l.claim === "no timeout on the call" && l.created, JSON.stringify(l));
+    add("add/line fields", "ref head class file claim created", l && l.ref === "12" && l.head === SHA1 && l.class === "unchecked-timeout" && l.file === "src/x.py" && l.claim === "no timeout on the call" && l.created && !("change_id" in l), JSON.stringify(l));
     const r2 = addF(repo, "12", "unchecked-timeout", "again");
     add("add/same ref and class once", "still one line", r2.status === 0 && r2.json?.stored === false && ledger(repo).length === 1, r2.stderr);
     add("add/ledger kept out of the tree", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
@@ -312,6 +312,48 @@ export function runLessonsCases() {
     const other = run(repo, ["round", "--ref", "ship-aaaaaaaaaaaa", "--base", SHA1, "--head", SHA2, "--round", "1", "--fresh", "ran"]);
     add("round/two refs at the same head and round keep two records", "distinct keys, both files", other.status === 0 && other.json?.evidence_key !== key && existsSync(recPath) && existsSync(join(repo, other.json?.path ?? "missing")), other.stdout + other.stderr);
     add("round/tree stays clean", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
+  }
+
+  {
+    // change_id on the ledger row and in each seen entry (traceable-ids spec-m3 R2, R10, AC6)
+    const repo = mkrepo();
+    const withId = (ref, cid, cls = "gamma") =>
+      run(repo, ["add", "--ref", ref, "--head", SHA1, "--class", cls, "--file", "src/x.py", "--change-id", cid], "a claim");
+    const r = withId("TST-1/build", "TST-1");
+    const row = ledger(repo)[0];
+    add("add/--change-id TST-1 is stored on the row", "change_id TST-1", r.status === 0 && row?.change_id === "TST-1", r.stderr + JSON.stringify(row));
+    for (const bad of ["x; rm", "lower-1", "TST-01", "TST-1 ", ""]) {
+      const b = withId("other", bad, "delta");
+      add(`add/--change-id ${JSON.stringify(bad)} is refused`, "exit 1, no row", b.status === 1 && ledger(repo).length === 1, b.stdout + b.stderr);
+    }
+    addF(repo, "2", "gamma", "second");
+    add("add/no --change-id leaves the field out", "absent", !!ledger(repo)[1] && !("change_id" in ledger(repo)[1]), JSON.stringify(ledger(repo)[1]));
+    const m = run(repo, ["mark", "gamma", "proposed"], "Check the thing.");
+    let seen = [];
+    try { seen = JSON.parse(JSON.parse(readFileSync(lessonFile(repo, "gamma"), "utf8")).detail_json).seen; } catch { /* reported below */ }
+    add("mark/copies each row's change_id into seen", "TST-1 then absent",
+      m.status === 0 && seen.length === 2 && seen[0].change_id === "TST-1" && !("change_id" in seen[1]), m.stderr + JSON.stringify(seen));
+
+    // The findings table row and the review-round record carry it too (spec-m3 R10 with ADR-0027's table and round).
+    const tref = "TST-1/build";
+    const tpath = join(repo, ".pro-dev", "review", "TST-1--build.json");
+    const raiseId = (cid, cls) => run(repo, ["raise", "--ref", tref, "--base", SHA1, "--head", SHA2, "--pass", "bugs", "--severity", "important",
+      "--class", cls, "--file", "src/x.py", "--line", "3", ...(cid === null ? [] : ["--change-id", cid])], "a claim");
+    const ra = raiseId("TST-1", "with-id");
+    const rb = raiseId(null, "without-id");
+    const rc = raiseId("x; rm", "bad-id");
+    const tbl = existsSync(tpath) ? JSON.parse(readFileSync(tpath, "utf8")).findings : {};
+    add("raise/--change-id TST-1 is stored on the table row", "F1 TST-1, F2 absent, the bad one refused with no row",
+      ra.status === 0 && rb.status === 0 && rc.status === 1 && tbl.F1?.change_id === "TST-1" && tbl.F2 && !("change_id" in tbl.F2) && !tbl.F3, JSON.stringify(tbl) + rc.stderr);
+    const roundId = (n, cid) => run(repo, ["round", "--ref", tref, "--base", SHA1, "--head", SHA2, "--round", String(n), "--fresh", "ran", ...(cid === null ? [] : ["--change-id", cid])]);
+    const rr = roundId(1, "TST-1");
+    const rrec = rr.json?.path ? JSON.parse(readFileSync(join(repo, rr.json.path), "utf8")) : null;
+    add("round/--change-id TST-1 puts change_id on the review-round record", "TST-1", rr.status === 0 && rrec?.change_id === "TST-1", rr.stdout + rr.stderr);
+    const rn = roundId(2, null);
+    const rnrec = rn.json?.path ? JSON.parse(readFileSync(join(repo, rn.json.path), "utf8")) : null;
+    add("round/no --change-id leaves the field out", "absent", rn.status === 0 && rnrec && !("change_id" in rnrec), rn.stdout + rn.stderr);
+    const rbad = roundId(3, "lower-1");
+    add("round/--change-id lower-1 is refused", "exit 1", rbad.status === 1, rbad.stdout + rbad.stderr);
   }
 
   {

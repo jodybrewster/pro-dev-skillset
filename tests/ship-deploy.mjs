@@ -109,6 +109,7 @@ export function runShipDeployCases() {
 
   try {
     manualCases();
+    changeIdCases();
     refusalCases();
     preflightCases();
     statusCases();
@@ -123,6 +124,34 @@ export function runShipDeployCases() {
     rmSync(sandbox, { recursive: true, force: true });
   }
   return out;
+
+  // change_id from the deployed commit's subject (traceable-ids spec-m3 R2, R7, R14, AC4).
+  // `<id>: ` always names the change; `<id> ` only when the prefix is the shortcode in intent/project.json
+  // at the deployed commit, so UTF-8, SHA-256 or ISO-8601 at the start of a subject is never read as an id.
+  function changeIdCases() {
+    const PDS = { "intent/project.json": '{"shortcode": "PDS"}\n' };
+    for (const [label, subject, want, extra] of [
+      ["TST-1: feat: x gives TST-1", "TST-1: feat: x", "TST-1", {}],
+      ["a squash merge titled PDS-50 title (#12) with shortcode PDS gives PDS-50", "PDS-50 title (#12)", "PDS-50", PDS],
+      ["ABC-1 title with shortcode PDS leaves it out", "ABC-1 title", null, PDS],
+      ["PDS-50 title with no project.json leaves it out", "PDS-50 title", null, {}],
+      ["UTF-8 decoding fix leaves it out", "UTF-8 decoding fix", null, PDS],
+      ["SHA-256 checksums leaves it out", "SHA-256 checksums", null, {}],
+      ["release v1.2.0 leaves it out", "release v1.2.0", null, {}],
+      ["an id that fails the pattern leaves it out", "tst-1: feat: x", null, {}],
+      ["an id glued to more text leaves it out", "TST-1x: feat", null, {}],
+    ]) {
+      const repo = mkrepo();
+      for (const [f, c] of Object.entries(extra)) { mkdirSync(dirname(join(repo, f)), { recursive: true }); writeFileSync(join(repo, f), c); }
+      writeFileSync(join(repo, "b.txt"), "b\n");
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", subject);
+      const h = head(repo);
+      const r = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
+      const rc = r.status === 0 && r.json ? rec(repo, r) : null;
+      add(`deployed/change_id: ${label}`, want ?? "absent",
+        rc && rc.evidence_key === `deploy-web-${h.slice(0, 12)}-20261102t101530z` && (want === null ? !("change_id" in rc) : rc.change_id === want), r.stdout + r.stderr + JSON.stringify(rc));
+    }
+  }
 
   // AC1 and R1: the record, its fields and its name.
   function manualCases() {
@@ -139,7 +168,8 @@ export function runShipDeployCases() {
     add("deployed/manual record carries the shared fields", "fields of docs/loop-records.md",
       rc.schema === 1 && rc.kind === "deploy" && rc.artifact_kind === "deploy" && rc.artifact_key === "web" && rc.head === h
         && rc.evidence_key === key && /^[a-z0-9][a-z0-9-]*$/.test(rc.evidence_key) && typeof rc.detail_json === "string"
-        && rc.produced_by === `pro-ship:deployed@${version}` && rc.summary === `production: deployed ${h.slice(0, 12)}`, JSON.stringify(rc));
+        && rc.produced_by === `pro-ship:deployed@${version}` && rc.summary === `production: deployed ${h.slice(0, 12)}`
+        && !("change_id" in rc), JSON.stringify(rc));
     add("deployed/manual detail_json holds the deploy keys", "target, env, url, commit, source, outcome, preflight, checks, rollback",
       d.target === "web" && d.target_kind === "deploy-on-merge" && d.env === "production" && d.url === "https://example.test"
         && d.commit === h && d.deployed_at === "2026-11-02T10:15:30+00:00" && typeof d.created === "string" && d.source === "manual"

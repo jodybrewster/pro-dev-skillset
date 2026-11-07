@@ -77,6 +77,15 @@ export function runVisualCases() {
       add("record/an id-named folder gives a lowercased key", "visual-tst-1-demo-step-2-desktop",
         r.status === 0 && rec?.evidence_key === "visual-tst-1-demo-step-2-desktop" && rec?.artifact_key === "TST-1-demo" && existsSync(join(repo, ".pro-dev", "visual", "visual-tst-1-demo-step-2-desktop.png")), r.stdout + r.stderr);
     }
+    // change_id from the id: of the intent it records (traceable-ids spec-m3 R2, R9, R14, AC5).
+    for (const [label, id, want] of [["TST-1", "TST-1", "TST-1"], ["lower-1", "lower-1", null], ["no intent.md", undefined, null]]) {
+      const repo = mkrepo();
+      if (id !== undefined) writeFileSync(join(repo, "intent", "2026-01-01-demo", "intent.md"), `---\nid: ${id}\nstatus: proposed\n---\n\n# Intent: demo\n`);
+      const r = visual(repo, [...base, "--status", "pass"]);
+      const rec = existsSync(keyFile(repo, ".json")) ? JSON.parse(readFileSync(keyFile(repo, ".json"), "utf8")) : null;
+      add(`record/change_id with ${label}`, want ?? "absent",
+        r.status === 0 && rec?.evidence_key === KEY && (want === null ? !("change_id" in rec) : rec.change_id === want), r.stderr + JSON.stringify(rec));
+    }
     // Mobile key and width.
     {
       const repo = mkrepo();

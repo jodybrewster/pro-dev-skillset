@@ -44,6 +44,7 @@ Shas are 40 lowercase hex characters.
 | `result` | string | `pass`, `fail` or `incomplete` |
 | `risk` | object | optional; `{tier, signals, declared, findings, tie}` from the classifier, plus `could_not_run: true` and `reason` when it could not run |
 | `sources` | object | optional; `{"floor-guard": <path or "not-installed">}`, the path `pr-check.py find` used |
+| `change_id` | string | optional; the change the stamp is about, matching `^[A-Z]{2,6}-[1-9][0-9]*$`: the branch name's prefix before its first `/` when it is an id, else the `id:` of the only intent folder the `base..head` diff touches; absent when neither gives one. No gate reads it |
 
 ### The tier and risk fields
 

@@ -759,6 +759,33 @@ export function runShipCheckCases() {
     ro = (() => { const q = prep(); const x = stamp(q, GOOD_REV, ["--tier", "medium"]); return { x, st: written(q) }; })();
     add("s11h no risk file keeps --tier and writes no risk field", "medium, no risk", ro.st?.tier === "medium" && !("risk" in ro.st), JSON.stringify(ro.st));
     add("s11i a stamp without risk has no risk key", "unclassified, no risk", st?.tier === "unclassified" && !("risk" in st), JSON.stringify(st));
+    // change_id (traceable-ids spec-m3 R2, R3, AC1): the branch prefix, else the id: of the only intent folder the diff touches.
+    {
+      const idIntent = (id) => `---\nid: ${id}\nstatus: proposed\n---\n\n# Intent: demo\n`;
+      const prepB = (branch, files) => {
+        const repo = mkrepo({ "a.txt": "1\n" });
+        const baseSha = git(repo, "rev-parse", "HEAD").stdout.trim();
+        git(repo, "checkout", "-q", "-b", branch);
+        const head = commit(repo, files, "feature");
+        mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+        writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...JSON.parse(JSON.stringify(GOOD_RUN)) }));
+        const q = { repo, baseSha, head };
+        const x = stamp(q);
+        return { x, st: written(q) };
+      };
+      for (const [id, branch, files, want] of [
+        ["c1 a branch TST-2/build gives TST-2", "TST-2/build", { "a.txt": "2\n" }, "TST-2"],
+        ["c2 feature/x touching only intent/TST-3-demo/ gives its id: TST-3", "feature/x", { "intent/TST-3-demo/intent.md": idIntent("TST-3") }, "TST-3"],
+        ["c3 feature/x touching no intent leaves change_id out", "feature/x", { "a.txt": "2\n" }, null],
+        ["c4 the branch prefix wins over the intent's id:", "TST-2/build", { "intent/TST-3-demo/intent.md": idIntent("TST-3") }, "TST-2"],
+        ["c5 a branch prefix that fails the pattern is not an id", "tst-2/build", { "a.txt": "2\n" }, null],
+        ["c6 an intent id: that fails the pattern is left out", "feature/x", { "intent/TST-3-demo/intent.md": idIntent("TST-3; rm") }, null],
+        ["c7 two intent folders in the diff give no id", "feature/x", { "intent/TST-3-demo/intent.md": idIntent("TST-3"), "intent/TST-4-demo/intent.md": idIntent("TST-4") }, null],
+      ]) {
+        const o = prepB(branch, files);
+        add(`stamp/${id}`, want ?? "absent", o.x.status === 0 && o.st && (want === null ? !("change_id" in o.st) : o.st.change_id === want), o.x.stdout + o.x.stderr + JSON.stringify(o.st?.change_id));
+      }
+    }
     add("s1d sources and the four checks are carried over", "floor-guard path and 4 checks", st?.sources?.["floor-guard"] === "/x/floor-guard.py" && st.checks.length === 4, JSON.stringify(st));
     add("s1e the tree is clean and .pro-dev/ is in the exclude file", "git status empty, exclude lists .pro-dev/",
       git(p.repo, "status", "--short").stdout.trim() === "" && readFileSync(resolve(p.repo, git(p.repo, "rev-parse", "--git-path", "info/exclude").stdout.trim()), "utf8").split("\n").includes(".pro-dev/"), git(p.repo, "status", "--short").stdout);

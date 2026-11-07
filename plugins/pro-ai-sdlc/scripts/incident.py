@@ -178,6 +178,9 @@ def cmd_record(arg: str) -> dict:
         "detail_json": json.dumps(detail),
         "produced_by": f"pro-ai-sdlc:incident@{evidence.plugin_version()}",
     }
+    change_id = evidence.change_id_of(root, d)  # the intent.md beside incident.md; incident.md's id: stays the folder
+    if change_id:
+        record["change_id"] = change_id
     out = evidence.write_record(root, "incidents", record)
     return {**out, "status": record["status"], "evidence_key": key}
 
