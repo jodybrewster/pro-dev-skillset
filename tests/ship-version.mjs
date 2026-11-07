@@ -156,6 +156,18 @@ exec "${realGit}" "$@"
     r = ship(repo, ["version"]);
     add("version/a breaking intent stays breaking when its build commit is separate", "major", r.json?.next === "2.0.0" && r.json.counts.breaking === 1, show(r));
 
+    // An intent in an id-named folder counts like a date folder (intent/2026-11-07-traceable-ids spec-m1 R11, AC8).
+    repo = mkrepo();
+    git(repo, "tag", "v1.0.0");
+    commit(repo, "fix the greeting (#2)", { "intent/TST-1-demo/intent.md": `---\nid: TST-1\n${intent({ kind: "bug" }).slice(4)}`, "src/demo.js": "x\n" });
+    r = ship(repo, ["version"]);
+    add("version/AC8 a kind: bug intent in intent/TST-1-demo makes a patch", "1.0.1, one fix",
+      r.json?.next === "1.0.1" && r.json.counts.fix === 1 && r.json.changes.length === 1 && !r.json.notes.some((s) => /invalid name/.test(s)), show(r));
+    commit(repo, "odd folder (#3)", { "intent/TST-01-x/intent.md": intent({ kind: "idea" }), "src/x.js": "x\n" });
+    r = ship(repo, ["version"]);
+    add("version/a folder outside both forms is still skipped with a note", "a note and no intent for that commit",
+      r.json?.notes.some((s) => /invalid name: TST-01-x/.test(s)) && r.json.changes.some((c) => c.subject === "odd folder (#3)" && c.intent === null), show(r));
+
     // A merge commit counts as one change.
     repo = mkrepo();
     git(repo, "tag", "v1.0.0");
