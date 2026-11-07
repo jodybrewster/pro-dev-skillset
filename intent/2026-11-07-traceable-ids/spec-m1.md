@@ -120,8 +120,8 @@ A person in a repo without one sees today's behavior and one reminder line.
 
 Computed on 2026-11-07 from `origin/main` at 20c5666 by the rule in assumption 4.
 p2-batch gets PDS-49, review-routes-back gets PDS-48 and traceable-ids gets PDS-50.
-Five intents merged after 20c5666 and before the build follow by the same rule as PDS-51 to PDS-55 (the m1 build records this under Departures).
-The first intent written after the backfill gets PDS-56.
+Six intents merged after 20c5666 and before the build follow by the same rule as PDS-51 to PDS-56 (the m1 build records this under Departures).
+The first intent written after the backfill gets PDS-57.
 
 | id | folder | created |
 |---|---|---|
@@ -176,10 +176,11 @@ The first intent written after the backfill gets PDS-56.
 | PDS-49 | `2026-11-07-p2-batch` | `2026-11-07T12:00:00-0500` |
 | PDS-50 | `2026-11-07-traceable-ids` | `2026-11-07T13:05:00-0500` |
 | PDS-51 | `2026-11-07-guard-hardening` | `2026-11-07T14:00:00-0500` |
-| PDS-52 | `2026-11-07-breaking-change-check` | `2026-11-07T14:31:00-0500` |
-| PDS-53 | `2026-11-07-pr-check-every-tier` | `2026-11-07T14:31:00-0500` |
-| PDS-54 | `2026-11-07-requirement-trace-check` | `2026-11-07T14:31:00-0500` |
-| PDS-55 | `2026-11-07-ui-reviews-on-ui-diffs` | `2026-11-07T14:31:00-0500` |
+| PDS-52 | `2026-11-07-reaching-done` | `2026-11-07T14:00:00-0500` |
+| PDS-53 | `2026-11-07-breaking-change-check` | `2026-11-07T14:31:00-0500` |
+| PDS-54 | `2026-11-07-pr-check-every-tier` | `2026-11-07T14:31:00-0500` |
+| PDS-55 | `2026-11-07-requirement-trace-check` | `2026-11-07T14:31:00-0500` |
+| PDS-56 | `2026-11-07-ui-reviews-on-ui-diffs` | `2026-11-07T14:31:00-0500` |
 
 ### Alternatives considered
 
@@ -209,12 +210,12 @@ ADR needed: yes, an id scheme that every change in every repo with the loop foll
 
 ## Acceptance criteria
 
-- AC1. After the backfill, `python3 plugins/pro-ai-sdlc/scripts/ids.py next` in this repo prints `PDS-56`.
+- AC1. After the backfill, `python3 plugins/pro-ai-sdlc/scripts/ids.py next` in this repo prints `PDS-57`.
 - AC2. In a fixture repo whose `origin/main` holds `TST-3` and whose `origin/other` branch holds `TST-7`, `ids.py next` prints `TST-8`; with a local unpushed branch holding `TST-9` it prints `TST-10`.
 - AC3. With `origin` pointing at a path that does not exist, `ids.py next` prints the next id, exits 0 and its stderr starts with `ids: offline`.
 - AC4. With no `intent/project.json`, `ids.py next` exits 1 and `/intent` writes a date-named folder with no `id:`.
 - AC5. `node tests/check.mjs` fails `change-ids` on a fixture with two intents holding `TST-2` (naming both files) and on a fixture with one intent lacking `id:`; it passes on this repo after the backfill.
-- AC6. `ids.py backfill` prints the 55 rows of "Backfill mapping" in order; after `--write`, `git diff --stat` shows 55 files changed, 55 insertions and 0 deletions.
+- AC6. `ids.py backfill` prints the 56 rows of "Backfill mapping" in order; after `--write`, `git diff --stat` shows 56 files changed, 56 insertions and 0 deletions.
 - AC7. `factory.py level intent/<fixture TST-1-demo>` runs and `factory.py record` for that folder writes `.pro-dev/factory/factory-tst-1-demo.json`; the existing `tests/factory.mjs` cases for date folders pass unchanged.
 - AC8. `ship.py version` in a fixture counts the `kind:` of an intent in `intent/TST-1-demo/`.
 - AC9. `/pro-dev install` in a scratch repo named `demo-app` offers `DA`, writes `intent/project.json` with the answer and writes nothing on a skip; a repo named `mieruka` is offered `MIE` and one named `one-two-three-four-five-six-seven` is offered `OTTFFS`; repos named `x`, `3d-viewer` and `my_app` are offered no default and the question asks with none.

@@ -121,9 +121,12 @@ Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
 - One pull request instead of three: the build was asked for a single PR, so pro-ship (step 10) and pro-core (step 11) ride beside pro-ai-sdlc, each with its own bump in both manifests and the marketplace entry and `metadata.version` once.
-- The backfill numbered 55 intents, not 50: five intents reached `origin/main` after the table was computed at 20c5666 (`2026-11-07-guard-hardening` at 14:00 and four at 14:31 on 2026-11-07, all after traceable-ids at 13:05).
-  The first 50 rows match spec-m1's table exactly; the five follow by the same rule as PDS-51 to PDS-55, so `ids.py next` prints `PDS-56` and the diff is 55 files, 55 insertions and 0 deletions.
-  spec-m1's table, AC1 and AC6 gain the five rows and the new counts in the same commit.
+- The backfill numbered 56 intents, not 50: six intents reached `origin/main` after the table was computed at 20c5666 (`2026-11-07-guard-hardening` and `2026-11-07-reaching-done` at 14:00 and four at 14:31 on 2026-11-07, all after traceable-ids at 13:05).
+  The first 50 rows match spec-m1's table exactly; the six follow by the same rule as PDS-51 to PDS-56.
+  `ids.py next` prints `PDS-57` and the diff against main is 56 files, 56 insertions and 0 deletions.
+  spec-m1's table, AC1 and AC6 carry the six rows and the new counts.
+- reaching-done merged while this branch was open; its `created:` ties guard-hardening and sorts after it by folder name.
+  `ids.py backfill --write` numbers from the highest id on any ref and this branch already held PDS-55, so the five ids after PDS-51 were set by hand in created order before anything merged (R19 forbids it only once merged) and checked by an independent recomputation in Node: 56 intents, 0 mismatches.
 - `tests/e2e-sdlc.mjs` (not in the file list) reads the factory record by its lowercased name, as `tests/e2e-sdlc/checks.mjs` does.
 - `pro-dev.py status --json` gains a `shortcode` field (`projectFile` and `default`) that `/pro-dev install` reads; the default rule of R20 is then code with a case in `tests/pro-dev.mjs` (`status/shortcode-default`) rather than prose proved by hand; the question and the write stay in `pro-dev.md`.
 - `docs/roadmap.md` is left alone: it lists no traceable-ids item to move.
