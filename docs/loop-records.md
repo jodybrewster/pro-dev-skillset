@@ -1,13 +1,13 @@
 # Loop records after the build
 
-This page is the one contract for the five records the loop writes: the deploy record, the incident record, the review lesson, the visual check and the factory run record.
+This page is the one contract for the six records the loop writes: the deploy record, the incident record, the review lesson, the review round, the visual check and the factory run record.
 mieruka and any other reader build against this page.
 The decision behind it is [ADR-0023](./decisions/0023-loop-records.md).
 The spec is `intent/2026-11-01-after-build-loop/spec.md`.
 The preflight record that comes before a deploy has its own page, [ship-preflight.md](./ship-preflight.md).
 Nothing here changes it.
 
-Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0.
+Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0; the review round since pro-ai-sdlc 0.17.0.
 
 ## Shared rules
 
@@ -131,6 +131,40 @@ Written by `lessons.py` when `/review` sees the same class of finding on a secon
 Local copies: the finding ledger `.pro-dev/review/findings.jsonl` (one line per finding, never read by mieruka) and `.pro-dev/review/lessons/<evidence_key>.json`.
 
 `detail_json` holds `class`, `state` (`proposed`, `accepted` or `declined`), `line` (the proposed text), `file` (`CLAUDE.md` or `AGENTS.md`), `seen` (a list of `{ref, head, file, claim}` for each change the class was found on) and `created`.
+
+## The review round
+
+Written by `lessons.py round` once per review round, after the round's grades and new findings are in the findings table.
+`/review` and `/ship` both write it.
+The decision behind it is [ADR-0027](./decisions/0027-review-memory.md).
+
+| Field | Value |
+|---|---|
+| `kind` | `review` |
+| `artifact_kind` | `review-round` |
+| `artifact_key` | the ref of the findings table: a branch name, `pr-<number>` or `ship-<first 12 of the merge base>` |
+| `evidence_key` | `review-round-<first 12 of head>-<round>` |
+| `status` | `fail` when any Important row is `open` or `not fixed`, `pass` otherwise |
+| `summary` | the round, the Important rows still open or not fixed, the fixed rows and whether the fresh pass ran |
+
+Local copies: the findings table `.pro-dev/review/<key>.json`, where `<key>` is the ref with every `/` written as `--` (never read by mieruka), and `.pro-dev/review/rounds/<evidence_key>.json`.
+
+`detail_json` holds:
+
+| Key | Type | Value |
+|---|---|---|
+| `ref` | string | the same ref as `artifact_key` |
+| `base` | string | the merge base the round reviewed from |
+| `head` | string | the head the round reviewed |
+| `round` | integer | the round number, 1 or more |
+| `range` | string | `<base>..<head>` |
+| `fresh` | string | `ran` when the fresh pass ran, `skipped` when an unfixed Important row stopped it |
+| `counts` | object | rows by status: `open`, `fixed`, `not_fixed` and `no_longer_applies` |
+| `findings` | array | `{id, file, line, class, severity, status}` per row; never the claim |
+| `created` | string | when the record was written |
+
+A row of the findings table holds `id`, `file`, `line`, `pass`, `class`, `severity` (`important`, `nit` or `pre-existing`), `claim` (one sentence of at most 300 characters), `status` (`open`, `fixed`, `not fixed` or `no longer applies`), `raised_at`, `graded_at`, `evidence` (`path:line` or null) and `reopened_from`.
+The claim stays in the local table and never reaches the record.
 
 ## The visual check
 

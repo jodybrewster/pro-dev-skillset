@@ -6,8 +6,20 @@
   lessons.py repeats
   lessons.py mark <class> proposed|accepted|declined [--file CLAUDE.md|AGENTS.md]    (line on stdin)
 
+  lessons.py raise --ref <ref> --base <40 hex> --head <40 hex> --pass <pass> --severity important|nit|pre-existing
+                   --class <slug> --file <path> --line <n>                            (claim on stdin)
+  lessons.py grade --ref <ref> --head <40 hex> <id> fixed|not-fixed|no-longer-applies --evidence <path:line>
+  lessons.py table --ref <ref> [--tally]
+  lessons.py round --ref <ref> --base <40 hex> --head <40 hex> --round <n> --fresh ran|skipped
+
 The ledger is .pro-dev/review/findings.jsonl, one line per finding, never read by mieruka. A lesson
 is a review-lesson manifest as docs/loop-records.md describes it, written through evidence.py.
+
+The findings table (ADR-0027) is .pro-dev/review/<key>.json, one per ref, where <key> is the ref
+with every / written as --. Each row has a stable id (F1, F2 and so on, never reused), a
+file:line and a status: open, fixed, not fixed or no longer applies. A row never holds a failure
+scenario or reasoning, so only grade mode reads it and the fresh pass never does. A round
+writes a review-round manifest to .pro-dev/review/rounds/.
 
 The claim and the line come from text a reviewed diff can shape, so both arrive on stdin and
 never on a command line. The line goes into an agent file that every later session reads, so
@@ -38,6 +50,12 @@ STATUS_OF = {"proposed": "info", "accepted": "pass", "declined": "partial"}
 MAX_LINE = 200
 MAX_CLAIM = 300
 MAX_REF = 200
+ROUND_DIR = "review/rounds"
+SEVERITIES = ("important", "nit", "pre-existing")
+GRADES = {"fixed": "fixed", "not-fixed": "not fixed", "no-longer-applies": "no longer applies"}
+STATUSES = ("open", "fixed", "not fixed", "no longer applies")
+LIVE = ("open", "not fixed")
+FID = re.compile(r"^F([1-9][0-9]{0,5})$")
 
 
 def now() -> str:
@@ -102,9 +120,7 @@ def cmd_add(a) -> dict:
         raise Refuse(f"lessons: refusing the class {a.cls!r}: only a-z, 0-9 and - are allowed, not starting with -")
     if not SHA.match(a.head):
         raise Refuse("lessons: --head must be 40 lowercase hex characters")
-    # A branch name is chosen by whoever opened the PR, so only plain characters pass.
-    if not a.ref or len(a.ref) > MAX_REF or not re.fullmatch(r"[A-Za-z0-9._/-]+", a.ref):
-        raise Refuse("lessons: --ref must be a branch name of A-Z, a-z, 0-9, ., _, / and - only (use pr-<number> otherwise)")
+    check_ref(a.ref)
     clean_path(a.file)
     claim = " ".join(read_stdin().split())
     if not claim:
@@ -120,6 +136,183 @@ def cmd_add(a) -> dict:
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
     return {"path": LEDGER, "mieruka": None, "why": "", "stored": True, "class": a.cls}
+
+
+def check_ref(ref: str) -> str:
+    # A branch name is chosen by whoever opened the PR, so only plain characters pass.
+    if not ref or len(ref) > MAX_REF or not re.fullmatch(r"[A-Za-z0-9._/-]+", ref):
+        raise Refuse("lessons: --ref must be a branch name of A-Z, a-z, 0-9, ., _, / and - only (use pr-<number> otherwise)")
+    return ref
+
+
+def check_sha(text: str, flag: str) -> str:
+    if not SHA.match(text or ""):
+        raise Refuse(f"lessons: {flag} must be 40 lowercase hex characters")
+    return text
+
+
+def read_claim() -> str:
+    claim = " ".join("".join(c if ord(c) >= 32 and ord(c) != 127 else " " for c in read_stdin()).split())
+    if not claim:
+        raise Refuse("lessons: the claim on stdin is empty")
+    return claim[:MAX_CLAIM]
+
+
+def table_path(root: str, ref: str) -> str:
+    return os.path.join(root, ".pro-dev", "review", ref.replace("/", "--") + ".json")
+
+
+def fid_num(fid: str) -> int:
+    m = FID.match(fid)
+    return int(m.group(1)) if m else 0
+
+
+def read_table(root: str, ref: str) -> dict:
+    """The table for a ref, or an empty one. A table that cannot be parsed is set aside as .bad."""
+    path = table_path(root, ref)
+    empty = {"schema": 1, "ref": ref, "base": None, "head": None, "round": 0, "findings": {}}
+    try:
+        text = open(path, encoding="utf-8").read()
+    except FileNotFoundError:
+        return empty
+    try:
+        data = json.loads(text)
+        ok = (isinstance(data, dict) and isinstance(data.get("findings"), dict)
+              and all(FID.match(k) and isinstance(v, dict) and v.get("status") in STATUSES for k, v in data["findings"].items()))
+    except ValueError:
+        ok = False
+    if not ok:
+        bad = path + ".bad"
+        os.replace(path, bad)
+        print(f"lessons: warning: {os.path.relpath(bad, root)} could not be read as a findings table; "
+              "it was set aside and this round runs as a first review", file=sys.stderr)
+        return empty
+    if data.get("ref") != ref:
+        raise Refuse(f"lessons: {os.path.relpath(path, root)} belongs to the ref {data.get('ref')!r}, not {ref!r}: "
+                     "two refs share a key once / is written as --, so use pr-<number> for this one")
+    return data
+
+
+def write_table(root: str, table: dict) -> str:
+    path = table_path(root, table["ref"])
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    evidence.ensure_excluded(root)
+    table["findings"] = dict(sorted(table["findings"].items(), key=lambda kv: fid_num(kv[0])))
+    evidence.write_atomic(path, json.dumps(table, indent=2) + "\n")
+    return os.path.relpath(path, root)
+
+
+def cmd_raise(a) -> dict:
+    """Add a finding with the next free id, unless an open or not fixed row has the same file and class."""
+    root = need_root()
+    ref = check_ref(a.ref)
+    check_sha(a.base, "--base")
+    check_sha(a.head, "--head")
+    if not evidence.safe_key(a.cls):
+        raise Refuse(f"lessons: refusing the class {a.cls!r}: only a-z, 0-9 and - are allowed, not starting with -")
+    if not evidence.safe_key(a.pass_):
+        raise Refuse(f"lessons: refusing the pass {a.pass_!r}: only a-z, 0-9 and - are allowed, not starting with -")
+    clean_path(a.file)
+    if a.line < 1:
+        raise Refuse("lessons: --line must be a positive line number")
+    claim = read_claim()
+    table = read_table(root, ref)
+    rows = table["findings"]
+    same = sorted((r for r in rows.values() if r.get("file") == a.file and r.get("class") == a.cls),
+                  key=lambda r: fid_num(r.get("id", "")))
+    live = [r for r in same if r.get("status") in LIVE]
+    table["base"], table["head"] = a.base, a.head
+    if live:
+        path = write_table(root, table)
+        return {"id": live[0]["id"], "stored": False, "reopened_from": None, "table": path}
+    graded = [r for r in same if r.get("status") in ("fixed", "no longer applies")]
+    reopened = graded[-1]["id"] if graded else None
+    fid = f"F{max([fid_num(k) for k in rows] + [0]) + 1}"
+    rows[fid] = {"id": fid, "file": a.file, "line": a.line, "pass": a.pass_, "class": a.cls, "severity": a.severity,
+                 "claim": claim, "status": "open", "raised_at": a.head, "graded_at": None, "evidence": None,
+                 "reopened_from": reopened}
+    path = write_table(root, table)
+    return {"id": fid, "stored": True, "reopened_from": reopened, "table": path}
+
+
+def check_evidence(text: str) -> str:
+    path, sep, line = (text or "").rpartition(":")
+    if not sep or not re.fullmatch(r"[1-9][0-9]{0,6}", line):
+        raise Refuse("lessons: --evidence must be path:line, a repo-relative path, a colon and a positive line number")
+    clean_path(path)
+    return text
+
+
+def cmd_grade(a) -> dict:
+    root = need_root()
+    ref = check_ref(a.ref)
+    check_sha(a.head, "--head")
+    if a.evidence is None:
+        raise Refuse("lessons: grade needs --evidence path:line; a reply, a commit message or a resolved thread is never evidence")
+    check_evidence(a.evidence)
+    table = read_table(root, ref)
+    row = table["findings"].get(a.id)
+    if row is None:
+        raise Refuse(f"lessons: the finding {a.id!r} is not in the table for {ref!r}")
+    row.update({"status": GRADES[a.grade], "graded_at": a.head, "evidence": a.evidence})
+    path = write_table(root, table)
+    return {"id": a.id, "status": row["status"], "table": path}
+
+
+def tally(rows: dict) -> list[str]:
+    """The summary line and the grade line of a graded table: each count is the rows still not fixed."""
+    nf = [r for r in rows.values() if r.get("status") == "not fixed"]
+    n = {s: sum(1 for r in nf if r.get("severity") == s) for s in SEVERITIES}
+    by = {s: sum(1 for r in rows.values() if r.get("status") == s) for s in STATUSES}
+    return [f"important: {n['important']}  nits: {n['nit']}  pre-existing: {n['pre-existing']}  skipped: 0",
+            f"fixed: {by['fixed']}  not fixed: {by['not fixed']}  no longer applies: {by['no longer applies']}"]
+
+
+def cmd_table(a):
+    root = need_root()
+    ref = check_ref(a.ref)
+    table = read_table(root, ref)
+    if a.tally:
+        return "\n".join(tally(table["findings"]))
+    if not os.path.exists(table_path(root, ref)):
+        return {"findings": {}}
+    table["findings"] = dict(sorted(table["findings"].items(), key=lambda kv: fid_num(kv[0])))
+    return table
+
+
+def cmd_round(a) -> dict:
+    """Write the review-round manifest for one round, after its grades and raises."""
+    root = need_root()
+    ref = check_ref(a.ref)
+    check_sha(a.base, "--base")
+    check_sha(a.head, "--head")
+    if a.round < 1:
+        raise Refuse("lessons: --round must be 1 or more")
+    table = read_table(root, ref)
+    table.update({"base": a.base, "head": a.head, "round": a.round})
+    write_table(root, table)
+    rows = list(table["findings"].values())
+    counts = {s.replace(" ", "_"): sum(1 for r in rows if r.get("status") == s) for s in STATUSES}
+    blocking = [r for r in rows if r.get("severity") == "important" and r.get("status") in LIVE]
+    findings = [{k: r.get(k) for k in ("id", "file", "line", "class", "severity", "status")} for r in rows]
+    detail = {"ref": ref, "base": a.base, "head": a.head, "round": a.round, "range": f"{a.base}..{a.head}",
+              "fresh": a.fresh, "counts": counts, "findings": findings, "created": now()}
+    summary = (f"round {a.round}: {len(blocking)} important open or not fixed, {counts['fixed']} fixed, "
+               f"fresh pass {a.fresh}")
+    record = {
+        "schema": 1,
+        "evidence_key": f"review-round-{a.head[:12]}-{a.round}",
+        "kind": "review",
+        "artifact_kind": "review-round",
+        "artifact_key": ref,
+        "status": "fail" if blocking else "pass",
+        "summary": summary,
+        "detail_json": json.dumps(detail),
+        "produced_by": f"pro-ai-sdlc:review@{evidence.plugin_version()}",
+    }
+    res = evidence.write_record(root, ROUND_DIR, record)
+    res.update({"evidence_key": record["evidence_key"], "status": record["status"]})
+    return res
 
 
 def cmd_classes(a) -> dict:
@@ -218,6 +411,34 @@ def main(argv: list[str]) -> int:
     s.add_argument("state", choices=STATES)
     s.add_argument("--file", default="CLAUDE.md")
     s.set_defaults(fn=cmd_mark)
+    s = sub.add_parser("raise")
+    s.add_argument("--ref", required=True)
+    s.add_argument("--base", required=True)
+    s.add_argument("--head", required=True)
+    s.add_argument("--pass", dest="pass_", required=True)
+    s.add_argument("--severity", required=True, choices=SEVERITIES)
+    s.add_argument("--class", dest="cls", required=True)
+    s.add_argument("--file", required=True)
+    s.add_argument("--line", required=True, type=int)
+    s.set_defaults(fn=cmd_raise)
+    s = sub.add_parser("grade")
+    s.add_argument("--ref", required=True)
+    s.add_argument("--head", required=True)
+    s.add_argument("--evidence")
+    s.add_argument("id")
+    s.add_argument("grade", choices=tuple(GRADES))
+    s.set_defaults(fn=cmd_grade)
+    s = sub.add_parser("table")
+    s.add_argument("--ref", required=True)
+    s.add_argument("--tally", action="store_true")
+    s.set_defaults(fn=cmd_table)
+    s = sub.add_parser("round")
+    s.add_argument("--ref", required=True)
+    s.add_argument("--base", required=True)
+    s.add_argument("--head", required=True)
+    s.add_argument("--round", required=True, type=int)
+    s.add_argument("--fresh", required=True, choices=("ran", "skipped"))
+    s.set_defaults(fn=cmd_round)
     args = p.parse_args(argv)
     try:
         out = args.fn(args)
@@ -227,7 +448,7 @@ def main(argv: list[str]) -> int:
     except (OSError, UnicodeError) as e:
         print(f"lessons: {e}", file=sys.stderr)
         return 1
-    print(json.dumps(out))
+    print(out if isinstance(out, str) else json.dumps(out))
     return 0
 
 

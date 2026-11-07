@@ -115,4 +115,9 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 2: `lessons.py table --ref <ref> --tally` prints the grade-mode summary line and the grade line computed from the table, so `/review` and `/ship` check the agent's tally against the table and `tests/lessons.mjs` proves R12's `important: 1` without a model (AC10).
+- Step 2: a table whose stored `ref` differs from the one asked for is refused, because `a/b` and `a--b` share a key once `/` is written as `--`; the message says to use `pr-<number>`.
+- Step 3: the round record's `detail_json` also holds `created`, as every other loop record does, and `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
+- Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
+
 ## Noticed but not touched

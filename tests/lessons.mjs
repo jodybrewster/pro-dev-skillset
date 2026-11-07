@@ -140,6 +140,134 @@ export function runLessonsCases() {
   }
 
   {
+    // The findings table (intent/2026-11-07-reaching-done, spec-m1 R1 to R9, AC1, AC2, AC10).
+    const repo = mkrepo();
+    const tablePath = (ref) => join(repo, ".pro-dev", "review", `${ref.replaceAll("/", "--")}.json`);
+    const readTable = (ref) => (existsSync(tablePath(ref)) ? JSON.parse(readFileSync(tablePath(ref), "utf8")) : null);
+    const raise = (ref, cls, file, claim = "a claim", opts = {}) => run(repo, ["raise", "--ref", ref, "--base", opts.base ?? SHA1, "--head", opts.head ?? SHA2,
+      "--pass", opts.pass ?? "bugs", "--severity", opts.severity ?? "important", "--class", cls, "--file", file, "--line", String(opts.line ?? 12)], claim);
+    const grade = (ref, id, g, evidence = "src/x.py:14", head = SHA2) => run(repo, ["grade", "--ref", ref, "--head", head, id, g, ...(evidence === null ? [] : ["--evidence", evidence])]);
+    const ref = "feat/table";
+
+    const empty = run(repo, ["table", "--ref", ref]);
+    add("table/no file prints an empty object", '{"findings": {}}', empty.status === 0 && JSON.stringify(empty.json) === '{"findings":{}}', empty.stdout + empty.stderr);
+    const f1 = raise(ref, "missing-timeout", "src/x.py", "no timeout on the call");
+    add("raise/first id is F1", "F1", f1.status === 0 && f1.json?.id === "F1" && f1.json?.stored === true, f1.stdout + f1.stderr);
+    add("raise/table file keyed by the ref with / as --", "feat--table.json", existsSync(tablePath(ref)), tablePath(ref));
+    const f2 = raise(ref, "off-by-one", "src/y.py", "loop stops one short", { severity: "nit" });
+    add("raise/second id is F2", "F2", f2.status === 0 && f2.json?.id === "F2", f2.stdout + f2.stderr);
+    const dup = raise(ref, "missing-timeout", "src/x.py", "the same thing again", { line: 40 });
+    add("raise/open row with the same file and class is not added again", "F1, no new row", dup.status === 0 && dup.json?.id === "F1" && dup.json?.stored === false && Object.keys(readTable(ref)?.findings ?? {}).length === 2, dup.stdout + dup.stderr);
+    const t = readTable(ref);
+    const R3 = ["id", "file", "line", "pass", "class", "severity", "claim", "status", "raised_at", "graded_at", "evidence", "reopened_from"];
+    add("table/top-level keys", "schema ref base head round findings", t && JSON.stringify(Object.keys(t).sort()) === JSON.stringify(["base", "findings", "head", "ref", "round", "schema"]) && t.schema === 1 && t.ref === ref && t.base === SHA1 && t.head === SHA2, JSON.stringify(t));
+    add("table/rows hold only the R3 keys", "exact key set", t && Object.values(t.findings).every((r) => JSON.stringify(Object.keys(r).sort()) === JSON.stringify([...R3].sort())), JSON.stringify(t));
+    const r1 = t?.findings?.F1 ?? {};
+    add("raise/row fields", "open, raised_at, no grade", r1.status === "open" && r1.raised_at === SHA2 && r1.graded_at === null && r1.evidence === null && r1.reopened_from === null && r1.line === 12 && r1.pass === "bugs" && r1.severity === "important" && r1.claim === "no timeout on the call", JSON.stringify(r1));
+    add("raise/tree stays clean", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
+    const long = raise(ref, "long-claim", "src/z.py", "x".repeat(400));
+    add("raise/claim capped at 300 characters", "300", long.status === 0 && readTable(ref)?.findings?.[long.json?.id]?.claim?.length === 300, long.stdout + long.stderr);
+
+    for (const [id, args] of [
+      ["an unknown id", ["F99", "fixed", "--evidence", "src/x.py:3"]],
+      ["a missing --evidence", ["F1", "fixed"]],
+      ["evidence with no line", ["F1", "fixed", "--evidence", "src/x.py"]],
+      ["evidence with line 0", ["F1", "fixed", "--evidence", "src/x.py:0"]],
+      ["evidence with an absolute path", ["F1", "fixed", "--evidence", "/etc/passwd:1"]],
+      ["evidence with ..", ["F1", "fixed", "--evidence", "../x.py:1"]],
+      ["an unknown grade", ["F1", "done", "--evidence", "src/x.py:3"]],
+    ]) {
+      const r = run(repo, ["grade", "--ref", ref, "--head", SHA2, ...args]);
+      add(`grade/refuses ${id}`, "exit 1 or 2, row unchanged", (r.status === 1 || r.status === 2) && readTable(ref)?.findings?.F1?.status === "open", r.stdout + r.stderr);
+    }
+    const shortHead = grade(ref, "F1", "fixed", "src/x.py:14", "abc123");
+    add("grade/refuses a short head", "exit 1", shortHead.status === 1 && readTable(ref)?.findings?.F1?.status === "open", shortHead.stdout + shortHead.stderr);
+
+    const SHA3 = "c".repeat(40);
+    const g1 = grade(ref, "F1", "fixed", "src/x.py:14", SHA3);
+    const g1row = readTable(ref)?.findings?.F1 ?? {};
+    add("grade/fixed sets status, graded_at and evidence", "fixed at src/x.py:14", g1.status === 0 && g1row.status === "fixed" && g1row.graded_at === SHA3 && g1row.evidence === "src/x.py:14", g1.stdout + g1.stderr + JSON.stringify(g1row));
+    const g2 = grade(ref, "F2", "not-fixed", "src/y.py:8", SHA3);
+    add("grade/not-fixed is stored as not fixed", "not fixed", g2.status === 0 && readTable(ref)?.findings?.F2?.status === "not fixed", g2.stdout + g2.stderr);
+    const reopen = raise(ref, "missing-timeout", "src/x.py", "the timeout is gone again", { head: SHA3 });
+    const f4 = readTable(ref)?.findings?.[reopen.json?.id] ?? {};
+    add("raise/a match with only a fixed row adds a row with reopened_from", "new id, reopened_from F1", reopen.status === 0 && reopen.json?.stored === true && reopen.json?.id === "F4" && f4.reopened_from === "F1" && f4.status === "open", reopen.stdout + reopen.stderr + JSON.stringify(f4));
+    const dup2 = raise(ref, "off-by-one", "src/y.py", "still one short", { severity: "nit" });
+    add("raise/a not fixed row with the same file and class is not added again", "F2", dup2.status === 0 && dup2.json?.id === "F2" && dup2.json?.stored === false, dup2.stdout + dup2.stderr);
+    grade(ref, "F3", "no-longer-applies", "src/z.py:1", SHA3);
+    const nla = raise(ref, "long-claim", "src/z.py", "back again");
+    add("raise/a match with a no longer applies row and no open match adds a row with reopened_from", "reopened_from F3", nla.status === 0 && nla.json?.stored === true && readTable(ref)?.findings?.[nla.json?.id]?.reopened_from === "F3", nla.stdout + nla.stderr);
+    const listed = run(repo, ["table", "--ref", ref]);
+    const ids = Object.keys(listed.json?.findings ?? {});
+    add("table/rows in id order", "F1 F2 F3 F4 F5", listed.status === 0 && ids.join(" ") === "F1 F2 F3 F4 F5", listed.stdout);
+
+    // R12: the tally of a graded table counts not fixed rows by severity, so an unfixed Important row never reads as clean.
+    const ref2 = "pr-77";
+    raise(ref2, "missing-guard", "src/a.py", "no guard");
+    raise(ref2, "style-thing", "src/b.py", "naming", { severity: "nit" });
+    grade(ref2, "F1", "not-fixed", "src/a.py:3");
+    grade(ref2, "F2", "fixed", "src/b.py:9");
+    const tally = run(repo, ["table", "--ref", ref2, "--tally"]);
+    const lines = tally.stdout.split("\n");
+    add("table --tally/an unfixed Important row opens with important: 1", "important: 1  nits: 0  pre-existing: 0  skipped: 0", tally.status === 0 && lines[0] === "important: 1  nits: 0  pre-existing: 0  skipped: 0" && lines[1] === "fixed: 1  not fixed: 1  no longer applies: 0", tally.stdout + tally.stderr);
+
+    for (const [id, args] of [
+      ["a bad severity", ["--severity", "critical"]], ["line 0", ["--line", "0"]], ["a word for a line", ["--line", "ten"]],
+      ["a short base", ["--base", "abc"]], ["a ref with a semicolon", ["--ref", "a;b"]], ["a class with capitals", ["--class", "Bad"]],
+      ["an absolute file", ["--file", "/etc/passwd"]], ["a pass with a space", ["--pass", "bad pass"]],
+    ]) {
+      const base = { "--ref": "pr-9", "--base": SHA1, "--head": SHA2, "--pass": "bugs", "--severity": "important", "--class": "ok-class", "--file": "src/x.py", "--line": "3" };
+      for (let i = 0; i < args.length; i += 2) base[args[i]] = args[i + 1];
+      const r = run(repo, ["raise", ...Object.entries(base).flat()], "claim");
+      add(`raise/refuses ${id}`, "exit 1 or 2", r.status === 1 || r.status === 2, r.stdout + r.stderr);
+    }
+    const emptyClaim = raise("pr-10", "ok-class", "src/x.py", " \n");
+    add("raise/refuses an empty claim", "exit 1", emptyClaim.status === 1, emptyClaim.stderr);
+
+    // R9: a damaged table is set aside and the round runs as a first review.
+    mkdirSync(dirname(tablePath("pr-55")), { recursive: true });
+    writeFileSync(tablePath("pr-55"), "{ not json");
+    const damaged = run(repo, ["table", "--ref", "pr-55"]);
+    add("table/a damaged file is renamed to .bad", ".bad exists, empty table, warning names it", damaged.status === 0 && JSON.stringify(damaged.json) === '{"findings":{}}' && existsSync(tablePath("pr-55") + ".bad") && !existsSync(tablePath("pr-55")) && damaged.stderr.includes("pr-55.json.bad"), damaged.stdout + damaged.stderr);
+    writeFileSync(tablePath("pr-56"), "[1, 2]");
+    const fresh = raise("pr-56", "ok-class", "src/x.py", "first claim");
+    add("raise/on a damaged table starts fresh at F1", "F1", fresh.status === 0 && fresh.json?.id === "F1" && existsSync(tablePath("pr-56") + ".bad"), fresh.stdout + fresh.stderr);
+  }
+
+  {
+    // The review round record (spec-m1 R21 to R24, AC6).
+    const repo = mkrepo();
+    const ref = "feat/round";
+    const raise = (cls, file, severity = "important") => run(repo, ["raise", "--ref", ref, "--base", SHA1, "--head", SHA2, "--pass", "bugs", "--severity", severity, "--class", cls, "--file", file, "--line", "5"], "a claim");
+    raise("missing-guard", "src/a.py"); raise("naming", "src/b.py", "nit");
+    const roundArgs = (n, fresh = "ran", head = SHA2) => ["round", "--ref", ref, "--base", SHA1, "--head", head, "--round", String(n), "--fresh", fresh];
+    const r1 = run(repo, roundArgs(1));
+    const key = `review-round-${SHA2.slice(0, 12)}-1`;
+    const recPath = join(repo, ".pro-dev", "review", "rounds", `${key}.json`);
+    const rec = existsSync(recPath) ? JSON.parse(readFileSync(recPath, "utf8")) : null;
+    const d = rec ? JSON.parse(rec.detail_json) : {};
+    add("round/writes the review-round manifest", "review / review-round, fail with an open Important row", r1.status === 0 && r1.json?.evidence_key === key && rec?.kind === "review" && rec.artifact_kind === "review-round" && rec.artifact_key === ref && rec.evidence_key === key && rec.status === "fail" && rec.schema === 1 && typeof rec.detail_json === "string" && rec.produced_by.startsWith("pro-ai-sdlc:review@") && typeof rec.summary === "string" && rec.summary.length > 0, r1.stdout + r1.stderr + JSON.stringify(rec));
+    add("round/detail_json fields", "ref base head round range fresh counts findings", d.ref === ref && d.base === SHA1 && d.head === SHA2 && d.round === 1 && d.range === `${SHA1}..${SHA2}` && d.fresh === "ran" && d.counts?.open === 2 && d.findings?.length === 2, JSON.stringify(d));
+    add("round/findings carry no claim text", "id file line class severity status only", (d.findings ?? []).every((f) => JSON.stringify(Object.keys(f).sort()) === JSON.stringify(["class", "file", "id", "line", "severity", "status"])) && !rec?.detail_json.includes("a claim"), JSON.stringify(d.findings));
+    const roundTable = join(repo, ".pro-dev", "review", "feat--round.json");
+    add("round/table records the round", "round 1", existsSync(roundTable) && JSON.parse(readFileSync(roundTable, "utf8")).round === 1);
+    const SHA3 = "c".repeat(40);
+    run(repo, ["grade", "--ref", ref, "--head", SHA3, "F1", "fixed", "--evidence", "src/a.py:7"]);
+    const r2 = run(repo, roundArgs(2, "ran", SHA3));
+    const rec2 = r2.json?.path ? JSON.parse(readFileSync(join(repo, r2.json.path), "utf8")) : null;
+    add("round/pass once no Important row is open or not fixed", "pass", r2.status === 0 && rec2?.status === "pass" && JSON.parse(rec2.detail_json).fresh === "ran", r2.stdout + r2.stderr);
+    const r3 = run(repo, ["round", "--ref", "pr-1", "--base", SHA1, "--head", SHA2, "--round", "1", "--fresh", "skipped"]);
+    add("round/a ref with no table writes a pass record", "pass, no findings", r3.status === 0 && r3.json?.path && JSON.parse(readFileSync(join(repo, r3.json.path), "utf8")).status === "pass", r3.stdout + r3.stderr);
+    for (const [id, args] of [["round 0", ["--round", "0"]], ["a bad fresh value", ["--fresh", "maybe"]], ["a short head", ["--head", "abc"]]]) {
+      const base = { "--ref": ref, "--base": SHA1, "--head": SHA2, "--round": "1", "--fresh": "ran" };
+      for (let i = 0; i < args.length; i += 2) base[args[i]] = args[i + 1];
+      const r = run(repo, ["round", ...Object.entries(base).flat()]);
+      add(`round/refuses ${id}`, "exit 1 or 2", r.status === 1 || r.status === 2, r.stdout + r.stderr);
+    }
+    add("round/tree stays clean", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
+  }
+
+  {
     // review.md allowed-tools: the exact set, no bare Edit or Write.
     const head = readFileSync(REVIEW_MD, "utf8").split("\n---")[0];
     const tools = (head.match(/^allowed-tools: (.*)$/m) || [, ""])[1];
