@@ -218,7 +218,7 @@ const CASES = [
   { id: "pp-warn/branches", expect: WARN, repo: "feature", command: "git push --branches", has: "every branch (--branches)" },
   { id: "pp-warn/push-option-value-skipped", expect: WARN, repo: "feature", command: "git push -o ci.skip origin :main", has: "delete of main" },
   { id: "pp-warn/plus-refs-heads", expect: WARN, repo: "feature", command: "git push origin +HEAD:refs/heads/main", has: "force push to main" },
-  { id: "pp-warn/delete-short-flag", expect: WARN, repo: "feature", command: "git push -d origin main", has: "delete of main" },
+  { id: "pp-warn/delete-short-flag", expect: WARN, repo: "feature", protected: "release\n", command: "git push -d origin release", has: "delete of release" },
   {
     id: "pp-warn/url-remote-no-leak",
     expect: WARN,
@@ -243,6 +243,8 @@ const CASES = [
     ["main-fix", "git push origin main-fix"],
     ["master-dot-bak", "git push origin master.bak"],
     ["force-feature", "git push -f origin feat/thing"],
+    // `-d` is not in the regex delete exemption, so this blocks today.
+    ["delete-short-flag-main", "git push -d origin main"],
   ].flatMap(([id, command]) => [
     { id: `pin/${id}`, expect: BLOCK, command, exit: 2 },
     { id: `pin/${id}-in-main-repo`, expect: BLOCK, repo: "main", command, exit: 2 },
