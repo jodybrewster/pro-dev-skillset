@@ -2,12 +2,18 @@
 # skills/documentation-and-adrs/SKILL.md from agent-skills
 # (https://github.com/addyosmani/agent-skills) under the MIT License below.
 # The text was rewritten for this marketplace.
+#
+# The grade step in skills/ship/SKILL.md adapts the "Review remembers" rule of
+# skills/super-review/SKILL.md from super-board
+# (https://github.com/EricTechPro/super-board), also MIT licensed:
+#   super-board: Copyright (c) 2026 Eric Tech
 # Everything else in this plugin is original work.
 
 MIT License
 
 Copyright (c) 2026 the pro-dev-skillset authors
 Copyright (c) 2025 Addy Osmani
+Copyright (c) 2026 Eric Tech
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

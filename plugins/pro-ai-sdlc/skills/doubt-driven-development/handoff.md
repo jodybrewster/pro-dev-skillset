@@ -10,7 +10,7 @@ The reviewer runs with the repo root as its working directory.
 ## Fields
 
 - `range`: `<sha before the step>..<head of the step>`, the step's committed range. Never a description of the step or a list of changed files.
-- `brief`: the paths to the plan with the step number, the spec and the intent. Never a paraphrase or an excerpt.
+- `brief`: the paths to the plan with the step number, the spec and the intent, then the path of any caller, guard or test the session knows contradicts its claim. Never a paraphrase or an excerpt.
 - `policy`: the paths to `REVIEW.md`, to the agent file such as `CLAUDE.md` or `AGENTS.md` and to `CONSTRAINTS.md` when each exists. Never a copy of the rules.
 - `risk`: the classifier tier and its signal ids when it ran, else `unclassified`. Never the author's own view of how risky the step is.
 

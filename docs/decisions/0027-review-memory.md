@@ -30,10 +30,11 @@ Round 1 of every later review is a grading dispatch of `pro-ai-sdlc:reviewer` in
 It cites a `path:line` for every grade and raises no new finding.
 Its report keeps the summary line first and puts the grade counts second.
 That summary line counts `not fixed` Important rows as important and `not fixed` nits as nits.
-`Nothing to fix.` follows only when that tally is all zero after grading.
+The round's report opens with the round's total, computed after the fresh pass: the graded rows still unfixed plus the fresh findings.
+The grade line `graded: fixed <n> not fixed <n> no longer applies <n>` is second and `Nothing to fix.` is third, only when the total's important and nits are both zero.
 When an Important row is `not fixed`, the round reports it under its id and skips the fresh pass.
 Otherwise the fresh pass runs blind, with ADR-0012's four fields and no table.
-The caller drops a fresh finding that matches an `open` or `not fixed` row by file and class; this replaces ADR-0011's in-session list.
+The caller hands every fresh finding to `lessons.py raise`, which matches it by file and class against the live table and returns the id of a matching `open` or `not fixed` row; this replaces ADR-0011's in-session list.
 Otherwise a fresh finding that matches a `fixed` or `no longer applies` row gets a new id with `reopened_from` naming that row, which keeps a regression visible.
 Dedupe applies only to `open` and `not fixed` rows.
 Every round reviews `merge-base..head`; `/ship` does the same whenever any commit is uncovered.
@@ -56,6 +57,7 @@ A second machine starts with no memory and anyone with a shell can edit it; it i
 What must stay true:
 
 - The fresh pass never sees the table.
+- A session that has read the table never runs the passes itself.
 - Grade mode never raises a new finding.
 - A `fixed` or `no longer applies` grade always cites a `path:line`.
 - The table never holds a failure scenario or text from a PR thread.
@@ -77,6 +79,6 @@ Revisit if grading proves no cheaper than a full fresh review, if the merge-base
 - `plugins/pro-ai-sdlc/templates/REVIEW.md` (the `## Rounds` section).
 - `docs/loop-records.md` (the review record) and `tests/mieruka-sync.mjs`.
 - The `sdlc-contract` check in `tests/check.mjs`.
-Not enforced yet: none of these exist until the m1 build lands.
+In force from pro-ai-sdlc 0.19.0, pro-quality 0.21.0 and pro-ship 0.18.0.
 
 Adapted in part from super-board (skills/super-review/SKILL.md, "Review remembers"), MIT.

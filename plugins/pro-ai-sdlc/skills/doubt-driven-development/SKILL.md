@@ -39,6 +39,10 @@ The artifact is the step's committed range, from the sha before the step to its 
 Doubt runs on a commit because the classifier and the diff both need fixed shas.
 A step too big for one read is split into smaller steps, never given extra rounds.
 
+Strip reasoning, not evidence.
+When the session knows a caller, guard or test that contradicts its own claim, that file's path goes in `brief` after the plan, spec and intent paths.
+It goes in as a path only, never with a note on why it matters, so the reviewer can refute the claim against code it would otherwise never open.
+
 ### Doubt
 
 Read `doubt-instructions.md` and `handoff.md` from this folder.
@@ -115,4 +119,4 @@ With nothing doubted the line reads `Doubt: none`.
 
 Example: `Doubt: step 3 (plan marker), 2 rounds, Codex ran in round 1; null customer id now rejected before the copy (fixed); row lock held for the whole copy accepted because the table is small; one naming note was noise.`
 
-Adapted from agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19, with the evidence rule from c55b842), MIT, Copyright (c) 2025 Addy Osmani.

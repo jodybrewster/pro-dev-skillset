@@ -13,11 +13,19 @@
 #   pbakaus/impeccable: Copyright 2025 Paul Bakaus
 # Only the section names and the schema comment follow the upstream; the rest is original.
 # The full Apache-2.0 text is at the URL above and in plugins/pro-testing/LICENSE.
+#
+# Grade mode in agents/reviewer.md (and its Codex twin), the grade step of
+# commands/review.md and the Rounds section of templates/REVIEW.md adapt the
+# "Review remembers" rule of skills/super-review/SKILL.md from super-board
+# (https://github.com/EricTechPro/super-board), also MIT licensed:
+#   super-board: Copyright (c) 2026 Eric Tech
+# The text was rewritten for this marketplace.
 
 MIT License
 
 Copyright (c) 2026 the pro-dev-skillset authors
 Copyright (c) 2025 Addy Osmani
+Copyright (c) 2026 Eric Tech
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

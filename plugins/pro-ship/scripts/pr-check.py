@@ -541,12 +541,13 @@ def committed_settings(root: str) -> str:
     return p.stdout if p.returncode == 0 else ""
 
 
-def enabled_plugins(root: str) -> dict:
+def enabled_plugins(root: str, sources=None) -> dict:
     """enabledPlugins as {key: (value, source)} from the user settings, then the committed project
-    settings, later winning."""
+    settings, later winning. `sources` replaces that list with other (load, label) pairs in order."""
     merged: dict = {}
-    sources = ((lambda: read(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings"),
-               (lambda: committed_settings(root), "committed project settings"))
+    if sources is None:
+        sources = ((lambda: read(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings"),
+                   (lambda: committed_settings(root), "committed project settings"))
     for load, label in sources:
         try:
             data = json.loads(load())
@@ -556,6 +557,51 @@ def enabled_plugins(root: str) -> dict:
         if isinstance(ep, dict):
             merged.update({k: (v, label) for k, v in ep.items()})
     return merged
+
+
+def settings_disable(root: str, key: str) -> str | None:
+    """The settings source whose enabledPlugins[key] is false after Claude Code's precedence, for
+    `find --enabled`: user, then the project's .claude/settings.json, then .claude/settings.local.json,
+    the later winning (enabled_plugins's merge). The project files are the working copies in the main
+    checkout and then in root, unlike the verifier's committed-only rule."""
+    bases = list(dict.fromkeys((main_checkout(root), root)))
+    def loader(path):
+        return lambda: read(path)
+    sources = [(loader(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings")]
+    sources += [(loader(os.path.join(b, ".claude", "settings.json")), "project settings") for b in bases]
+    sources += [(loader(os.path.join(b, ".claude", "settings.local.json")), "local settings") for b in bases]
+    value, label = enabled_plugins(root, sources).get(key, (None, None))
+    return label if value is False else None
+
+
+def enabled_install(root: str, plugin: str, rel: str) -> str | None:
+    """Path of <plugin>/<rel> from an install record that no settings file disables, else None.
+    Never the in-place sibling or the repo's own plugins/ folder: a file there proves no install.
+    A project or local record counts for root or the main checkout beside it (an /execute worktree),
+    preferring the closest; then a user record."""
+    installed = read_installed()
+    mkt = own_marketplace(installed)
+    roots = (root, main_checkout(root))
+    scoped, user = [], []
+    for key, recs in installed.items():
+        name, _, m = key.partition("@")
+        if name != plugin or (mkt and m != mkt) or not isinstance(recs, list) or settings_disable(root, key):
+            continue
+        for r in recs:
+            if not isinstance(r, dict) or not r.get("installPath"):
+                continue
+            cand = os.path.join(str(r["installPath"]), rel)
+            if not os.path.isfile(cand):
+                continue
+            if r.get("scope") in ("project", "local") and r.get("projectPath"):
+                pp = os.path.realpath(str(r["projectPath"]))
+                if any(is_under(r0, pp) for r0 in roots):
+                    scoped.append((len(pp), cand))
+            elif r.get("scope") == "user":
+                user.append(cand)
+    if scoped:
+        return max(scoped, key=lambda t: t[0])[1]
+    return user[-1] if user else None
 
 
 def verifier_state(root: str) -> tuple[bool, str | None]:
@@ -1243,9 +1289,20 @@ def main(argv: list[str]) -> int:
             print(cmd_marker(repo_root()))
             return 0
         if cmd == "find":
+            # --enabled: only an install record no settings file disables counts (enabled_install).
+            enabled_only = rest[:1] == ["--enabled"]
+            rest = rest[1:] if enabled_only else rest
             if len(rest) != 2:
-                raise Refuse("pr-check: usage: find <plugin> <file>")
-            print(find_sibling(repo_root(), rest[0], rest[1]))
+                raise Refuse("pr-check: usage: find [--enabled] <plugin> <file>")
+            if not enabled_only:
+                print(find_sibling(repo_root(), rest[0], rest[1]))
+                return 0
+            parts = rest[1].replace("\\", "/").split("/")
+            if rest[1].startswith("/") or ".." in parts or "\\" in rest[1] or not re.fullmatch(r"[A-Za-z0-9_.-]+", rest[0]):
+                print("not-installed")
+                return 0
+            rel = rest[1] if "/" in rest[1] else os.path.join("scripts", rest[1])
+            print(enabled_install(repo_root(), rest[0], rel) or "not-installed")
             return 0
         if cmd == "codex-trigger":
             emit(cmd_codex_trigger(repo_root(), rest))

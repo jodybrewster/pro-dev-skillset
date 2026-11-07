@@ -90,22 +90,27 @@ claude plugin validate plugins/pro-ship --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of a9555f59259f
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: a9555f59259f on `build/reaching-done-m1`, rebased onto origin/main at 05ebdbe, with three rounds of PR review fixes.
+- Checks run: `node tests/check.mjs` 50 checks, 0 failures, 13 warnings; `node tests/lessons.mjs` 96/96; `node tests/ship-check.mjs` 245/245; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), 3 notOneOf warnings, also after the pro-ship description change; `node --test tests/unit/*.test.mjs` 198 pass, 0 fail; `node tests/behavioral.mjs --dry-run` 7 case files, 11 runs planned; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round loaded; `claude plugin validate . --strict` and the three touched plugins each print Validation passed; `tests/lessons.mjs` also passes under Python 3.9.6.
+- Definition of done: met, apart from the hand runs of `/review` and `/ship` end to end noted under AC3 to AC5 and AC11 to AC12.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
+- Doubt: none; no step was marked irreversible.
+- AC1: `tests/lessons.mjs` shows `raise` giving F1 then F2, a duplicate open row printing F1 with nothing added, a match with a `fixed` row adding F4 with `reopened_from` F1, `grade` refusing an unknown id and a missing `--evidence`, `table` on a missing file printing `{"findings": {}}` and a damaged table renamed to `.bad`.
+- AC2: a case reads the table back and finds only the twelve R3 keys on every row.
+- AC3: on a demo branch a grade-mode dispatch of the new reviewer text graded F1 `fixed` at `pay.py:9` after a fix commit, with the summary line all zero; `lessons.py grade` and `round` wrote it and the round record is `pass`. The fresh pass was not run in the demo; the duplicate rule that stops it raising F1 again is covered by `tests/lessons.mjs`.
+- AC4: the same with no fix graded F1 `not fixed` at `pay.py:9`, the agent and `table --tally` both opened with `important: 1` (the hand run predates the `graded:` line format), the round was closed `--fresh skipped` and its record is `fail`.
+- AC5: scripted part only: the ship table `ship-7ab5a947f2f8` shows F1 `fixed` at `pay.py:9` and `.pro-dev/review/rounds/` holds its `review-round` record; `pr-check.py find pro-ai-sdlc lessons.py` resolves the script. A full `/ship` hand run waits for the board rerun.
+- AC6: `tests/mieruka-sync.mjs` loads a `review-round` record with mieruka's own sync.
+- AC7: `sdlc-contract` asserts the validation, zero-findings and base-version lines in both agents and both Codex twins; `agent-twins` holds the code-reviewer twin identical.
+- AC8: `SKILL.md` holds "Strip reasoning, not evidence" and the `doubt` check passes.
+- AC9: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass.
+- AC10: `grade` refuses evidence with no line, line 0, an absolute path and `..`; a `no longer applies` match adds a row with `reopened_from` F3; `table --tally` opens with `important: 1` for one unfixed Important row; `sdlc-contract` asserts the never-evidence sentence in `reviewer.md` and its twin.
+- AC11: `review.md` step 1 sets every round to `<merge base>..<head>` and says `--since` never narrows grade mode, asserted by `sdlc-contract`; not hand-run.
+- AC12: `pr-check.py find --enabled` prints `not-installed` for a missing plugin, a disabled install and the repo's own `plugins/` copy (`tests/ship-check.mjs` f6 to f6l, which also cover the in-place layout, a `settings.local.json` disable, a linked worktree and the settings precedence) and `ship/SKILL.md` then says `grading skipped: pro-ai-sdlc not installed`, asserted by `sdlc-contract`; not hand-run.
+- AC13: the `doubt` check asserts the callers, guards and tests line in `doubt-instructions.md`.
+- AC14: `node tests/behavioral.mjs --dry-run` lists `requesting-code-review` #1 to #3 with their `review-evidence` fixture files.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted` and ADR-0027 from `proposed` to `accepted`.
@@ -114,5 +119,40 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 2: `lessons.py table --ref <ref> --tally` prints the summary line and the grade line from the table, so `tests/lessons.mjs` proves R12's `important: 1` without a model (AC10).
+  After the PR review its first line counts every row still `open` or `not fixed` by severity, which after the fresh pass's raises is the round's total.
+- Step 2: a table whose stored `ref` differs from the one asked for is refused, because `a/b` and `a--b` share a key once `/` is written as `--`; the message says to use `pr-<number>`.
+- Step 3: the round record's `detail_json` also holds `created`, as every other loop record does.
+  Its `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
+- Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
+- Step 3, found in the hand run: R22's key `review-round-<first 12 of head>-<round>` let a second ref at the same head and round overwrite the first record, which a branch `/review` and a `/ship` on the same head both reach.
+  The key gains `-<first 8 hex of the SHA-1 of the ref>`; `tests/lessons.mjs` holds two refs at one head and round apart.
+- Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero.
+  After the PR review the grade line reads `graded: fixed <n> not fixed <n> no longer applies <n>` and a round's report opens with the round's total, computed after the fresh pass; R12, R26 and ADR-0027 now say so, which settles how the summary line of ADR-0011 reads across grading and the fresh pass.
+- Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
+- Step 5: when `lessons.py table` printed any row, the session has read the table and never runs the passes itself; the fresh pass always goes to the `reviewer` subagent (ADR-0012), in `/review` and in `/ship`.
+  A first review with no table still chooses as before (N2).
+- Step 5, after the PR review: the caller never dedupes against its copy of the table from before grading.
+  Every fresh finding goes to `lessons.py raise`, which applies R6 against the live table; `/review` now raises in step 5 before writing the report so the total counts after dedupe.
+- Step 2, after the PR review: R6 gains severity; an Important finding that matches a live nit row raises that row to Important and `raise` reports `severity_raised`.
+  A table that is not UTF-8 or holds a row whose `id` is missing or differs from its key is set aside as `.bad`.
+- Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
+- Step 7: the doubt skill's own `handoff.md` also names the contradicting paths in its `brief` line, so the template the session fills agrees with R28; the field names are unchanged.
+- Step 8: the fixtures are listed file by file, so the runner copies each to the repo root and the prompts name `before.py`, `after.py`, `clean.py` and `CONTRACT.md` without the folder; expectations that joined two checks are split into one check each.
+- Step 9: `/ship` grades before its one turn of specialists, since an unfixed Important row skips the code reviewer's fresh pass; the security review and the test engineer still run that round.
+- Step 9, after the PR review: `/ship` finds `lessons.py` with `pr-check.py find --enabled`, which counts an install only when the plugin settings do not disable it and never counts the repo's own `plugins/` folder; round 2 gave it its own helper, `enabled_install`.
+  It prints `not-installed` for a disabled install, so `/ship` says `grading skipped: pro-ai-sdlc not installed`.
+- Round 2 of the PR review: `find --enabled` has its own helper, `enabled_install`, so the verifier keeps its anti-tamper rule unchanged.
+  It never counts the in-place sibling or the repo's own `plugins/` folder and keeps plain `find`'s worktree fallback through `main_checkout`.
+  Round 3: it follows Claude Code's settings precedence through `enabled_plugins`'s merge (user, then the project's `.claude/settings.json`, then `.claude/settings.local.json`, the later winning), so a project or local `true` overrides a user `false`.
+- Round 2: `grade` records the head on the table and the `graded:` line counts only the rows graded at that head, so a later round shows its own grades.
+  Round 3: `table --tally --head <sha>` takes the round's head, which `/review` and `/ship` pass, so a round that grades nothing prints all zeros.
+- Round 2: `/review` always prints the `graded:` line second, all zeros on a first review, so `Nothing to fix.` is always third as R26 and ADR-0027 say.
+- Pre-existing, fixed after the PR review: the pro-ship description in `ship/SKILL.md` and both manifests now says `/ship` reviews from the merge base when pr-check missed a commit; `node tests/route-lexical.mjs --min-rank1 70` stays at rank-1 80/98.
+- Step 9: `/ship` also raises the security review's blocking and should-fix findings (as `important` and `nit` with `--pass security`), so a fixed security finding is graded rather than reported again.
+- Step 9: when the base is the empty tree (a first release of the whole history), the review range starts at the empty tree, since `git merge-base` has no answer there.
+- Step 10: after the rebases onto main the bumps are pro-ai-sdlc 0.19.0 (main took 0.17.0 in #191 and 0.18.0 in #195), pro-ship 0.18.0 (main took 0.17.0 in #191), pro-quality 0.21.0 and `metadata.version` 1.96.0 (main had 1.95.0); earlier commit messages still name the versions of their day.
+- Step 10: ADR-0027's enforcement line now names the versions it is in force from.
 
 ## Noticed but not touched

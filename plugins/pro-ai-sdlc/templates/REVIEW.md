@@ -43,7 +43,10 @@ They never count toward Important and never block.
 
 ## Rounds
 
-After the first full review, later rounds cover only the new commits.
+Every round reads `merge-base..head`, so a fix anywhere on the branch is inside the range.
+A later round first grades each earlier finding in the findings table `fixed`, `not fixed` or `no longer applies` at the new head, citing a `path:line` for each grade.
+When an Important finding is `not fixed`, the round reports it under its id and skips the fresh pass.
+Otherwise the fresh pass runs blind to the table.
 A finding is never raised twice.
 A class of bug is named once with every instance listed.
 Pre-existing findings do not block.
