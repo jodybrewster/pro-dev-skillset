@@ -483,6 +483,36 @@ export function runShipCheckCases() {
       none();
       const own = mkrepo({ ".claude-plugin/marketplace.json": JSON.stringify({ name: "m", plugins: [{ name: "pro-ai-sdlc", source: "./plugins/pro-ai-sdlc" }] }), "plugins/pro-ai-sdlc/scripts/lessons.py": "# lessons\n" });
       add("f6d find --enabled never counts the repo's own plugins/ folder", "not-installed", findE(own, cacheLay) === "not-installed", findE(own, cacheLay));
+      // The in-place sibling never counts for --enabled, so a user-level disable is not bypassed by the layout.
+      const placeLay = layout("place");
+      mkdirSync(join(placeLay.base, "plugins", "pro-ai-sdlc", "scripts"), { recursive: true });
+      writeFileSync(join(placeLay.base, "plugins", "pro-ai-sdlc", "scripts", "lessons.py"), "# lessons\n");
+      const d2 = sdlc(2);
+      records({ "pro-ai-sdlc@mkt": [{ scope: "user", installPath: d2, version: "1" }] });
+      mkdirSync(join(env.HOME, ".claude"), { recursive: true });
+      writeFileSync(join(env.HOME, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": false } }));
+      add("f6e find --enabled ignores the in-place sibling when the user settings disable the plugin", "not-installed", findE(er, placeLay) === "not-installed", findE(er, placeLay));
+      rmSync(join(env.HOME, ".claude"), { recursive: true, force: true });
+      add("f6e2 find --enabled in the in-place layout uses the enabled install record", "the install path", findE(er, placeLay) === join(d2, "scripts", "lessons.py"), findE(er, placeLay));
+      // A local-scope disable in .claude/settings.local.json counts for --enabled.
+      const lr = mkrepo({});
+      const d3 = sdlc(3);
+      records({ "pro-ai-sdlc@mkt": [{ scope: "local", projectPath: lr, installPath: d3, version: "1" }] });
+      add("f6f find --enabled resolves a local record for this repo", "the install path", findE(lr, cacheLay) === join(d3, "scripts", "lessons.py"), findE(lr, cacheLay));
+      mkdirSync(join(lr, ".claude"), { recursive: true });
+      writeFileSync(join(lr, ".claude", "settings.local.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": false } }));
+      add("f6g find --enabled treats a settings.local.json disable as missing", "not-installed", findE(lr, cacheLay) === "not-installed", findE(lr, cacheLay));
+      rmSync(join(lr, ".claude"), { recursive: true, force: true });
+      // A local record for the main checkout counts in a linked worktree beside it, as plain find does.
+      const wt = join(sandbox, "sdlc-linked-wt");
+      git(lr, "worktree", "add", "-q", "-b", "sdlc-linked-wt", wt);
+      add("f6h find --enabled counts a local record for the main checkout in its linked worktree", "the install path", findE(wt, cacheLay) === join(d3, "scripts", "lessons.py"), findE(wt, cacheLay));
+      mkdirSync(join(lr, ".claude"), { recursive: true });
+      writeFileSync(join(lr, ".claude", "settings.local.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": false } }));
+      add("f6i a settings.local.json disable in the main checkout holds in the linked worktree", "not-installed", findE(wt, cacheLay) === "not-installed", findE(wt, cacheLay));
+      git(lr, "worktree", "remove", "--force", wt);
+      git(lr, "branch", "-q", "-D", "sdlc-linked-wt");
+      none();
     }
 
     // run --step floor maps exit 0, 1 and 2 (R5).

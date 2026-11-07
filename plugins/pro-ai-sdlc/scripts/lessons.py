@@ -271,16 +271,19 @@ def cmd_grade(a) -> dict:
     if row is None:
         raise Refuse(f"lessons: the finding {a.id!r} is not in the table for {ref!r}")
     row.update({"status": GRADES[a.grade], "graded_at": a.head, "evidence": a.evidence})
+    table["head"] = a.head
     path = write_table(root, table)
     return {"id": a.id, "status": row["status"], "table": path}
 
 
-def tally(rows: dict) -> list[str]:
+def tally(rows: dict, head) -> list[str]:
     """The summary line and the grade line. The summary counts the live rows (open or not fixed) by
-    severity, so after grading and the fresh pass's raises it is the round's total."""
+    severity, so after grading and the fresh pass's raises it is the round's total. The grade line
+    counts this round's grades only: the rows graded at the head the table last saw."""
     live = [r for r in rows.values() if r.get("status") in LIVE]
     n = {s: sum(1 for r in live if r.get("severity") == s) for s in SEVERITIES}
-    by = {s: sum(1 for r in rows.values() if r.get("status") == s) for s in STATUSES}
+    graded = [r for r in rows.values() if head and r.get("graded_at") == head]
+    by = {s: sum(1 for r in graded if r.get("status") == s) for s in STATUSES}
     return [f"important: {n['important']}  nits: {n['nit']}  pre-existing: {n['pre-existing']}  skipped: 0",
             f"graded: fixed {by['fixed']} not fixed {by['not fixed']} no longer applies {by['no longer applies']}"]
 
@@ -290,7 +293,7 @@ def cmd_table(a):
     ref = check_ref(a.ref)
     table = read_table(root, ref)
     if a.tally:
-        return "\n".join(tally(table["findings"]))
+        return "\n".join(tally(table["findings"], table.get("head")))
     if not os.path.exists(table_path(root, ref)):
         return {"findings": {}}
     table["findings"] = dict(sorted(table["findings"].items(), key=lambda kv: fid_num(kv[0])))

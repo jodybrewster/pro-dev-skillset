@@ -216,6 +216,14 @@ export function runLessonsCases() {
     raise(ref2, "new-nit", "src/d.py", "a new nit", { severity: "nit" });
     const total = run(repo, ["table", "--ref", ref2, "--tally"]).stdout.split("\n");
     add("table --tally/after raises the first line is the round total", "important: 2  nits: 1", total[0] === "important: 2  nits: 1  pre-existing: 0  skipped: 0" && total[1] === "graded: fixed 1 not fixed 1 no longer applies 0", total.join(" | "));
+    // The graded line counts this round's grades only: rows graded at the head the table last saw.
+    const ref5 = "pr-62";
+    raise(ref5, "one", "src/e.py", "one"); raise(ref5, "two", "src/f.py", "two");
+    grade(ref5, "F1", "fixed", "src/e.py:1", SHA2); grade(ref5, "F2", "not-fixed", "src/f.py:1", SHA2);
+    const SHA4 = "d".repeat(40);
+    grade(ref5, "F2", "fixed", "src/f.py:3", SHA4);
+    const r3 = run(repo, ["table", "--ref", ref5, "--tally"]).stdout.split("\n");
+    add("table --tally/round 3 grading one row reads graded: fixed 1", "graded: fixed 1 not fixed 0 no longer applies 0", r3[1] === "graded: fixed 1 not fixed 0 no longer applies 0" && r3[0] === "important: 0  nits: 0  pre-existing: 0  skipped: 0", r3.join(" | "));
 
     for (const [id, args] of [
       ["a bad severity", ["--severity", "critical"]], ["line 0", ["--line", "0"]], ["a word for a line", ["--line", "ten"]],
