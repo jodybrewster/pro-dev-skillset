@@ -38,7 +38,7 @@ The id appears in every artifact of the change:
 - every review finding; a finding can then be traced to the change it was raised on and to the round that closed it;
 - the roadmap row and any ADR the change produced.
 
-`/intent` allocates the next number from the ids already present on `origin/main` and on every remote branch; two sessions writing intents at the same time do not collide; a `check.mjs` check fails on a duplicate or missing id.
+`/intent` allocates the next number from the ids committed on `origin/main` and on any local or remote branch; an intent left uncommitted or unpushed in another clone is caught by the duplicate check on the second pull request; a `check.mjs` check fails on a duplicate or missing id.
 The 49 existing intent folders keep their names and gain an `id:` line in creation order, PDS-1 to PDS-49; no link in the docs, the roadmap or the ADRs breaks.
 A hook warns when a commit on a change branch lacks the id, in warn mode first.
 

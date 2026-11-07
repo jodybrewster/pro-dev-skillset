@@ -20,7 +20,7 @@ A hosted counter or a ticket system would add a service the loop does not have; 
 
 Each repo that uses the loop declares a shortcode of two to six capitals once, in a tracked `intent/project.json`.
 Every change has an id `<shortcode>-<n>` matching `^[A-Z]{2,6}-[1-9][0-9]*$`.
-`/intent` allocates it by fetching and taking the highest `id:` across `intent/*/intent.md` on the default branch and every remote branch, plus one; offline it uses the last fetch and says so.
+`/intent` allocates it by fetching and taking the highest `id:` across `intent/*/intent.md` committed on the default branch and on any local or remote branch, plus one; offline it uses the last fetch and says so.
 The id lives in the `id:` line of the intent's frontmatter and is copied into the spec and plan; tools read it from there, never from the folder name.
 New folders are named `intent/<id>-<slug>/`; existing folders keep their names and gain an `id:` line in `created:` order.
 An id is never reused or renumbered, a dropped intent keeps its folder and the shortcode never changes in place.
@@ -30,7 +30,7 @@ A repo with no `intent/project.json` works as before.
 ## Consequences
 
 One id finds a change's branch, commits, pull requests, stamp, records and docs.
-A duplicate made by two offline sessions is caught by the `change-ids` check on the second pull request, not at allocation.
+A duplicate from an intent uncommitted or unpushed in another clone is caught by the `change-ids` check on the second pull request, not at allocation.
 Every script that reads a folder name has to accept two forms for as long as date folders exist.
 Evidence keys built from an id-named folder are lowercased to keep the key charset of ADR-0023.
 Changing the shortcode means a new decision and a migration of every id, which the check makes visible.

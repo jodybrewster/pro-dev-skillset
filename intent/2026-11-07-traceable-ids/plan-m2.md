@@ -21,6 +21,7 @@ Each build takes the next minor above its base for pro-ship and pro-ai-sdlc.
 - `plugins/pro-ai-sdlc/scripts/execute-gate.py` (modified): `change_id` and the `<id>/build` branch.
 - `tests/execute.mjs` (modified): the branch cases.
 - `plugins/pro-ai-sdlc/scripts/factory.py` (modified): `binding_reasons` for `<id>/brief` and `<id>/build`.
+- `plugins/pro-ai-sdlc/factory/session.sh` (modified): `want` is `<id>/brief` or `<id>/build` for an intent with an id.
 - `tests/factory.mjs` (modified): the binding cases.
 - `plugins/pro-ai-sdlc/commands/spec.md`, `plan.md`, `intent.md`, `incident.md`, `execute.md`, `auto.md`, `pr-babysit.md` (modified): branch and subject rules; `Bash(git switch:*)` in `allowed-tools` of `/spec` and `/plan`.
 - `plugins/pro-ai-sdlc/README.md` (modified): the hook under `## Hooks`.
@@ -40,7 +41,7 @@ Each build takes the next minor above its base for pro-ship and pro-ai-sdlc.
 5. `hooks/hooks.json` gains the entry beside `production-gate` with a 5 second timeout; `plugins/pro-ai-sdlc/README.md` lists the hook; `docs/enforce-mode.md` gains the `change-id` row (size S; R10, R15, R16, AC5)
    Checkpoint: `node tests/check.mjs` passes the hook-loading checks; `claude plugin validate plugins/pro-ai-sdlc --strict` passes.
 6. `execute-gate.py` reads `id:` from the intent's frontmatter, prints `change_id` and `branch` as `<id>/build` or `<id>/build-<module>`; cases in `tests/execute.mjs` for both and for an intent with no id (size S; R4, AC2)
-7. `binding_reasons` in `factory.py` expects `<id>/brief` or `<id>/build` for an intent with an id and today's names otherwise; cases in `tests/factory.mjs` (size S; R7, AC4)
+7. `binding_reasons` in `factory.py` expects `<id>/brief` or `<id>/build` for an intent with an id and today's names otherwise; `factory/session.sh` reads the intent's `id:` and sets `want` to the same names; cases in `tests/factory.mjs`, including an s1-harness case asserting the `--head` value passed to the stubbed `gh` (size S; R6, R7, AC4)
    Checkpoint: `node tests/execute.mjs` and `node tests/factory.mjs` pass.
 8. `commands/spec.md` and `commands/plan.md` create `<id>/spec` or `<id>/plan` from the default branch with `git switch -c` and write `<id>: spec: <slug>` or `<id>: plan: <slug>`; `commands/intent.md` and `commands/incident.md` write `<id>: intent: <slug>` and `<id>: incident: <slug>` (size S; R1, R2, R3)
 9. `commands/execute.md` starts every subject and the PR title with `<id>: `, keeping `feat:` or `fix:` after it; `commands/auto.md` uses `<id>/brief` and `<id>/build`; `commands/pr-babysit.md` prefixes fix commits on an id branch (size S; R5, R6, R8)

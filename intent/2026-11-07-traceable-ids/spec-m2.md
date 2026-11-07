@@ -42,8 +42,8 @@ Confirmed by the maintainer on 2026-11-07:
 - R3. `/intent`, `/incident`, `/spec` and `/plan` write subjects `<id>: intent: <slug>`, `<id>: incident: <slug>`, `<id>: spec: <slug>` and `<id>: plan: <slug>` when the intent has an id and today's subjects otherwise (intent: "the first words of every commit subject, `PDS-50: ...`").
 - R4. `execute-gate.py` reads `id:` from the intent's frontmatter, adds `change_id` to its JSON output and sets `branch` to `<id>/build` for `plan.md` and `<id>/build-<module>` for `plan-<module>.md`; with no id it prints the slug as today; the local and `origin` existence checks apply to the new name.
 - R5. `/execute` starts every commit subject with `<id>: ` and opens the pull request titled `<id>: feat: <title>` or `<id>: fix: <title>` by the intent's `kind`, keeping the word `ship.py version` reads (intent: "plus every pull request title").
-- R6. `/auto brief` creates `<id>/brief` and `/auto build` works on `<id>/build`, with `<id>: ` on each subject and title; with no id the names stay `<slug>-brief` and `<slug>`.
-- R7. `factory.py`'s `binding_reasons` expects the head branch `<id>/brief` or `<id>/build` when the intent has an id and today's names otherwise; the host then never raises a run to level 3 over the new branch names.
+- R6. `/auto brief` creates `<id>/brief` and `/auto build` works on `<id>/build`, with `<id>: ` on each subject and title; with no id the names stay `<slug>-brief` and `<slug>`; `factory/session.sh` sets `want` to `<id>/brief` or `<id>/build` from the intent's `id:` for the `gh pr list --head` lookup and to today's names otherwise; `commands/auto.md` step 6 names `<id>/brief`.
+- R7. `factory.py`'s `binding_reasons` expects the head branch `<id>/brief` or `<id>/build` when the intent has an id and today's names otherwise, the same names `factory/session.sh` looks up; the host then never raises a run to level 3 over the new branch names.
 - R8. `/pr-babysit` starts each fix commit subject with `<id>: ` when the branch starts with an id.
 - R9. `ship.py`'s `commit_kind` removes one leading `^[A-Z]{2,6}-[1-9][0-9]*: ` before it reads the Conventional Commit word: `PDS-51: feat: add x` is a feature, `PDS-51: fix(y)!: z` is breaking and `PDS-51: tidy` is unknown, as `tidy` is today.
 - R10. `plugins/pro-ai-sdlc/hooks/hooks.json` gains a PreToolUse entry on `Bash` that runs `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/change-id.py"` with a 5 second timeout (intent: "A hook warns when a commit on a change branch lacks the id").
@@ -88,6 +88,7 @@ Branch lists, `git log --oneline` and the pull request list group by id at a gla
 - `plugins/pro-ai-sdlc/commands/spec.md`, `plan.md`, `intent.md`, `incident.md`, `execute.md`, `auto.md`, `pr-babysit.md`: branch and subject rules; `Bash(git switch:*)` added to `allowed-tools` of `/spec` and `/plan`.
 - `plugins/pro-ai-sdlc/scripts/execute-gate.py`: the id and the new branch name.
 - `plugins/pro-ai-sdlc/scripts/factory.py`: `binding_reasons`.
+- `plugins/pro-ai-sdlc/factory/session.sh`: `want` from the intent's `id:`.
 - `plugins/pro-ai-sdlc/scripts/change-id.py` (new) and `hooks/hooks.json`.
 - `plugins/pro-ship/scripts/ship.py`: `commit_kind`.
 - `docs/enforce-mode.md`, `plugins/pro-ai-sdlc/README.md`, `docs/factory.md` (branch names).
@@ -120,7 +121,7 @@ ADR needed: no, this module applies ADR-0026 to branches and subjects.
 - AC1. `commit_kind("PDS-51: feat: add x", "")` returns feature, `commit_kind("PDS-51: fix(y)!: z", "")` returns breaking and `commit_kind("PDS-51: tidy", "")` returns unknown in `tests/ship-version.mjs`.
 - AC2. `execute-gate.py` on a fixture `plan-m1.md` whose intent holds `id: TST-4` prints `"branch": "TST-4/build-m1"` and `"change_id": "TST-4"`; on an intent with no id it prints the slug.
 - AC3. In `tests/sdlc-hooks.mjs`, on branch `TST-4/build`: `git commit -m "no id"` in warn mode logs `change-id` to `warn.log` and allows; the same in enforce mode denies with the reason; `git commit -m "TST-4: ok"` allows silently; a heredoc message starting `TST-4: ` allows; `git commit` with no `-m` allows; on branch `main` and on `feature/x` nothing is logged; a payload of `{` exits 0; with a global `mode` file of enforce, with `CLAUDE_GUARD_MODE=enforce` and with no `mode.change-id`, `git commit -m "no id"` on `TST-4/build` still only warns.
-- AC4. `factory.py` binding cases accept `TST-4/brief` for an intent with that id and still accept `<slug>-brief` for one without.
+- AC4. The s1 harness in `tests/factory.mjs` asserts that `session.sh` passes `--head TST-4/brief` to the stubbed `gh` for an intent with that id and `--head <slug>-brief` for one without; `factory.py` binding cases accept `TST-4/brief` for an intent with that id and still accept `<slug>-brief` for one without.
 - AC5. `docs/enforce-mode.md` has a `change-id` row naming `change-id.py` and `mode.change-id`.
 - AC6. `node tests/check.mjs` and `claude plugin validate . --strict` pass after each PR.
 
