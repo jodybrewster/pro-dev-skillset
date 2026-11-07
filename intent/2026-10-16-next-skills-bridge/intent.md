@@ -3,6 +3,7 @@ source: planning-session
 kind: bug
 status: accepted
 risk: medium
+level: 3
 outcome: O6
 opportunity: pro-nextjs ships three skills adapted from vercel-labs/next-skills, a repository that never carried a license file
 created: 2026-10-16
