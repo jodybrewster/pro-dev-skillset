@@ -9,7 +9,7 @@
 //
 // Also exported as runSdlcHookCases() for tests/check.mjs.
 
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, realpathSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -30,10 +30,12 @@ function run(script, payload, { mode = null, env = {}, raw = null } = {}) {
     input, encoding: "utf8", timeout: 30_000,
     env: { ...process.env, CLAUDE_GUARD_DIR: guardDir, RELEASE_APPROVAL: "", ...env },
   });
+  const logPath = join(guardDir, "warn.log");
+  const log = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
   rmSync(guardDir, { recursive: true, force: true });
   let json = null;
   try { json = r.stdout.trim() ? JSON.parse(r.stdout) : null; } catch { /* not json */ }
-  return { status: r.status, json, stdout: r.stdout, stderr: r.stderr };
+  return { status: r.status, json, stdout: r.stdout, stderr: r.stderr, log };
 }
 
 export function runSdlcHookCases() {
@@ -147,6 +149,51 @@ export function runSdlcHookCases() {
     add("ps6 a malformed payload passes", "allow", r, r.status === 0 && !r.stdout);
     r = run("plan-sync.py", stop(free), { mode: "enforce" });
     add("ps7 a directory that is not a git repo passes", "allow", r, r.status === 0 && !r.stdout);
+
+    // plan-sync: a ## Done written at one head goes stale when code changes after it
+    const commit = (cwd, msg) => git(cwd, "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", "commit", "-q", "-am", msg);
+    const head = (cwd) => git(cwd, "rev-parse", "HEAD").stdout.trim();
+    const stale = join(sandbox, "stale");
+    const planPath = join(stale, "intent", "2026-01-01-x", "plan.md");
+    mkdirSync(dirname(planPath), { recursive: true });
+    writeFileSync(planPath, "# Plan\n\n## Done\n\nFilled in when the build is finished.\n");
+    writeFileSync(join(stale, "app.js"), "1\n");
+    git(stale, "init", "-q", "-b", "main");
+    git(stale, "add", "-A");
+    commit(stale, "init");
+    git(stale, "checkout", "-q", "-b", "build");
+    writeFileSync(join(stale, "app.js"), "2\n");
+    commit(stale, "build");
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd1 a plan with no Done as of line behaves as today on a branch with code commits", "allow", r, r.status === 0 && !r.stdout);
+    const built = head(stale);
+    writeFileSync(planPath, `# Plan\n\n## Done\n\nDone as of ${built.slice(0, 12)}\n\n- Build commit: ${built.slice(0, 12)}\n`);
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd2 Done as of the current head is not stale", "allow", r, r.status === 0 && !r.stdout);
+    commit(stale, "plan: done");
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd3 committing the plan alone after Done does not make it stale", "allow", r, r.status === 0 && !r.stdout);
+    writeFileSync(join(stale, "app.js"), "3\n");
+    commit(stale, "fix after done");
+    const later = head(stale);
+    const want = `## Done is stale (written at ${built.slice(0, 12)}, head is ${later.slice(0, 12)})`;
+    r = run("plan-sync.py", stop(stale));
+    add("sd4 warn mode reports a stale Done after a later code commit and does not block", "warn", r, warned(r) && !r.json?.decision && r.json.systemMessage.includes(want));
+    add("sd5 warn mode logs the stale Done to warn.log", "logged", r, r.log.includes("would-block") && r.log.includes(want));
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd6 enforce mode blocks once on a stale Done", "block", r, r.json?.decision === "block" && r.json.reason.includes(want));
+    r = run("plan-sync.py", stop(stale, { stop_hook_active: true }), { mode: "enforce" });
+    add("sd7 the second stop passes", "allow", r, r.status === 0 && !r.stdout);
+    writeFileSync(join(stale, "intent", "2026-01-01-x", "notes.md"), "x\n");
+    git(stale, "add", "-A");
+    writeFileSync(planPath, `# Plan\n\n## Done\n\nDone as of ${later.slice(0, 12)}\n`);
+    commit(stale, "plan: done again");
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd8 Done rewritten at the new head clears it", "allow", r, r.status === 0 && !r.stdout);
+    writeFileSync(planPath, "# Plan\n\n## Done\n\nDone as of 0123456789ab\n");
+    commit(stale, "plan: unknown sha");
+    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd9 a Done sha the repo does not have passes", "allow", r, r.status === 0 && !r.stdout);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

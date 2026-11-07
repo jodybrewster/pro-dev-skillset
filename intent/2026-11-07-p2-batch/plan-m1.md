@@ -106,6 +106,11 @@ An empty section tells the reviewer the diff follows the plan.
   R5 says the tip is fetched and the spec's policy line says `record` already fetches; it does not.
 - Steps 1 and 2: `tests/unit/factory-level.test.mjs` and the existing `l3` case in `tests/factory.mjs` put their stop-list words under `## Proposed outcome`, because under `## Problem` they no longer raise the level (R2); the unit file gains a case for a word under Problem staying at level 1.
 - Steps 1 and 2: AC1 cannot pass as written. `intent/2026-11-04-rollback-path` uses release and deploy as the subject of its `## Proposed outcome` and `## Affected users and systems`, so under R1 its reasons still list `stop-list words in Proposed outcome: deploy, release` and the same for Affected users and systems; the level is 3 either way. The build follows R1 to R3 and leaves AC1 for the spec owner to restate.
+- Step 5: `stale_done()` reads the plans the working tree changed and the plans the branch's own commits changed since it left the default branch (`origin/HEAD`, `origin/main`, `origin/master`, `main` or `master`, local refs only).
+  R8 names only the working tree, but AC5's later commit leaves a clean tree, so a working-tree-only read would never see the plan; on the default branch itself only the working tree counts, so merged plans never nag.
+- Step 5: a `Done as of` sha the repo does not have, as after a rebase, passes, and the line is read from the first non-blank line under `## Done`.
+- Step 5: when the plan.md reminder and a stale Done fire together, one Stop reports both in one message and one block.
+- Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
 
 ## Noticed but not touched
 

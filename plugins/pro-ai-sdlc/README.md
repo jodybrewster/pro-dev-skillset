@@ -99,7 +99,7 @@ All three ship in warn mode: a flagged call is logged and announced, then allowe
 They read `~/.claude/hooks/mode` and `~/.claude/hooks/mode.<hook>` (`warn` or `enforce`), set `CLAUDE_GUARD_DIR` to move that folder, and log to `warn.log` in it.
 
 - `protect-tests` blocks test-file edits while `.claude/fix-mode` (or the sample repo's `.claude/.fix-task`) exists or `SDLC_TASK_KIND=fix` is set.
-- `plan-sync` is a Stop hook that flags code changed with no plan.md update; in enforce mode it blocks once and honours `stop_hook_active`.
+- `plan-sync` is a Stop hook that flags code changed with no plan.md update and a `## Done` gone stale: when a plan's `## Done` starts with `Done as of <sha>` and code changed after that sha, it names both shas. In enforce mode it blocks once and honours `stop_hook_active`.
 - `production-gate` flags a push to the default branch, a production deploy, a publish, a PR merge and a release; in enforce mode it asks, and `RELEASE_APPROVAL=1` in the starting environment lets it through.
 
 A payload the hooks cannot parse is logged and allowed.

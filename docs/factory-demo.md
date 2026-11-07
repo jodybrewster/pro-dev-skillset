@@ -80,7 +80,7 @@ Write the larger intent yourself in a Claude Code session in the repo:
 /intent Tasks get an optional due date and listTasks can filter to overdue tasks. Tests take today's date from an environment variable so they do not depend on the clock.
 ```
 
-Expected: the report ends `level: 3 (stop-list words: environment variable)`.
+Expected: the report ends `level: 3 (stop-list words in Constraints: environment variable)`, or names `Proposed outcome` when the intent puts the test clock there.
 Accept it through a pull request; the runner's `--next` never picks it up.
 
 Then walk the gates:
