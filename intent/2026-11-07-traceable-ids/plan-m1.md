@@ -126,7 +126,7 @@ An empty section tells the reviewer the diff follows the plan.
   `ids.py next` prints `PDS-57` and the diff against main is 56 files, 56 insertions and 0 deletions.
   spec-m1's table, AC1 and AC6 carry the six rows and the new counts.
 - reaching-done merged while this branch was open; its `created:` ties guard-hardening and sorts after it by folder name.
-  `ids.py backfill --write` numbers from the highest id on any ref and this branch already held PDS-55, so the five ids after PDS-51 were set by hand in created order before anything merged (R19 forbids it only once merged) and checked by an independent recomputation in Node: 56 intents, 0 mismatches.
+  `ids.py backfill --write` numbers from the highest id on any ref and this branch already held PDS-55; the five ids after PDS-51 were set by hand in created order before anything merged (R19 forbids it only once merged) and checked by an independent recomputation in Node: 56 intents, 0 mismatches.
 - `tests/e2e-sdlc.mjs` (not in the file list) reads the factory record by its lowercased name, as `tests/e2e-sdlc/checks.mjs` does.
 - `pro-dev.py status --json` gains a `shortcode` field (`projectFile` and `default`) that `/pro-dev install` reads; the default rule of R20 is then code with a case in `tests/pro-dev.mjs` (`status/shortcode-default`) rather than prose proved by hand; the question and the write stay in `pro-dev.md`.
 - `docs/roadmap.md` is left alone: it lists no traceable-ids item to move.
