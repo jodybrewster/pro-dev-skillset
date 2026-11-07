@@ -171,7 +171,7 @@ function applyEdit(text, e) {
 const SHIP_BLOCK = [
   "", "## Ship", "", "```yaml", "targets:", "  - id: app", "    kind: tag-release",
   "    rollback:", "      triggers:", '        - "the export is wrong or empty"', "      steps:",
-  '        - "Revert the release commit on main and tag the previous version again."',
+  '        - "`git revert --no-edit <release commit>`"', '        - "manual: push the revert through a pull request; a fixed release gets its own tag"',
   '      rto: "one release cycle"', 'tag_pattern: "v*"', "last_deploy: tag", "```", "",
 ].join("\n");
 

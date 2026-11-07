@@ -127,8 +127,8 @@ targets:
       triggers:
         - "the release breaks a caller"
       steps:
-        - "Delete the release on the consumer side and point it back at the previous tag."
-        - "Revert the release commits on main through a pull request."
+        - "`git revert --no-edit <first release commit>^..<last release commit>`"
+        - "manual: push the revert through a pull request and point the consumer back at the previous tag"
       rto: "one release cycle"
 tag_pattern: "v*"
 last_deploy: tag

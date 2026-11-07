@@ -26,7 +26,14 @@ repo that holds the current directory):
                                    manifest), preflight.md and, when the repo has an ignored
                                    .mieruka/evidence/, a copy there. Refuses a dirty tracked
                                    tree, a GO with blockers, a GO with no target, a GO target
-                                   with no rollback and a done legal review of another commit.
+                                   with no rollback, a GO rollback step that is prose or still
+                                   holds a <placeholder> in a command and a done legal review of
+                                   another commit.
+  ready                            is every target's rollback and verify step runnable: an argv
+                                   list, one inline code span or a sh, bash or shell fence, with
+                                   manual: lines beside at least one rollback command. Prints
+                                   {ready, problems: [{target, field, index, text}]} and exits 9
+                                   when a step is prose. Reads files only and writes nothing.
   check SHA                        the freshness verdict the gates use:
                                    {fresh, cause, status, head}. The contract is
                                    docs/ship-preflight.md.
@@ -210,10 +217,11 @@ def ship_dir(root: str) -> str:
     return d
 
 
-def gh_run(root: str, args: list[str], what: str) -> str:
+def gh_run(root: str, args: list[str], what: str, stdin: str | None = None) -> str:
     """Run gh with a timeout. Any failure raises Refuse: a gh problem is reported, never a pass."""
     try:
-        r = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True, timeout=GH_TIMEOUT)
+        r = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True, timeout=GH_TIMEOUT,
+                           input=stdin if stdin is not None else "")
     except FileNotFoundError:
         raise Refuse(f"ship: {what}: gh is not installed or not on PATH")
     except subprocess.TimeoutExpired:
@@ -1003,6 +1011,95 @@ def write_atomic(path: str, text: str) -> None:
     os.replace(tmp, path)
 
 
+# ---------------------------------------------------------------------------
+# ready - the readiness check (reaching-done m3, R16 to R21) and the report's steps (R23)
+# ---------------------------------------------------------------------------
+
+READY_EXIT = 9
+CODE_SPAN = re.compile(r"`([^`\n]+)`")
+SHELL_FENCE = re.compile(r"```(?:sh|bash|shell)[ \t]*\n(.*)\n```", re.S)
+PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
+
+
+def runnable(step) -> str:
+    """command, manual or prose. A command is an argv list of non-empty strings, a string whose
+    whole text is one inline code span on one line or a sh, bash or shell fence with at least one
+    non-empty line. A string that starts with manual: is a step for a person. Anything else is prose."""
+    if isinstance(step, list):
+        return "command" if step and all(isinstance(a, str) and a.strip() for a in step) else "prose"
+    if isinstance(step, dict) and list(step) == ["manual"] and isinstance(step["manual"], str):
+        step = "manual: " + step["manual"]  # `- manual: text` in the Ship block's yaml reads as a one-key map
+    if not isinstance(step, str):
+        return "prose"
+    text = step.strip()
+    if text.startswith("manual:"):
+        return "manual" if text[len("manual:"):].strip() else "prose"
+    m = CODE_SPAN.fullmatch(text)
+    if m and m.group(1).strip():
+        return "command"
+    m = SHELL_FENCE.fullmatch(text)
+    if m and "```" not in m.group(1) and any(ln.strip() for ln in m.group(1).split("\n")):
+        return "command"
+    return "prose"
+
+
+def step_text(step) -> str:
+    if isinstance(step, list):
+        return " ".join(str(a) for a in step)
+    if isinstance(step, dict) and list(step) == ["manual"]:
+        return f"manual: {step['manual']}"
+    return str(step)
+
+
+def as_steps(value) -> list:
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def step_problems(tid: str, field: str, steps: list, needs_command: bool) -> list[dict]:
+    """The steps ready rejects, each {target, field, index, text} with the text cut to 80 characters."""
+    out, kinds = [], []
+    for i, s in enumerate(steps):
+        kinds.append(runnable(s))
+        if kinds[-1] == "prose":
+            out.append({"target": tid, "field": field, "index": i, "text": clean(step_text(s), 80)})
+    if needs_command and "manual" in kinds and "command" not in kinds:
+        out.append({"target": tid, "field": field, "index": None,
+                    "text": "only manual: steps; add at least one runnable rollback command"})
+    return out
+
+
+def cmd_ready(root: str, args: list[str]) -> tuple[dict, int]:
+    """Every target's rollback steps and verify list are runnable. Reads files only and writes nothing."""
+    if args:
+        raise Refuse("ship: usage: ready")
+    problems, found = [], targets(root)
+    for t in found:
+        rb = t.get("rollback")
+        tid = clean(t.get("id"), 80)
+        problems += step_problems(tid, "rollback.steps", as_steps(rb.get("steps") if isinstance(rb, dict) else None), True)
+        problems += step_problems(tid, "verify", as_steps(t.get("verify")), False)
+    if problems:
+        return {"ready": False, "problems": problems}, READY_EXIT
+    return {"ready": True, "targets": len(found)}, 0
+
+
+def validate_steps(tid, steps: list) -> None:
+    """A GO's rollback holds commands with every placeholder filled, plus any manual: lines (R23)."""
+    kinds = [runnable(s) for s in steps]
+    for i, (s, k) in enumerate(zip(steps, kinds)):
+        if k == "prose":
+            raise Refuse(f"ship: refusing to record GO: target {tid} rollback step {i + 1} is prose, not a runnable command "
+                         f"({clean(step_text(s), 80)!r}). Write it as a command in backticks, a sh fence, an argv list or a manual: line.")
+        hole = PLACEHOLDER.search(step_text(s)) if k == "command" else None
+        if hole:
+            raise Refuse(f"ship: refusing to record GO: target {tid} rollback step {i + 1} still holds the placeholder "
+                         f"{clean(hole.group(0), 60)}. Fill it in from this release.")
+    if "command" not in kinds:
+        raise Refuse(f"ship: refusing to record GO: target {tid} has only manual: rollback steps. Add one runnable command.")
+
+
 def validate_report(report, head: str) -> None:
     if not isinstance(report, dict):
         raise Refuse("ship: the report is not a JSON object")
@@ -1030,9 +1127,10 @@ def validate_report(report, head: str) -> None:
         for t in report.get("targets", []):
             rb = t.get("rollback") if isinstance(t, dict) else None
             steps = rb.get("steps") if isinstance(rb, dict) else None
-            if not (isinstance(steps, list) and any(isinstance(s, str) and s.strip() for s in steps)):
-                tid = t.get("id") if isinstance(t, dict) else "?"
+            tid = clean(t.get("id"), 80) if isinstance(t, dict) else "?"
+            if not (isinstance(steps, list) and any(isinstance(s, list) and s or isinstance(s, str) and s.strip() for s in steps)):
                 raise Refuse(f"ship: refusing to record GO: target {tid} has no rollback steps (a missing rollback is a Blocker).")
+            validate_steps(tid, steps)
 
 
 def reviewer_mismatches(report: dict, rules: dict) -> tuple[list[tuple[str, str]], list[str]]:
@@ -1182,6 +1280,306 @@ def check(root: str, sha: str) -> dict:
     if st not in ("pass", "partial"):
         return verdict("no-go", st, hd)
     return verdict(None, st, hd)
+
+
+# ---------------------------------------------------------------------------
+# confirm - a head-bound confirmation of checks left at confirm (reaching-done m3, R1 to R11)
+# The reply rule is written once in docs/ship-preflight.md; merge-gate.py keeps its own copy of
+# the re-check (ADR-0003) and both are held to the cases in tests/ship-preflight.mjs and
+# tests/ship-hooks.mjs.
+# ---------------------------------------------------------------------------
+
+CONFIRM_PREFIX = "pro-ship-confirm-request: "
+CONFIRMED = re.compile(r"\s*confirmed\.?\s*", re.I)
+REPO_NAME = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+ITEM_CAP = 30
+
+
+def repo_name(root: str) -> str:
+    out = gh_run(root, ["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"], "reading the repo name").strip()
+    if not REPO_NAME.fullmatch(out):
+        raise Refuse("ship: gh did not name this repo as owner/name")
+    return out.lower()
+
+
+def pr_number(value) -> int | None:
+    if value is None:
+        return None
+    if not re.fullmatch(r"[1-9][0-9]{0,9}", value):
+        raise Refuse("ship: a PR number is digits only")
+    return int(value)
+
+
+def commit_sha(root: str, value, what: str) -> str:
+    """The full sha of a commit of this repo, or a full sha as given."""
+    if not isinstance(value, str) or not value or value.startswith("-"):
+        raise Refuse(f"ship: {what} needs a commit sha")
+    full = rev(root, value)
+    if full:
+        return full
+    if SHA.match(value):
+        return value
+    raise Refuse(f"ship: {what} {clean(value, 60)!r} is not a commit of this repo")
+
+
+def is_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def pick_scope(root: str, head: str, pr: int | None, merged: bool = False) -> tuple[str, int | None]:
+    """("pr", n) for the PR given or the PR gh finds for head, else ("tag", None).
+
+    request and read look for a PR of any state whose head is the sha; deployed (merged=True)
+    looks for a merged PR whose merge commit or head is the deployed commit."""
+    if pr is not None:
+        return "pr", pr
+    args = ["pr", "list", "--state", "merged" if merged else "all", "--search", head, "--limit", "20",
+            "--json", "number,headRefOid" + (",mergeCommit" if merged else "")]
+    found = gh_json(root, args, f"looking for a PR of {head[:8]}")
+    for p in found if isinstance(found, list) else []:
+        if not isinstance(p, dict) or not is_int(p.get("number")):
+            continue
+        mc = p.get("mergeCommit") if isinstance(p.get("mergeCommit"), dict) else {}
+        if p.get("headRefOid") == head or (merged and mc.get("oid") == head):
+            return "pr", p["number"]
+    return "tag", None
+
+
+def pr_view(root: str, pr: int, merge: bool = False) -> dict:
+    """{head, merge, comments} of a PR, each comment as {id, login, body, at, edited, url}."""
+    fields = "number,headRefOid,url,comments" + (",mergeCommit" if merge else "")
+    data = gh_json(root, ["pr", "view", str(pr), "--json", fields], f"reading the comments of PR {pr}")
+    if not isinstance(data, dict) or not isinstance(data.get("comments"), list):
+        raise Refuse(f"ship: PR {pr} came back without comments")
+    out = []
+    for c in data["comments"]:
+        if not isinstance(c, dict):
+            continue
+        au = c.get("author") if isinstance(c.get("author"), dict) else {}
+        out.append({"id": c.get("id"), "login": au.get("login"), "body": c.get("body"), "at": c.get("createdAt"),
+                    "edited": c.get("includesCreatedEdit") is not False, "url": http_url(c.get("url"))})
+    mc = data.get("mergeCommit") if isinstance(data.get("mergeCommit"), dict) else {}
+    head = data.get("headRefOid")
+    return {"head": head if isinstance(head, str) else None, "merge": mc.get("oid"), "comments": out}
+
+
+def commit_comments(root: str, sha: str) -> list[dict]:
+    data = gh_json(root, ["api", f"repos/{{owner}}/{{repo}}/commits/{sha}/comments?per_page=100"],
+                   f"reading the comments on {sha[:8]}")
+    out = []
+    for c in data if isinstance(data, list) else []:
+        if not isinstance(c, dict):
+            continue
+        u = c.get("user") if isinstance(c.get("user"), dict) else {}
+        out.append({"id": c.get("id"), "login": u.get("login"), "body": c.get("body"), "at": c.get("created_at"),
+                    "edited": c.get("updated_at") != c.get("created_at"), "url": http_url(c.get("html_url"))})
+    return out
+
+
+def comment_time(value):
+    if not isinstance(value, str):
+        return None
+    try:
+        return parse_time(value, "a comment time")
+    except Refuse:
+        return None
+
+
+def parse_request(body) -> dict | None:
+    """The one request line of a comment as a dict, or None. Comment text is data: it is parsed, never run."""
+    lines = [ln for ln in (body if isinstance(body, str) else "").splitlines() if ln.startswith(CONFIRM_PREFIX)]
+    if len(lines) != 1:
+        return None
+    try:
+        v = json.loads(lines[0][len(CONFIRM_PREFIX):])
+    except ValueError:
+        return None
+    if (not isinstance(v, dict) or v.get("scope") not in ("pr", "tag") or not isinstance(v.get("head"), str)
+            or not SHA.match(v["head"]) or not isinstance(v.get("repo"), str) or not REPO_NAME.fullmatch(v["repo"])
+            or not isinstance(v.get("items"), list) or not v["items"]
+            or not all(isinstance(i, str) and i.strip() for i in v["items"])):
+        return None
+    if (v["scope"] == "pr") != (is_int(v.get("pr")) and v["pr"] > 0) or (v["scope"] == "tag" and v.get("pr") is not None):
+        return None
+    return v
+
+
+def read_reply(root: str, scope: str, pr: int | None, head: str, repo: str, comments: list[dict]) -> dict:
+    """The reply rule: the newest request from a login with write access binds repo, head and scope;
+    the earliest later, unedited `confirmed` from a login with write access counts. Nothing else does."""
+    def hold(why: str) -> dict:
+        return {"confirmed": False, "why": why}
+    cache: dict[str, bool] = {}
+
+    def trusted(login) -> bool:
+        return isinstance(login, str) and bool(LOGIN.match(login)) and can_push(root, login, cache)
+    requests = [(comment_time(c["at"]), c) for c in comments
+                if any(ln.startswith(CONFIRM_PREFIX) for ln in str(c.get("body") or "").splitlines())]
+    requests = [(t, c) for t, c in requests if t is not None and trusted(c["login"])]
+    if not requests:
+        return hold("no request from a login with write access; post one with confirm request")
+    newest = max(t for t, _ in requests)
+    latest = [c for t, c in requests if t == newest]
+    if len(latest) != 1:
+        return hold("two requests share the newest time; post a fresh request")
+    req_c = latest[0]
+    req = parse_request(req_c["body"])
+    if req is None:
+        return hold("the newest request cannot be read; post a fresh request")
+    if req["repo"].lower() != repo:
+        return hold(f"the newest request is for {clean(req['repo'], 80)}, not {repo}")
+    if req["scope"] != scope or req.get("pr") != pr:
+        def where(sc, n) -> str:
+            return f"PR {n}" if sc == "pr" else "the commit"
+        return hold(f"the newest request is for {where(req['scope'], req.get('pr'))} in another scope, not {where(scope, pr)}")
+    if req["head"] != head:
+        return hold(f"the newest request is bound to another head ({req['head'][:8]}), not {head[:8]}")
+    if req_c["edited"]:
+        return hold("the request was edited after it was posted; post a fresh request")
+    seen = set()
+    timed = sorted(((comment_time(c["at"]), i, c) for i, c in enumerate(comments) if c is not req_c), key=lambda x: (x[0] is None, x[0] or newest, x[1]))
+    for t, _, c in timed:
+        if t is None or not isinstance(c.get("body"), str) or not CONFIRMED.fullmatch(c["body"]):
+            continue
+        if t <= newest:
+            seen.add("before")
+        elif c["edited"]:
+            seen.add("edited")
+        elif not trusted(c["login"]):
+            seen.add("access")
+        else:
+            return {"confirmed": True, "repo": repo, "scope": scope, "pr": pr, "head": head,
+                    "items": [clean(i, 120) for i in req["items"]], "request_id": req_c["id"], "request_url": req_c["url"],
+                    "reply_id": c["id"], "reply_url": c["url"], "by": c["login"], "at": c["at"]}
+    if "access" in seen:
+        return hold("a confirmed reply came from a login with no write access, which never counts")
+    if "edited" in seen:
+        return hold("the confirmed reply was edited, which never counts; reply again")
+    if "before" in seen:
+        return hold("the confirmed reply came before the request; reply after it")
+    return hold("no confirmed reply after the request; a label or a reaction never counts")
+
+
+def preflight_confirm_items(root: str, head: str) -> set[str]:
+    rec = read_json(os.path.join(root, ".pro-dev", "ship", "preflight.json"))
+    if not isinstance(rec, dict) or rec.get("head") != head or not isinstance(rec.get("detail_json"), str):
+        return set()
+    try:
+        detail = json.loads(rec["detail_json"])
+    except ValueError:
+        return set()
+    checks = detail.get("checks") if isinstance(detail, dict) else None
+    return {c["item"] for c in checks if isinstance(c, dict) and c.get("status") == "confirm"
+            and isinstance(c.get("item"), str)} if isinstance(checks, list) else set()
+
+
+def confirm_items(text) -> list[str]:
+    try:
+        items = json.loads(text) if isinstance(text, str) else None
+    except ValueError:
+        raise Refuse("ship: --items must be a JSON list of check names")
+    if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
+        raise Refuse("ship: --items must be a JSON list of check names")
+    out = []
+    for i in items:
+        if i.strip() and i not in out:
+            out.append(i)
+    if not out:
+        raise Refuse("ship: confirm request needs at least one item")
+    if len(out) > ITEM_CAP:
+        raise Refuse(f"ship: confirm request takes at most {ITEM_CAP} items")
+    return out
+
+
+def confirm_request(root: str, head: str, pr: int | None, items_text) -> dict:
+    refuse_headless("confirm request")
+    items = confirm_items(items_text)
+    allowed = set(LIBRARY_CHECKS) | set(SERVICE_CHECKS) | preflight_confirm_items(root, head)
+    unknown = [i for i in items if i not in allowed]
+    if unknown:
+        raise Refuse(f"ship: {clean(unknown[0], 80)!r} is neither a check left at confirm in the preflight record "
+                     f"for {head[:8]} nor a deploy check ({', '.join(LIBRARY_CHECKS + SERVICE_CHECKS)})")
+    repo = repo_name(root)
+    scope, pr = pick_scope(root, head, pr)
+    line = CONFIRM_PREFIX + json.dumps({"head": head, "items": items, "pr": pr, "repo": repo, "scope": scope},
+                                       sort_keys=True, separators=(",", ":"))
+    where = f"this PR (#{pr})" if scope == "pr" else "this commit"
+    body = (f"{line}\n\nA person with write access to {repo}: check each item below against commit {head}, "
+            f"then reply on {where} with the single word `confirmed`. "
+            "A label, a reaction or an edited reply does not count.\n\n"
+            + "".join(f"- {clean(i, 120)}\n" for i in items))
+    if scope == "pr":
+        out = gh_run(root, ["pr", "comment", str(pr), "--body-file", "-"], f"posting the request on PR {pr}", stdin=body)
+        url = next((http_url(ln.strip()) for ln in reversed(out.splitlines()) if http_url(ln.strip())), None)
+    else:
+        got = gh_run(root, ["api", f"repos/{{owner}}/{{repo}}/commits/{head}/comments", "-F", "body=@-"],
+                     f"posting the request on {head[:8]}", stdin=body)
+        try:
+            data = json.loads(got)
+        except ValueError:
+            data = None
+        url = http_url(data.get("html_url")) if isinstance(data, dict) else None
+    return {"posted": True, "scope": scope, "pr": pr, "head": head, "items": items, "url": url}
+
+
+def write_confirmation(root: str, head: str, conf: dict) -> dict:
+    """Rewrite a preflight record for head with the confirmation and the listed checks at pass (R8, R9)."""
+    path = os.path.join(root, ".pro-dev", "ship", "preflight.json")
+    rec = read_json(path)
+    if (not isinstance(rec, dict) or rec.get("head") != head or rec.get("schema") != 1
+            or not str(rec.get("produced_by") or "").startswith("pro-ship:ship") or not isinstance(rec.get("detail_json"), str)):
+        return {"cleared": [], "written": [], "skipped": [f"no preflight record for {head[:8]}, so nothing was written"]}
+    try:
+        detail = json.loads(rec["detail_json"])
+    except ValueError:
+        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail cannot be read, so nothing was written"]}
+    if not isinstance(detail, dict):
+        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail is not an object, so nothing was written"]}
+    cleared = []
+    for c in detail.get("checks") if isinstance(detail.get("checks"), list) else []:
+        if isinstance(c, dict) and c.get("status") == "confirm" and c.get("item") in conf["items"]:
+            c["status"] = "pass"
+            c["evidence"] = f"confirmed by {conf['by']} in {conf['reply_url']}"
+            cleared.append(c["item"])
+    detail["confirmation"] = {k: conf[k] for k in ("repo", "scope", "pr", "head", "items", "request_id", "request_url",
+                                                   "reply_id", "reply_url", "by", "at")}
+    rec["detail_json"] = json.dumps(detail)
+    text = json.dumps(rec, indent=2) + "\n"
+    ship_dir(root)
+    write_atomic(path, text)
+    written, skipped = [os.path.relpath(path, root)], []
+    if isinstance(rec.get("evidence_key"), str) and SAFE_NAME.match(rec["evidence_key"]):
+        copy, why = mieruka_copy(root, rec["evidence_key"], text)
+        (written if copy else skipped).append(copy or why)
+    return {"cleared": cleared, "written": written, "skipped": skipped}
+
+
+def cmd_confirm(root: str, args: list[str]) -> dict:
+    sub = args[0] if args else None
+    if sub not in ("request", "read"):
+        raise Refuse("ship: usage: confirm request --head <sha> --items <JSON list> [--pr <n>] | confirm read --head <sha> [--pr <n>]")
+    rest = args[1:]
+    known = ("--head", "--pr", "--items") if sub == "request" else ("--head", "--pr")
+    for i, a in enumerate(rest):
+        if a.startswith("--") and a not in known and (i == 0 or rest[i - 1] not in known):
+            raise Refuse(f"ship: confirm {sub}: unknown option {a}")
+    head = commit_sha(root, flag(rest, "--head"), "--head")
+    pr = pr_number(flag(rest, "--pr"))
+    if sub == "request":
+        return confirm_request(root, head, pr, flag(rest, "--items"))
+    repo = repo_name(root)
+    scope, pr = pick_scope(root, head, pr)
+    if scope == "pr":
+        view = pr_view(root, pr)
+        if view["head"] != head:
+            return {"confirmed": False, "why": f"the head of PR {pr} has moved on to {str(view['head'])[:8]}, so a reply for {head[:8]} no longer binds it"}
+        comments = view["comments"]
+    else:
+        comments = commit_comments(root, head)
+    conf = read_reply(root, scope, pr, head, repo, comments)
+    if not conf["confirmed"]:
+        return conf
+    return {**conf, **write_confirmation(root, head, conf)}
 
 
 # ---------------------------------------------------------------------------
@@ -2704,6 +3102,12 @@ def main(argv: list[str]) -> int:
             emit(cmd_checks(root, rest))
         elif cmd == "clean-run":
             emit(cmd_clean_run(root, rest))
+        elif cmd == "confirm":
+            emit(cmd_confirm(root, rest))
+        elif cmd == "ready":
+            out, code = cmd_ready(root, rest)
+            emit(out)
+            return code
         elif cmd == "check":
             if len(rest) != 1:
                 raise Refuse("ship: usage: check <sha>")

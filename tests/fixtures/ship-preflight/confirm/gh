@@ -1,0 +1,28 @@
+#!/bin/sh
+# A fake gh for the confirmation cases of tests/ship-preflight.mjs and tests/ship-deploy.mjs.
+# It answers from $GH_STUB_DIR, logs each call to calls.log and keeps what a post sent:
+#   repo.txt            owner/name for `gh repo view` (default o/r)
+#   pr-list.json        the answer to `gh pr list` (default [])
+#   pr-<n>.json         the answer to `gh pr view <n>`
+#   commit-<sha>.json   the comments on a commit (default [])
+#   perm-<login>.txt    a login's permission (default read)
+# `gh pr comment <n>` keeps stdin in posted-pr-<n>.txt; a commit comment post keeps it in
+# posted-commit-<sha>.txt. Any other call exits 2, so nothing reaches the network.
+d="$GH_STUB_DIR"
+echo "$*" >> "$d/calls.log"
+case "$1 $2" in
+  "repo view") if [ -f "$d/repo.txt" ]; then cat "$d/repo.txt"; else echo o/r; fi ;;
+  "pr list") if [ -f "$d/pr-list.json" ]; then cat "$d/pr-list.json"; else echo "[]"; fi ;;
+  "pr view") if [ -f "$d/pr-$3.json" ]; then cat "$d/pr-$3.json"; else echo "no pull requests found for $3" >&2; exit 1; fi ;;
+  "pr comment") cat > "$d/posted-pr-$3.txt"; echo "https://github.com/o/r/pull/$3#issuecomment-900" ;;
+  "api repos/{owner}/{repo}/collaborators/"*)
+    u="${2#repos/\{owner\}/\{repo\}/collaborators/}"; u="${u%/permission}"
+    if [ -f "$d/perm-$u.txt" ]; then cat "$d/perm-$u.txt"; else echo read; fi ;;
+  "api repos/{owner}/{repo}/commits/"*)
+    s="${2#repos/\{owner\}/\{repo\}/commits/}"; s="${s%%/*}"
+    case "$*" in
+      *body=@-*) cat > "$d/posted-commit-$s.txt"; printf '{"id":901,"html_url":"https://github.com/o/r/commit/%s#commitcomment-901"}\n' "$s" ;;
+      *) if [ -f "$d/commit-$s.json" ]; then cat "$d/commit-$s.json"; else echo "[]"; fi ;;
+    esac ;;
+  *) echo "gh stub: no canned answer for: $*" >&2; exit 2 ;;
+esac

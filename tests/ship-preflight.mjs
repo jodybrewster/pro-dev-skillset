@@ -9,7 +9,8 @@
 // Also exported as runShipPreflightCases() for tests/check.mjs. Case ids for the record
 // fixtures are `check/<fixture file>` and `check/missing`; the preflight-contract check reads them.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, readdirSync, chmodSync, symlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, readdirSync, chmodSync, symlinkSync, copyFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -121,6 +122,8 @@ export function runShipPreflightCases() {
     scopeCases();
     recordCases();
     checkCases();
+    readyCases();
+    confirmCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
@@ -468,7 +471,7 @@ export function runShipPreflightCases() {
   // AC4 and AC5: the record.
   function recordCases() {
     const version = JSON.parse(readFileSync(PLUGIN_JSON, "utf8")).version;
-    const rollback = { triggers: ["error rate above 2 percent"], steps: ["roll back to the previous deploy"], rto: "5 minutes" };
+    const rollback = { triggers: ["error rate above 2 percent"], steps: ["`vercel rollback`"], rto: "5 minutes" };
     const report = (h, b, extra = {}) => ({
       verdict: "GO", head: h, base: b,
       scope: { kind: "tag", range: `${b}..${h}`, prs: [1], uncovered: [], last_deploy_source: "tag" },
@@ -562,6 +565,24 @@ export function runShipPreflightCases() {
     r = rec(t.repo, report(t.h, t.b, { verdict: "MAYBE" }));
     add("record/refuses a verdict that is not GO or NO-GO", "exit 1", r.status === 1, r.stdout + r.stderr);
 
+    // reaching-done m3, R23 and AC10: a GO holds only runnable rollback steps with no placeholder left.
+    const withSteps = (steps) => (h, b) => report(h, b, { targets: [{ id: "web", kind: "tag-release", env: null, url: null, commit: h, rollback: { triggers: ["x"], steps, rto: "minutes" } }] });
+    for (const [label, steps, ok, why] of [
+      ["refuses a GO with a prose rollback step", ["Revert the release commits on main"], false, /prose/],
+      ["refuses a GO whose command step still holds a placeholder", ["`git checkout <previous version>`"], false, /placeholder/],
+      ["refuses a GO whose fenced step still holds a placeholder", ["```sh\ngit revert <first release commit>\n```"], false, /placeholder/],
+      ["accepts a placeholder in a manual: line beside a command", ["`git push origin main`", "manual: pin <previous version> until the fix lands"], true],
+      ["accepts a sh fenced block and an argv list", ["```sh\ngit revert --no-edit abc123\ngit push origin main\n```", ["vercel", "rollback"]], true],
+      ["refuses a GO whose only rollback steps are manual:", ["manual: tell the channel"], false, /manual/],
+    ]) {
+      t = mk();
+      r = rec(t.repo, withSteps(steps)(t.h, t.b));
+      add(`record/${label}`, ok ? "exit 0" : "exit 1, no file", ok ? r.status === 0 : r.status === 1 && why.test(r.stderr) && !existsSync(join(t.repo, ".pro-dev", "ship", "preflight.json")), r.stdout + r.stderr);
+    }
+    t = mk();
+    r = rec(t.repo, { ...withSteps(["Revert it by hand"])(t.h, t.b), verdict: "NO-GO", blockers: [{ text: "x", evidence: "y" }] });
+    add("record/a NO-GO may hold a prose rollback step", "exit 0", r.status === 0, r.stdout + r.stderr);
+
     // AC5: the mieruka drop.
     t = mk();
     put(t.repo, { ".gitignore": ".mieruka/evidence/\n", ".mieruka/config.json": "{}\n" });
@@ -645,6 +666,191 @@ export function runShipPreflightCases() {
     mkdirSync(join(d, ".pro-dev", "ship", "preflight.json"), { recursive: true });
     const rd = ship(d, ["check", head(d)]);
     add("check/a record that cannot be read is unreadable", "cause unreadable", rd.json?.cause === "unreadable", rd.stdout + rd.stderr);
+  }
+
+  // reaching-done m3, R16 to R21: ready rejects a rollback or verify step that is not a runnable command.
+  function readyCases() {
+    const block = (steps, verify = null) => "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: web\n    kind: tag-release\n    rollback:\n      triggers:\n        - a broken install\n      steps:\n"
+      + steps.map((s) => `        - ${s}\n`).join("") + "      rto: minutes\n" + (verify ? "    verify:\n" + verify.map((s) => `      - ${s}\n`).join("") : "") + "```\n";
+    const sum = (f) => createHash("sha256").update(readFileSync(f)).digest("hex");
+    let repo = mkrepo({ "CLAUDE.md": block(["\"Revert the release commits on main\""]) });
+    mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+    const pj = join(repo, ".pro-dev", "ship", "preflight.json"), rj = join(repo, ".pro-dev", "ship", "report.json");
+    writeFileSync(pj, '{"schema": 1, "head": "x"}\n');
+    writeFileSync(rj, '{"verdict": "GO"}\n');
+    const before = [sum(pj), sum(rj)];
+    let r = ship(repo, ["ready"]);
+    const p = r.json?.problems?.[0];
+    add("ready/a prose rollback step exits 9 and is named", "exit 9, ready false, target web, field rollback.steps, index 0",
+      r.status === 9 && r.json?.ready === false && p?.target === "web" && p.field === "rollback.steps" && p.index === 0 && p.text === "Revert the release commits on main", r.stdout + r.stderr);
+    add("ready/a stopped run leaves preflight.json and report.json byte for byte", "same sha256",
+      sum(pj) === before[0] && sum(rj) === before[1] && readdirSync(join(repo, ".pro-dev", "ship")).sort().join() === "preflight.json,report.json", r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": block(["\"" + "Revert the release commits on main and then wait for the next release cycle to land it everywhere".repeat(2) + "\""]) });
+    r = ship(repo, ["ready"]);
+    add("ready/a problem text is cut to 80 characters", "at most 80", r.status === 9 && r.json.problems[0].text.length <= 80, r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": block(["[git, revert, --no-edit, HEAD]", "\"`git push origin main`\"", "\"manual: installs pinned to the previous tag already have the old copy\"", "manual: tell the channel"]) });
+    r = ship(repo, ["ready"]);
+    add("ready/an argv list, an inline code span and manual: steps beside them pass", "exit 0, ready true", r.status === 0 && r.json?.ready === true, r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": block(["\"`git revert --no-edit <first release commit>^..<last release commit>`\""]) });
+    r = ship(repo, ["ready"]);
+    add("ready/a placeholder inside a command passes, because the report fills it", "exit 0", r.status === 0, r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": block(["\"manual: installs pinned to the previous tag already have the old copy\""]) });
+    r = ship(repo, ["ready"]);
+    add("ready/a target whose only rollback step is manual: fails", "exit 9", r.status === 9 && r.json.problems.length === 1 && r.json.problems[0].index === null, r.stdout + r.stderr);
+    for (const [label, step] of [["an empty argv list", "[]"], ["a code span with a backtick inside", "\"`a ` b`\""], ["an empty code span", "\"` `\""], ["an empty manual: line", "\"manual:\""]]) {
+      repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\"", step]) });
+      r = ship(repo, ["ready"]);
+      add(`ready/${label} is prose`, "exit 9 at index 1", r.status === 9 && r.json.problems[0].index === 1, r.stdout + r.stderr);
+    }
+    repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\""], ["check the health page"]) });
+    r = ship(repo, ["ready"]);
+    add("ready/a prose verify step fails (R18)", "exit 9, field verify", r.status === 9 && r.json.problems[0].field === "verify" && r.json.problems[0].text === "check the health page", r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\""], ["\"`curl -fsS https://example.com/health`\"", "\"manual: open the dashboard\""]) });
+    r = ship(repo, ["ready"]);
+    add("ready/a verify list of a code span and a manual: line passes (R18)", "exit 0", r.status === 0 && r.json.ready === true, r.stdout + r.stderr);
+    // The sh fence cannot sit inside the Ship block's yaml fence, so its form is pinned through runnable().
+    const py = spawnSync("python3", ["-c", "import importlib.util,sys,json\nsp=importlib.util.spec_from_file_location('ship',sys.argv[1]);m=importlib.util.module_from_spec(sp);sp.loader.exec_module(m)\nprint(json.dumps([m.runnable(s) for s in json.loads(sys.argv[2])]))",
+      SHIP, JSON.stringify(["```sh\ngit revert --no-edit HEAD\ngit push origin main\n```", "```bash\nvercel rollback\n```", "```shell\n\n```", "```js\nx()\n```", "`one`", "manual: a person step", ["git", "push"], ["git", ""], "Revert it"])], { encoding: "utf8", env });
+    add("ready/runnable() reads sh, bash and shell fences as commands and an empty or js fence as prose", "command,command,prose,prose,command,manual,command,prose,prose",
+      (() => { try { return JSON.stringify(JSON.parse(py.stdout)); } catch { return ""; } })() === JSON.stringify(["command", "command", "prose", "prose", "command", "manual", "command", "prose", "prose"]), py.stdout + py.stderr);
+    // AC11: this repo's own Ship block.
+    r = ship(ROOT, ["ready", "--root", ROOT]);
+    const steps = JSON.parse(ship(ROOT, ["targets", "--root", ROOT]).stdout)[0].rollback.steps;
+    add("ready/this repo's Ship block passes, pushes the revert and tags nothing", "exit 0, a git push origin main step, no git tag",
+      r.status === 0 && steps.some((s) => s === "`git push origin main`") && !JSON.stringify(steps).includes("git tag") && steps.filter((s) => String(s).startsWith("manual:")).length === 2, r.stdout + r.stderr + JSON.stringify(steps));
+  }
+
+  // reaching-done m3, R1 to R9 and AC1 to AC3 and AC5: the head-bound confirmation, with the fake gh
+  // of tests/fixtures/ship-preflight/confirm/gh first on PATH.
+  function confirmCases() {
+    const bin = join(sandbox, "confirm-bin");
+    mkdirSync(bin, { recursive: true });
+    copyFileSync(join(FIX, "confirm", "gh"), join(bin, "gh"));
+    chmodSync(join(bin, "gh"), 0o755);
+    const cship = (repo, args, dir, extra = {}) => ship(repo, args, { env: { PATH: `${bin}:${process.env.PATH}`, GH_STUB_DIR: dir, ...extra } });
+    const ITEM = "env vars set in production";
+    const REQ = "pro-ship-confirm-request: ";
+    const T0 = "2026-11-07T09:00:00Z", T1 = "2026-11-07T10:00:00Z", T2 = "2026-11-07T11:00:00Z";
+    const recRepo = () => {
+      const repo = mkrepo({ "a.txt": "1\n", ".gitignore": ".mieruka/evidence/\n", ".mieruka/config.json": "{}\n" });
+      const b = head(repo);
+      const h = commit(repo, { "a.txt": "2\n" });
+      const rep = {
+        verdict: "GO", head: h, base: b,
+        scope: { kind: "pr", range: `${b}..${h}`, prs: [42], uncovered: [], last_deploy_source: "none" },
+        blockers: [], fixes: [], risks: [],
+        checks: [{ section: "release", item: ITEM, status: "confirm", evidence: "look at the host's settings" },
+          { section: "security", item: "dependency audit", status: "pass", evidence: "0 vulnerabilities" }],
+        legal: { status: "not-installed", verdict: null, base: null, head: null, blocking: 0, required: 0 },
+        targets: [{ id: "web", kind: "deploy-on-merge", env: "production", url: null, commit: h, rollback: { triggers: ["x"], steps: ["`vercel rollback`"], rto: "2 minutes" } }],
+        report_md: "# Ship decision\n\nGO\n",
+      };
+      const rp = join(sandbox, `confirm-report-${++repoN}.json`);
+      writeFileSync(rp, JSON.stringify(rep));
+      const r = ship(repo, ["record", rp]);
+      if (r.status !== 0) throw new Error(`confirm fixture record failed: ${r.stderr}`);
+      return { repo, h, pj: join(repo, ".pro-dev", "ship", "preflight.json"), mj: join(repo, ".mieruka", "evidence", `ship-preflight-${h.slice(0, 12)}`, "evidence.json") };
+    };
+    const firstLine = (f) => { try { const l = readFileSync(f, "utf8").split("\n")[0]; return l.startsWith(REQ) ? JSON.parse(l.slice(REQ.length)) : null; } catch { return null; } };
+
+    // AC1: pr scope.
+    let t = recRepo();
+    let d = stubDir({});
+    let r = cship(t.repo, ["confirm", "request", "--head", t.h, "--pr", "42", "--items", JSON.stringify([ITEM])], d);
+    let line = firstLine(join(d, "posted-pr-42.txt"));
+    const posted = existsSync(join(d, "posted-pr-42.txt")) ? readFileSync(join(d, "posted-pr-42.txt"), "utf8") : "";
+    add("confirm/request posts one PR comment whose request line binds the head, the items and scope pr", "head, items, pr 42, repo o/r, scope pr, keys sorted",
+      r.status === 0 && line?.head === t.h && line.items.join() === ITEM && line.pr === 42 && line.repo === "o/r" && line.scope === "pr"
+        && posted.split("\n")[0] === REQ + JSON.stringify({ head: t.h, items: [ITEM], pr: 42, repo: "o/r", scope: "pr" })
+        && /reply .*the single word `confirmed`/.test(posted) && r.json?.url === "https://github.com/o/r/pull/42#issuecomment-900", r.stdout + r.stderr + posted);
+    d = stubDir({ "pr-list.json": [{ number: 9, headRefOid: "f".repeat(40) }, { number: 7, headRefOid: t.h }] });
+    r = cship(t.repo, ["confirm", "request", "--head", t.h, "--items", JSON.stringify([ITEM])], d);
+    add("confirm/request without --pr finds the PR whose head is that sha", "posted on PR 7", r.status === 0 && firstLine(join(d, "posted-pr-7.txt"))?.pr === 7, r.stdout + r.stderr);
+    d = stubDir({});
+    r = cship(t.repo, ["confirm", "request", "--head", t.h, "--pr", "42", "--items", JSON.stringify([ITEM])], d, { FACTORY_SESSION: "1" });
+    add("confirm/request refuses a headless run", "exit 1, nothing posted", r.status === 1 && /factory session/.test(r.stderr) && !existsSync(join(d, "posted-pr-42.txt")), r.stdout + r.stderr);
+    for (const [label, items, why] of [["an item that is neither a confirm check nor a deploy check", ["make coffee"], /make coffee/],
+      ["a check of the record that is not at confirm", ["dependency audit"], /dependency audit/], ["an empty item list", [], /at least one/]]) {
+      d = stubDir({});
+      r = cship(t.repo, ["confirm", "request", "--head", t.h, "--pr", "42", "--items", JSON.stringify(items)], d);
+      add(`confirm/request refuses ${label}`, "exit 1, nothing posted", r.status === 1 && why.test(r.stderr) && !existsSync(join(d, "posted-pr-42.txt")), r.stdout + r.stderr);
+    }
+
+    // AC5, first half: tag scope posts a commit comment through gh api.
+    const LIB = ["rollback dry run", "tests on a clean checkout of the tag"];
+    d = stubDir({ "pr-list.json": [{ number: 9, headRefOid: "f".repeat(40) }] });
+    r = cship(t.repo, ["confirm", "request", "--head", t.h, "--items", JSON.stringify(LIB)], d);
+    line = firstLine(join(d, `posted-commit-${t.h}.txt`));
+    add("confirm/request with no PR for the head posts a commit comment in scope tag", "scope tag, pr null, through gh api commits/<sha>/comments",
+      r.status === 0 && line?.scope === "tag" && line.pr === null && line.items.join() === LIB.join() && line.head === t.h
+        && readFileSync(join(d, "calls.log"), "utf8").includes(`api repos/{owner}/{repo}/commits/${t.h}/comments -F body=@-`)
+        && r.json?.url === `https://github.com/o/r/commit/${t.h}#commitcomment-901`, r.stdout + r.stderr);
+
+    // AC2: confirm read, one valid reply and each refusal with its own why.
+    const reqLine = (h, extra = {}) => REQ + JSON.stringify({ head: h, items: [ITEM], pr: 42, repo: "o/r", scope: "pr", ...extra }) + "\n\nPlease check and reply confirmed.";
+    const cm = (id, login, body, at, edited = false) => ({ id: `IC_${id}`, author: { login }, authorAssociation: "MEMBER", body, createdAt: at, includesCreatedEdit: edited, url: `https://github.com/o/r/pull/42#issuecomment-${id}` });
+    const view = (h, comments) => ({ number: 42, headRefOid: h, url: "https://github.com/o/r/pull/42", comments });
+    const perms = { "perm-maint.txt": "write\n", "perm-boss.txt": "admin\n" };
+    const reads = [
+      ["a label alone (no reply)", (h) => [cm(1, "maint", reqLine(h), T1)], /no confirmed reply/],
+      ["an edited reply", (h) => [cm(1, "maint", reqLine(h), T1), cm(2, "maint", "confirmed", T2, true)], /edited/],
+      ["a reply before the request", (h) => [cm(2, "maint", "confirmed", T0), cm(1, "maint", reqLine(h), T1)], /before the request/],
+      ["a reply on a request bound to another head", () => [cm(1, "maint", reqLine("e".repeat(40)), T1), cm(2, "maint", "confirmed", T2)], /another head/],
+      ["a reply from a read-only user", (h) => [cm(1, "maint", reqLine(h), T1), cm(2, "reader", "confirmed", T2)], /no write access/],
+      ["a request from a read-only user", (h) => [cm(1, "reader", reqLine(h), T1), cm(2, "maint", "confirmed", T2)], /no request from a login with write access/],
+      ["a reply that says more than confirmed", (h) => [cm(1, "maint", reqLine(h), T1), cm(2, "maint", "confirmed, ship it", T2)], /no confirmed reply/],
+    ];
+    const whys = new Set();
+    for (const [label, comments, why] of reads) {
+      t = recRepo();
+      const before = readFileSync(t.pj, "utf8");
+      d = stubDir({ ...perms, "pr-42.json": view(t.h, comments(t.h)) });
+      r = cship(t.repo, ["confirm", "read", "--head", t.h, "--pr", "42"], d);
+      whys.add(r.json?.why);
+      add(`confirm/read does not count ${label}`, "confirmed false with its why, record untouched",
+        r.status === 0 && r.json?.confirmed === false && why.test(r.json.why || "") && readFileSync(t.pj, "utf8") === before, r.stdout + r.stderr);
+    }
+    // A label alone and a longer reply both leave no confirmed reply, so they share one why.
+    add("confirm/each refusal of read gives its own why", `${reads.length - 1} distinct whys`, whys.size === reads.length - 1, [...whys].join(" | "));
+
+    t = recRepo();
+    d = stubDir({ ...perms, "pr-42.json": view(t.h, [cm(1, "boss", reqLine(t.h), T1), cm(2, "reader", "confirmed", "2026-11-07T10:30:00Z"), cm(3, "maint", " Confirmed. ", T2), cm(4, "boss", "confirmed", "2026-11-07T12:00:00Z")]) });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h, "--pr", "42"], d);
+    let rec = null, detail = null;
+    try { rec = JSON.parse(readFileSync(t.pj, "utf8")); detail = JSON.parse(rec.detail_json); } catch { /* checked below */ }
+    const cleared = detail?.checks?.find((c) => c.item === ITEM);
+    const conf = detail?.confirmation || {};
+    add("confirm/read takes the earliest later confirmed reply from a write user and clears the listed check", "confirmed by maint, the check at pass with the reply url",
+      r.status === 0 && r.json?.confirmed === true && r.json.by === "maint" && cleared?.status === "pass"
+        && cleared.evidence === "confirmed by maint in https://github.com/o/r/pull/42#issuecomment-3"
+        && detail.checks.find((c) => c.item === "dependency audit")?.evidence === "0 vulnerabilities", r.stdout + r.stderr + JSON.stringify(detail));
+    add("confirm/read records the confirmation inside detail_json and keeps every other field", "repo, scope, pr, head, items, request and reply ids and urls, by, at; status, head, schema kept",
+      conf.repo === "o/r" && conf.scope === "pr" && conf.pr === 42 && conf.head === t.h && conf.items?.join() === ITEM && conf.request_id === "IC_1"
+        && conf.request_url?.endsWith("issuecomment-1") && conf.reply_id === "IC_3" && conf.reply_url?.endsWith("issuecomment-3") && conf.by === "maint" && conf.at === T2
+        && rec.status === "pass" && rec.head === t.h && rec.schema === 1 && typeof rec.detail_json === "string" && rec.produced_by.startsWith("pro-ship:ship@"), JSON.stringify(rec));
+    const c3 = ship(t.repo, ["check", t.h]);
+    add("confirm/after a valid read check still reports the record fresh (AC3)", "fresh", c3.json?.fresh === true && c3.json.status === "pass", c3.stdout + c3.stderr);
+    add("confirm/the mieruka copy is rewritten with the record", "same bytes", existsSync(t.mj) && readFileSync(t.mj, "utf8") === readFileSync(t.pj, "utf8"), "");
+    d = stubDir({ ...perms, "pr-42.json": view("d".repeat(40), [cm(1, "maint", reqLine(t.h), T1), cm(2, "maint", "confirmed", T2)]) });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h, "--pr", "42"], d);
+    add("confirm/read refuses when the PR head has moved past the head", "confirmed false", r.status === 0 && r.json?.confirmed === false && /head/.test(r.json.why), r.stdout + r.stderr);
+
+    // AC5 and R5: tag scope reads the commit comments.
+    t = recRepo();
+    const cc = (id, login, body, at, upd = at) => ({ id, user: { login }, body, created_at: at, updated_at: upd, html_url: `https://github.com/o/r/commit/${t.h}#commitcomment-${id}` });
+    const tagReq = (h) => REQ + JSON.stringify({ head: h, items: [ITEM], pr: null, repo: "o/r", scope: "tag" });
+    d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", tagReq(t.h), T1), cc(12, "maint", "confirmed", T2)] });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
+    add("confirm/read with no PR for the head reads the commit comments in scope tag", "confirmed by maint, scope tag",
+      r.status === 0 && r.json?.confirmed === true && r.json.scope === "tag" && JSON.parse(JSON.parse(readFileSync(t.pj, "utf8")).detail_json).confirmation?.scope === "tag", r.stdout + r.stderr);
+    t = recRepo();
+    d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", tagReq(t.h), T1), cc(12, "maint", "confirmed", T2, "2026-11-07T11:05:00Z")] });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
+    t = recRepo();
+    d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", REQ + JSON.stringify({ head: t.h, items: [ITEM], pr: 42, repo: "o/r", scope: "pr" }), T1), cc(12, "maint", "confirmed", T2)] });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
+    add("confirm/a pr-scope request read in tag scope does not count", "confirmed false, another scope", r.status === 0 && r.json?.confirmed === false && /another scope/.test(r.json.why), r.stdout + r.stderr);
+    add("confirm/an edited commit comment reply does not count", "confirmed false, edited", r.status === 0 && r.json?.confirmed === false && /edited/.test(r.json.why), r.stdout + r.stderr);
   }
 }
 

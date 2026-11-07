@@ -136,8 +136,10 @@ targets:
         - "a plugin fails to load or its hooks block a session after an update"
         - "claude plugin validate --strict fails on main"
       steps:
-        - "Revert the release commits on main with git revert and push the revert."
-        - "Tag the previous version of each affected plugin as <plugin>--vX.Y.Z so installs update back to it."
+        - "`git revert --no-edit <first release commit>^..<last release commit>`"
+        - "`git push origin main`"
+        - "manual: installs pinned to the previous release's tag already have the old copy"
+        - "manual: a new release, if one is needed, goes through /ship with its own bump and tag"
       rto: "one release cycle"
 tag_pattern: "*--v*"
 last_deploy: tag
