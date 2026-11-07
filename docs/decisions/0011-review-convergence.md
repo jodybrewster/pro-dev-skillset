@@ -6,6 +6,8 @@ Date: 2026-10-30
 
 accepted (2026-10-30)
 
+Amended 2026-11-07 by ADR-0027 (proposed): later rounds grade a persisted findings table and read merge-base to head; the in-session dedupe list is replaced by the table.
+
 Decided by: the maintainer.
 Source: intent/2026-10-29-review-policy/.
 
