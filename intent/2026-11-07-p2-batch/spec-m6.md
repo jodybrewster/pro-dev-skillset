@@ -76,12 +76,12 @@ ADR needed: no, ADR-0015's amendment already governs a hook's network call; this
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | A hook that makes a network call, which REVIEW.md pass 2 forbids outside the merge gate | `REVIEW.md`, ADR-0015 amendment | open: add `sdd-cache.py` to the exception with the limit in Policy constraints, or ship the skill without the cache |
+| 1 | A hook that makes a network call, which REVIEW.md pass 2 forbids outside the merge gate | `REVIEW.md`, ADR-0015 amendment | resolved on 2026-11-07: `sdd-cache.py` joins the exception with the limit in Policy constraints |
 | 2 | Codex gets the skill but not the hooks | ADR-0004 | resolved: documented gap in `docs/codex-parity.md`; the skill works without the cache |
 
 ## Open questions
 
-- Ship with or without the cache hooks (concern 1); the proposal is with, under the stated limit.
+- Resolved: ship with the cache hooks under the stated limit (concern 1).
 
 ## Acceptance criteria
 

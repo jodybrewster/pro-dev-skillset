@@ -81,12 +81,12 @@ ADR needed: yes, a new specialist review that `/review` and `/ship` dispatch set
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | An Opus agent on every `/review` with an architecture signal adds cost to the loop | `docs/evals.md`, the model split | open: dispatch only on the signals in R4; the maintainer confirms the list |
+| 1 | An Opus agent on every `/review` with an architecture signal adds cost to the loop | `docs/evals.md`, the model split | resolved on 2026-11-07: dispatch only on the four signals in R4 |
 | 2 | mattpocock-skills is a 28-skill plugin; installing it brings skills that overlap ours (`tdd`, `code-review`, `grilling`) | `using-pro-dev`, the router | open: the install note says which overlap and that ours route first; a routing case guards the two most likely collisions |
 
 ## Open questions
 
-- Which architecture signals trigger diff mode (concern 1): the four in R4 are the proposal.
+- Resolved: the four signals in R4 trigger diff mode (concern 1).
 - Whether the ADR is written at spec time or plan time; the proposal is plan time, after the signal list is settled.
 
 ## Acceptance criteria

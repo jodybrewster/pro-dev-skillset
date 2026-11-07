@@ -85,12 +85,12 @@ ADR needed: no, it applies ADR-0016 and the ADR-0015 network exception to one mo
 
 | # | Concern | Policy or owner | Resolution |
 |---|---------|-----------------|------------|
-| 1 | The hook reads `gh pr view`, a network call REVIEW.md pass 2 allows only for the merge gate | `REVIEW.md`, ADR-0015 amendment | open: extend the exception line to `cleanup-wt.py`, or drop the fourth probe and accept that squash-merged branches read as unmerged |
+| 1 | The hook reads `gh pr view`, a network call REVIEW.md pass 2 allows only for the merge gate | `REVIEW.md`, ADR-0015 amendment | resolved on 2026-11-07: the exception line in REVIEW.md extends to `cleanup-wt.py`, limited to `gh pr view` on the branch's own PR |
 | 2 | Enforce mode deletes worktrees, the one irreversible act in this batch | `docs/enforce-mode.md` | resolved: recovery file before every removal (R4), `--restore` (R7), warn start |
 
 ## Open questions
 
-- Whether the `gh` probe stays (concern 1); the maintainer decides before the plan.
+- Resolved: the `gh` probe stays (concern 1).
 
 ## Acceptance criteria
 
