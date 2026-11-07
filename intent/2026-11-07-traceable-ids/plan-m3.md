@@ -85,17 +85,17 @@ claude plugin validate . --strict          # Validation passed
 
 ## Done
 
-Done as of 37aa80547a37
+Done as of 43bf5498524f
 
-- Build commit: 37aa80547a37 on `PDS-50/build-m3`, based on origin/main 6d8170a.
+- Build commit: 43bf5498524f on `PDS-50/build-m3`, one commit rebased onto origin/main 3af9bdd (after m4 in PR 195 and reaching-done m1 in PR 192); pro-ai-sdlc 0.20.0, pro-ship 0.19.0, marketplace 1.98.0, one minor above main for each.
 - Checks run:
   - `node tests/check.mjs`: 50 checks, 0 failures, 13 warnings (stamp-contract and change-ids pass).
   - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped (no key).
   - `node tests/route-lexical.mjs --min-rank1 70`: rank-1 80/98 (81.6%), top-k 93/98 (94.9%), notOneOf failures 3.
   - `node --test tests/unit/*.test.mjs`: 200 tests, 200 pass, 0 fail.
-  - `node tests/factory.mjs`: 178/178; `node tests/incident.mjs`: 46/46; `node tests/visual.mjs`: 35/35; `node tests/lessons.mjs`: 47/47.
-  - `node tests/ship-check.mjs`: 239/239; `node tests/ship-deploy.mjs`: 147/147.
-  - `MIERUKA_ROOT=<mieruka checkout at d17b5ca> node tests/mieruka-sync.mjs`: passed, the preflight plus deploy, incident, review-lesson, ui-step and factory-run loaded, each record holding change_id TST-1.
+  - `node tests/factory.mjs`: 178/178; `node tests/incident.mjs`: 46/46; `node tests/visual.mjs`: 35/35; `node tests/lessons.mjs`: 108/108.
+  - `node tests/ship-check.mjs`: 252/252; `node tests/ship-deploy.mjs`: 151/151.
+  - `MIERUKA_ROOT=<mieruka checkout at d17b5ca> node tests/mieruka-sync.mjs`: passed, the preflight plus deploy, incident, review-lesson, review-round, ui-step and factory-run loaded, each record holding change_id TST-1.
   - `claude plugin validate . --strict`: Validation passed; each of the 21 plugin folders passed strict.
 - Definition of done: met (the verifier ran: every test green and each changed writer checked by hand; its verdict was incomplete only because it was told to skip check.mjs and the sync check, both run here).
 - Visual: none
@@ -103,9 +103,9 @@ Done as of 37aa80547a37
 - AC1: a branch `TST-2/build` stamps `TST-2`, `feature/x` touching only `intent/TST-3-demo/` stamps `TST-3`, `feature/x` with no intent leaves it out (ship-check `stamp/c1` to `c7`).
 - AC2: `valid-pass-change-id.json` gets the verdict of `valid-pass.json` from both gates (stamp-contract pass).
 - AC3: `factory.py record` with `id: TST-1` writes `"change_id": "TST-1"` and the key `factory-2026-01-02-greeting` (factory `c1` to `c4`, `r1` asserts it absent with no id).
-- AC4: subject `TST-1: feat: x` writes `TST-1`; `release v1.2.0` writes none (ship-deploy `change_id` cases).
+- AC4: subject `TST-1: feat: x` writes `TST-1`; `release v1.2.0` writes none; `PDS-50 title` writes `PDS-50` only when the shortcode is PDS; `UTF-8 decoding fix`, `SHA-256 checksums` and `ABC-1 title` write none (ship-deploy `change_id` cases).
 - AC5: incident and visual write `change_id` from the intent; `id: lower-1` and no intent.md write none.
-- AC6: `lessons.py add --change-id TST-1` stores it, `'x; rm'` exits 1 with no row, `mark` copies it into `seen`.
+- AC6: `lessons.py add --change-id TST-1` stores it, `'x; rm'` exits 1 with no row, `mark` copies it into `seen`; `raise` and `round` take it onto the findings table row and the review-round record and refuse a bad one.
 - AC7: the mieruka sync check passed with every record holding `change_id`.
 - AC8: check.mjs and strict validation pass on this one PR.
 - Sign-off:
