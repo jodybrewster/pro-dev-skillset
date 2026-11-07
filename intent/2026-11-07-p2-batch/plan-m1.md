@@ -19,7 +19,7 @@ A and B both bump `metadata.version` in `.claude-plugin/marketplace.json`, so th
 - `plugins/pro-quality/skills/constraints/SKILL.md` (modified): the proof step and the `### Not enforced` heading.
 - `plugins/pro-quality/.claude-plugin/plugin.json`, `plugins/pro-quality/.codex-plugin/plugin.json` (modified): 0.19.0 to 0.20.0.
 - `.claude-plugin/marketplace.json` (modified): the two plugin versions and `metadata.version`, once per PR.
-- `.github/workflows/validate.yml` (modified): the `hooks-macos` job.
+- `.github/workflows/hooks-macos.yml` (new): the path-filtered `hooks-macos` job; `validate.yml` is unchanged (the job moved out during review, see Departures).
 - `docs/enforce-mode.md` (modified): a row for the stale-Done check under `plan-sync`.
 - `docs/factory.md` (modified): the section rule for the level and the ancestor rule for `record`.
 - `docs/roadmap.md` (modified): items 46 to 49 ticked with their PR, in the PR that lands each.
@@ -135,6 +135,10 @@ An empty section tells the reviewer the diff follows the plan.
   `tests/mieruka-sync.mjs` records a merged state in a fixture with no origin, so its fixture gains a bare origin, pushed and fetched; `tests/factory.mjs` case m7 mirrors it.
   That check also failed earlier, at the deploy writer, since `ship.py deployed` requires a deploy time; the fixture now passes `--deployed-at`.
 - Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
+- Steps 8 and 9 (PR C): the job timeout is 20 minutes, not 10; the first run timed out at 10 with every check passing because `check.mjs` takes about 9.5 minutes on `macos-latest`. N1 is restated in `spec-m1.md`.
+- Steps 8 and 9 (PR C): review found the job would bill about 100 macOS minutes per push on a private repo; it moved to its own workflow `hooks-macos.yml` with a paths filter and a concurrency group, so it runs only when hooks or tests change and cannot be a required check. The maintainer approved that trade on 2026-11-07 over running it on every push. R12 and R13 are restated in `spec-m1.md`.
+- Step 8 (PR C): a step asserts the Python is 3.9 so a changed runner image fails the job instead of passing on another Python.
+- Step 8 (PR C): `macos-latest` puts Homebrew Python 3.15 first on `PATH`, so a step puts `/usr/bin/python3` (3.9.6) first; on 3.9 the codex-run check skips its `.toml` cases for want of `tomllib`.
 
 ## Noticed but not touched
 

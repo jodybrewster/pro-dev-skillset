@@ -44,12 +44,12 @@ Confirmed on 2026-11-07:
 - R9. A plan with no `Done as of` line behaves exactly as today.
 - R10. `/constraints` gains a step before it writes an "Enforced with numbers" row: run the check against a fixture that breaks the rule and against a clean control; write the row only when the first exits non-zero and the second exits 0 (intent: "proves each check on a known violation and a clean control").
 - R11. A check that exits 0 on the violation is listed under a `### Not enforced` heading with the command and the two exit codes, never as a row.
-- R12. `.github/workflows/validate.yml` gains a job `hooks-macos` on `macos-latest` that runs `node tests/check.mjs` with the system `python3` and no Claude CLI install.
-- R13. The job is required for the pull-request event like the existing job; a failure on macOS fails the PR.
+- R12. A workflow `.github/workflows/hooks-macos.yml` runs a job `hooks-macos` on `macos-latest` with `node tests/check.mjs` on the system `python3` and no Claude CLI install, only when a hook script, a hook test or the workflow changes (restated on 2026-11-07: macOS minutes bill at ten times the Linux rate on a private repo).
+- R13. Whenever the job runs on a pull request its failure fails the PR; it is not a required status check, because a path-filtered job never reports on a docs-only PR (restated on 2026-11-07).
 
 ### Non-functional
 
-- N1. The macOS job finishes in under ten minutes.
+- N1. The macOS job finishes in under twenty minutes (restated on 2026-11-07 from ten: `node tests/check.mjs` alone takes about nine and a half minutes on `macos-latest`).
 - N2. Each plugin change bumps its version in both manifests and the marketplace entry, plus `metadata.version`, in the same commit.
 - N3. `plan-sync.py` reads only the plan files and `git` output; it writes nothing.
 
@@ -65,7 +65,7 @@ Confirmed on 2026-11-07:
 ### Boundaries
 
 Always: edit the four files named, add behavior cases under `tests/` for each hook change, bump versions.
-Ask first: changing a stop-list word, adding a scanner, making the macOS job optional.
+Ask first: changing a stop-list word, adding a scanner. The macOS job being path-filtered and not a required check was asked and approved on 2026-11-07.
 Never: lower a recorded level, write a `merged` record for a sha off the base, block in warn mode.
 
 ## Design
