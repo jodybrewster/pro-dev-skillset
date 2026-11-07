@@ -209,6 +209,21 @@ Within a tier, items are in the order to build them.
 
 ## The ranked list
 
+Items 32 to 54 were added on 2026-11-07 from a comparison with [super-board](https://github.com/EricTechPro/super-board) (local clone `../super-board`, commit `d0b7d5a`, release 3.3.0) and with agent-skills from `eb07f19` to `301b02b` (release 0.6.15 and later merges).
+Their detail is under [Items 32 to 54](#items-32-to-54).
+
+### Need
+
+The tiers rank where an item fires; this rates how much this repo needs each open item now, given the retest of 2026-11-04 and the enforce decision due 2026-11-13.
+
+- High: 32, 33, 40, 35, 36, 37, 38 and 39.
+  The first three are open safety holes, each one file.
+  The rest are the retest findings that kept a card from Done or let a weaker review through, so they come before the board rerun.
+- Medium: 34, 43, 41, 42, 47, 46, 45, 22, 48 and 49.
+  These close the remaining guard gaps, make review and test-gap quality less dependent on the model and make factory runs recoverable and honest about Done.
+- Low: 44, 50, 51, 52, 53, 54, 16, 17, 19, 20, 21, 23, 28, 30 and 31.
+  Polish, or work that pays off only past one person, with several intents running at once or once CI holds the gate.
+
 ### P0: every edit and every PR
 
 - [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
@@ -217,6 +232,9 @@ Within a tier, items are in the order to build them.
 - [x] 4. Risk classifier and approval tiers (M, pro-ship): shipped in #88 as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
 - [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
+- [ ] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core)
+- [ ] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core)
+- [ ] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security)
 
 ### P1: every feature through the loop plus safety
 
@@ -228,6 +246,15 @@ Within a tier, items are in the order to build them.
 - [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/spec.md), intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
 - [x] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94), built in [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99)
 - [x] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95), built in [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103)
+- [ ] 35. Reviewer memory: grade each earlier finding fixed, not fixed or no longer applies at the new head before the fresh pass, then review merge-base to head instead of the first and last uncovered commit (M, pro-ai-sdlc, pro-ship)
+- [ ] 36. The reviewer's model goes into the review record and the pr-check stamp; `/ship` and `factory verify` refuse a review that did not run on Opus (S-M, pro-ship, pro-ai-sdlc)
+- [ ] 37. A human confirmation bound to the PR head, which clears a check left at `confirm` (M, pro-ship)
+- [ ] 38. A readiness check in the `/ship` preflight that rejects a rollback or verify step that is not a runnable command (S, pro-ship)
+- [ ] 39. Validate each finding against the callers, guards and tests that reach the changed code; keep contradicting evidence in the doubt step's review unit (S, pro-quality, pro-ai-sdlc)
+- [ ] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship)
+- [ ] 41. A test-gap ledger in `test-engineer`: each acceptance criterion mapped to an assertion or `none`, exact edge-case values and a step that tests the tests (M, pro-quality)
+- [ ] 42. A retry path for a factory run that errored before opening a PR, with an attempt cap per intent that escalates to level 3 (M, pro-ai-sdlc)
+- [ ] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core)
 
 ### P2: situational, or past one person
 
@@ -239,6 +266,12 @@ Within a tier, items are in the order to build them.
 - [ ] 20. Installed skills declare runnable checks (M, pro-core, stack plugins)
 - [ ] 21. The scaling block and `repo-hygiene` (M, pro-ship)
 - [ ] 22. Reviewer evals from past bugs (M, this repo)
+- [ ] 44. Worktree cleanup that finds merged branches four ways, keeps unmerged work and writes a recovery file before it deletes (M, pro-ai-sdlc)
+- [ ] 45. Verified role identity: check the `gh api user` login against the role map before acting (M, pro-ai-sdlc)
+- [ ] 46. Done means on the base: `factory.py record --state merged` checks the SHA is on the fetched base; plan-sync writes `Done as of <sha>` (S, pro-ai-sdlc)
+- [ ] 47. `factory.py level` scans only added lines for stop-list words (S, pro-ai-sdlc)
+- [ ] 48. A CI matrix with macOS and Python 3.9 for the hook tests (S, this repo)
+- [ ] 49. `/constraints` runs each check against a known violation and a clean control before it calls the check enforced (S, pro-quality)
 
 ### P3: small polish, one batch
 
@@ -249,11 +282,16 @@ Within a tier, items are in the order to build them.
 - [x] 27. An accessibility checklist sidecar (S, pro-design): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
 - [ ] 28. Two `/fix` tweaks (S, pro-core or user scope)
 - [x] 29. Optional capability map in `/spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [ ] 50. The reviewer writes two to four hypotheses from the criteria and the raw diff before it reads the builder's claims (S, pro-ai-sdlc, pro-quality)
+- [ ] 51. TDD: crash and rollback tests go through the real boundary; the red run must fail for the right reason (S, pro-execution)
+- [ ] 52. QA evidence rules: `not captured` plus a reason instead of a blank; no rounding a failing contrast ratio up (S, pro-testing, pro-design)
 
 ### Later
 
 - [ ] 30. Domain skills: deprecation and migration, observability, API design, performance, context engineering
 - [ ] 31. Release, flags, staged rollout, rollback, merge queue, two-person approval, skeptic pass
+- [ ] 53. A duplicate and overlap check before a factory run, once several intents run at once (S-M, pro-ai-sdlc)
+- [ ] 54. Finding collection from Sentry and PostHog with one verifier per candidate (L, its own intent)
 
 ## How the items group into intents
 
@@ -265,6 +303,9 @@ Within a tier, items are in the order to build them.
 - Intent B, the rest of pro-ship: 15, 16, 21.
 - Specialist agents (intent already drafted): 18, plus 10 if the verifier lens is not enough.
 - Single items: 12, 19, 20, 22, 23, 28.
+- Guard hardening: 32, 33, 34 and 43, with a row each in [docs/enforce-mode.md](./enforce-mode.md) so they join the warn period.
+- Reaching Done: 35 to 39 and 46, before the board rerun in [Now](#now).
+- Small sync batch: 40, 49, 51 and 52.
 
 ## What's worth doing from agent-skills, by size
 
@@ -494,6 +535,32 @@ Each is a fork with attribution when a project needs it.
 
 Release, feature flags, staged rollout, rollback, a merge queue, two-person approval and a skeptic pass that tries to refute each finding.
 Source: the pro-ship brainstorm, "Later" and "Built to scale up".
+
+### Items 32 to 54
+
+Paths in this section are in super-board unless they name agent-skills or this repo.
+Both upstreams are MIT; an adapted file keeps a footer and a row in [docs/licenses.md](./licenses.md).
+Ported guards run under our warn and enforce modes instead of super-board's plain deny.
+
+- 32: `hooks/guard-protected-push.py` parses refspecs; this repo's `plugins/pro-core/scripts/git-safe.py` matches them by regex and lets `--delete` through.
+- 33: `hooks/guard-secrets.py` and `scripts/super-board-env-check.sh`; `.env.example` stays readable and the guard fails open on its own errors.
+- 34: `hooks/guard-key-literals.py`; reuse the key patterns in `incident.py` and check it does not double-deny with `push-gate`.
+- 35: `skills/super-review/SKILL.md` "Review remembers" and step 3b of `skills/super-board/references/run.md`; our reviewer stays blind to earlier reasoning and a separate step checks the recorded findings at the new head. Fixes the retest finding where a fixed finding came back as Important and `/ship` reviewed the wrong range.
+- 36: the retest's Opus-to-Sonnet override passed with no gate; `reviewer.md` sets `model: opus` only in frontmatter.
+- 37: `scripts/super-board-approval.py`: only a later reply from a user with write access counts, a label never does and the merge gate re-reads it before merging.
+- 38: `scripts/super-board-verification-ready.py` halts before dispatch and keeps state; it would have caught the prose rollback steps that stopped the retest.
+- 39: agent-skills #736 and #754 (`353ae84`, `c55b842`) in `code-reviewer.md`, `reviewer.md` and `doubt-driven-development`.
+- 40: agent-skills #718 (`30187c1`): `git diff --cached -i -G'password|secret|api_key|token' --name-only` in `plugins/pro-ship/skills/ship/references/security-checklist.md`.
+- 41: `skills/super-qa/SKILL.md`, the test-gap check; Opus found two high test gaps in the retest that Sonnet runs missed.
+- 42: `run.md` caps rebuilds per root-cause hash and sweeps stranded cards; `factory.py` resumes only when a build or brief PR exists.
+- 43: `hooks/guard-delete-outside.py`; `git-safe.py` blocks only `rm -rf` of `/`, `~` and `$HOME`.
+- 44: `hooks/cleanup-wt.py`, run at session start only when a base tip moved.
+- 49: agent-skills #694 (`ba3d99e`); semgrep and axe can exit 0 on findings. Port its `quality-gate.mjs` only if `/constraints` gains a tool table.
+- 51: agent-skills #750 (`2b14012`) and `skills/super-qa/references/iteration-preamble.md`.
+- 52: `skills/super-qa/SKILL.md` evidence rules and agent-skills #733 (`57bfe5d`).
+
+Not taken from super-board: the GitHub Projects board machinery (waves, card claims, quota guard, merge lock), model ladders and the router, hooks merged into `.claude/settings.json` (breaks the hook-loading law), `eval` of config commands in its merge gate, `ui-refine-loop` (about 2M tokens for five rounds), its emoji commit format and its `pr-security-review`, a verbatim port of anthropics/claude-code-security-review that `security-architect` in diff mode already covers.
+Not taken from agent-skills 0.6.15: the `simplify-ignore` hook fixes (we skip the hook), the context-capacity note, the eval runner changes, the error-boundary typing and the security and git-workflow description tweaks, since none has a counterpart here.
 
 ## Skipped on purpose
 
