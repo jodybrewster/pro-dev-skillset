@@ -143,6 +143,10 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 9: `/ship` grades before its one turn of specialists, since an unfixed Important row skips the code reviewer's fresh pass; the security review and the test engineer still run that round.
 - Step 9, after the PR review: `/ship` finds `lessons.py` with `pr-check.py find --enabled`, which counts an install only when the plugin settings do not disable it and never counts the repo's own `plugins/` folder (the rule of `verifier_state`, now `plugin_state`).
   It prints `not-installed` for a disabled install, so `/ship` says `grading skipped: pro-ai-sdlc not installed`.
+- Round 2 of the PR review: `find --enabled` has its own helper, `enabled_install`, so the verifier keeps its anti-tamper rule unchanged.
+  It never counts the in-place sibling or the repo's own `plugins/` folder, treats a `false` in the user settings, the project's `.claude/settings.json` or `.claude/settings.local.json` (in the repo or its main checkout) as disabled and keeps plain `find`'s worktree fallback through `main_checkout`.
+- Round 2: `grade` records the head on the table and the `graded:` line counts only the rows graded at that head, so a later round shows its own grades.
+- Round 2: `/review` always prints the `graded:` line second, all zeros on a first review, so `Nothing to fix.` is always third as R26 and ADR-0027 say.
 - Pre-existing, fixed after the PR review: the pro-ship description in `ship/SKILL.md` and both manifests now says `/ship` reviews from the merge base when pr-check missed a commit; `node tests/route-lexical.mjs --min-rank1 70` stays at rank-1 80/98.
 - Step 9: `/ship` also raises the security review's blocking and should-fix findings (as `important` and `nit` with `--pass security`), so a fixed security finding is graded rather than reported again.
 - Step 9: when the base is the empty tree (a first release of the whole history), the review range starts at the empty tree, since `git merge-base` has no answer there.

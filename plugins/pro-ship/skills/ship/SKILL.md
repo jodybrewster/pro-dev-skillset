@@ -121,7 +121,7 @@ The review range is `<git merge-base base head>..<head>` as full shas; when the 
 A range that starts at the first uncovered commit would stop before a fix in a covered PR, so the range always starts at the merge base.
 
 1. Find the ledger script: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pr-check.py" find --enabled pro-ai-sdlc lessons.py`.
-   `--enabled` counts only an install that the plugin settings do not disable and never the repo's own `plugins/` folder.
+   `--enabled` counts only an install record that no user, project or local settings file disables; a copy beside pro-ship or in the repo's own `plugins/` folder never counts.
    When it prints `not-installed`, say `grading skipped: pro-ai-sdlc not installed` and go on to the specialists, which run the fresh pass alone with nothing raised or recorded.
    Otherwise call the path it printed `LESSONS`.
 2. The findings table of a release is keyed by the ref `ship-<first 12 of the merge base>`, so every `/ship` run on the same release shares one table.

@@ -103,8 +103,10 @@ Open the report with that total line, exactly in this form:
 important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>
 ```
 
-When this round graded rows, the second line is the script's grade line, `graded: fixed <n> not fixed <n> no longer applies <n>`, followed by one line per graded row.
-When important and nits are both zero, the next line is "Nothing to fix."
+The second line is always the script's grade line, `graded: fixed <n> not fixed <n> no longer applies <n>`, which counts this round's grades only.
+On a first review with no table rows it reads `graded: fixed 0 not fixed 0 no longer applies 0`.
+When important and nits are both zero, the third line is "Nothing to fix."
+When this round graded rows, one line per graded row follows.
 When the fresh pass was skipped, the total counts the graded rows alone and the report ends with the unfixed rows under their ids and the `fresh pass skipped` line.
 Otherwise rank findings most severe first, under Important and then Nits, each with its id.
 Each one names its pass, severity (Important or nit), file and line, a one-sentence claim and a concrete failure scenario.
