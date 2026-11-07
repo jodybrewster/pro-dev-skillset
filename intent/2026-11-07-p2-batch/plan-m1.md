@@ -1,7 +1,7 @@
 # Plan m1: the small batch
 
 Built from `spec-m1.md` (commit 1b96079) and `intent.md` in this folder.
-Status: draft.
+Status: approved.
 Approver: the engineer; no lead needed, the blast radius is two scripts, one skill and one workflow, each with behavior cases.
 Dated: 2026-11-07.
 
