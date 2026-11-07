@@ -18,12 +18,12 @@ Related: [review-routes-back](../2026-11-07-review-routes-back/intent.md), [p2-b
 
 ## Problem
 
-A change in the loop is known by a folder name, `intent/<date>-<slug>/`, and nothing else.
+A change in the loop is known by a folder name, `intent/<date>-<slug>/`; nothing else names it.
 Its branch, its commits, its pull requests, its pr-check stamp, its factory and deploy records and its card in mieruka each name it differently or not at all.
 Tracing one change from an idea to a deploy means matching slugs by eye across a dozen places.
 On the retest of 2026-11-04 four pull requests, two intents and a release had to be lined up by hand to see what had reached Done.
-Today's m1 build opened three pull requests for one plan, and the only thing tying them together was prose in their bodies.
-Two sessions in one checkout landed spec commits on each other's branches, and nothing in a commit subject said which change it belonged to.
+Today's m1 build opened three pull requests for one plan; the only thing tying them together was prose in their bodies.
+Two sessions in one checkout landed spec commits on each other's branches; nothing in a commit subject said which change it belonged to.
 
 ## Proposed outcome
 
@@ -31,14 +31,14 @@ Each repo declares a shortcode once, in a tracked `intent/project.json` (`{"shor
 Every change has an id, `<shortcode>-<n>`, allocated when its intent is written and never reused.
 The id appears in every artifact of the change:
 
-- the intent folder for a new change, `intent/PDS-50-slug/`, and an `id:` line in the frontmatter of `intent.md`, `spec.md` and `plan.md`;
+- the intent folder for a new change, `intent/PDS-50-slug/`, plus an `id:` line in the frontmatter of `intent.md`, `spec.md` and `plan.md`;
 - the branch for each stage, `PDS-50/spec`, `PDS-50/plan`, `PDS-50/build-m1`;
-- the first words of every commit subject, `PDS-50: ...`, and of every pull request title;
+- the first words of every commit subject, `PDS-50: ...`, plus every pull request title;
 - the pr-check stamp, the factory record and the deploy record, as `change_id`, which mieruka reads to put a card and its evidence together;
 - every review finding, so a finding can be traced to the change it was raised on and to the round that closed it;
 - the roadmap row and any ADR the change produced.
 
-`/intent` allocates the next number from the ids already present on `origin/main` and on every remote branch, so two sessions writing intents at the same time do not collide, and a `check.mjs` check fails on a duplicate or missing id.
+`/intent` allocates the next number from the ids already present on `origin/main` and on every remote branch, so two sessions writing intents at the same time do not collide; a `check.mjs` check fails on a duplicate or missing id.
 The 49 existing intent folders keep their names and gain an `id:` line in creation order, PDS-1 to PDS-49, so no link in the docs, the roadmap or the ADRs breaks.
 A hook warns when a commit on a change branch lacks the id, in warn mode first.
 
