@@ -3,6 +3,7 @@ source: planning-session
 kind: bug
 status: accepted
 risk: low
+level: 2
 outcome: O6
 opportunity: the independent review of the merged PR 51 found a release that re-resolves nothing, a verify loop that passes on failure, an Apache-2.0 obligation unmet and a handful of nits
 created: 2026-10-16T18:00:00-04:00
