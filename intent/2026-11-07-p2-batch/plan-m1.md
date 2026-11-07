@@ -136,7 +136,7 @@ An empty section tells the reviewer the diff follows the plan.
   That check also failed earlier, at the deploy writer, since `ship.py deployed` requires a deploy time; the fixture now passes `--deployed-at`.
 - Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
 - Steps 8 and 9 (PR C): the job timeout is 20 minutes, not 10; the first run timed out at 10 with every check passing because `check.mjs` takes about 9.5 minutes on `macos-latest`. N1 is restated in `spec-m1.md`.
-- Steps 8 and 9 (PR C): review found the job would bill about 100 macOS minutes per push on a private repo; it moved to its own workflow `hooks-macos.yml` with a paths filter and a concurrency group, so it runs only when hooks or tests change and cannot be a required check. R12 and R13 are restated in `spec-m1.md`.
+- Steps 8 and 9 (PR C): review found the job would bill about 100 macOS minutes per push on a private repo; it moved to its own workflow `hooks-macos.yml` with a paths filter and a concurrency group, so it runs only when hooks or tests change and cannot be a required check. The maintainer approved that trade on 2026-11-07 over running it on every push. R12 and R13 are restated in `spec-m1.md`.
 - Step 8 (PR C): a step asserts the Python is 3.9 so a changed runner image fails the job instead of passing on another Python.
 - Step 8 (PR C): `macos-latest` puts Homebrew Python 3.15 first on `PATH`, so a step puts `/usr/bin/python3` (3.9.6) first; on 3.9 the codex-run check skips its `.toml` cases for want of `tomllib`.
 

@@ -65,7 +65,7 @@ Confirmed on 2026-11-07:
 ### Boundaries
 
 Always: edit the four files named, add behavior cases under `tests/` for each hook change, bump versions.
-Ask first: changing a stop-list word, adding a scanner, making the macOS job optional.
+Ask first: changing a stop-list word, adding a scanner. The macOS job being path-filtered and not a required check was asked and approved on 2026-11-07.
 Never: lower a recorded level, write a `merged` record for a sha off the base, block in warn mode.
 
 ## Design
