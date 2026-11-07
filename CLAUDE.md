@@ -23,7 +23,8 @@ A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md
 ## How work flows here
 
 The AI-native SDLC playbook is the guide and `pro-ai-sdlc` is where it is encoded, so the whole loop works from Claude Code alone in any repo with the plugin installed (it is opt-in and not part of `pro-dev-starter`).
-Mieruka is only a UI over it and reads the plugin's templates and rules.
+Mieruka runs the same loop too.
+Its board and chat start the plugin's commands and its autorun works accepted intents by itself, reading the plugin's templates and rules.
 
 ### Dogfood it: every change goes through mieruka and the loop
 
