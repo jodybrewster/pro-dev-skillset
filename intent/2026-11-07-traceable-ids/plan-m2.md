@@ -106,4 +106,19 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- One pull request instead of two: the pro-ship change (steps 1 and 2) rides beside pro-ai-sdlc, each plugin with its own bump in both manifests and the marketplace entry and `metadata.version` once.
+  `ship.py` then reads an id before the kind word in the same merge that starts writing ids into subjects, which is what the B-first order was for.
+- `change-id.py` reads its own payload instead of going through `guard.read_payload`, so an empty or broken payload logs `could-not-parse` as R14 says; the shared helper logs `parse-error`.
+- `change-id.py` also follows a `cd <dir>` earlier in the command, besides `git -C`.
+  A session in one checkout that runs `cd <worktree> && git commit` would otherwise read the branch of the wrong checkout and warn on a good commit.
+- `execute-gate.py` asks origin for `refs/heads/<branch>` exactly; the bare name it passed before also matched a longer ref ending in the same words.
+- The pro-ai-sdlc description in both manifests and the marketplace entry now says four hooks and names `change-id`.
+- `tests/factory.mjs` gains the mixed-folder case the m1 review asked for (i10, i11: a date folder and two id folders, `next` takes the date folder first and then the lowest id) and `makePr` takes a `folder` option for the id-intent binding cases.
+- The `docs/enforce-mode.md` counts command lists `change-id` beside the other gates.
+- A plugin eval case, `plugins/pro-ai-sdlc/evals/hook-change-id/` tagged `hook:change-id`, because the `component-coverage` check fails a new hook with no case; it was scaffolded and the hook run on it by hand, the paid eval was not run.
+
 ## Noticed but not touched
+
+- `/incident` still names its branch `incident/<slug>`: spec-m2 sets only its subject, so `/spec` run on that branch commits there and says the branch does not start with `<id>/`.
+- R1's one-line note when `/spec` commits on a branch that does not start with `<id>/` is command prose and has no automated case.
+- Codex runs no Claude hook, so under Codex the subject rule rests on the command prose alone (ADR-0004).

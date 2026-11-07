@@ -97,7 +97,8 @@ Record each doubted step as one `Doubt:` line under `## Done` in plan.md.
 If no path was given, stop and ask for one; `/execute` never guesses which plan to build.
 From the repo root run `git fetch origin`, then `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/execute-gate.py" <plan path>`.
 On exit 1 print its reason and stop; nothing has changed yet.
-On success it prints `slug`, `branch`, `intent_dir` and `default_branch`; use them below.
+On success it prints `slug`, `branch`, `change_id`, `intent_dir` and `default_branch`; use them below.
+`branch` is `<id>/build` for `plan.md` and `<id>/build-<module>` for `plan-<module>.md` when the intent has an `id:` (ADR-0026) and the slug when it has none; `change_id` is that id or null.
 Read the plan in full, then the spec and intent beside it.
 
 ### 2. Make the worktree
@@ -133,6 +134,7 @@ Without the skill, print `classifier could not run: pro-ship not installed` and 
 For each step write or extend the test first, see it fail, then write the code until it passes.
 A step counts as built only when its tests pass and, where the stack has them, type checking and linting pass too (the repo's own commands, found as in the baseline).
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
+When `change_id` is set, every commit subject of the build starts with `<change_id>: ` (`PDS-51: step 3: the parser`), the plan's `## Done` commit included.
 After each step's commit, freeze the test files that commit added or changed with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/test-lock.py" <worktree> <path> [<path> ...]`, each path relative to the worktree.
 A step that only adds failing tests and leaves the code to a later step is built together with that step, so a test has passed once before it is frozen.
 The `protect-tests` hook then flags any later edit to a listed file; new test files stay free.
@@ -218,7 +220,7 @@ Without the skill, print `pr-check could not run: pro-ship not installed` and li
 A pr-check result that is not a pass is listed under "Potential concerns" and opens the pull request as a draft.
 
 Push with `git push -u origin <branch>`.
-Open the pull request with `gh pr create` against `<default_branch>`, its title starting `fix:` when the intent's `kind` is `bug` and `feat:` otherwise, because `ship.py version` reads that word, adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
+Open the pull request with `gh pr create` against `<default_branch>`, its title starting `fix:` when the intent's `kind` is `bug` and `feat:` otherwise, because `ship.py version` reads that word; when `change_id` is set the title starts `<change_id>: fix:` or `<change_id>: feat:`, which `ship.py` reads past, so a squash merge carries the id onto the default branch; adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
 Its body links the intent folder, lists each acceptance criterion with its proof and names any departures.
 The body ends with "Things I didn't touch" (the `## Noticed but not touched` lines and neighboring work left out on purpose) and "Potential concerns" (consented stop-list steps, open doubt findings, what the verifier could not check and risks seen), each "None" when empty.
 When pro-ship is installed and pr-check wrote a stamp, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" marker` (it finds pro-ship's `pr-check.py` in the repo layout or the plugin cache) and append the one line `pr-check.py marker` prints as the last line of the body.

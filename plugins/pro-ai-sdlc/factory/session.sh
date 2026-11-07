@@ -92,9 +92,22 @@ claude -p "/pro-ai-sdlc:auto ${phase} ${dir}" \
     "Bash(gh secret:*)" "Bash(gh release:*)" "Bash(gh pr merge:*)" "Bash(git tag:*)" "Bash(claude:*)" \
   --output-format stream-json --verbose || echo "factory: claude exited $?" >&2
 
-# The PR is found by the branch name the phase is told to use: <slug>-brief for the brief, /execute's
-# own <slug> for the build. There is no fallback to a newer PR; the host checks the same name again.
-case "$phase" in brief) want="${slug}-brief" ;; *) want="$slug" ;; esac
+# The PR is found by the branch name the phase is told to use: <id>/brief or <id>/build when the
+# intent's frontmatter has an id: line (ADR-0026), else <slug>-brief for the brief and /execute's own
+# <slug> for the build. There is no fallback to a newer PR; the host checks the same name again.
+cid=$(awk 'NR == 1 { sub(/\r$/, ""); if ($0 != "---") exit; next }
+  { sub(/\r$/, "") } $0 == "---" { exit }
+  /^id:/ { sub(/^id:[ \t]*/, ""); sub(/[ \t]+$/, ""); print; exit }' "$dir/intent.md" 2>/dev/null || true)
+case "$cid" in
+  [ABCDEFGHIJKLMNOPQRSTUVWXYZ]*-[123456789]*)
+    case "${cid%%-*}" in ?|???????*|*[!ABCDEFGHIJKLMNOPQRSTUVWXYZ]*) cid="" ;; esac
+    case "${cid#*-}" in *[!0123456789]*) cid="" ;; esac
+    ;;
+  *) cid="" ;;
+esac
+if [ -n "$cid" ]; then want="$cid/$phase"
+else case "$phase" in brief) want="${slug}-brief" ;; *) want="$slug" ;; esac
+fi
 pr=$(gh pr list --head "$want" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
 case "$pr" in ''|*[!0-9]*) echo "factory: no pull request found for branch $want" >&2; exit 1 ;; esac
 echo "factory: pr $pr"

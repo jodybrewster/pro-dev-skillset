@@ -91,7 +91,7 @@ Apply corrections and show it again until the person is satisfied.
 Then commit that one file on the current branch:
 
 - `git add intent/<folder>/intent.md`
-- `git commit -m "intent: <slug>"`
+- `git commit -m "<id>: intent: <slug>"` when the folder has an id and `git commit -m "intent: <slug>"` when it does not
 
 The person accepts the intent in person, so no PR is opened for acceptance.
 Never stage other files, never pass `--no-verify` and do not push.

@@ -128,6 +128,41 @@ export function runExecuteCases() {
       r.status === 0 && r.json?.slug === "demo-two" && r.json?.branch === "demo-two" && r.json?.intent_dir === "intent/TST-1-demo-two");
     add("g12 a plan with an id: frontmatter block still reads its Status", "pass", r, r.status === 0);
 
+    // traceable-ids m2 R4, AC2: the build branch is named for the intent's id.
+    const intentMd = (id) => `---\n${id ? `id: ${id}\n` : ""}source: idea\nkind: change\nstatus: accepted\n---\n\n# Intent: x\n`;
+    const modRel = "intent/TST-4-mods/plan-m1.md";
+    write(join(g, "intent/TST-4-mods/intent.md"), intentMd("TST-4"));
+    write(join(g, modRel), `---\nid: TST-4\n---\n\n${PLAN("approved", "<sha>")}`);
+    const oneRel = "intent/TST-5-one/plan.md";
+    write(join(g, "intent/TST-5-one/intent.md"), intentMd("TST-5"));
+    write(join(g, oneRel), PLAN("approved", "<sha>"));
+    const noRel = "intent/2026-01-03-plain/plan-m2.md";
+    write(join(g, "intent/2026-01-03-plain/intent.md"), intentMd(null));
+    write(join(g, noRel), PLAN("approved", "<sha>"));
+    git(g, "add", "-A");
+    git(g, "commit", "-q", "-m", "id intents");
+    r = run("execute-gate.py", [join(g, modRel)], g);
+    add("g13 AC2 plan-m1.md of an intent with id TST-4 builds on TST-4/build-m1", "TST-4/build-m1", r,
+      r.status === 0 && r.json?.branch === "TST-4/build-m1" && r.json?.change_id === "TST-4" && r.json?.slug === "mods");
+    r = run("execute-gate.py", [join(g, oneRel)], g);
+    add("g14 plan.md of an intent with an id builds on <id>/build", "TST-5/build", r, r.status === 0 && r.json?.branch === "TST-5/build" && r.json?.change_id === "TST-5");
+    r = run("execute-gate.py", [join(g, noRel)], g);
+    add("g15 AC2 an intent with no id keeps the slug and a null change_id", "plain", r, r.status === 0 && r.json?.branch === "plain" && r.json?.change_id === null);
+    git(g, "branch", "TST-5/build");
+    r = run("execute-gate.py", [join(g, oneRel)], g);
+    add("g16 a local <id>/build branch stops", "stop", r, r.status === 1 && /TST-5\/build already exists locally/.test(r.stderr));
+    git(g, "branch", "-D", "TST-5/build");
+    git(g, "push", "-q", "origin", "HEAD:refs/heads/TST-4/build-m1");
+    r = run("execute-gate.py", [join(g, modRel)], g);
+    add("g17 an <id>/build-<module> branch on origin stops", "stop", r, r.status === 1 && /TST-4\/build-m1 already exists on origin/.test(r.stderr));
+    git(g, "push", "-q", "origin", "--delete", "TST-4/build-m1");
+    write(join(g, "intent/TST-6-bad/intent.md"), intentMd("tst-6"));
+    write(join(g, "intent/TST-6-bad/plan.md"), PLAN("approved", "<sha>"));
+    git(g, "add", "-A");
+    git(g, "commit", "-q", "-m", "bad id");
+    r = run("execute-gate.py", [join(g, "intent/TST-6-bad/plan.md")], g);
+    add("g18 a malformed id: is read as no id", "bad", r, r.status === 0 && r.json?.branch === "bad" && r.json?.change_id === null);
+
     // ── copy-env.py ──
     const m = repoWithOrigin(sandbox, "app", {
       ".gitignore": ".env\n.env.*\n!.env.example\n.dev.vars\nnode_modules/\n",

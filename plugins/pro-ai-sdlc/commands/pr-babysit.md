@@ -64,6 +64,7 @@ Each round:
 4. Run the project's verify command (from the repo's CLAUDE.md, else `package.json` scripts `check`, `verify`, `validate`, `test`, else Makefile `verify`, `check`, `test`).
    Do not push until it passes.
 5. Commit with a message that says what the round fixed and push with plain `git push`.
+   When the branch name starts with a change id (`PDS-51/build`), the subject starts with that id: `PDS-51: <what the round fixed>`.
    Never pass `--no-verify` and never force-push.
 6. Re-check: wait for the new checks to finish, then start the next round.
 

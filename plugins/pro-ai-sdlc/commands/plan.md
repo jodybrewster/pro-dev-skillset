@@ -1,7 +1,7 @@
 ---
 description: "Write plan.md beside a spec: the files touched, the order of work, the tests that prove it, risks, rejected options and proof of done. Interrogates the plan before it is committed. Usage: /plan [path to spec.md]"
 argument-hint: "[path to spec.md]  (default: the newest spec without a plan.md)"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Glob, Grep, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Glob, Grep, Write
 ---
 
 ## Context
@@ -89,7 +89,8 @@ The level is only ever raised; never edit it down by hand.
 ### 5. Show it and commit after confirmation
 
 Print the plan and iterate until the engineer confirms.
-Then commit that one file: `git add <intent dir>/plan.md` and `git commit -m "plan: <slug>"`.
+Then commit that one file: `git add <intent dir>/plan.md` and `git commit -m "<id>: plan: <slug>"` when the intent's frontmatter has an `id:`, or `git commit -m "plan: <slug>"` when it has none.
+With an `id:` (ADR-0026), commit on the current branch when it starts with `<id>/` (the `<id>/spec` branch of a spec and plan written together); on the default branch run `git switch -c <id>/plan` first; on any other branch commit there and say in one line that it does not start with `<id>/`.
 Never stage other files, never pass `--no-verify` and do not push.
 Check `git status` that nothing else got staged.
 Implement only after the plan is committed.

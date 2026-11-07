@@ -94,7 +94,7 @@ Run these in order and stop at the first failure.
    Re-run it whenever the state changes; it rewrites the same record.
 4. Create a short branch in the main checkout if the current branch is `main` or `master`: `git switch -c incident/<slug>`.
    Never use a worktree for this.
-5. `git add intent/<folder>/incident.md intent/<folder>/intent.md` and `git commit -m "incident: <slug>"`.
+5. `git add intent/<folder>/incident.md intent/<folder>/intent.md` and `git commit -m "<id>: incident: <slug>"` when the folder has an id, or `git commit -m "incident: <slug>"` when it does not.
    Stage only those two files, never pass `--no-verify` and do not push.
 
 ### 5. Report

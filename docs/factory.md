@@ -27,6 +27,7 @@ level 3 ----> level 2 plus the policy owner on flagged concerns and the lead on 
 
 The session proposes and the runner decides.
 A session can only push a branch and open a pull request; the runner on your machine checks the pull request from its own fetch and does every merge.
+The brief pull request comes from `<id>/brief` and the build pull request from `<id>/build` when the intent's frontmatter has an `id:` line ([ADR-0026](./decisions/0026-change-ids.md)) and from `<slug>-brief` and `<slug>` when it has none; `session.sh` looks each one up by that name and the runner raises the run to level 3 when a pull request comes from any other branch.
 Anything unexpected raises the level and stops the run with the reason in the record.
 Deploy is always a person's step.
 

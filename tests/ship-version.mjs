@@ -469,6 +469,19 @@ exec "${realGit}" "$@"
     r = one("removed the export");
     add("commit/no prefix counts as unknown, assumes breaking and asks", "2.0.0, 1.0.1 and a question",
       r.json?.next === "2.0.0" && r.json.next_if_not_breaking === "1.0.1" && r.json.counts.unknown === 1 && r.json.unclassified[0] === "removed the export" && /removed the export/.test(r.json.question), show(r));
+    // traceable-ids m2 R9: one leading change id is read past before the Conventional Commit word.
+    r = one("PDS-51: feat: add x");
+    add("commit/AC1 an id before feat is a feature", "1.1.0", r.json?.next === "1.1.0" && r.json.counts.feature === 1, show(r));
+    r = one("PDS-51: fix(y)!: z");
+    add("commit/AC1 an id before a bang is breaking", "2.0.0", r.json?.next === "2.0.0" && r.json.counts.breaking === 1 && r.json.next_if_not_breaking === null, show(r));
+    r = one("PDS-51: fix: bug");
+    add("commit/an id before fix is a patch", "1.0.1", r.json?.next === "1.0.1" && r.json.counts.fix === 1, show(r));
+    r = one("PDS-51: tidy");
+    add("commit/AC1 an id before no prefix is unknown", "asks", r.json?.counts.unknown === 1 && r.json.next === "2.0.0" && r.json.unclassified[0] === "PDS-51: tidy", show(r));
+    r = one("PDS-51: PDS-52: feat: x");
+    add("commit/only one leading id is read past", "unknown", r.json?.counts.unknown === 1, show(r));
+    r = one("pds-51: feat: x");
+    add("commit/a lowercase id is not an id", "unknown", r.json?.counts.unknown === 1, show(r));
   }
 
   // R10.
