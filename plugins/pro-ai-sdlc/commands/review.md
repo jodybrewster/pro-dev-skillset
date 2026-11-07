@@ -94,7 +94,7 @@ When that row was a nit and the finding is Important, it prints `"severity_raise
 When only a `fixed` or `no longer applies` row matches, it adds a new row with `reopened_from` naming the old one: report it as a regression under the new id.
 Otherwise it prints the new id.
 
-Then run `lessons.py table --ref '<ref>' --tally`.
+Then run `lessons.py table --ref '<ref>' --tally --head <40 hex>` with the round's head.
 Its first line counts every row still `open` or `not fixed` by severity, which after the raises is the round's total: the unfixed graded rows plus the fresh findings.
 Add the fresh pass's Pre-existing and skipped counts to it; Pre-existing findings are not raised.
 Open the report with that total line, exactly in this form:

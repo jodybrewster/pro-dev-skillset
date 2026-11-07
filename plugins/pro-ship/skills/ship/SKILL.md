@@ -180,7 +180,7 @@ With `LESSONS` found, write the round to the table as `/review` does:
    That covers each Important or nit finding of the code reviewer and each blocking or should-fix finding of the security review, the latter as `important` or `nit` with `--pass security`.
    The claim goes on stdin through a heredoc whose delimiter ends in random characters, in your own words as one sentence, never on the command line.
    The class is a kebab-case slug for the kind of mistake.
-2. Print `python3 "$LESSONS" table --ref ship-<first 12 of the merge base> --tally`: its first line counts every row still `open` or `not fixed`, which is the round's total after the raises.
+2. Print `python3 "$LESSONS" table --ref ship-<first 12 of the merge base> --tally --head <head>`: its first line counts every row still `open` or `not fixed`, which is the round's total after the raises.
    Its second line is `graded: fixed <n> not fixed <n> no longer applies <n>`.
    Every Important row it counts is a Blocker under its id.
 3. Close the round with `python3 "$LESSONS" round --ref ship-<first 12 of the merge base> --base <merge base> --head <head> --round <n> --fresh ran|skipped`, where `<n>` is the table's `round` plus one.
