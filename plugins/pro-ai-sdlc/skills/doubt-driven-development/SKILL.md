@@ -50,7 +50,10 @@ Fill the four fields of `handoff.md`.
 Dispatch a fresh subagent with the full text of `doubt-instructions.md` followed by the filled fields and nothing else.
 No claim, no author description, no session summary, no plan excerpt and no earlier findings go in.
 Never fork the session to be the reviewer.
-Name the model and effort at dispatch: Opus at high effort.
+Name the model and effort at dispatch: the model `REVIEW.md` names for this host at high effort.
+Ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host <claude or codex>`, which reads the `## Review model` section from the default branch tip and never from the working tree; with no section it answers `opus` for `claude`.
+Under Codex the host picks the model.
+Name the model you dispatched the reviewer on in the `Doubt:` line.
 Under Codex, start a fresh agent run with the same text.
 
 ### Codex offer
@@ -117,6 +120,6 @@ Never paste reviewer output.
 A step the person declined to doubt is recorded as declined.
 With nothing doubted the line reads `Doubt: none`.
 
-Example: `Doubt: step 3 (plan marker), 2 rounds, Codex ran in round 1; null customer id now rejected before the copy (fixed); row lock held for the whole copy accepted because the table is small; one naming note was noise.`
+Example: `Doubt: step 3 (plan marker), 2 rounds on opus, Codex ran in round 1; null customer id now rejected before the copy (fixed); row lock held for the whole copy accepted because the table is small; one naming note was noise.`
 
 Adapted from agent-skills (skills/doubt-driven-development/SKILL.md at eb07f19, with the evidence rule from c55b842), MIT, Copyright (c) 2025 Addy Osmani.

@@ -126,4 +126,27 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 2: `stamp` reads a reviewer with no `host` as `claude` and refuses any host but `claude` and `codex`: an unknown host cannot skip the rule.
+  A `model` must be a model id of at most 100 letters, digits and `._:/@[]-` characters; the stamp refuses anything else because the marker carries it.
+- Step 2: `model_ok` is null for a reviewer that did not run (`skipped-no-surface`, `not-installed`, `could-not-run`); R8 judges only `done` and `inline`.
+- Step 2: each warn or enforce line also lands in `warn.log` under the gate name `review-model`, which is the evidence the `docs/enforce-mode.md` row reads; a note line for a host with no rule does not.
+- Step 2: the marker of a `claude` model whose id names no family carries the id itself: `/ship` and verify then read it as a mismatch rather than a family.
+- Step 2: the result rule in `docs/pr-check-stamp.md` is renumbered; the model rule is rule 2, after a missing run record and before `pass`.
+- Steps 2 and 7: three new stamp fixtures, `review-model-sonnet-warn.json`, `review-model-none-enforce.json` and `review-model-codex-host.json`, with their `expect.json` rows; `valid-pass.json` and `valid-pass-codex.json` gain `host`, `model` and `model_ok`.
+- Steps 6, 7 and 9: pro-ai-sdlc's copy of the reader is its own module, `scripts/reviewmodel.py`, which `factory.py` and `lessons.py` import, instead of a copy inside `factory.py`.
+  The `review-model` check holds the block in `pr-check.py`, `ship.py` and `reviewmodel.py` byte for byte and runs each copy on `tests/fixtures/review-model/cases.json`.
+- Step 8 (R5): `/review` and the doubt step ask `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host <host>` instead of `pr-check.py review-model` with pro-ship installed and `git show origin/HEAD:REVIEW.md` without it.
+  It prints the same JSON from the same tip with the checked block, needs no pro-ship and leaves no yaml for the session to parse.
+  There is no "pro-ship not installed" path left to report.
+- Step 9: the review-round record also carries `model_ok`, judged by `reviewmodel.py` against the tip, beside R12's `model` and `host`; `--host` defaults to `claude` and a missing `--model` records null and `model_ok` false.
+- Step 6: two markers in the body raise with `more than one pr-check marker`; a marker written before this change passes with the note `the pr-check marker records no reviewer model`.
+  `verify` gains a `notes` list in its JSON, printed as `note:` lines; `run` prints each as a `factory: note,` line on stderr.
+  The tests serve every build PR a body that ends with an Opus marker as `/execute` now writes one; they point `CLAUDE_GUARD_DIR` at the stub folder.
+- Step 4 (R16): `reviewers` in `report.json` is a list of `{agent, status, host, model}`; a reviewer with no host reads as `claude` and a `done` reviewer with no model is a mismatch, as in the stamp.
+  A NO-GO is recorded in enforce too, with the note in its summary.
+- Step 8: a reviewer's closing line names the model it ran on and wins over the dispatch model when the two differ, since the host ran it; the skills say to report the difference.
+
 ## Noticed but not touched
+
+- `/execute`'s `allowed-tools` has no `python3` entry for pro-ship's scripts: `pr-check.py marker` asks once per run as the pr-check steps it follows already do.
+- `pro-security:security-architect` has no closing `model:` line (R6 names the two code reviewers); pr-check and `/ship` record its dispatch model.

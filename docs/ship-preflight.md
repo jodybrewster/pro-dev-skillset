@@ -67,6 +67,7 @@ It holds these keys.
 | `checks` | array | `{section, item, status, evidence}`; `status` is `pass`, `finding` or `confirm` |
 | `legal` | object | see below |
 | `targets` | array | one `{id, kind, env, url, commit, rollback}` per target; `rollback` is `{triggers, steps, rto}` and a GO needs at least one step in every target |
+| `reviewers` | array | optional; one `{agent, status, host, model}` per specialist `/ship` dispatched: `host` is `claude` or `codex` (missing reads as `claude`) and `model` the id it ran on or null |
 
 The `legal` object records the pro-legal review of the range.
 
@@ -83,6 +84,7 @@ A `Hold` verdict makes the report NO-GO.
 When `status` is `done`, `head` must equal the report's `head`, because a review of another commit says nothing about the commit shipped.
 `record` refuses a GO that has blockers, a GO with no target, a GO target with no rollback steps and a `done` legal review whose `head` is another commit.
 It accepts only the verdicts `GO` and `NO-GO`; there is no "GO with acknowledged risks" verdict.
+A `done` reviewer whose model misses its host's rule in `REVIEW.md` on the default branch tip (see "The review model" in [pr-check-stamp.md](./pr-check-stamp.md)) adds `review ran on <model> (<host>)` to the summary; when `mode.review-model` holds `enforce`, `record` refuses a GO with one.
 
 ## The freshness rule
 

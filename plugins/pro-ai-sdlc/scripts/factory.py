@@ -23,8 +23,8 @@ run. run: 0 merged, 3 stopped with the level raised, 2 error, 1 refused before i
 Python 3 standard library only. No model call. Every subprocess is an argv list.
 `run <intent dir>` on a folder whose record shows a build PR that is still open skips the session and
 goes straight to the host checks and the merge (resume).
-Test hooks: FACTORY_DOCKER, FACTORY_GH, FACTORY_RISK_CLASSIFY and FACTORY_FLOOR_GUARD name other
-binaries or scripts; FACTORY_CHECKS_WAIT and FACTORY_CHECKS_POLL set the seconds to wait for PR checks.
+Test hooks: FACTORY_DOCKER, FACTORY_GH, FACTORY_RISK_CLASSIFY, FACTORY_FLOOR_GUARD and FACTORY_PR_CHECK
+name other binaries or scripts; FACTORY_CHECKS_WAIT and FACTORY_CHECKS_POLL set the seconds to wait for PR checks.
 """
 
 from __future__ import annotations
@@ -42,6 +42,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import evidence  # noqa: E402
+import reviewmodel  # noqa: E402
 from evidence import Refuse  # noqa: E402
 
 # An intent folder is named by its date or, since change ids (ADR-0026), by its id: 2026-01-02-slug or PDS-51-slug.
@@ -720,6 +721,27 @@ def find_risk_classify():
     return find_script("FACTORY_RISK_CLASSIFY", "pro-ship", "risk-classify.py")
 
 
+def marker_reasons(root, tip, body):
+    """([(level, reason)], [note]) from the pr-check marker in the build PR's body (spec-m2 R18).
+    A missing marker raises only when pro-ship's pr-check.py is found; a model that misses REVIEW.md's
+    rule on the tip raises only under mode.review-model enforce and is a note in warn."""
+    if not find_script("FACTORY_PR_CHECK", "pro-ship", "pr-check.py"):
+        return [], ["pr-check not installed, reviewer model not checked"]
+    found = reviewmodel.MARKER.findall(body if isinstance(body, str) else "")
+    if not found:
+        return [(2, "no pr-check marker")], []
+    if len(found) > 1:
+        return [(2, "more than one pr-check marker")], []
+    model, host = found[0][3], found[0][4]
+    if not model:
+        return [], ["the pr-check marker records no reviewer model"]
+    rules, _source = reviewmodel.review_rules(root, (tip,))
+    if reviewmodel.model_ok(host, model, rules) is False:
+        why = f"the review ran on {model}, REVIEW.md names {rules.get(host)}"
+        return ([(2, why)], []) if reviewmodel.model_mode() == "enforce" else ([], [why])
+    return [], []
+
+
 def is_test_path(path):
     low = path.lower()
     base = low.rsplit("/", 1)[-1]
@@ -1192,7 +1214,7 @@ def verify(root, phase, folder, rel, pr, token=None, image=None, checks_min=DEFA
         raise Refuse("factory: no origin remote or default branch to compare the PR against")
     head = fetch_pr_head(root, pr)
     view = gh_json(root, ["pr", "view", str(pr), "--json",
-                          "state,baseRefName,headRefOid,isCrossRepository,headRefName,isDraft,author"], token)
+                          "state,baseRefName,headRefOid,isCrossRepository,headRefName,isDraft,author,body"], token)
     reasons = []
     if view.get("headRefOid") != head:
         return {"result": "stop", "level": 2, "head": head, "reasons": ["the PR head moved after it was fetched"], "tier": None}
@@ -1210,16 +1232,19 @@ def verify(root, phase, folder, rel, pr, token=None, image=None, checks_min=DEFA
         raise Refuse("factory: the PR has no changes")
     reasons += binding_reasons(root, phase, folder, view, base, head, token)
     info = {"tier": None, "unread_lines": 0}
+    notes = []
     if phase == "brief":
         reasons += [(2, p) for p in check_brief(root, rel, head, base)]
     else:
         repo_url = repo_url_of(root)
         more, info = check_build(root, rel, head, base, tip, token, pr, image, repo_url, folder, checks_min)
         reasons += more
+        more, notes = marker_reasons(root, tip, view.get("body"))
+        reasons += more
     level = max([lv for lv, _ in reasons] or [1])
     return {"result": "raise" if reasons else "pass", "level": level, "head": head, "base": base,
             "reasons": [t for _, t in reasons], "tier": info.get("tier"), "unread_lines": info.get("unread_lines", 0),
-            "draft": bool(view.get("isDraft"))}
+            "draft": bool(view.get("isDraft")), "notes": notes}
 
 
 def cmd_verify(a):
@@ -1233,6 +1258,9 @@ def cmd_verify(a):
         print(f"verify {a.phase}: pass ({res['head'][:12]})")
     else:
         print(f"verify {a.phase}: raise to level {res['level']} ({'; '.join(res['reasons'])})")
+    if not a.json:
+        for n in res.get("notes", []):
+            print(f"note: {n}")
     return 0 if res["result"] == "pass" else 3
 
 
@@ -1439,6 +1467,8 @@ def run_phases(root, a, token, folder, rel, repo_url, branch, resume_pr=None, sp
             print(f"factory: {phase} pr {pr}", flush=True)
         write_record(root, folder, "verify", **{f"{phase}_pr": pr})
         res = verify(root, phase, folder, rel, pr, token, a.image, a.checks_timeout_min)
+        for n in res.get("notes", []):
+            print(f"factory: note, {n}", file=sys.stderr)
         if res["result"] != "pass":
             raise Stop("stopped", res["level"], "; ".join(res["reasons"]))
         if phase == "build":

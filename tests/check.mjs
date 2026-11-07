@@ -1423,6 +1423,67 @@ checks["stamp-contract"] = () => {
   return { failures, warnings };
 };
 
+// The reviewer's model (intent/2026-11-07-reaching-done spec-m2): pr-check.py and ship.py in pro-ship
+// and reviewmodel.py in pro-ai-sdlc each carry the block that reads `## Review model`, because plugins
+// do not import each other. The copies must be byte for byte the same and each must give the answers
+// tests/fixtures/review-model/cases.json records. factory.py and lessons.py import reviewmodel.py.
+checks["review-model"] = () => {
+  const failures = [], warnings = [];
+  const copies = ["plugins/pro-ship/scripts/pr-check.py", "plugins/pro-ship/scripts/ship.py", "plugins/pro-ai-sdlc/scripts/reviewmodel.py"];
+  const blocks = copies.map((f) => {
+    const text = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : null;
+    if (text === null) { failures.push(`${f} missing`); return null; }
+    const m = text.match(/^# --- review model: begin[^\n]*\n[\s\S]*?^# --- review model: end[^\n]*$/m);
+    if (!m) failures.push(`${f} has no review model block between its begin and end lines`);
+    return m ? m[0] : null;
+  });
+  for (let i = 1; i < copies.length; i++)
+    if (blocks[0] !== null && blocks[i] !== null && blocks[i] !== blocks[0]) failures.push(`${copies[i]}: the review model block differs from ${copies[0]}; change every copy in one commit`);
+  for (const f of ["plugins/pro-ai-sdlc/scripts/factory.py", "plugins/pro-ai-sdlc/scripts/lessons.py"]) {
+    const text = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
+    if (!/^import reviewmodel\b/m.test(text)) failures.push(`${f} does not import reviewmodel`);
+  }
+  if (spawnSync("python3", ["--version"], { stdio: "ignore" }).error) { warnings.push("review-model fixture run skipped - python3 not found"); return { failures, warnings }; }
+  const harness = `
+import importlib.util, json, os, sys, tempfile
+cases = json.load(open(sys.argv[1]))
+out = {}
+for path in sys.argv[2:]:
+    spec = importlib.util.spec_from_file_location("rm_copy_%d" % len(out), path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, os.path.dirname(path))
+    spec.loader.exec_module(mod)
+    res = {"family": [mod.family(m) for m, _ in cases["family"]],
+           "parse": [mod.parse_review_model(t) for t, _ in cases["parse"]],
+           "model_ok": [mod.model_ok(h, m, r) for h, m, r, _ in cases["model_ok"]],
+           "mode": []}
+    for content, _ in cases["mode"]:
+        with tempfile.TemporaryDirectory() as d:
+            if content is not None:
+                open(os.path.join(d, "mode.review-model"), "w").write(content)
+            os.environ["CLAUDE_GUARD_DIR"] = d
+            res["mode"].append(mod.model_mode())
+    out[path] = res
+print(json.dumps(out))
+`;
+  const fixture = join(ROOT, "tests", "fixtures", "review-model", "cases.json");
+  const cases = JSON.parse(readFileSync(fixture, "utf8"));
+  const r = spawnSync("python3", ["-I", "-c", harness, fixture, ...copies.map((f) => join(ROOT, f))], { encoding: "utf8", env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
+  let got = null;
+  try { got = JSON.parse(r.stdout); } catch { failures.push(`the review model fixture run printed no JSON: ${(r.stderr || "").slice(-300)}`); return { failures, warnings }; }
+  for (const f of copies) {
+    const res = got[join(ROOT, f)];
+    for (const kind of ["family", "parse", "model_ok", "mode"]) {
+      cases[kind].forEach((c, i) => {
+        const want = c[c.length - 1];
+        if (JSON.stringify(res[kind][i]) !== JSON.stringify(want))
+          failures.push(`${f}: ${kind} case ${i + 1} gave ${JSON.stringify(res[kind][i])}, the fixture says ${JSON.stringify(want)}`);
+      });
+    }
+  }
+  return { failures, warnings };
+};
+
 // One preflight record, many readers: the fixtures, expect.json, docs/ship-preflight.md and
 // `ship.py check` must agree. Every cause the page names needs a fixture (missing has none,
 // because the runner writes no file; tests/ship-preflight.mjs has a case for it).
@@ -1589,6 +1650,23 @@ checks["sdlc-contract"] = () => {
   const shipSkill = join(ROOT, "plugins", "pro-ship", "skills", "ship", "SKILL.md");
   const shipT = existsSync(shipSkill) ? readFileSync(shipSkill, "utf8") : "";
   for (const a of ["grading skipped: pro-ai-sdlc not installed", "ship-<first 12 of the merge base>", "pr-check.py\" find --enabled pro-ai-sdlc lessons.py", "<git merge-base base head>..<head>", "Never pass the table to the fresh pass", "never runs the code review itself"])
+    if (!shipT.includes(a)) failures.push(`pro-ship: skills/ship/SKILL.md lacks the anchor "${a}"`);
+  // the reviewer's model (intent/2026-11-07-reaching-done, spec-m2 R5, R6, R12, R17).
+  const modelLine = "`model: <the model id you run on>  host: <claude or codex>`";
+  for (const f of ["agents/reviewer.md", ".codex-plugin/agents/reviewer.toml"]) need(f, [modelLine]);
+  for (const f of ["plugins/pro-quality/agents/code-reviewer.md", "plugins/pro-quality/.codex-plugin/agents/code-reviewer.toml"]) {
+    const body = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
+    if (!body.includes(modelLine)) failures.push(`pro-quality: ${f} lacks the closing model line ${modelLine}`);
+  }
+  need("commands/execute.md", ["`python3 \"$CHECK\" marker`", "append the one line `pr-check.py marker` prints as the last line of the body"]);
+  need("commands/review.md", ["scripts/reviewmodel.py\" --host", "--fresh ran|skipped --model <id> --host claude|codex", "Never pass the required model in place of the one that ran"]);
+  need("skills/doubt-driven-development/SKILL.md", ["scripts/reviewmodel.py\" --host"]);
+  need("templates/REVIEW.md", ["## Review model"]);
+  const prcSkill = join(ROOT, "plugins", "pro-ship", "skills", "pr-check", "SKILL.md");
+  const prcT = existsSync(prcSkill) ? readFileSync(prcSkill, "utf8") : "";
+  for (const a of ["review-model --host", "`range`, `host` and `model`", "Never record the required model in place of the one that ran"])
+    if (!prcT.includes(a)) failures.push(`pro-ship: skills/pr-check/SKILL.md lacks the anchor "${a}"`);
+  for (const a of ["review-model --host", "`model_mismatch`", "whose `result` is `pass`", "\"reviewers\": [{"])
     if (!shipT.includes(a)) failures.push(`pro-ship: skills/ship/SKILL.md lacks the anchor "${a}"`);
   const babyC = read("commands/pr-babysit.md") ?? "";
   if (!babyC.includes("three rounds")) failures.push('pro-ai-sdlc: commands/pr-babysit.md does not say "three rounds"');

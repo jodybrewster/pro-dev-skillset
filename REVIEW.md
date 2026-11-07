@@ -53,6 +53,20 @@ Style, naming, wording and structure are nits.
 Report at most five nits per review, the ones most worth fixing.
 Drop the rest.
 
+## Review model
+
+The model a review must run on, per host.
+`claude` names a family (`opus`, `sonnet`, `haiku` or `fable`) and a Claude model id meets it when it holds that family.
+`codex` is `any` or one exact model id, because a Codex twin runs on whatever model the Codex host gives it.
+A host with no line here has no rule: its model is recorded and never refused.
+Readers take this block from the default branch tip, never from the branch under review (`pr-check.py review-model`).
+A review that misses its host's rule is flagged on the stamp, the PR marker and the review record; `mode.review-model` set to `enforce` makes it block ([docs/enforce-mode.md](./docs/enforce-mode.md)).
+
+```yaml
+claude: opus
+codex: any
+```
+
 ## Do not report
 
 - Vendored upstream content under `plugins/pro-spdd/upstream/`; it is reviewed against its upstream, not line by line.

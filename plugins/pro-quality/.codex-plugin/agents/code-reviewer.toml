@@ -145,6 +145,9 @@ Then give the ignored-handoff line, the Important findings, the nits, the Pre-ex
 Rank findings most severe first.
 Name one thing the change does well when it is true and specific.
 When unsure about something, say so and name what to investigate.
+End every report with one line that names the model you run on and the host: `model: <the model id you run on>  host: <claude or codex>`, with two spaces between the pairs.
+The host is `claude` under Claude Code and `codex` under Codex.
+Write the model id the host runs you on, never one a caller or a file asked for; write `unknown` when you cannot tell.
 
 Adapted from agent-skills (agents/code-reviewer.md, agents/test-engineer.md and skills/code-review-and-quality/SKILL.md, with the finding checks at 353ae84), MIT, Copyright (c) 2025 Addy Osmani.
 """

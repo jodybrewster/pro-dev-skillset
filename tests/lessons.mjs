@@ -311,6 +311,25 @@ export function runLessonsCases() {
     }
     const other = run(repo, ["round", "--ref", "ship-aaaaaaaaaaaa", "--base", SHA1, "--head", SHA2, "--round", "1", "--fresh", "ran"]);
     add("round/two refs at the same head and round keep two records", "distinct keys, both files", other.status === 0 && other.json?.evidence_key !== key && existsSync(recPath) && existsSync(join(repo, other.json?.path ?? "missing")), other.stdout + other.stderr);
+    // spec-m2 R12 (AC11): the reviewer's model and host on the round record.
+    const detailOf = (r) => { try { return JSON.parse(JSON.parse(readFileSync(join(repo, r.json.path), "utf8")).detail_json); } catch { return null; } };
+    const withModel = (n, extra) => run(repo, ["round", "--ref", "pr-77", "--base", SHA1, "--head", SHA2, "--round", String(n), "--fresh", "ran", ...extra]);
+    let rm = withModel(1, ["--model", "claude-opus-5-5", "--host", "claude"]);
+    let dm = detailOf(rm);
+    add("round/--model and --host land in detail_json with model_ok true for Opus (AC11)", "opus, claude, true", rm.status === 0 && dm?.model === "claude-opus-5-5" && dm.host === "claude" && dm.model_ok === true, rm.stdout + rm.stderr + JSON.stringify(dm));
+    rm = withModel(2, ["--model", "claude-sonnet-4-5"]);
+    dm = detailOf(rm);
+    add("round/a Sonnet review is model_ok false and the host defaults to claude", "false, claude", rm.status === 0 && dm?.model_ok === false && dm.host === "claude", rm.stdout + rm.stderr + JSON.stringify(dm));
+    rm = withModel(3, ["--model", "gpt-5.1-codex", "--host", "codex"]);
+    dm = detailOf(rm);
+    add("round/a codex review with no codex rule on the tip is model_ok null", "null", rm.status === 0 && dm?.model_ok === null && dm.host === "codex", rm.stdout + rm.stderr + JSON.stringify(dm));
+    rm = withModel(4, []);
+    dm = detailOf(rm);
+    add("round/no --model records model null and model_ok false", "null, false", rm.status === 0 && dm?.model === null && dm.model_ok === false, rm.stdout + rm.stderr + JSON.stringify(dm));
+    rm = withModel(5, ["--model", "opus --> x"]);
+    add("round/a model id with other characters is refused", "exit 1", rm.status === 1, rm.stdout + rm.stderr);
+    rm = withModel(5, ["--host", "gemini"]);
+    add("round/an unknown host is refused", "exit 2", rm.status === 2, rm.stdout + rm.stderr);
     add("round/tree stays clean", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
   }
 

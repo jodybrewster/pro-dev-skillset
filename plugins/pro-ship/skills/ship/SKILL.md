@@ -106,7 +106,10 @@ With `factory_repo` true, anything but `yes` is a Blocker the person can accept 
 A commit is covered only when its PR body holds exactly one `pr-check` marker with `result=pass` whose `head` matches and the PR is from this repo, written by the current gh user or by an owner, member or collaborator.
 A marker on a fork PR or from an outside contributor counts for nothing, because the PR author writes the body.
 Everything the script cannot prove is uncovered.
-Print the covered PR numbers and list each uncovered commit with its subject.
+It also prints `model_mismatch`: each PR whose marker says the review ran on a model that misses the `## Review model` rule of `REVIEW.md` on the default branch tip.
+`model_unrecorded` lists each PR whose marker was written before markers carried a model.
+Under `mode.review-model` set to enforce a `model_mismatch` PR's commits are uncovered and reviewed again; in warn they stay covered and the report lists the PR with its `review ran on <model> (<host>)` reason.
+Print the covered PR numbers, both model lists and each uncovered commit with its subject.
 When every commit is covered, no reviewer runs and the report says so with the PR numbers.
 
 ## One turn of specialists
@@ -138,6 +141,10 @@ When `table` printed any row, this session has read the table and never runs the
 
 ### Dispatch
 
+First ask which model the reviews must run on: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pr-check.py" review-model --host <claude or codex>` prints `{host, required, source}` from `REVIEW.md` on the default branch tip, never the working tree.
+The host is `claude` under Claude Code and `codex` under Codex.
+Under Claude Code name `required` as the model of the code and security reviewers at dispatch (for example `opus`), never a cheaper one; under Codex the host picks the model.
+
 Dispatch, in one turn so they run in parallel:
 
 - `pro-quality:code-reviewer` on the review range, when any commit is uncovered and step 5 above did not skip it.
@@ -155,6 +162,8 @@ Never add a summary of the work, the session's reasoning or earlier findings.
 None of the specialists calls another.
 Choose from the agents the host offers.
 When one is not installed, record it as `not installed` in the report and go on; when the host cannot dispatch subagents, say so, apply that specialist's own instructions in this session and note that the context was not fresh.
+Record each specialist you dispatched under `reviewers` in report.json with its `host` and the `model` it ran on: the code reviewer's closing `model: <id>  host: <host>` line or else the model you dispatched it on; the others take their dispatch model.
+Never write the required model in place of the one that ran.
 
 Read the results:
 
@@ -202,7 +211,8 @@ Each item ends as `pass`, `finding` or `confirm` with its evidence.
 Never write `pass` for an item you did not check.
 Anything the checks could not read is `confirm` and says what the person must look at.
 
-The repo's own checks (build, lint, typecheck, tests) are not run again when a valid `pr-check` stamp for HEAD holds them.
+The repo's own checks (build, lint, typecheck, tests) are not run again only when `.pro-dev/ship/pr-check.json` is a stamp for HEAD whose `result` is `pass`.
+A stamp that is `incomplete` or `fail`, for any reason including a reviewer on the wrong model, holds nothing: run the checks.
 Otherwise run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pr-check.py" discover` and each step with `run --step <name>`.
 A failing check is a Blocker.
 
@@ -260,12 +270,14 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
   "checks": [{"section": "security", "item": "dependency audit", "status": "pass|finding|confirm", "evidence": ""}],
   "legal": {"status": "done|not-installed|could-not-run", "verdict": null, "base": null, "head": null, "blocking": 0, "required": 0},
   "targets": [{"id": "", "kind": "", "env": null, "url": null, "commit": "<sha>", "rollback": {"triggers": [], "steps": [], "rto": ""}}],
+  "reviewers": [{"agent": "pro-quality:code-reviewer", "status": "done|inline|not-installed|could-not-run", "host": "claude|codex", "model": "<id or null>"}],
   "report_md": "<the full Markdown report>"
 }
 ```
 
 3. `python3 "$SHIP" record .pro-dev/ship/report.json` writes the record and the report.
    It refuses a GO with a Blocker, a GO with no target, a target without rollback steps, a done legal review whose `head` is not HEAD and a dirty tree.
+   A `done` reviewer whose model misses its host's rule adds `review ran on <model> (<host>)` to the summary in warn; under `mode.review-model` enforce the GO is refused until that review runs again on the model `REVIEW.md` names.
 4. Print the verdict, the paths it wrote and, when one was written, the mieruka copy.
    Say "run /pro-ship:ship again after any new commit".
    After a GO, add one line: once the deploy has happened, run `/pro-ship:deployed` to record it and walk the post-deploy checks.

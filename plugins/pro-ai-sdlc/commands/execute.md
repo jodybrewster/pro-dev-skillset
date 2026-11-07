@@ -221,6 +221,9 @@ Push with `git push -u origin <branch>`.
 Open the pull request with `gh pr create` against `<default_branch>`, its title starting `fix:` when the intent's `kind` is `bug` and `feat:` otherwise, because `ship.py version` reads that word, adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
 Its body links the intent folder, lists each acceptance criterion with its proof and names any departures.
 The body ends with "Things I didn't touch" (the `## Noticed but not touched` lines and neighboring work left out on purpose) and "Potential concerns" (consented stop-list steps, open doubt findings, what the verifier could not check and risks seen), each "None" when empty.
+When pro-ship is installed and pr-check wrote a stamp, run `python3 "$CHECK" marker` with the `$CHECK` the pr-check skill used (pro-ship's `scripts/pr-check.py`) and append the one line `pr-check.py marker` prints as the last line of the body.
+That line carries the head, the result and the reviewer's model and host; `/ship` and `factory.py verify` read it.
+Never edit or retype it.
 If `gh` fails, give the compare URL for the branch instead.
 
 ### 9. Report

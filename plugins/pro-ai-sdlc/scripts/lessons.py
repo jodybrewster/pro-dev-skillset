@@ -11,6 +11,7 @@
   lessons.py grade --ref <ref> --head <40 hex> <id> fixed|not-fixed|no-longer-applies --evidence <path:line>
   lessons.py table --ref <ref> [--tally [--head <40 hex>]]
   lessons.py round --ref <ref> --base <40 hex> --head <40 hex> --round <n> --fresh ran|skipped [--change-id <id>]
+                   [--model <id>] [--host claude|codex]
 
 The ledger is .pro-dev/review/findings.jsonl, one line per finding, never read by mieruka. A lesson
 is a review-lesson manifest as docs/loop-records.md describes it, written through evidence.py.
@@ -43,6 +44,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import evidence  # noqa: E402
+import reviewmodel  # noqa: E402
 from evidence import Refuse  # noqa: E402
 
 LEDGER = os.path.join(".pro-dev", "review", "findings.jsonl")
@@ -327,6 +329,10 @@ def cmd_round(a) -> dict:
     if a.round < 1:
         raise Refuse("lessons: --round must be 1 or more")
     check_change_id(a.change_id)
+    if a.model is not None and not reviewmodel.MODEL_ID.match(a.model):
+        raise Refuse("lessons: --model must be a model id (letters, digits and ._:/@[]-)")
+    # spec-m2 R12: the reviewer's host and model, judged against REVIEW.md on the default branch tip.
+    rules, _source = reviewmodel.review_rules(root)
     table = read_table(root, ref)
     table.update({"base": a.base, "head": a.head, "round": a.round})
     write_table(root, table)
@@ -335,7 +341,8 @@ def cmd_round(a) -> dict:
     blocking = [r for r in rows if r.get("severity") == "important" and r.get("status") in LIVE]
     findings = [{k: r.get(k) for k in ("id", "file", "line", "class", "severity", "status")} for r in rows]
     detail = {"ref": ref, "base": a.base, "head": a.head, "round": a.round, "range": f"{a.base}..{a.head}",
-              "fresh": a.fresh, "counts": counts, "findings": findings, "created": now()}
+              "fresh": a.fresh, "counts": counts, "findings": findings, "created": now(),
+              "host": a.host, "model": a.model, "model_ok": reviewmodel.model_ok(a.host, a.model, rules)}
     summary = (f"round {a.round}: {len(blocking)} important open or not fixed, {counts['fixed']} fixed, "
                f"fresh pass {a.fresh}")
     record = {
@@ -489,6 +496,8 @@ def main(argv: list[str]) -> int:
     s.add_argument("--round", required=True, type=int)
     s.add_argument("--fresh", required=True, choices=("ran", "skipped"))
     s.add_argument("--change-id", dest="change_id")
+    s.add_argument("--model")
+    s.add_argument("--host", default="claude", choices=reviewmodel.REVIEW_HOSTS)
     s.set_defaults(fn=cmd_round)
     args = p.parse_args(argv)
     try:

@@ -102,7 +102,11 @@ Each element of `checks` is one command that `run` executed or could not find.
 | `blocking` | integer | findings that block the merge, see the tally lines |
 | `important` | integer | see the tally lines |
 | `range` | string or null | `<base>..<head>` as handed to the reviewer; null when it was not dispatched |
+| `host` | string | `claude` or `codex`, the host that ran the reviewer; `stamp` reads a missing value as `claude` and refuses any other |
+| `model` | string or null | the model id the reviewer ran on (letters, digits and `._:/@[]-`, at most 100 characters); null when nobody recorded one |
+| `model_ok` | boolean or null | for a `done` or `inline` reviewer, whether `model` meets the host's rule in `REVIEW.md`; null for a reviewer that did not run or a host with no rule |
 
+`host`, `model` and `model_ok` came with the reaching-done change (spec-m2); a stamp written before it has none of them and readers ignore their absence.
 `skipped-no-surface` is only valid for `security`.
 `inline` means the host could not dispatch a subagent and the skill applied the reviewer's skill in the same session, with a context that was not fresh.
 A reviewer that was not dispatched has `blocking` 0 and `important` 0.
@@ -169,6 +173,23 @@ When no Codex review was considered the stamp has no `reviewers.codex` key.
 | `disputed` | integer | findings both reviewers raised at different severities, from `pr-check.py agree` |
 | `range` | string or null | `<base>..<head>` as handed to Codex; null when it was not dispatched |
 
+### The review model
+
+`REVIEW.md` names the model a review must run on, per host, in a fenced `yaml` block under `## Review model`, for example `claude: opus` and `codex: any`.
+`stamp` reads it from `REVIEW.md` on the default branch tip (`origin/HEAD`, then `origin/main`, `main`, `origin/master` and `master`, the first that exists), never the working tree or the branch under review; `pr-check.py review-model --host <host>` prints the same reading.
+A tip with no file or no readable section means `claude: opus` and no rule for any other host.
+
+- `claude`: the rule is a family (`opus`, `sonnet`, `haiku` or `fable`) and a model meets it when its id holds the same family, the first of the four it contains.
+- `codex`: the rule is `any` or one exact model id, compared verbatim.
+- `any` matches every model; a missing model never matches a rule.
+- A host with no rule gets `model_ok` null and the line `pr-check: note, <which> review ran on <model> (<host>), REVIEW.md names no model for <host>`; it never changes the result.
+
+A `done` or `inline` reviewer with `model_ok` false prints `pr-check: warn, <which> review ran on <model> (<host>), REVIEW.md names <required>` (with `enforce` in place of `warn` under enforce) and appends a `review-model` line to `warn.log` in the guard folder.
+The mode is `mode.review-model` in the guard folder alone, never the global `mode` file. It is warn by default ([ADR-0016](./decisions/0016-gate-enforce-rule.md)).
+In warn the result is computed as if the model matched.
+In enforce it is `incomplete` (rule 2 of the result rule).
+The model is reported by the caller and by the reviewer's closing line; a session can write a false one, which a local guardrail accepts as it accepts a forged stamp (ADR-0014).
+
 ## The two tally lines
 
 The skill reads a count from each reviewer's output and passes it to `stamp` through `--reviewers <json>`.
@@ -202,16 +223,18 @@ The first rule that matches wins.
    - `floor` is `findings`;
    - `reviewers.code` or `reviewers.security` has `blocking` above 0 (`reviewers.codex` is never read);
    - `reviewers.verifier` counts for HEAD (see "The verifier") and has `verdict` `fail`.
-2. `pass` when all of these hold:
+2. A run record that misses a step gives `incomplete` (see below).
+   Then, only when `mode.review-model` holds `enforce`, `reviewers.code` or `reviewers.security` with `model_ok` false gives `incomplete`.
+3. `pass` when all of these hold:
    - every check has `status` `pass` or `not-found` (a repo with no command found has only `not-found` checks and still passes this line);
    - `floor` is `pass`, `not-installed` or `not-found`;
    - `mutation.status` is `killed` or `skipped`, or it is `survived` with `accepted` true;
    - `reviewers.code.status` is `done` or `inline`;
    - `reviewers.security.status` is `done`, `inline` or `skipped-no-surface`;
    - `reviewers.verifier.status` is `not-installed`, or it counts for HEAD and has `verdict` `pass`.
-3. `incomplete` in every other case.
+4. `incomplete` in every other case.
 
-The consequences of rule 3 are spelled out because the spec leaves them open:
+The consequences of rule 4 are spelled out because the spec leaves them open:
 
 - A check with `status` `timeout` gives `incomplete`.
 - `floor` of `could-not-run` gives `incomplete`.
@@ -228,6 +251,16 @@ The consequences of rule 3 are spelled out because the spec leaves them open:
 
 A failing check stops the review (R6), so the reviewers are not dispatched and both record `could-not-run`.
 Rule 1 wins in that case and `result` is `fail`.
+
+## The PR body marker
+
+`pr-check.py marker` prints one line from the stamp for the PR body; `/execute` appends it when pro-ship is installed:
+
+`<!-- pro-ship:pr-check head=<sha> result=<result> tier=<tier> model=<model> host=<host> -->`
+
+`model` and `host` come from `reviewers.code`: the family for `claude` (the model id when it names none), the model id for `codex` and `none` when the stamp has no model.
+`/ship` (`ship.py coverage`) and `factory.py verify` read it.
+A marker written before these two fields existed still parses: it counts as covered and `coverage` lists its PR under `model_unrecorded`.
 
 ## The validity rule
 

@@ -49,6 +49,6 @@ List any migration, config or generated file in the diff and write "confirm" bes
 ## Marker line
 
 End the draft with the output of `pr-check.py marker`, alone on the last line and unchanged.
-It reads `<!-- pro-ship:pr-check head=<full sha> result=<result> tier=<tier> -->` from the stamp you just wrote.
+It reads `<!-- pro-ship:pr-check head=<full sha> result=<result> tier=<tier> model=<model> host=<host> -->` from the stamp you just wrote; `model` is the code reviewer's family under `claude`, its model id under `codex` and `none` when the stamp has no model.
 `/pro-ship:ship` reads it later to tell which PRs a passing pr-check already covered.
 When the command exits 1 there is no stamp: say so and leave the line out.

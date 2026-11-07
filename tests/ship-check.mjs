@@ -77,10 +77,141 @@ export function runShipCheckCases() {
     stampCases();
     markerCases();
     codexCases();
+    reviewModelCases();
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
   return out;
+
+  // -------------------------------------------------------------------------
+  // The reviewer's model (intent/2026-11-07-reaching-done spec-m2 R2 to R11, AC1 to AC6):
+  // REVIEW.md on the default branch tip names a rule per host, the stamp records host, model
+  // and model_ok, mode.review-model alone turns a mismatch into incomplete.
+  // -------------------------------------------------------------------------
+  function reviewModelCases() {
+    const RM = (yaml) => `# Review\n\n## Review model\n\n\`\`\`yaml\n${yaml}\`\`\`\n\n## Nits\n\nFive.\n`;
+    const passCheck = (step) => ({ step, command: `make ${step}`, status: "pass", exit_code: 0, output_tail: [] });
+    const RUN = { checks: ["build", "lint", "typecheck", "test"].map(passCheck), floor: "pass",
+      mutation: { status: "killed", reason: null, file: "a.txt", accepted: false }, sources: { "floor-guard": "/x/floor-guard.py" } };
+    const guard = (mode) => {
+      const d = join(sandbox, `guard${++repoN}`);
+      mkdirSync(d, { recursive: true });
+      if (mode) writeFileSync(join(d, "mode.review-model"), `${mode}\n`);
+      return d;
+    };
+    const WARN = guard(null), ENFORCE = guard("enforce"), GLOBAL = guard(null);
+    writeFileSync(join(GLOBAL, "mode"), "enforce\n");
+    // main holds REVIEW.md (or none); the feature branch may hold its own.
+    const prep = (review = RM("claude: opus\ncodex: any\n"), feature = {}) => {
+      const repo = mkrepo(review === null ? { "a.txt": "1\n" } : { "a.txt": "1\n", "REVIEW.md": review });
+      const baseSha = git(repo, "rev-parse", "HEAD").stdout.trim();
+      git(repo, "checkout", "-q", "-b", "feat");
+      const head = commit(repo, { "a.txt": "2\n", ...feature }, "feature");
+      mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+      writeFileSync(join(repo, ".pro-dev", "ship", "run.json"), JSON.stringify({ head, ...JSON.parse(JSON.stringify(RUN)) }));
+      return { repo, baseSha, head };
+    };
+    const code = (extra) => ({ agent: "pro-quality:code-reviewer", status: "done", blocking: 0, important: 0, range: null, ...extra });
+    const stampWith = (p, codeRec, gdir, security = { agent: null, status: "skipped-no-surface", blocking: 0, important: 0, range: null }) =>
+      pc(p.repo, ["stamp", "--base", p.baseSha, "--reviewers", JSON.stringify({ code: codeRec, security,
+        verifier: { agent: "pro-ai-sdlc:verifier", status: "done", verdict: "pass", head: p.head } })], { env: { CLAUDE_GUARD_DIR: gdir } });
+    const warnLine = (model, host, req) => `pr-check: warn, code review ran on ${model} (${host}), REVIEW.md names ${req}`;
+
+    // AC1: Sonnet in warn keeps done, flags model_ok false, prints the warn line and passes.
+    let p = prep();
+    let r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), WARN);
+    let c = r.json?.reviewers?.code;
+    add("rm1 a claude code review on Sonnet in warn: model_ok false, done, the warn line, pass (AC1)", "pass with the warn line",
+      r.status === 0 && r.json.result === "pass" && c?.status === "done" && c.model_ok === false && c.host === "claude" && c.model === "claude-sonnet-4-5"
+      && r.stderr.includes(warnLine("claude-sonnet-4-5", "claude", "opus")), r.stdout + r.stderr);
+    const log = existsSync(join(WARN, "warn.log")) ? readFileSync(join(WARN, "warn.log"), "utf8") : "";
+    add("rm1b the warn line also lands in warn.log under review-model", "a review-model warn line", /\treview-model\twarn\t.*claude-sonnet-4-5/.test(log), log);
+    // AC2: enforce turns the same stamp incomplete; Opus passes in both modes.
+    p = prep();
+    r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), ENFORCE);
+    add("rm2 the same stamp under mode.review-model enforce is incomplete (AC2)", "incomplete with the line",
+      r.status === 0 && r.json?.result === "incomplete" && r.stderr.includes("pr-check: enforce, code review ran on claude-sonnet-4-5 (claude), REVIEW.md names opus"), r.stdout + r.stderr);
+    p = prep();
+    r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), GLOBAL);
+    add("rm2b the global mode file alone leaves the model check in warn", "pass", r.json?.result === "pass", r.stdout + r.stderr);
+    for (const [label, g] of [["warn", WARN], ["enforce", ENFORCE]]) {
+      p = prep();
+      r = stampWith(p, code({ host: "claude", model: "claude-opus-5-5" }), g);
+      add(`rm3 Opus passes in ${label} with model_ok true and no line (AC2)`, "pass", r.json?.result === "pass" && r.json.reviewers.code.model_ok === true && !/review ran on/.test(r.stderr), r.stdout + r.stderr);
+    }
+    // AC3: a done reviewer with no model is never a match.
+    p = prep();
+    r = stampWith(p, code({ host: "claude" }), WARN);
+    add("rm4 a done reviewer with no model gets model_ok false and the warn line in warn (AC3)", "pass, false, line",
+      r.json?.result === "pass" && r.json.reviewers.code.model_ok === false && r.json.reviewers.code.model === null && r.stderr.includes(warnLine("none", "claude", "opus")), r.stdout + r.stderr);
+    p = prep();
+    r = stampWith(p, code({ host: "claude" }), ENFORCE);
+    add("rm4b the same in enforce is incomplete (AC3)", "incomplete", r.json?.result === "incomplete", r.stdout + r.stderr);
+    p = prep();
+    r = stampWith(p, code({}), WARN);
+    add("rm4c a reviewer with no host is read as claude", "host claude, model_ok false", r.json?.reviewers?.code?.host === "claude" && r.json.reviewers.code.model_ok === false, r.stdout + r.stderr);
+    // A reviewer that did not run has nothing to judge.
+    p = prep();
+    r = stampWith(p, code({ status: "could-not-run", agent: null }), ENFORCE);
+    add("rm4d a reviewer that could not run has model_ok null", "null", r.json?.reviewers?.code?.model_ok === null && !/review ran on/.test(r.stderr), r.stdout + r.stderr);
+    // AC4: a Codex twin run.
+    const CODEX_MODEL = "gpt-5.1-codex";
+    for (const [label, yaml, want] of [["codex: any", "claude: opus\ncodex: any\n", true], ["the exact id", `claude: opus\ncodex: ${CODEX_MODEL}\n`, true], ["a different exact id", "claude: opus\ncodex: gpt-4.1\n", false]]) {
+      p = prep(RM(yaml));
+      r = stampWith(p, code({ host: "codex", model: CODEX_MODEL }), WARN);
+      add(`rm5 a codex reviewer under ${label} gets model_ok ${want} (AC4)`, String(want), r.json?.reviewers?.code?.model_ok === want && r.json.result === "pass", r.stdout + r.stderr);
+    }
+    for (const [label, g] of [["warn", WARN], ["enforce", ENFORCE]]) {
+      p = prep(RM("claude: opus\n"));
+      r = stampWith(p, code({ host: "codex", model: CODEX_MODEL }), g);
+      add(`rm6 a codex reviewer with no codex entry in ${label}: model_ok null, the note, never incomplete (AC4)`, "pass, null, note",
+        r.json?.result === "pass" && r.json.reviewers.code.model_ok === null
+        && r.stderr.includes(`pr-check: note, code review ran on ${CODEX_MODEL} (codex), REVIEW.md names no model for codex`), r.stdout + r.stderr);
+    }
+    p = prep();
+    r = stampWith(p, code({ host: "gemini", model: "x" }), WARN);
+    add("rm7 an unknown host is refused", "exit 1", r.status === 1 && /host must be one of/.test(r.stderr), r.stdout + r.stderr);
+    p = prep();
+    r = stampWith(p, code({ host: "claude", model: "opus --> <script>" }), WARN);
+    add("rm7b a model id with characters a marker cannot carry is refused", "exit 1", r.status === 1 && /model must be a model id/.test(r.stderr), r.stdout + r.stderr);
+    // The rule is read from the tip: the branch under review cannot lower it.
+    p = prep(RM("claude: opus\ncodex: any\n"), { "REVIEW.md": RM("claude: sonnet\n") });
+    r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), WARN);
+    add("rm8 a feature branch REVIEW.md naming sonnet does not make a Sonnet review match", "model_ok false", r.json?.reviewers?.code?.model_ok === false, r.stdout + r.stderr);
+    // AC5: review-model reads the tip.
+    r = pc(p.repo, ["review-model", "--host", "claude"]);
+    add("rm9 review-model --host claude prints opus from main, not the branch's sonnet (AC5)", "opus, main:REVIEW.md",
+      r.status === 0 && r.json?.host === "claude" && r.json.required === "opus" && r.json.source === "main:REVIEW.md", r.stdout + r.stderr);
+    r = pc(p.repo, ["review-model", "--host", "codex"]);
+    add("rm9b review-model --host codex prints any", "any", r.json?.required === "any", r.stdout + r.stderr);
+    writeFileSync(join(p.repo, "REVIEW.md"), RM("claude: haiku\n"));
+    r = pc(p.repo, ["review-model"]);
+    add("rm9c an edit in the working tree does not change it", "opus", r.json?.required === "opus" && r.json.host === "claude", r.stdout + r.stderr);
+    git(p.repo, "checkout", "-q", "--", "REVIEW.md");
+    const none = prep(null);
+    r = pc(none.repo, ["review-model", "--host", "claude"]);
+    const rc = pc(none.repo, ["review-model", "--host", "codex"]);
+    add("rm9d no REVIEW.md on the tip means claude: opus and no codex rule", "opus, null, default",
+      r.json?.required === "opus" && r.json.source === "default" && rc.json?.required === null, r.stdout + rc.stdout + r.stderr);
+    const unreadable = prep("# Review\n\n## Review model\n\nNo block here.\n");
+    r = pc(unreadable.repo, ["review-model"]);
+    add("rm9e a section with no yaml block is read as the default", "opus, default", r.json?.required === "opus" && r.json.source === "default", r.stdout + r.stderr);
+    r = pc(none.repo, ["review-model", "--host", "gemini"]);
+    add("rm9f an unknown --host is refused", "exit 1", r.status === 1, r.stdout + r.stderr);
+    // AC6: the marker carries the code reviewer's model and host.
+    p = prep();
+    stampWith(p, code({ host: "claude", model: "claude-opus-5-5" }), WARN);
+    r = pc(p.repo, ["marker"]);
+    add("rm10 the marker of an Opus stamp carries model=opus host=claude (AC6)", "the line", r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${p.head} result=pass tier=unclassified model=opus host=claude -->\n`, r.stdout + r.stderr);
+    p = prep();
+    stampWith(p, code({ host: "claude" }), WARN);
+    r = pc(p.repo, ["marker"]);
+    add("rm10b the marker of a stamp with no code model carries model=none (AC6)", "model=none", r.status === 0 && / model=none host=claude -->\n$/.test(r.stdout), r.stdout + r.stderr);
+    p = prep();
+    stampWith(p, code({ host: "codex", model: CODEX_MODEL }), WARN);
+    r = pc(p.repo, ["marker"]);
+    add("rm10c a codex stamp's marker carries the model id", "model=gpt-5.1-codex host=codex", / model=gpt-5\.1-codex host=codex -->\n$/.test(r.stdout), r.stdout + r.stderr);
+  }
 
   // R9: the PR body marker line comes from the stamp and nowhere else.
   function markerCases() {
@@ -94,7 +225,7 @@ export function runShipCheckCases() {
     writeFileSync(stampPath, fx);
     r = pc(repo, ["marker"]);
     const tier = JSON.parse(fx).tier;
-    add("m2 marker prints the one-line comment from the stamp", "the R9 line", r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${sha} result=pass tier=${tier} -->\n`, r.stdout + r.stderr);
+    add("m2 marker prints the one-line comment from the stamp", "the R9 line", r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${sha} result=pass tier=${tier} model=opus host=claude -->\n`, r.stdout + r.stderr);
     writeFileSync(stampPath, readFileSync(join(FIXTURES, "result-fail.json"), "utf8").split("HEAD").join(sha));
     r = pc(repo, ["marker"]);
     add("m3 marker carries a failing result as it is", "result=fail", r.status === 0 && /result=fail tier=/.test(r.stdout), r.stdout + r.stderr);

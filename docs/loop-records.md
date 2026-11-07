@@ -179,6 +179,11 @@ mieruka never reads the table.
 | `counts` | object | rows by status: `open`, `fixed`, `not_fixed` and `no_longer_applies` |
 | `findings` | array | `{id, file, line, class, severity, status}` per row; never the claim |
 | `created` | string | when the record was written |
+| `host` | string | `claude` or `codex`, the host the round's review ran on (`--host`, default `claude`) |
+| `model` | string or null | the model id the round's review ran on (`--model`); null when the caller passed none |
+| `model_ok` | boolean or null | whether `model` meets the host's rule in the `## Review model` section of `REVIEW.md` on the default branch tip; null when that host has no rule, false when `model` is null |
+
+`host`, `model` and `model_ok` are optional for readers: a record written before them has none.
 
 A row of the findings table holds `id`, `file`, `line`, `pass`, `class`, `severity` (`important`, `nit` or `pre-existing`), `claim` (one sentence of at most 300 characters), `status` (`open`, `fixed`, `not fixed` or `no longer applies`), `raised_at`, `graded_at`, `evidence` (`path:line` or null), `reopened_from` and, when `raise` was given `--change-id`, `change_id`.
 The claim stays in the local table and never reaches the record.
