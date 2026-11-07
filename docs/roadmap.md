@@ -270,7 +270,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [ ] 46. Done means on the base: `factory.py record --state merged` checks the SHA is on the fetched base; plan-sync writes `Done as of <sha>` (S, pro-ai-sdlc)
 - [ ] 47. `factory.py level` scans only added lines for stop-list words (S, pro-ai-sdlc)
 - [ ] 48. A CI matrix with macOS and Python 3.9 for the hook tests (S, this repo)
-- [x] 49. `/constraints` runs each check against a known violation and a clean control before it calls the check enforced (S, pro-quality) (PR B, this change)
+- [x] 49. `/constraints` runs each check against a known violation and a clean control before it calls the check enforced (S, pro-quality) [#174](https://github.com/jodybrewster/pro-dev-skillset/pull/174)
 
 ### P3: small polish, one batch
 

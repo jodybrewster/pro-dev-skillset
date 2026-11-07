@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Portable pro dev skill stack",
-    "version": "1.90.0"
+    "version": "1.91.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
