@@ -846,11 +846,11 @@ export function runShipPreflightCases() {
     t = recRepo();
     d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", tagReq(t.h), T1), cc(12, "maint", "confirmed", T2, "2026-11-07T11:05:00Z")] });
     r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
+    add("confirm/an edited commit comment reply does not count", "confirmed false, edited", r.status === 0 && r.json?.confirmed === false && /edited/.test(r.json.why), r.stdout + r.stderr);
     t = recRepo();
     d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", REQ + JSON.stringify({ head: t.h, items: [ITEM], pr: 42, repo: "o/r", scope: "pr" }), T1), cc(12, "maint", "confirmed", T2)] });
     r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
     add("confirm/a pr-scope request read in tag scope does not count", "confirmed false, another scope", r.status === 0 && r.json?.confirmed === false && /another scope/.test(r.json.why), r.stdout + r.stderr);
-    add("confirm/an edited commit comment reply does not count", "confirmed false, edited", r.status === 0 && r.json?.confirmed === false && /edited/.test(r.json.why), r.stdout + r.stderr);
   }
 }
 
