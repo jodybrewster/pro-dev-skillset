@@ -4,7 +4,7 @@ kind: change
 breaking: false
 status: proposed
 risk: medium
-level: 2
+level: 3
 created: 2026-11-07T12:00:00-0500
 author: the maintainer
 ---
