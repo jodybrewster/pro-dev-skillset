@@ -49,10 +49,12 @@ def log(hook: str, action: str, detail: str, cwd: str) -> None:
         pass
 
 
-def warn(hook: str, summary: str, detail: str, cwd: str) -> None:
+def warn(hook: str, summary: str, detail: str, cwd: str, advice: str = "") -> None:
     """Warn mode: log a would-deny line, tell the user and the model, allow (the caller exits 0)."""
     log(hook, "would-deny", detail, cwd)
     msg = f"[{hook}] warn mode: would deny {summary} (logged to warn.log, allowed)"
+    if advice:
+        msg += ". " + advice
     print(json.dumps({
         "systemMessage": msg,
         "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": msg},

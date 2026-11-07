@@ -106,5 +106,8 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 2: R3 strips every markup tag from the key's word before it looks for `<`, but `<x>` and `<your-key>` match the same tag pattern, so the literal rule would strip the stand-in it is meant to catch. The guard treats a tag glued between two key characters (`KEY<x>KEY`) as a stand-in and strips only the tags around the key (`<code>KEY</code>`), then reads a `<` or `...` still in the word as a stand-in. The AC2a cases pin both directions.
 - Step 2: an Edit's line numbers count within `new_string`, so its message reads `line 2 of the edit to config.ts`; a MultiEdit's reads `edit 2 line 1 of config.ts`.
 - Steps 3 and 6: each plugin's version bump lands in the commit that first changes its content, as the version-bump law asks, not in step 7.
+- Step 5: `guardlib.warn()` gains an optional `advice` argument so the warn message carries R16's way forward; `guardlib.py` was not in the file list. Existing callers are unchanged.
+- Step 5: a variable the hook's environment does not hold is unknown and skipped like an assigned one, where super-board expands it to an empty string; a `cd -` makes later relative words unknown. A `find` that deletes with no starting path checks the current directory, `-ok` and `-okdir` count like `-exec`, `git clean -n` and `--dry-run` are not deletions and redirect targets (`2> /dev/null`) are not operands.
+- Step 4: the delete-outside fixtures use a project root, `HOME` and `TMPDIR` under `/srv` that need not exist, because the guard only resolves words; a root under the system temp folder would make every sibling exempt on macOS.
 
 ## Noticed but not touched
