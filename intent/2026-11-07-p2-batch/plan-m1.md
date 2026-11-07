@@ -19,7 +19,7 @@ A and B both bump `metadata.version` in `.claude-plugin/marketplace.json`, so th
 - `plugins/pro-quality/skills/constraints/SKILL.md` (modified): the proof step and the `### Not enforced` heading.
 - `plugins/pro-quality/.claude-plugin/plugin.json`, `plugins/pro-quality/.codex-plugin/plugin.json` (modified): 0.19.0 to 0.20.0.
 - `.claude-plugin/marketplace.json` (modified): the two plugin versions and `metadata.version`, once per PR.
-- `.github/workflows/validate.yml` (modified): the `hooks-macos` job.
+- `.github/workflows/hooks-macos.yml` (new): the path-filtered `hooks-macos` job; `validate.yml` is unchanged (the job moved out during review, see Departures).
 - `docs/enforce-mode.md` (modified): a row for the stale-Done check under `plan-sync`.
 - `docs/factory.md` (modified): the section rule for the level and the ancestor rule for `record`.
 - `docs/roadmap.md` (modified): items 46 to 49 ticked with their PR, in the PR that lands each.

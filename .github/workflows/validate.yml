@@ -61,3 +61,8 @@ jobs:
             exit 1
           fi
 
+  # TODO: Add Codex parity smoke check once the Codex CLI plugin marketplace
+  # commands are stable and documented. The README references
+  # `codex-cli 0.122.0-alpha.13`, but the exact `codex plugin ...` invocation
+  # for adding a local marketplace path is not confirmed. Re-enable as a
+  # separate job with `continue-on-error: true` once verified.
