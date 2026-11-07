@@ -3,6 +3,7 @@ source: idea
 kind: change
 status: accepted
 risk: low
+level: 3
 created: 2026-10-25T09:30:00-04:00
 author: the maintainer
 ---
