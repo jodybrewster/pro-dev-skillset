@@ -24,8 +24,8 @@ const put = (p, t) => { mkdirSync(dirname(p), { recursive: true }); writeFileSyn
 
 const ROLES = (body) => `# Review\n\n## Roles\n\n\`\`\`yaml\n${body}\n\`\`\`\n`;
 const ALL = "roles:\n  product_owner: [t]\n  engineer: [t, sam]\n  lead: [t]\n  policy_owner: [t]\n  platform_owner: [t]";
-const intent = ({ source = "idea", risk = "low", author = "t", level = "", body = "Fix the greeting typo." } = {}) =>
-  `---\nsource: ${source}\nkind: bug\nstatus: accepted\nrisk: ${risk}\n${level ? `level: ${level}\n` : ""}created: 2026-01-02T10:00:00-0500\nauthor: ${author}\n---\n\n# Intent\n\n## Problem\n\n${body}\n`;
+const intent = ({ source = "idea", risk = "low", author = "t", level = "", body = "Fix the greeting typo.", outcome = "" } = {}) =>
+  `---\nsource: ${source}\nkind: bug\nstatus: accepted\nrisk: ${risk}\n${level ? `level: ${level}\n` : ""}created: 2026-01-02T10:00:00-0500\nauthor: ${author}\n---\n\n# Intent\n\n## Problem\n\n${body}\n${outcome ? `\n## Proposed outcome\n\n${outcome}\n` : ""}`;
 
 let count = 0;
 // A repo on main with REVIEW.md and one intent, both committed.
@@ -91,14 +91,18 @@ test("each stop-list word is level 3", () => {
   const words = ["auth", "login", "password", "oauth", "session", "permission", "migration", "schema change", "payment", "billing", "stripe",
     "deploy", "release", "secret", "token", "credential", "api key", "environment variable", "env var", ".env", "personal data", "export"];
   for (const w of words) {
-    const j = level(repo(ROLES(ALL), intent({ body: `Touches the ${w} handling.` }))).json;
+    const j = level(repo(ROLES(ALL), intent({ outcome: `Touches the ${w} handling.` }))).json;
     assert.equal(j.level, 3, w);
   }
-  assert.equal(level(repo(ROLES(ALL), intent({ body: "Users are Deployed and Sessions end." }))).json.level, 3);
+  assert.equal(level(repo(ROLES(ALL), intent({ outcome: "Users are Deployed and Sessions end." }))).json.level, 3);
+});
+
+test("a stop-list word only under Problem is discussed, not built, and stays level 1", () => {
+  assert.equal(level(repo(ROLES(ALL), intent({ body: "Touches the deploy handling." }))).json.level, 1);
 });
 
 test("stop-list words match whole words only, and comments are ignored", () => {
-  const j = level(repo(ROLES(ALL), intent({ body: "The author wrote a tokenizer for greeting text. <!-- password -->" }))).json;
+  const j = level(repo(ROLES(ALL), intent({ outcome: "The author wrote a tokenizer for greeting text. <!-- password -->" }))).json;
   assert.equal(j.level, 1);
 });
 

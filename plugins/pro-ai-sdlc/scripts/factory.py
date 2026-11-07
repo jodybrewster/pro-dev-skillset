@@ -284,6 +284,30 @@ def stop_words_in(text):
     return [w for w, rx in STOP_RES if rx.search(text)]
 
 
+# The sections of intent.md that say what the change does. A stop-list word only raises the level
+# when it is here; under Problem, Out of scope or Risk it is being discussed, not built.
+REQUIREMENT_SECTIONS = ("Proposed outcome", "Affected users and systems", "Constraints")
+FENCE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})[^\n]*\n.*?^[ \t]*\1[ \t]*$", re.M | re.S)
+CODE_SPAN_RE = re.compile(r"(`+)[^\n]*?\1")
+
+
+def requirement_sections(body):
+    """[(section name, text)] for the requirement sections, without comments, fenced blocks or code spans."""
+    text = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+    text = FENCE_RE.sub("", text)
+    wanted = {name.lower(): name for name in REQUIREMENT_SECTIONS}
+    found = {}
+    current = None
+    for line in text.split("\n"):
+        m = re.match(r"^##[ \t]+(.+?)[ \t#]*$", line)
+        if m:
+            current = wanted.get(m.group(1).strip().lower())
+            continue
+        if current:
+            found.setdefault(current, []).append(line)
+    return [(name, CODE_SPAN_RE.sub("", "\n".join(found[name]))) for name in REQUIREMENT_SECTIONS if name in found]
+
+
 def compute(root, tip, rel):
     """(computed level, [(level, reason)], intent text used, tip text or None, working text or None)."""
     path = rel + "/intent.md"
@@ -318,9 +342,10 @@ def compute(root, tip, rel):
     elif risk != "low":
         reasons.append((2, "risk: " + (risk if risk in ("medium",) else "not declared low")))
     clean = re.sub(r"<!--.*?-->", "", body, flags=re.S)
-    hits = stop_words_in(clean)
-    if hits:
-        reasons.append((3, "stop-list words: " + ", ".join(hits)))
+    for section, text in requirement_sections(body):
+        hits = stop_words_in(text)
+        if hits:
+            reasons.append((3, f"stop-list words in {section}: " + ", ".join(hits)))
     if names_dependency(clean):
         reasons.append((2, "a new dependency is named"))
     level = max([lv for lv, _ in reasons] or [1])
@@ -547,9 +572,28 @@ def write_record(root, folder, state, reason="", **fields):
     return d
 
 
+def merged_refusal(root, sha):
+    """None when <sha> is on the default branch tip, else the reason a merged record is refused."""
+    tip, branch = default_tip(root)
+    if not sha:
+        return f"factory: refusing --state merged with no --sha: a merged record names the commit on {branch}"
+    tip_sha = resolve(root, tip) or tip
+    r = git(root, "merge-base", "--is-ancestor", sha, tip)
+    if r.returncode == 0:
+        return None
+    return (f"factory: refusing --state merged: {sha[:12]} is not on {tip} (tip {tip_sha[:12]}, branch {branch}); "
+            f"run git fetch if it merged since the last fetch")
+
+
 def cmd_record(a):
     root = repo_root(a.repo)
     folder, _ = folder_of(root, a.dir)
+    if a.state == "merged":
+        why = merged_refusal(root, a.sha)
+        if why:
+            # A merged record for a commit off the base is never written; 2 is "could not record".
+            print(why, file=sys.stderr)
+            return 2
     brief = a.brief_pr or (a.pr if a.state == "brief" else None)
     build = a.build_pr or (a.pr if a.pr and a.state != "brief" else None)
     d = write_record(root, folder, a.state, a.reason or "", cost_usd=a.cost, level_now=a.level_now,

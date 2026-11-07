@@ -100,5 +100,12 @@ Filled in when the build is finished, before sign-off.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 4: a refused `record --state merged` returns 2 from `cmd_record` instead of raising `Refuse`, because `main()` maps a `record` refusal to exit 1 and R5 and AC3 ask for 2.
+- Step 4: `record --state merged` with no `--sha` is refused the same way, since R6 allows a merged record only for a sha on the base.
+- Step 4: `record` does not fetch; it reads the tip `default_tip()` resolves from local refs, as the plan says, and the refusal tells the person to run `git fetch` when the merge is newer than the last fetch.
+  R5 says the tip is fetched and the spec's policy line says `record` already fetches; it does not.
+- Steps 1 and 2: `tests/unit/factory-level.test.mjs` and the existing `l3` case in `tests/factory.mjs` put their stop-list words under `## Proposed outcome`, because under `## Problem` they no longer raise the level (R2); the unit file gains a case for a word under Problem staying at level 1.
+- Steps 1 and 2: AC1 cannot pass as written. `intent/2026-11-04-rollback-path` uses release and deploy as the subject of its `## Proposed outcome` and `## Affected users and systems`, so under R1 its reasons still list `stop-list words in Proposed outcome: deploy, release` and the same for Affected users and systems; the level is 3 either way. The build follows R1 to R3 and leaves AC1 for the spec owner to restate.
+
 ## Noticed but not touched
 
