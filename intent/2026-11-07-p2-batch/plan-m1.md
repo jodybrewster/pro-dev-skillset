@@ -84,32 +84,31 @@ gh pr checks <PR C>                        # hooks-macos pass
 
 ## Done
 
-Done as of eac31ffbb1d6
+Done as of e09acf9530c7
 
 PR A only (steps 1 to 6); PR B and PR C fill their own lines.
 
-- Build commit: eac31ffbb1d6 on `build/p2-m1-a` (5ded122 steps 1 to 4, e00cd86 steps 5 and 6, eac31ffbb1d6 prose fixes)
-- Checks run:
-  - `node tests/factory.mjs`: 157/157 factory cases passed (the first run before the change: 149/157, l5 to l7 and m1 to m4 failing).
-  - `node tests/sdlc-hooks.mjs`: 47/47 sdlc hook cases passed (before the change: 44/47, sd4 to sd6 failing).
-  - `node tests/check.mjs`: 48 checks, 0 failures, 13 warnings (run on e00cd86; eac31ffbb1d6 changes prose and one test name only).
+- Build commit: e09acf9530c7 on `build/p2-m1-a` after the rebase onto main (531a9fc steps 1 to 4, 8a65297 steps 5 and 6, f5b4f8f prose, e09acf9530c7 review fixes)
+- Checks run, all at e09acf9530c7:
+  - `node tests/factory.mjs`: 158/158 factory cases passed (before the build: 149/157, l5 to l7 and m1 to m4 failing).
+  - `node tests/sdlc-hooks.mjs`: 51/51 sdlc hook cases passed (before the review fixes: 46/51, sd6 and sd10 to sd13 failing).
+  - `node tests/check.mjs`: 48 checks, 0 failures, 13 warnings.
   - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped with no key.
   - `node --test tests/unit/*.test.mjs`: pass 198, fail 0.
-  - `node tests/route-lexical.mjs --min-rank1 70`: passed, 0 collision failures, 3 notOneOf warnings as before.
   - `claude plugin validate . --strict` and `claude plugin validate plugins/pro-ai-sdlc --strict`: Validation passed.
   - `python3 plugins/pro-ai-sdlc/scripts/factory.py level intent/2026-11-04-rollback-path`: `level: 3 (risk: high; stop-list words in Proposed outcome: deploy, release; stop-list words in Affected users and systems: deploy, release; no readable Roles block in REVIEW.md on origin/main (REVIEW.md has no ## Roles block))`.
   - `/usr/bin/python3 -m py_compile` on `factory.py` and `plan-sync.py` under Python 3.9.6: ok.
 - Definition of done: met for PR A.
 - Visual: none
 - Doubt: none
-- AC1: pass against the restated criterion. The level is 3 from `risk: high`; the stop-list reasons name Proposed outcome and Affected users and systems only, none names Problem, Out of scope or Risk. The first wording of AC1 asked for no stop-list reason at all, which that intent cannot satisfy because releases are its subject; see Departures.
-- AC2: pass. Case l4 (auth under Problem, Out of scope and Risk) reads level 1; l5 (auth under Proposed outcome) reads 3 with `stop-list words in Proposed outcome: auth`; l6 names Constraints; l7 ignores code spans, fences and comments; l8 keeps a recorded level 3.
-- AC3: pass. Case m1 exits 2 with no record for a sha on an unmerged branch; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha.
-- AC4: not run live. `commands/execute.md` now writes `Done as of <git rev-parse --short=12 HEAD>` first; cases sd2 and sd3 show a Done at the head, then the plan committed alone, passes.
-- AC5: pass in the sandbox. sd4 and sd5: warn mode after a later code commit prints and logs `## Done is stale (written at <sha>, head is <sha>)` to `warn.log` without blocking; sd6 blocks once in enforce; sd7 passes with `stop_hook_active`; sd1 and sd9 show a plan with no line or an unknown sha unchanged.
+- AC1: pass against the restated criterion. The level is 3 from `risk: high`; the stop-list reasons name Proposed outcome and Affected users and systems only.
+- AC2: pass. Cases l4 to l8: auth under Problem, Out of scope and Risk reads level 1; under Proposed outcome it reads 3 with `stop-list words in Proposed outcome: auth`; l6 names Constraints; l7 ignores code spans, fences and comments; l8 keeps a recorded level 3.
+- AC3: pass. m1 exits 2 with no record for an unmerged-branch sha; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha; m6 refuses with no remote.
+- AC4: not run live. `commands/execute.md` writes `Done as of <git rev-parse --short=12 HEAD>` first; sd2 and sd3 show a Done at the head, then the plan committed alone, passes.
+- AC5: pass in the sandbox. sd4 and sd5 warn and log `## Done is stale (written at <sha>, head is <sha>)`; sd6 blocks once under `mode.stale-done` enforce; sd7 passes with `stop_hook_active`; sd10 stays in warn under a global, `mode.plan-sync` and env enforce; sd11 reads a bulleted, backticked line under the lead sentence; sd12 and sd13 cover `plan-m1.md`.
 - AC6: pass, by hand on `demo/app` (after `npm ci`) following this branch's `constraints/SKILL.md` and `commands/constraints.md` rather than the installed plugin. Proved and written as rows: `npx tsc --noEmit` (type error in `components/data.ts`: violation exit 2, clean exit 0), `npm test` (failing assertion in `app/__tests__/data.test.ts`: violation exit 1, clean exit 0) and `npm run build` (bad export in `app/page.tsx`: violation exit 1, clean exit 0). Not enforced: a type error in a test file passed both `npx tsc --noEmit` (tsconfig excludes `**/__tests__/**`) and `npm test` (Vitest does not type-check), violation exit 0 and clean exit 0 for each. Measured: 9 passing tests and 102 kB First Load JS for `/`; no coverage provider is installed, so coverage was left out. `floor-guard.py` parses exactly the three rows. `demo/app/CONSTRAINTS.md` was written and not committed.
 - AC7: other PR.
-- AC8: `node tests/check.mjs` and `claude plugin validate . --strict` pass after PR A; PRs B and C report their own.
+- AC8: `node tests/check.mjs` and `claude plugin validate . --strict` pass after PR A.
 - Sign-off:
 
 ## Departures from plan
