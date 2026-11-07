@@ -82,7 +82,7 @@ claude plugin validate plugins/pro-core --strict
 
 Done as of 89401fd010c4.
 
-- Build commit: 89401fd010c4 (rebased onto main after #191; pro-core 0.28.0, pro-security 0.4.0, metadata 1.95.0) on `build/guard-hardening-m3`, [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194)
+- Build commit: 89401fd010c4 (rebased onto main after #191 and #195; pro-core 0.28.0, pro-security 0.4.0, metadata 1.96.0) on `build/guard-hardening-m3`, [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194)
 - Checks run: `node tests/guards.mjs` 118 cases, 0 failures; `node tests/git-safe.mjs` 148 cases, 0 failures; `node tests/security-hooks.mjs` 50 cases, 0 failures; `node tests/check.mjs` 50 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `claude plugin validate . --strict` and for `plugins/pro-core` and `plugins/pro-security` all passed; `/usr/bin/python3 -m py_compile` (3.9.6) clean on both scripts.
 - Mutations: dropping `ASIA` fails the two `aws-asia` cases; removing the `cd` tracking fails `cd-then-rm` (warn and enforce), `cd-absolute` and `pushd`. Both restored.
 - Definition of done: met. A pr-check stamp was not run; the pr-gate warned and allowed the PR.
