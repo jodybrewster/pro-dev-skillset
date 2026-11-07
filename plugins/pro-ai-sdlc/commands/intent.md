@@ -1,7 +1,7 @@
 ---
 description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<date>-<slug>/intent.md from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
 argument-hint: "<idea or bug, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write
 ---
 
 ## Context
@@ -60,8 +60,17 @@ If the idea is empty, ask for it first.
 ### 2. Write the file
 
 Pick a slug of two to five lowercase words joined by hyphens.
-Write `<repo root>/intent/<YYYY-MM-DD>-<slug>/intent.md` using today's date, with the template's frontmatter and sections, one sentence per line.
-If that directory already exists, choose another slug.
+Then name the folder, called `<folder>` below:
+
+- When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next`.
+  It prints the change id (for example `PDS-51`) and one line on stderr saying where the number came from or that it was allocated offline from the last fetch; repeat that line to the person.
+  `<folder>` is `<id>-<slug>` and the file gets `id: <id>` as its first frontmatter key.
+  If it exits 1, show its message and stop: the shortcode in `intent/project.json` is fixed before any id is allocated.
+- Otherwise `<folder>` is `<YYYY-MM-DD>-<slug>` with today's date and the template's `id:` line is deleted.
+  Tell the person in one line that `/pro-dev install` sets a shortcode so new changes get an id.
+
+Write `<repo root>/intent/<folder>/intent.md` (with no shortcode that is `<repo root>/intent/<YYYY-MM-DD>-<slug>/intent.md`) with the template's frontmatter and sections, one sentence per line.
+If that directory already exists, choose another slug and keep the id it was given; an id is never reused.
 Fill Author and Created from Context and set Status to draft.
 Quote the person where the wording matters.
 Keep the template's section names and order exactly, so tools that read the file find each field.
@@ -81,7 +90,7 @@ Apply corrections and show it again until the person is satisfied.
 
 Then commit that one file on the current branch:
 
-- `git add intent/<YYYY-MM-DD>-<slug>/intent.md`
+- `git add intent/<folder>/intent.md`
 - `git commit -m "intent: <slug>"`
 
 The person accepts the intent in person, so no PR is opened for acceptance.
@@ -90,4 +99,4 @@ If the current branch is `main` or `master`, say so before committing, since a b
 
 ### 4. Report
 
-The path, the commit hash and one line suggesting `/spec intent/<YYYY-MM-DD>-<slug>/intent.md` as the next step.
+The path, the commit hash and one line suggesting `/spec intent/<folder>/intent.md` as the next step.

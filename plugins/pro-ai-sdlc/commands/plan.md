@@ -37,6 +37,7 @@ Use a read-only subagent for breadth when the spec touches many files.
 ### 2. Draft the plan
 
 Write `<intent dir>/plan.md` from the template, sections in its order, one sentence per line.
+When the intent's frontmatter has an `id:`, keep the template's frontmatter block above `# Plan:` with that value, in `plan.md` and in each `plan-<module-id>.md`; when it has none, delete the block.
 Cover the files touched (new, modified or deleted, with a reason), the sequence of work in separately checkable steps, the test or visual check behind each step, the risks (with the template's `Stop-list categories:` line filled in), the alternatives you rejected, the exact commands that show it is done and an empty departures section.
 Size every step XS, S, M or L: XS is one file and under 30 minutes, S is one or two files and under an hour, M is up to two hours and L is more.
 Aim for XS to S.
