@@ -120,4 +120,11 @@ It also moves ADR-0026 from `proposed` to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- One pull request instead of three: the build was asked for a single PR, so pro-ship (step 10) and pro-core (step 11) ride beside pro-ai-sdlc, each with its own bump in both manifests and the marketplace entry and `metadata.version` once.
+- The backfill numbered 55 intents, not 50: five intents reached `origin/main` after the table was computed at 20c5666 (`2026-11-07-guard-hardening` at 14:00 and four at 14:31 on 2026-11-07, all after traceable-ids at 13:05).
+  The first 50 rows match spec-m1's table exactly; the five follow by the same rule as PDS-51 to PDS-55, so `ids.py next` prints `PDS-56` and the diff is 55 files, 55 insertions and 0 deletions.
+  spec-m1's table, AC1 and AC6 gain the five rows and the new counts in the same commit.
+- `tests/e2e-sdlc.mjs` (not in the file list) reads the factory record by its lowercased name, as `tests/e2e-sdlc/checks.mjs` does.
+- The `change-ids` rule lives in `tests/ids.mjs` as `changeIdProblems(root)` so its fixtures and this repo run the same code; `tests/check.mjs` imports it.
+
 ## Noticed but not touched
