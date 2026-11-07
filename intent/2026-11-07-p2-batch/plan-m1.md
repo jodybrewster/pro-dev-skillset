@@ -84,18 +84,21 @@ gh pr checks <PR C>                        # hooks-macos pass
 
 ## Done
 
-Done as of e09acf9530c7
+Done as of 6e7e55d9a646
 
-PR A only (steps 1 to 6); PR B and PR C fill their own lines.
+PR A (steps 1 to 6) on top of PR B (#174, step 7); PR C fills its own lines.
 
-- Build commit: e09acf9530c7 on `build/p2-m1-a` after the rebase onto main (531a9fc steps 1 to 4, 8a65297 steps 5 and 6, f5b4f8f prose, e09acf9530c7 review fixes)
-- Checks run, all at e09acf9530c7:
-  - `node tests/factory.mjs`: 158/158 factory cases passed (before the build: 149/157, l5 to l7 and m1 to m4 failing).
+- Build commit: 6e7e55d9a646 on `build/p2-m1-a`, rebased onto main after #174 merged (1b39e47 steps 1 to 4, 8566ce0 steps 5 and 6, 7d0eee1 and 6e7e55d9a646 review fixes)
+- Checks run, all at 6e7e55d9a646:
+  - `node tests/factory.mjs`: 159/159 factory cases passed (before the build: 149/157, l5 to l7 and m1 to m4 failing).
   - `node tests/sdlc-hooks.mjs`: 51/51 sdlc hook cases passed (before the review fixes: 46/51, sd6 and sd10 to sd13 failing).
   - `node tests/check.mjs`: 48 checks, 0 failures, 13 warnings.
   - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped with no key.
+  - `node tests/route-lexical.mjs --min-rank1 70`: exit 0, rank-1 80/98 (81.6%), top-k 93/98 (94.9%), 0 collision failures, 3 notOneOf warnings.
   - `node --test tests/unit/*.test.mjs`: pass 198, fail 0.
-  - `claude plugin validate . --strict` and `claude plugin validate plugins/pro-ai-sdlc --strict`: Validation passed.
+  - `claude plugin validate . --strict`: Validation passed.
+  - `claude plugin validate plugins/pro-ai-sdlc --strict`: Validation passed.
+  - `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs`: mieruka sync check passed, loading the preflight record plus deploy, incident, review-lesson, ui-step and factory-run.
   - `python3 plugins/pro-ai-sdlc/scripts/factory.py level intent/2026-11-04-rollback-path`: `level: 3 (risk: high; stop-list words in Proposed outcome: deploy, release; stop-list words in Affected users and systems: deploy, release; no readable Roles block in REVIEW.md on origin/main (REVIEW.md has no ## Roles block))`.
   - `/usr/bin/python3 -m py_compile` on `factory.py` and `plan-sync.py` under Python 3.9.6: ok.
 - Definition of done: met for PR A.
@@ -103,12 +106,12 @@ PR A only (steps 1 to 6); PR B and PR C fill their own lines.
 - Doubt: none
 - AC1: pass against the restated criterion. The level is 3 from `risk: high`; the stop-list reasons name Proposed outcome and Affected users and systems only.
 - AC2: pass. Cases l4 to l8: auth under Problem, Out of scope and Risk reads level 1; under Proposed outcome it reads 3 with `stop-list words in Proposed outcome: auth`; l6 names Constraints; l7 ignores code spans, fences and comments; l8 keeps a recorded level 3.
-- AC3: pass. m1 exits 2 with no record for an unmerged-branch sha; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha; m6 refuses with no remote.
+- AC3: pass. m1 exits 2 with no record for an unmerged-branch sha; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha; m6 refuses with no remote; m7 writes it in a plain `git init` with a pushed and fetched bare origin, as the mieruka sync fixture does.
 - AC4: not run live. `commands/execute.md` writes `Done as of <git rev-parse --short=12 HEAD>` first; sd2 and sd3 show a Done at the head, then the plan committed alone, passes.
 - AC5: pass in the sandbox. sd4 and sd5 warn and log `## Done is stale (written at <sha>, head is <sha>)`; sd6 blocks once under `mode.stale-done` enforce; sd7 passes with `stop_hook_active`; sd10 stays in warn under a global, `mode.plan-sync` and env enforce; sd11 reads a bulleted, backticked line under the lead sentence; sd12 and sd13 cover `plan-m1.md`.
 - AC6: pass, by hand on `demo/app` (after `npm ci`) following this branch's `constraints/SKILL.md` and `commands/constraints.md` rather than the installed plugin. Proved and written as rows: `npx tsc --noEmit` (type error in `components/data.ts`: violation exit 2, clean exit 0), `npm test` (failing assertion in `app/__tests__/data.test.ts`: violation exit 1, clean exit 0) and `npm run build` (bad export in `app/page.tsx`: violation exit 1, clean exit 0). Not enforced: a type error in a test file passed both `npx tsc --noEmit` (tsconfig excludes `**/__tests__/**`) and `npm test` (Vitest does not type-check), violation exit 0 and clean exit 0 for each. Measured: 9 passing tests and 102 kB First Load JS for `/`; no coverage provider is installed, so coverage was left out. `floor-guard.py` parses exactly the three rows. `demo/app/CONSTRAINTS.md` was written and not committed.
 - AC7: other PR.
-- AC8: `node tests/check.mjs` and `claude plugin validate . --strict` pass after PR A.
+- AC8: `node tests/check.mjs` and `claude plugin validate . --strict` pass after PR A, on top of PR B.
 - Sign-off:
 
 ## Departures from plan
