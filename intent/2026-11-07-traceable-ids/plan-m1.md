@@ -102,17 +102,19 @@ git grep -c "^id: PDS-" -- 'intent/*/intent.md' | wc -l  # 50
 
 ## Done
 
-Done as of fe7642ddc6ac
+Done as of 1b76778c8ef1
 
-- Build commit: fe7642ddc6ac on `build/traceable-ids-m1`, rebased on main at 8924c54 (one PR for all three plugins; see Departures).
-- Checks run: `node tests/check.mjs` 49 checks, 0 failures, 13 warnings (all pre-existing: Codex agent twins and routing coverage in other plugins), `change-ids` pass.
-  `node tests/eval.mjs --dry` 99 cases reference real skills.
+- Build commit: 1b76778c8ef1 on `build/traceable-ids-m1`, rebased on main at c22f221 after PR 190 (one PR for all three plugins; see Departures).
+  The review round added the folder-order fix (id folders by number after date folders) in `factory.py next` and `tests/e2e-sdlc/checks.mjs`.
+- Checks run at 1b76778c8ef1: `node tests/check.mjs` 50 checks, 0 failures, 13 warnings (all pre-existing: Codex agent twins and routing coverage in other plugins), `change-ids` pass.
+  `node --test tests/unit/*.test.mjs` 200 pass, 0 fail; `node tests/ids.mjs` 27/27; `node tests/factory.mjs` 174/174; `node tests/pro-dev.mjs` 198 cases, 0 failures; `node tests/ship-version.mjs` 152/152; `claude plugin validate . --strict` and pro-ai-sdlc, pro-core and pro-ship strict passed; `ids.py backfill` had nothing to do.
+  Checks run at fe7642ddc6ac, before the rebase and the review fix: `node tests/eval.mjs --dry` 99 cases reference real skills.
   `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), top-k 93/98, 3 notOneOf warnings.
   `node --test tests/unit/*.test.mjs` 199 pass, 0 fail.
   `node tests/ids.mjs` 27/27; `node tests/factory.mjs` 173/173; `node tests/execute.mjs` 31/31; `node tests/visual.mjs` 32/32; `node tests/incident.mjs` 41/41; `node tests/ship-version.mjs` 152/152; `node tests/pro-dev.mjs` 198 cases, 0 failures.
   `claude plugin validate . --strict` passed; pro-ai-sdlc, pro-core and pro-ship strict passed; all 21 plugins strict passed.
   `/usr/bin/python3` (3.9.6) `-m py_compile` clean on `ids.py` and `pro-dev.py`.
-- Definition of done: met; every R has a case or a line in a command and the versions are bumped (pro-ai-sdlc 0.17.0, pro-ship 0.17.0, pro-core 0.26.0, marketplace 1.93.0).
+- Definition of done: met; every R has a case or a line in a command and the versions are bumped (pro-ai-sdlc 0.17.0, pro-ship 0.17.0, pro-core 0.27.0, marketplace 1.94.0, above PR 190's pro-core 0.26.0, pro-ship 0.16.2 and 1.93.0).
 - Visual: none
 - Doubt: step 8 (irreversible) was not sent to a reviewer subagent; the backfill was checked by an independent recomputation in Node (56 intents, 0 mismatches) and the first 50 rows by a byte diff against spec-m1's table.
 - AC1: `python3 plugins/pro-ai-sdlc/scripts/ids.py next` prints `PDS-57` (spec-m1 AC1 as amended for the six late intents).
