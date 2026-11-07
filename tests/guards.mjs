@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Behaviour test for the shared guard helper of pro-core, `scripts/guardlib.py`,
 // and for the guards built on the same mode rule: pro-security's
-// `key-literal.py` and pro-core's `delete-outside.py`.
+// `key-literal.py`, pro-core's `delete-outside.py`, pro-core's secret-read guard
+// `scripts/secret-read.py` and its helper `scripts/env-check.py`.
 //
 // The pro-core guards (the protected-push findings of git-safe.py first) read
 // their mode through guardlib. A new guard enforces only when its own
@@ -18,6 +19,17 @@
 // every key-literal case asserts the planted key appears in no output and no
 // warn.log line.
 //
+// The sr/* cases drive secret-read.py the way Claude Code does: one process per
+// case, the PreToolUse payload on stdin, a throwaway guard folder and a working
+// folder that holds a planted `.env` with a sentinel value. A JSON
+// `permissionDecision: deny` is deny; a `secret-read` `would-deny` line in
+// warn.log is warn; anything else is allow. Every case also asserts that the
+// sentinel never reaches stdout, stderr or warn.log.
+//
+// The env-check/* cases run env-check.py against fixture dotenv files that hold the
+// sentinel and assert each output line, the exit code and that the sentinel
+// is absent from stdout and stderr in every outcome.
+//
 //   node tests/guards.mjs
 //   node tests/guards.mjs --only=mode     # substring filter on case id
 //   node tests/guards.mjs --only=key-literal
@@ -32,12 +44,18 @@ import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS = join(ROOT, "plugins", "pro-core", "scripts");
 const LIB = join(SCRIPTS, "guardlib.py");
 const KEY_LITERAL = join(ROOT, "plugins", "pro-security", "scripts", "key-literal.py");
 const DELETE_OUTSIDE = join(SCRIPTS, "delete-outside.py");
+const SECRET_READ = join(SCRIPTS, "secret-read.py");
+const ENV_CHECK = join(SCRIPTS, "env-check.py");
+
+// Built at runtime so no copy of it sits in this file or the repo.
+const SENTINEL = `sentinel${randomBytes(8).toString("hex")}`;
 
 const PROBE = [
   "import sys",
@@ -47,7 +65,7 @@ const PROBE = [
   "print(guardlib.own_mode(sys.argv[2]))",
 ].join("\n");
 
-const CASES = [
+const MODE_CASES = [
   { id: "mode/no-file-reads-warn", key: "protected-push", files: {}, expect: "warn" },
   { id: "mode/own-file-enforce", key: "protected-push", files: { "mode.protected-push": "enforce\n" }, expect: "enforce" },
   { id: "mode/own-file-warn", key: "protected-push", files: { "mode.protected-push": "warn\n" }, expect: "warn" },
@@ -61,6 +79,264 @@ const CASES = [
     expect: "enforce",
   },
   { id: "mode/other-key-file-ignored", key: "protected-push", files: { "mode.floor-guard": "enforce\n" }, expect: "warn" },
+  { id: "mode/secret-read-own-file-enforce", key: "secret-read", files: { "mode.secret-read": "enforce\n" }, expect: "enforce" },
+];
+
+// ── secret-read ─────────────────────────────────────────────────────────────
+const WARN = "warn";
+const DENY = "deny";
+const ALLOW = "allow";
+const ENFORCE = { "mode.secret-read": "enforce\n" };
+
+const srRead = (file_path) => ({ tool: "Read", input: { file_path } });
+const srGrep = (input) => ({ tool: "Grep", input: { pattern: "KEY", ...input } });
+const srBash = (command) => ({ tool: "Bash", input: { command } });
+
+// AC1: every R2 kind on Read, plus the R2 kinds the AC does not list.
+const READ_SECRETS = [
+  ["sr-read/dotenv", ".env", "a dotenv file"],
+  ["sr-read/dotenv-local", ".env.local", "a dotenv file"],
+  ["sr-read/dotenv-production-nested", "config/.env.production", "a dotenv file"],
+  ["sr-read/ssh-key", "~/.ssh/id_ed25519", "a private SSH key"],
+  ["sr-read/ssh-key-rsa-absolute", "/home/someone/.ssh/id_rsa", "a private SSH key"],
+  ["sr-read/pem", "certs/server.pem", "a PEM file"],
+  ["sr-read/npmrc", ".npmrc", "an .npmrc file"],
+  ["sr-read/npmrc-home", "~/.npmrc", "an .npmrc file"],
+  ["sr-read/credentials-json", "credentials.json", "a credentials file"],
+  ["sr-read/credentials-bare", "~/.aws/credentials", "a credentials file"],
+  ["sr-read/credentials-yml", "config/credentials.yml", "a credentials file"],
+  ["sr-read/service-account", "gcp-service-account.json", "a service-account file"],
+  ["sr-read/dev-vars", ".dev.vars", "a dev vars file"],
+  ["sr-read/dev-vars-staging", "worker/.dev.vars.staging", "a dev vars file"],
+];
+
+// AC2 and AC4a: names that look close and hold no secret.
+const READ_ALLOWS = [
+  ["sr-read-allow/env-example", ".env.example"],
+  ["sr-read-allow/env-sample", ".env.sample"],
+  ["sr-read-allow/env-template", "config/.env.template"],
+  ["sr-read-allow/ssh-pub", "~/.ssh/id_ed25519.pub"],
+  ["sr-read-allow/src-env-ts", "src/env.ts"],
+  ["sr-read-allow/credentials-ts", "src/auth/credentials.ts"],
+  ["sr-read-allow/id-helpers-py", "scripts/id_helpers.py"],
+  ["sr-read-allow/npmrc-lookalike", "docs/npmrc.md"],
+  ["sr-read-allow/envrc", ".envrc"],
+  ["sr-read-allow/package-json", "package.json"],
+];
+
+// AC3, AC4a, AC7 and R6 to R10 on Bash. [id, command, expect]
+const BASH_CASES = [
+  ["sr-bash/cat-env", "cat .env", WARN],
+  ["sr-bash/head-env-local", "head -5 .env.local", WARN],
+  ["sr-bash/grep-key-env", "grep KEY .env", WARN],
+  ["sr-bash/sed-npmrc", "sed -n 1p .npmrc", WARN],
+  ["sr-bash/redirect-spaced", "python3 x.py < .env", WARN],
+  ["sr-bash/redirect-attached", "python3 x.py <.env.local", WARN],
+  ["sr-bash/redirect-fd0", "wc -l 0< .env", WARN],
+  ["sr-bash/xargs-cat", "echo .env | xargs cat", WARN],
+  ["sr-bash/xargs-flags-grep", "find . -name .npmrc | xargs -0 grep token", WARN],
+  ["sr-bash/tail-ssh-key", "tail ~/.ssh/id_rsa", WARN],
+  ["sr-bash/less-credentials", "less ~/.aws/credentials", WARN],
+  ["sr-bash/more-service-account", "more keys/ci-service-account.json", WARN],
+  ["sr-bash/rg-env", "rg API_KEY .env.production", WARN],
+  ["sr-bash/egrep-env", "egrep -i 'key|token' .env", WARN],
+  ["sr-bash/fgrep-env", "fgrep KEY .dev.vars", WARN],
+  ["sr-bash/grep-e-pattern-then-file", "grep -e KEY .env", WARN],
+  ["sr-bash/grep-e-names-env-pattern-no-file", "grep -e .env src/config.ts", ALLOW],
+  ["sr-bash/sed-e-script-then-file", "sed -e 's/a/b/' .env", WARN],
+  ["sr-bash/cat-absolute-bin", "/bin/cat .env", WARN],
+  ["sr-bash/env-assign-prefix", "LC_ALL=C cat .env", WARN],
+  ["sr-bash/after-and", "cd app && cat .env.local", WARN],
+  ["sr-bash/in-pipeline", "cat .env | grep KEY", WARN],
+  ["sr-bash/second-line", "echo start\ncat .npmrc", WARN],
+  ["sr-bash/double-quoted", 'cat ".env"', WARN],
+  ["sr-bash/cat-ssh-glob", "cat ~/.ssh/id_*", WARN],
+  ["sr-bash/cat-pem-glob", "cat certs/*.pem", WARN],
+  ["sr-bash/head-pem-glob", "head *.pem", WARN],
+  ["sr-bash/cat-env-glob", "cat .env*", WARN],
+  ["sr-bash/cat-credentials-glob", "cat credentials*", WARN],
+  // Review of #193: a glob in a folder part leaves the last component to R2; braces expand.
+  ["sr-bash/folder-glob-env", "cat apps/*/.env", WARN],
+  ["sr-bash/folder-glob-env-local", "cat */.env.local", WARN],
+  ["sr-bash/brace-env", "cat {.env,.env.local}", WARN],
+  ["sr-bash/brace-suffix-env", "cat .env{,.local}", WARN],
+  ["sr-bash-allow/folder-glob-readme", "cat apps/*/README.md", ALLOW],
+  ["sr-bash-allow/brace-ts", "cat src/*.{ts,tsx}", ALLOW],
+  // grep options whose value is a file glob, and options that take a number.
+  ["sr-bash/grep-include-eq", "grep -rn KEY --include='.env*' .", WARN],
+  ["sr-bash/grep-include-spaced", "grep -rn KEY --include .env .", WARN],
+  ["sr-bash/rg-g-glob", "rg KEY -g '.env*'", WARN],
+  ["sr-bash/rg-glob-long", "rg KEY --glob=.npmrc", WARN],
+  ["sr-bash-allow/grep-include-ts", "grep -rn KEY --include='*.ts' .", ALLOW],
+  ["sr-bash-allow/grep-context-then-pattern", "grep -A 3 .env src/", ALLOW],
+  ["sr-bash-allow/grep-max-count-then-pattern", "grep -m 1 .env.local docs", ALLOW],
+  ["sr-bash-allow/grep-long-max-count-then-pattern", "grep --max-count 2 .npmrc README.md", ALLOW],
+  // Command substitutions run, quoted or not; heredoc bodies are text.
+  ["sr-bash/subst-in-double-quotes", 'echo "$(cat .env)"', WARN],
+  ["sr-bash/subst-bare", "export X=$(head -1 .env.local)", WARN],
+  ["sr-bash/backtick-in-double-quotes", 'echo "`cat .npmrc`"', WARN],
+  ["sr-bash/backtick-bare", "echo `cat .env`", WARN],
+  ["sr-bash-allow/subst-in-single-quotes", "echo '$(cat .env)'", ALLOW],
+  ["sr-bash-allow/heredoc-doc-line", "cat > notes.md <<'EOF'\ncat .env prints values\nEOF\necho done", ALLOW],
+  ["sr-bash-allow/heredoc-dash-doc-line", "cat > notes.md <<-EOF\n\tgrep KEY .env\n\tEOF", ALLOW],
+  ["sr-bash/after-heredoc-ends", "cat > notes.md <<'EOF'\ntext\nEOF\ncat .env", WARN],
+  ["sr-bash/heredoc-to-shell", "bash <<'EOF'\ncat .env\nEOF", WARN],
+  ["sr-bash/herestring-is-not-heredoc", "grep KEY <<<EOF\ncat .env\nEOF", WARN],
+  ["sr-bash/grep-T-takes-no-value", "grep -T KEY .env", WARN],
+  // Review round 2 of #193: a heredoc body is kept whenever any stage of its line runs a shell.
+  ["sr-bash/heredoc-piped-to-bash", "cat <<'EOF' | bash\ncat .env\nEOF", WARN],
+  ["sr-bash/heredoc-after-cd-bash", "cd app && bash <<'EOF'\ncat .env\nEOF", WARN],
+  ["sr-bash/heredoc-env-assign-bash", "FOO=1 bash <<'EOF'\ncat .env\nEOF", WARN],
+  ["sr-bash/heredoc-sudo-sh", "sudo sh <<EOF\ncat .env\nEOF", WARN],
+  ["sr-bash/heredoc-env-runner-zsh", "env -i FOO=1 zsh <<EOF\nhead .npmrc\nEOF", WARN],
+  // An apostrophe in a quoted heredoc body must not hide a later substitution.
+  ["sr-bash/apostrophe-in-heredoc-then-subst", "cat > notes.md <<'EOF'\nfix: don't log keys\nEOF\necho \"$(cat .env)\"", WARN],
+  // Brace lists that hold a slash expand before the basename is taken.
+  ["sr-bash/brace-with-slash", "cat apps/{web/.env,api/.env}", WARN],
+  ["sr-bash/brace-mixed-with-slash", "cat {README.md,apps/.env}", WARN],
+  ["sr-bash-allow/brace-with-slash-readme", "cat apps/{web/README.md,api/README.md}", ALLOW],
+  // Review round 3 of #193: a brace group with no comma does not end expansion,
+  // the cap keeps the first alternatives and runner flags consume their value.
+  ["sr-bash/brace-after-var", "cat ${APP_DIR}/.env{,.local}", WARN],
+  ["sr-bash/xargs-brace-after-placeholder", "ls | xargs -I{} cat {}/.env{,.local}", WARN],
+  ["sr-bash/brace-cap-keeps-first", "cat {.env,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32,a33,a34,a35,a36,a37,a38,a39,a40,a41,a42,a43,a44,a45,a46,a47,a48,a49,a50,a51,a52,a53,a54,a55,a56,a57,a58,a59,a60,a61,a62,a63,a64,a65,a66,a67,a68,a69,a70}", WARN],
+  ["sr-bash/sudo-u-value", "sudo -u deploy cat /srv/app/.env", WARN],
+  ["sr-bash/sudo-long-user-value", "sudo --user deploy cat /srv/app/.env", WARN],
+  ["sr-bash/nice-n-value", "nice -n 10 cat .env", WARN],
+  ["sr-bash/env-u-value", "env -u FOO cat .env", WARN],
+  ["sr-bash/env-C-value", "env -C app cat .env", WARN],
+  ["sr-bash/heredoc-piped-to-sudo-u-bash", "cat <<'EOF' | sudo -u deploy bash\ncat .env\nEOF", WARN],
+  ["sr-bash-allow/sudo-u-value-no-secret", "sudo -u deploy cat README.md", ALLOW],
+  ["sr-bash/env-check-plain", "python3 @@ENV_CHECK@@ OPENAI_API_KEY", ALLOW],
+  ["sr-bash/env-check-plain-file-flag", "python3 @@ENV_CHECK@@ --file .env OPENAI_API_KEY", ALLOW],
+  ["sr-bash/env-check-no-python", "@@ENV_CHECK@@ KEY", ALLOW],
+  ["sr-bash/env-check-piped-to-cat-env", "python3 @@ENV_CHECK@@ KEY | cat .env", WARN],
+  ["sr-bash/env-check-then-cat-env", "python3 @@ENV_CHECK@@ KEY; cat .env", WARN],
+  ["sr-bash-allow/grep-pattern-names-env", 'grep -r ".env" src/', ALLOW],
+  ["sr-bash-allow/rg-pattern-names-env", "rg -n '.env.local' docs", ALLOW],
+  ["sr-bash-allow/sed-script-names-npmrc", "sed -n '/.npmrc/p' README.md", ALLOW],
+  ["sr-bash-allow/cp-example", "cp .env.example .env", ALLOW],
+  ["sr-bash-allow/source", "source .env", ALLOW],
+  ["sr-bash-allow/dot-source", ". .env.local && npm run dev", ALLOW],
+  ["sr-bash-allow/ls", "ls -la .env", ALLOW],
+  ["sr-bash-allow/check-ignore", "git check-ignore .env", ALLOW],
+  ["sr-bash-allow/cat-example", "cat .env.example", ALLOW],
+  ["sr-bash-allow/cat-star", "cat *", ALLOW],
+  ["sr-bash-allow/cat-json-glob", "cat *.json", ALLOW],
+  ["sr-bash-allow/cat-ssh-pub-glob", "cat ~/.ssh/id_*.pub", ALLOW],
+  ["sr-bash-allow/cat-credentials-ts-glob", "cat src/auth/credentials*.ts", ALLOW],
+  ["sr-bash-allow/cat-pub-key", "cat ~/.ssh/id_ed25519.pub", ALLOW],
+  ["sr-bash-allow/heredoc-in", "cat <<EOF\n.env\nEOF", ALLOW],
+  ["sr-bash-allow/xargs-no-secret", "ls | xargs cat", ALLOW],
+  ["sr-bash-allow/xargs-not-reader", "echo .env | xargs ls -la", ALLOW],
+  ["sr-bash-allow/echo-name", "echo 'copy .env.example to .env'", ALLOW],
+  ["sr-bash-allow/no-secret-at-all", "npm test", ALLOW],
+];
+
+// Five brace groups of thirty options (about 300 characters): 24 million
+// expansions if a guard expanded them all. The guard must cap and return fast.
+const BRACE_GROUP = `{${Array.from({ length: 30 }, (_, i) => String.fromCharCode(97 + (i % 26)) + (i >= 26 ? "x" : "")).join(",")}}`;
+const BRACE_BOMB = BRACE_GROUP.repeat(5);
+const FAST_MS = 3000;
+
+const SR_CASES = [
+  ...READ_SECRETS.map(([id, p, kind]) => ({ id, ...srRead(p), expect: WARN, has: kind })),
+  ...READ_ALLOWS.map(([id, p]) => ({ id, ...srRead(p), expect: ALLOW })),
+
+  // AC4, AC4a: Grep path and glob.
+  { id: "sr-grep/path-env", ...srGrep({ path: ".env" }), expect: WARN },
+  { id: "sr-grep/glob-env-star", ...srGrep({ glob: ".env*" }), expect: WARN },
+  { id: "sr-grep/glob-id-star", ...srGrep({ glob: "id_*" }), expect: WARN },
+  { id: "sr-grep/glob-pem", ...srGrep({ path: "certs", glob: "*.pem" }), expect: WARN },
+  { id: "sr-grep/path-npmrc", ...srGrep({ path: "~/.npmrc" }), expect: WARN },
+  { id: "sr-grep/path-credentials", ...srGrep({ path: "~/.aws/credentials" }), expect: WARN },
+  { id: "sr-grep/glob-credentials", ...srGrep({ glob: "credentials*" }), expect: WARN },
+  { id: "sr-grep/path-service-account", ...srGrep({ path: "keys/ci-service-account.json" }), expect: WARN },
+  { id: "sr-grep/path-dev-vars", ...srGrep({ path: "worker/.dev.vars" }), expect: WARN },
+  { id: "sr-grep/glob-folder-env", ...srGrep({ glob: "**/.env" }), expect: WARN },
+  { id: "sr-grep/glob-brace-env", ...srGrep({ glob: "{.env,.env.local}" }), expect: WARN },
+  { id: "sr-grep/path-folder-glob-env", ...srGrep({ path: "apps/*/.env" }), expect: WARN },
+  { id: "sr-read/folder-glob-env", ...srRead("apps/*/.env.production"), expect: WARN },
+  { id: "sr-grep-allow/glob-ts", ...srGrep({ glob: "*.ts" }), expect: ALLOW },
+  { id: "sr-grep-allow/glob-json", ...srGrep({ glob: "*.json" }), expect: ALLOW },
+  { id: "sr-grep-allow/path-src", ...srGrep({ path: "src", glob: "*.{ts,tsx}" }), expect: ALLOW },
+  { id: "sr-grep-allow/path-env-example", ...srGrep({ path: ".env.example" }), expect: ALLOW },
+  { id: "sr-grep-allow/glob-folder-readme", ...srGrep({ glob: "**/README.md" }), expect: ALLOW },
+  { id: "sr-grep-allow/glob-brace-example", ...srGrep({ glob: "{.env.example,.env.sample}" }), expect: ALLOW },
+
+  ...BASH_CASES.map(([id, command, expect]) => ({ id, ...srBash(command), expect })),
+
+  // The message names the kind, the basename and the way forward, never the value.
+  { id: "sr-msg/warn-names-kind-and-way-forward", ...srBash("cat .env"), expect: WARN, has: "env-check.py" },
+  { id: "sr-msg/warn-names-example", ...srRead(".env.local"), expect: WARN, has: ".env.example" },
+  { id: "sr-msg/warn-summary", ...srRead(".env"), expect: WARN, has: "would deny reading a dotenv file (.env)" },
+
+  // AC5: enforce only under its own mode file.
+  ...READ_SECRETS.slice(0, 8).map(([id, p]) => ({ id: id.replace("sr-read/", "sr-enforce/read-"), ...srRead(p), expect: DENY, modes: ENFORCE })),
+  ...BASH_CASES.filter(([, , e]) => e === WARN).slice(0, 8).map(([id, command]) => ({
+    id: id.replace("sr-bash/", "sr-enforce/bash-"), ...srBash(command), expect: DENY, modes: ENFORCE,
+  })),
+  { id: "sr-enforce/deny-names-env-check", ...srBash("cat .env"), expect: DENY, modes: ENFORCE, has: "env-check.py" },
+  { id: "sr-enforce/allow-stays-allow", ...srRead(".env.example"), expect: ALLOW, modes: ENFORCE },
+  { id: "sr-enforce/env-check-stays-allow", ...srBash("python3 @@ENV_CHECK@@ KEY"), expect: ALLOW, modes: ENFORCE },
+  { id: "sr-global-mode/read-env-stays-warn", ...srRead(".env"), expect: WARN, modes: { mode: "enforce\n" } },
+  { id: "sr-global-mode/cat-env-stays-warn", ...srBash("cat .env"), expect: WARN, modes: { mode: "enforce\n" } },
+  { id: "sr-global-mode/env-var-stays-warn", ...srBash("cat .env"), expect: WARN, env: { CLAUDE_GUARD_MODE: "enforce" } },
+  { id: "sr-global-mode/other-key-ignored", ...srRead(".env"), expect: WARN, modes: { "mode.protected-push": "enforce\n" } },
+
+  // Review round 2 of #193: brace expansion is capped while it runs.
+  { id: "sr-brace-bomb/bash-allow", ...srBash(`cat ${BRACE_BOMB}`), expect: ALLOW, maxMs: FAST_MS },
+  { id: "sr-brace-bomb/bash-folder-env", ...srBash(`cat ${BRACE_BOMB}/.env`), expect: WARN, maxMs: FAST_MS },
+  { id: "sr-brace-bomb/grep-glob", ...srGrep({ glob: BRACE_BOMB }), expect: ALLOW, maxMs: FAST_MS },
+  { id: "sr-brace-bomb/read", ...srRead(`${BRACE_BOMB}.txt`), expect: ALLOW, maxMs: FAST_MS },
+
+  // AC8: malformed payloads exit 0 with no output.
+  { id: "sr-malformed/not-json", raw: "not json", expect: ALLOW, silent: true },
+  { id: "sr-malformed/empty-object", raw: "{}", expect: ALLOW, silent: true },
+  { id: "sr-malformed/empty-stdin", raw: "", expect: ALLOW, silent: true },
+  { id: "sr-malformed/array", raw: "[]", expect: ALLOW, silent: true },
+  { id: "sr-malformed/read-no-file-path", raw: JSON.stringify({ tool_name: "Read", tool_input: {} }), expect: ALLOW, silent: true },
+  { id: "sr-malformed/read-number-path", raw: JSON.stringify({ tool_name: "Read", tool_input: { file_path: 7 } }), expect: ALLOW, silent: true },
+  { id: "sr-malformed/bash-list-command", raw: JSON.stringify({ tool_name: "Bash", tool_input: { command: ["cat", ".env"] } }), expect: ALLOW, silent: true },
+  { id: "sr-malformed/grep-input-string", raw: JSON.stringify({ tool_name: "Grep", tool_input: ".env" }), expect: ALLOW, silent: true },
+  { id: "sr-malformed/other-tool", raw: JSON.stringify({ tool_name: "Write", tool_input: { file_path: ".env" } }), expect: ALLOW, silent: true },
+  { id: "sr-malformed/unclosed-quote", ...srBash("cat '.env"), expect: WARN },
+];
+
+// ── env-check ───────────────────────────────────────────────────────────────
+const S = SENTINEL;
+const FIXTURE = [
+  `SET=${S}`,
+  "EMPTY=",
+  `export QUOTED="${S}"`,
+  "# MISSING=x",
+  `  SPACED = '${S}'`,
+  "BLANKQ=''",
+  `TWICE=${S}`,
+  "TWICE=",
+  "COMMENTED= # a note",
+  "",
+].join("\n");
+
+const EC_CASES = [
+  { id: "env-check/set-empty-missing", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "SET", "EMPTY", "MISSING"], exit: 1, stdout: "SET present\nEMPTY empty\nMISSING missing\n" },
+  { id: "env-check/all-present-exit-0", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "SET", "QUOTED", "SPACED"], exit: 0, stdout: "SET present\nQUOTED present\nSPACED present\n" },
+  { id: "env-check/export-quoted", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "QUOTED"], exit: 0, stdout: "QUOTED present\n" },
+  { id: "env-check/quoted-blank-is-empty", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "BLANKQ"], exit: 1, stdout: "BLANKQ empty\n" },
+  { id: "env-check/last-assignment-wins", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "TWICE"], exit: 1, stdout: "TWICE empty\n" },
+  { id: "env-check/commented-line-is-missing", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "MISSING"], exit: 1, stdout: "MISSING missing\n" },
+  { id: "env-check/inline-comment-is-empty", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "COMMENTED"], exit: 1, stdout: "COMMENTED empty\n" },
+  { id: "env-check/default-env-local-first", files: { ".env.local": `SET=${S}\n`, ".env": "OTHER=1\n" }, args: ["SET", "OTHER"], exit: 1, stdout: "SET present\nOTHER missing\n" },
+  { id: "env-check/default-env", files: { ".env": `SET=${S}\n` }, args: ["SET"], exit: 0, stdout: "SET present\n" },
+  { id: "env-check/no-file-all-missing", files: {}, args: ["SET", "EMPTY"], exit: 1, stdout: "SET missing\nEMPTY missing\n" },
+  { id: "env-check/unreadable-file", files: { "f.env": FIXTURE }, dirs: ["adir"], args: ["--file", "adir", "SET"], exit: 1, stdout: "SET missing\n", stderr: "adir" },
+  { id: "env-check/nonexistent-file", files: {}, args: ["--file", "nope.env", "SET"], exit: 1, stdout: "SET missing\n", stderr: "nope.env" },
+  { id: "env-check/bad-key-exit-64", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "BAD-KEY"], exit: 64, stdout: "", stderr: "BAD-KEY" },
+  { id: "env-check/bad-key-default-file-exit-64", files: { ".env": FIXTURE }, args: ["BAD-KEY"], exit: 64, stdout: "", stderr: "BAD-KEY" },
+  { id: "env-check/bad-key-after-good-exit-64", files: { "f.env": FIXTURE }, args: ["--file", "f.env", "SET", "1BAD"], exit: 64, stdout: "" },
+  { id: "env-check/file-flag-without-value-exit-64", files: { ".env": FIXTURE }, args: ["SET", "--file"], exit: 64, stdout: "" },
+  { id: "env-check/no-keys-exit-64", files: { ".env": FIXTURE }, args: [], exit: 64, stdout: "" },
+  { id: "env-check/unknown-option-exit-64", files: { ".env": FIXTURE }, args: ["--show", "SET"], exit: 64, stdout: "" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -297,18 +573,101 @@ function runHookCase(c, env, dir) {
 
 function baseEnv() {
   const env = { ...process.env };
-  for (const k of ["CLAUDE_GUARD_MODE", "CLAUDE_PROJECT_DIR", "PRO_DEV_STATE_DIR"]) delete env[k];
+  for (const k of ["CLAUDE_GUARD_MODE", "CLAUDE_GUARD_DIR", "CLAUDE_PROJECT_DIR", "PRO_DEV_STATE_DIR"]) delete env[k];
   return env;
 }
 
+function readLog(dir) {
+  try {
+    return readFileSync(join(dir, "warn.log"), "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function decide(stdout, logText) {
+  let out = null;
+  try {
+    out = JSON.parse((stdout || "").trim() || "null");
+  } catch {
+    out = null;
+  }
+  if (out && out.hookSpecificOutput && out.hookSpecificOutput.permissionDecision === "deny") return DENY;
+  if (/\tsecret-read\twould-deny\t/.test(logText)) return WARN;
+  return ALLOW;
+}
+
+function runSecretReadCase(c) {
+  const root = mkdtempSync(join(tmpdir(), "guards-sr-"));
+  try {
+    const guardDir = join(root, "guard");
+    const cwd = join(root, "work");
+    mkdirSync(guardDir);
+    mkdirSync(cwd);
+    // A planted secret beside the call: the guard must never read or echo it.
+    writeFileSync(join(cwd, ".env"), `OPENAI_API_KEY=${SENTINEL}\nKEY=${SENTINEL}\n`);
+    for (const [name, body] of Object.entries(c.modes || {})) writeFileSync(join(guardDir, name), body);
+    let payload = c.raw;
+    if (payload === undefined) {
+      const input = { ...c.input };
+      if (typeof input.command === "string") input.command = input.command.split("@@ENV_CHECK@@").join(ENV_CHECK);
+      payload = JSON.stringify({ tool_name: c.tool, cwd, tool_input: input });
+    }
+    if (!existsSync(SECRET_READ)) return { ...c, actual: "missing", ok: false, reason: "secret-read.py not found" };
+    const env = { ...baseEnv(), ...(c.env || {}), CLAUDE_GUARD_DIR: guardDir };
+    const started = Date.now();
+    const res = spawnSync("python3", [SECRET_READ], { input: payload, encoding: "utf8", env, cwd, timeout: c.maxMs || 20_000 });
+    const tookMs = Date.now() - started;
+    const logText = readLog(guardDir);
+    const said = `${res.stdout || ""}${res.stderr || ""}`;
+    const actual = res.status === 0 ? decide(res.stdout, logText) : `exit ${res.status}`;
+    const problems = [];
+    if (actual !== c.expect) problems.push(`got ${actual}`);
+    if (c.maxMs && (res.error || tookMs > c.maxMs)) problems.push(`took ${tookMs} ms, budget ${c.maxMs} ms`);
+    if (res.status !== 0) problems.push(`exit ${res.status}: ${(res.stderr || "").trim().split("\n").pop()}`);
+    if ((said + logText).includes(SENTINEL)) problems.push("output or warn.log holds the planted value");
+    if (c.has && !said.includes(c.has)) problems.push(`output does not name "${c.has}"`);
+    if (c.silent && said.trim()) problems.push("printed output on a malformed payload");
+    if (c.expect === ALLOW && logText.includes("\tsecret-read\t")) problems.push("wrote a secret-read warn.log line");
+    if (c.expect === WARN && !/systemMessage/.test(res.stdout || "")) problems.push("warn printed no systemMessage");
+    if (c.expect === DENY && !/\tsecret-read\tdeny\t/.test(logText)) problems.push("denied without a secret-read deny line in warn.log");
+    return { ...c, actual, ok: problems.length === 0, reason: problems.join("; ") };
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function runEnvCheckCase(c) {
+  const cwd = mkdtempSync(join(tmpdir(), "guards-ec-"));
+  try {
+    for (const [name, body] of Object.entries(c.files)) writeFileSync(join(cwd, name), body);
+    for (const d of c.dirs || []) mkdirSync(join(cwd, d));
+    if (!existsSync(ENV_CHECK)) return { ...c, expect: `exit ${c.exit}`, actual: "missing", ok: false, reason: "env-check.py not found" };
+    const res = spawnSync("python3", [ENV_CHECK, ...c.args], { encoding: "utf8", env: baseEnv(), cwd, timeout: 20_000 });
+    const expect = `exit ${c.exit}`;
+    const actual = `exit ${res.status}`;
+    const problems = [];
+    if (actual !== expect) problems.push(`got ${actual}`);
+    if (c.stdout !== undefined && res.stdout !== c.stdout) problems.push(`stdout ${JSON.stringify(res.stdout)}`);
+    if (c.stderr && !(res.stderr || "").includes(c.stderr)) problems.push(`stderr does not name "${c.stderr}"`);
+    if (`${res.stdout || ""}${res.stderr || ""}`.includes(SENTINEL)) problems.push("stdout or stderr holds the fixture value");
+    return { ...c, expect, actual, ok: problems.length === 0, reason: problems.join("; ") };
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
 export function runGuardCases({ only = null } = {}) {
-  const all = [...CASES, ...KEY_CASES, ...DEL_CASES];
-  const selected = only ? all.filter((c) => c.id.includes(only)) : all;
+  const pick = (list) => (only ? list.filter((c) => c.id.includes(only)) : list);
+  const modes = pick([...MODE_CASES, ...KEY_CASES, ...DEL_CASES]);
+  const srs = pick(SR_CASES);
+  const ecs = pick(EC_CASES);
+  const selected = [...modes, ...srs, ...ecs];
   const out = { skipped: null, selected, results: [] };
   const py = spawnSync("python3", ["--version"], { stdio: "ignore" });
   if (py.error) return { ...out, skipped: "python3 not found on PATH" };
 
-  for (const c of selected) {
+  for (const c of modes) {
     const dir = mkdtempSync(join(tmpdir(), "guards-"));
     try {
       for (const [name, body] of Object.entries(c.files || {})) writeFileSync(join(dir, name), body);
@@ -327,6 +686,8 @@ export function runGuardCases({ only = null } = {}) {
       rmSync(dir, { recursive: true, force: true });
     }
   }
+  for (const c of srs) out.results.push(runSecretReadCase(c));
+  for (const c of ecs) out.results.push(runEnvCheckCase(c));
   return out;
 }
 
@@ -348,7 +709,10 @@ function main() {
     if (!r.ok) failed++;
     console.log(`${r.ok ? "✓" : "✗"} ${r.id.padEnd(width)}  expect=${r.expect.padEnd(7)} got=${r.actual}${r.ok ? "" : `  ${r.reason}`}`);
   }
-  console.log(`\n${failed ? "✗" : "✓"} ${results.length} cases · ${failed} failures`);
+  const count = (p) => results.filter((r) => r.id.startsWith(p)).length;
+  console.log(
+    `\n${failed ? "✗" : "✓"} ${results.length} cases (${count("mode/")} mode, ${count("key-literal")} key-literal, ${count("delete-outside")} delete-outside, ${count("sr")} secret-read, ${count("env-check/")} env-check) · ${failed} failures`
+  );
   process.exit(failed ? 1 : 0);
 }
 

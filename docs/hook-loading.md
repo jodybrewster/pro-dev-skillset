@@ -40,6 +40,10 @@ The same `Bash` matcher also runs `scripts/delete-outside.py` with a 5 second ti
 It flags `rm`, `rmdir`, `unlink`, `find -delete`, `find -exec rm` and `git clean` whose target resolves outside the project root under the `delete-outside` mode key, which reads only `mode.delete-outside` and starts in warn.
 The shared helper `scripts/guardlib.py` is imported, not registered.
 
+`pro-core` registers a second `PreToolUse` hook, matcher `Read|Grep|Bash`, that runs `scripts/secret-read.py` with a 5 second timeout.
+It flags a read of a dotenv file, a private SSH key, a `.pem` file, `.npmrc`, a credentials file or a service-account JSON under the `secret-read` mode key, which reads only `mode.secret-read` and starts in warn ([enforce-mode.md](./enforce-mode.md)).
+Its helper `scripts/env-check.py` prints `present`, `empty` or `missing` per key name and is run by the agent, not registered.
+
 `pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
 It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.
 

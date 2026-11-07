@@ -20,7 +20,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 |---|---|---|---|---|---|
 | pro-core | find-skills | [vercel-labs/skills](https://github.com/vercel-labs/skills) | MIT | Copyright (c) 2026 Vercel, Inc. | forked |
 | pro-core | dream | [grandamenium/dream-skill](https://github.com/grandamenium/dream-skill) | MIT, stated in the README; no license file | none published | forked |
-| pro-core | `scripts/git-safe.py` (the protected-push refspec parser) and the tokenizer in `scripts/guardlib.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-protected-push.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
+| pro-core | `scripts/git-safe.py` (the protected-push refspec parser), the tokenizer in `scripts/guardlib.py`, `scripts/secret-read.py` (the secret path set and the plain env-check exemption) and `scripts/env-check.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-protected-push.py`, `hooks/guard-secrets.py` and `scripts/super-board-env-check.sh` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-core | `scripts/delete-outside.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-delete-outside.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-data | drizzle-orm-architecture | [Yoraexe/ceobe](https://github.com/Yoraexe/ceobe) | MIT | Copyright (c) 2026 Yoragam1 | forked |
 | pro-data | drizzle-schema-definition | [Intense-Visions/harness-engineering](https://github.com/Intense-Visions/harness-engineering) | MIT | Copyright (c) 2026 Intense Visions, Inc. | forked |
