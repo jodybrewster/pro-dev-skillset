@@ -125,6 +125,8 @@ An empty section tells the reviewer the diff follows the plan.
   The first 50 rows match spec-m1's table exactly; the five follow by the same rule as PDS-51 to PDS-55, so `ids.py next` prints `PDS-56` and the diff is 55 files, 55 insertions and 0 deletions.
   spec-m1's table, AC1 and AC6 gain the five rows and the new counts in the same commit.
 - `tests/e2e-sdlc.mjs` (not in the file list) reads the factory record by its lowercased name, as `tests/e2e-sdlc/checks.mjs` does.
+- `docs/roadmap.md` is left alone: it lists no traceable-ids item to move.
+- Three review nits folded in: R10 says `execute-gate.py` names the build branch only, AC9 gains the repos that fall through to the question (`x`, `3d-viewer`, `my_app`) and ADR-0026's allocation and window lines match R3.
 - The `change-ids` rule lives in `tests/ids.mjs` as `changeIdProblems(root)` so its fixtures and this repo run the same code; `tests/check.mjs` imports it.
 
 ## Noticed but not touched

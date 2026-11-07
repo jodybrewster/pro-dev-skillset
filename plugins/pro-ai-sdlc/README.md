@@ -14,7 +14,7 @@ Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this o
 
 | Stage | Command | Writes |
 |---|---|---|
-| Intent | `/intent` | `intent/<date>-<slug>/intent.md` |
+| Intent | `/intent` | `intent/<ID>-<slug>/intent.md` in a repo with a shortcode, else `intent/<date>-<slug>/intent.md` |
 | Spec | `/spec` | `spec.md` beside the intent |
 | Plan | `/plan` | `plan.md` beside the spec |
 | Build | `/execute` | a worktree and branch off the default branch, the built change, the plan's Done section and an open PR; never a merge |
@@ -38,6 +38,19 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 
 The interview rules for `/intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
+
+## Change ids
+
+A repo that declares a shortcode in a tracked `intent/project.json` (`{"shortcode": "PDS"}`) gives every change an id such as `PDS-51` ([ADR-0026](../../docs/decisions/0026-change-ids.md)).
+`/intent` and `/incident` allocate it, name the folder `intent/<ID>-<slug>/` and write `id:` first in the frontmatter; `/spec` and `/plan` copy it into every file they write.
+Tools read the id from frontmatter and never from the folder name.
+Every script that reads a folder accepts both forms.
+Without the file the loop works as before with date folders.
+
+- `scripts/ids.py next` fetches origin with a 10 second timeout and prints the highest id on every origin ref, every local branch and the working tree plus one; offline it allocates from the last fetch and says so.
+- `scripts/ids.py backfill` prints the ids it would give intents that have none, in `created:` order; `--write` inserts each as the first frontmatter line.
+
+An id is never reused: a dropped intent keeps its folder and its number.
 
 ## Building a plan
 
