@@ -2,7 +2,9 @@
 
 The AI-native SDLC as one plugin, stack-agnostic.
 The playbook is the guide and this plugin is where it is encoded.
-The whole loop works from Claude Code alone in any repo that has the plugin installed; mieruka is only a UI over it and reads the plugin's templates and rules.
+The whole loop works from Claude Code alone in any repo that has the plugin installed.
+Mieruka runs the same loop too.
+Its board and chat start the plugin's commands and its autorun works accepted intents by itself, reading the plugin's templates and rules.
 It is a Claude Code only plugin: its commands target Claude Code and make no promise for Codex.
 
 Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this one if present, the kit installed into a repo.
