@@ -33,11 +33,34 @@ Markdown files are skipped by the marker rules because docs name the markers.
 The file has these sections in this order.
 
 1. Floor: the moves above as bullets, plus secrets.
-2. Enforced with numbers: a table of Dimension, Rule, Checked by and Runs at. Each rule has a number and a direction word. A row exists only when its check ran and exited 0.
+2. Enforced with numbers: a table of Dimension, Rule, Checked by and Runs at. Each rule has a number and a direction word. A row exists only when its check was proved as below.
 3. Measured, not yet enforced: a table of Metric, Today and Direction. These are numbers with no failing check yet.
 4. Exceptions: a table of ID, Rule, Path, Reason, Owner and Expires.
 
 An optional `Test files:` line lists extra globs the guard treats as tests.
+
+## Proving a check
+
+A check that exits 0 tells you nothing until you have seen it fail.
+Some tools exit 0 even when they report findings, so a green run alone does not show the rule is enforced.
+Before writing an Enforced with numbers row, run its command twice:
+
+1. Violation: make a small temporary edit that breaks the rule, such as a type error for a types rule, a line the linter rejects for a lint rule or a failing assertion for a tests rule. Run the command and note its exit code.
+2. Clean control: undo the edit, confirm with `git status` that the tree is back as it was and run the command again. Note its exit code.
+
+Write the row only when the violation run exits non-zero and the clean run exits 0.
+When the clean run fails, the rule goes under Measured, not yet enforced as before.
+When the violation run exits 0, the check does not enforce the rule.
+List it under a `### Not enforced` heading at the end of the Measured, not yet enforced section, with the command and both exit codes. It never becomes a row:
+
+```
+### Not enforced
+
+- `npx semgrep --config auto`: violation exit 0, clean exit 0
+```
+
+Never leave the violation in the working tree and never commit it.
+No scanner is installed to do this; the proof uses the checks the repo already runs.
 
 ## Ratchets
 
