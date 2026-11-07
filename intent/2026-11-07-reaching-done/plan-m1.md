@@ -119,5 +119,7 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 2: a table whose stored `ref` differs from the one asked for is refused, because `a/b` and `a--b` share a key once `/` is written as `--`; the message says to use `pr-<number>`.
 - Step 3: the round record's `detail_json` also holds `created`, as every other loop record does, and `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
 - Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
+- Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero, which is how R12 and R26 both hold.
+- Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
 
 ## Noticed but not touched

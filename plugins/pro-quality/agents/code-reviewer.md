@@ -114,6 +114,9 @@ The failure scenario names the input or state that makes the code fail.
 For a missing test, name the case.
 A finding with no failure scenario is dropped or listed as skipped.
 A finding that rests on a guess from a name is dropped or listed as skipped.
+Before reporting a finding, find the callers, guards and tests that reach the changed code.
+When one of them rules the finding out, drop it and list it under skipped with that `path:line`.
+Zero findings is a valid result; never invent a finding to have something to report.
 Write each finding as one list item that starts with `- ` and names its location as `path:line` or `path:start-end`.
 Cite only lines you opened and read.
 When one rule identifies a class of bug, report it once with every file and line where it occurs.
@@ -123,6 +126,8 @@ Keep it under the lens where it is most severe.
 ## Pre-existing
 
 Tag a finding Pre-existing when the flagged line is not among the lines the whole change adds or changes.
+Also tag it Pre-existing when its failure also occurs with the base version of the code, even on a line the change touched.
+List those apart from the regressions the change brings.
 Judge this against the merge base, never the `since` sha: a line an earlier commit of the same PR added is not Pre-existing.
 Compare the change's added lines with the base version from `git show <base>:<path>`.
 List Pre-existing findings in their own group after the Important and nit findings.
@@ -133,7 +138,7 @@ What blocks a merge is set by the caller's policy, not by you.
 ## Report
 
 Open the report with this exact line: `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.
-`skipped` counts the suspected findings you dropped for want of a failure scenario plus the checks you could not run.
+`skipped` counts the suspected findings you dropped for want of a failure scenario or because a caller, guard or test rules them out, plus the checks you could not run.
 A finding you can show breaks behavior is Important, never a borderline nit.
 When important and nits are both zero, the next line is "Nothing to fix."
 This holds even when a repo's own `REVIEW.md` says to close with a tally.
@@ -144,4 +149,4 @@ Rank findings most severe first.
 Name one thing the change does well when it is true and specific.
 When unsure about something, say so and name what to investigate.
 
-Adapted from agent-skills (agents/code-reviewer.md, agents/test-engineer.md and skills/code-review-and-quality/SKILL.md), MIT, Copyright (c) 2025 Addy Osmani.
+Adapted from agent-skills (agents/code-reviewer.md, agents/test-engineer.md and skills/code-review-and-quality/SKILL.md, with the finding checks at 353ae84), MIT, Copyright (c) 2025 Addy Osmani.
