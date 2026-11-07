@@ -224,6 +224,13 @@ export function runLessonsCases() {
     grade(ref5, "F2", "fixed", "src/f.py:3", SHA4);
     const r3 = run(repo, ["table", "--ref", ref5, "--tally"]).stdout.split("\n");
     add("table --tally/round 3 grading one row reads graded: fixed 1", "graded: fixed 1 not fixed 0 no longer applies 0", r3[1] === "graded: fixed 1 not fixed 0 no longer applies 0" && r3[0] === "important: 0  nits: 0  pre-existing: 0  skipped: 0", r3.join(" | "));
+    const r3h = run(repo, ["table", "--ref", ref5, "--tally", "--head", SHA4]).stdout.split("\n");
+    add("table --tally --head/the round's head counts the grades made at it", "graded: fixed 1", r3h[1] === "graded: fixed 1 not fixed 0 no longer applies 0", r3h.join(" | "));
+    const SHA5 = "e".repeat(40);
+    const none5 = run(repo, ["table", "--ref", ref5, "--tally", "--head", SHA5]).stdout.split("\n");
+    add("table --tally --head/a round that grades nothing prints all zeros", "graded: fixed 0 not fixed 0 no longer applies 0", none5[1] === "graded: fixed 0 not fixed 0 no longer applies 0", none5.join(" | "));
+    const badHead = run(repo, ["table", "--ref", ref5, "--tally", "--head", "abc"]);
+    add("table --tally --head/refuses a short head", "exit 1", badHead.status === 1, badHead.stdout + badHead.stderr);
 
     for (const [id, args] of [
       ["a bad severity", ["--severity", "critical"]], ["line 0", ["--line", "0"]], ["a word for a line", ["--line", "ten"]],

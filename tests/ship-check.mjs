@@ -512,6 +512,18 @@ export function runShipCheckCases() {
       add("f6i a settings.local.json disable in the main checkout holds in the linked worktree", "not-installed", findE(wt, cacheLay) === "not-installed", findE(wt, cacheLay));
       git(lr, "worktree", "remove", "--force", wt);
       git(lr, "branch", "-q", "-D", "sdlc-linked-wt");
+      // Claude Code precedence: user, then project .claude/settings.json, then .claude/settings.local.json; the later one wins.
+      rmSync(join(lr, ".claude"), { recursive: true, force: true });
+      const setUser = (v) => { mkdirSync(join(env.HOME, ".claude"), { recursive: true }); writeFileSync(join(env.HOME, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": v } })); };
+      const setRepo = (name, v) => { mkdirSync(join(lr, ".claude"), { recursive: true }); writeFileSync(join(lr, ".claude", name), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": v } })); };
+      const clearAll = () => { rmSync(join(env.HOME, ".claude"), { recursive: true, force: true }); rmSync(join(lr, ".claude"), { recursive: true, force: true }); };
+      setUser(false); setRepo("settings.json", true);
+      add("f6j a user false overridden by a project true counts as enabled", "the install path", findE(lr, cacheLay) === join(d3, "scripts", "lessons.py"), findE(lr, cacheLay));
+      clearAll(); setUser(true); setRepo("settings.local.json", false);
+      add("f6k a user true overridden by a local false is not-installed", "not-installed", findE(lr, cacheLay) === "not-installed", findE(lr, cacheLay));
+      clearAll(); setRepo("settings.json", true); setRepo("settings.local.json", false);
+      add("f6l a project true overridden by a local false is not-installed", "not-installed", findE(lr, cacheLay) === "not-installed", findE(lr, cacheLay));
+      clearAll();
       none();
     }
 

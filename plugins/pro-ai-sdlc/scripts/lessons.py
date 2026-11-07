@@ -9,7 +9,7 @@
   lessons.py raise --ref <ref> --base <40 hex> --head <40 hex> --pass <pass> --severity important|nit|pre-existing
                    --class <slug> --file <path> --line <n>                            (claim on stdin)
   lessons.py grade --ref <ref> --head <40 hex> <id> fixed|not-fixed|no-longer-applies --evidence <path:line>
-  lessons.py table --ref <ref> [--tally]
+  lessons.py table --ref <ref> [--tally [--head <40 hex>]]
   lessons.py round --ref <ref> --base <40 hex> --head <40 hex> --round <n> --fresh ran|skipped
 
 The ledger is .pro-dev/review/findings.jsonl, one line per finding, never read by mieruka. A lesson
@@ -293,7 +293,9 @@ def cmd_table(a):
     ref = check_ref(a.ref)
     table = read_table(root, ref)
     if a.tally:
-        return "\n".join(tally(table["findings"], table.get("head")))
+        # --head is the round's head: the graded line counts only rows graded at it.
+        head = check_sha(a.head, "--head") if a.head is not None else table.get("head")
+        return "\n".join(tally(table["findings"], head))
     if not os.path.exists(table_path(root, ref)):
         return {"findings": {}}
     table["findings"] = dict(sorted(table["findings"].items(), key=lambda kv: fid_num(kv[0])))
@@ -452,6 +454,7 @@ def main(argv: list[str]) -> int:
     s = sub.add_parser("table")
     s.add_argument("--ref", required=True)
     s.add_argument("--tally", action="store_true")
+    s.add_argument("--head")
     s.set_defaults(fn=cmd_table)
     s = sub.add_parser("round")
     s.add_argument("--ref", required=True)

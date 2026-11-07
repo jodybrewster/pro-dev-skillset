@@ -541,12 +541,13 @@ def committed_settings(root: str) -> str:
     return p.stdout if p.returncode == 0 else ""
 
 
-def enabled_plugins(root: str) -> dict:
+def enabled_plugins(root: str, sources=None) -> dict:
     """enabledPlugins as {key: (value, source)} from the user settings, then the committed project
-    settings, later winning."""
+    settings, later winning. `sources` replaces that list with other (load, label) pairs in order."""
     merged: dict = {}
-    sources = ((lambda: read(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings"),
-               (lambda: committed_settings(root), "committed project settings"))
+    if sources is None:
+        sources = ((lambda: read(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings"),
+                   (lambda: committed_settings(root), "committed project settings"))
     for load, label in sources:
         try:
             data = json.loads(load())
@@ -559,22 +560,18 @@ def enabled_plugins(root: str) -> dict:
 
 
 def settings_disable(root: str, key: str) -> str | None:
-    """The first settings file that sets enabledPlugins[key] to false, for `find --enabled`: the user
-    settings, then the project's .claude/settings.json and .claude/settings.local.json in root and in
-    its main checkout. Any false disables; the working copies are read, unlike the verifier's rule."""
-    paths = [(os.path.join(os.path.expanduser("~"), ".claude", "settings.json"), "user settings")]
-    for base in dict.fromkeys((root, main_checkout(root))):
-        paths += [(os.path.join(base, ".claude", "settings.json"), "project settings"),
-                  (os.path.join(base, ".claude", "settings.local.json"), "local settings")]
-    for path, label in paths:
-        try:
-            data = json.loads(read(path))
-        except (OSError, ValueError):
-            continue
-        ep = data.get("enabledPlugins") if isinstance(data, dict) else None
-        if isinstance(ep, dict) and ep.get(key) is False:
-            return label
-    return None
+    """The settings source whose enabledPlugins[key] is false after Claude Code's precedence, for
+    `find --enabled`: user, then the project's .claude/settings.json, then .claude/settings.local.json,
+    the later winning (enabled_plugins's merge). The project files are the working copies in the main
+    checkout and then in root, unlike the verifier's committed-only rule."""
+    bases = list(dict.fromkeys((main_checkout(root), root)))
+    def loader(path):
+        return lambda: read(path)
+    sources = [(loader(os.path.join(os.path.expanduser("~"), ".claude", "settings.json")), "user settings")]
+    sources += [(loader(os.path.join(b, ".claude", "settings.json")), "project settings") for b in bases]
+    sources += [(loader(os.path.join(b, ".claude", "settings.local.json")), "local settings") for b in bases]
+    value, label = enabled_plugins(root, sources).get(key, (None, None))
+    return label if value is False else None
 
 
 def enabled_install(root: str, plugin: str, rel: str) -> str | None:
