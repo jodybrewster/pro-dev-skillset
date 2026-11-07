@@ -46,7 +46,7 @@ Key literals (item 34):
 - R4. The uncommitted value files are never checked, before or after the write: `.env`, `.env.local`, `.env.*.local`, `.dev.vars` and `.dev.vars.<env>` where `<env>` is not `example`, `sample` or `template`.
   They are where R8's message tells the agent to put the value and git ignores them by convention.
   The committed templates (`.env.example`, `.env.sample`, `.env.template`, `.dev.vars.example` and `.env.production`) are checked like any other file, since a key written there would be committed.
-  `.env.production` is a template here and a secret value file in m2's read guard, on purpose: a key written into it must be caught because the file is often committed, and a read of it must be caught because it may hold real values.
+  `.env.production` is a template here and a secret value file in m2's read guard, on purpose: a key written into it must be caught because the file is often committed; a read of it must be caught because it may hold real values.
 - R5. PreToolUse reads `content` for Write, `new_string` for Edit and each `edits[].new_string` for MultiEdit and finds the first five matching lines, numbered within the text (for MultiEdit, as edit and line).
 - R6. PreToolUse mode is `warn` unless `mode.key-literal` in the guard folder holds `enforce`; the global `mode` file and `CLAUDE_GUARD_MODE` leave it in warn.
   Warn mode logs `would-deny`, prints `systemMessage` and `additionalContext` and allows; enforce mode logs `deny` and prints `permissionDecision: deny`.
