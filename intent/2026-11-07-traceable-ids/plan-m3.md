@@ -85,16 +85,16 @@ claude plugin validate . --strict          # Validation passed
 
 ## Done
 
-Done as of 43bf5498524f
+Done as of e659f06c09e7
 
-- Build commit: 43bf5498524f on `PDS-50/build-m3`, one commit rebased onto origin/main 3af9bdd (after m4 in PR 195 and reaching-done m1 in PR 192); pro-ai-sdlc 0.20.0, pro-ship 0.19.0, marketplace 1.98.0, one minor above main for each.
+- Build commit: e659f06c09e7 on `PDS-50/build-m3`, rebased onto origin/main 775cb72 (after PR 195, PR 192 and PR 193); pro-ai-sdlc 0.20.0, pro-ship 0.19.0, marketplace 1.99.0, one minor above main for each.
 - Checks run:
   - `node tests/check.mjs`: 50 checks, 0 failures, 13 warnings (stamp-contract and change-ids pass).
   - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped (no key).
   - `node tests/route-lexical.mjs --min-rank1 70`: rank-1 80/98 (81.6%), top-k 93/98 (94.9%), notOneOf failures 3.
   - `node --test tests/unit/*.test.mjs`: 200 tests, 200 pass, 0 fail.
-  - `node tests/factory.mjs`: 178/178; `node tests/incident.mjs`: 46/46; `node tests/visual.mjs`: 35/35; `node tests/lessons.mjs`: 108/108.
-  - `node tests/ship-check.mjs`: 252/252; `node tests/ship-deploy.mjs`: 151/151.
+  - `node tests/factory.mjs`: 178/178; `node tests/incident.mjs`: 46/46; `node tests/visual.mjs`: 36/36; `node tests/lessons.mjs`: 108/108.
+  - `node tests/ship-check.mjs`: 255/255; `node tests/ship-deploy.mjs`: 152/152.
   - `MIERUKA_ROOT=<mieruka checkout at d17b5ca> node tests/mieruka-sync.mjs`: passed, the preflight plus deploy, incident, review-lesson, review-round, ui-step and factory-run loaded, each record holding change_id TST-1.
   - `claude plugin validate . --strict`: Validation passed; each of the 21 plugin folders passed strict.
 - Definition of done: met (the verifier ran: every test green and each changed writer checked by hand; its verdict was incomplete only because it was told to skip check.mjs and the sync check, both run here).
