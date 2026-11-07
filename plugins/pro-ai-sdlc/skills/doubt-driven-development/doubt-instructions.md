@@ -16,6 +16,8 @@ If you find none after a thorough read, say so plainly and stop.
 
 How to work:
 Run git diff on the range and read the code around each hunk.
+Before raising a finding, read the callers, guards and tests that reach the range.
+Drop a finding that one of them rules out.
 Read every brief and policy path yourself.
 Run nothing that writes to the repo.
 Never open, read or quote env files (.env and its variants) or any secret.

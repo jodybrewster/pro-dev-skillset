@@ -117,11 +117,13 @@ An empty section tells the reviewer the diff follows the plan.
 
 - Step 2: `lessons.py table --ref <ref> --tally` prints the grade-mode summary line and the grade line computed from the table, so `/review` and `/ship` check the agent's tally against the table and `tests/lessons.mjs` proves R12's `important: 1` without a model (AC10).
 - Step 2: a table whose stored `ref` differs from the one asked for is refused, because `a/b` and `a--b` share a key once `/` is written as `--`; the message says to use `pr-<number>`.
-- Step 3: the round record's `detail_json` also holds `created`, as every other loop record does, and `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
+- Step 3: the round record's `detail_json` also holds `created`, as every other loop record does.
+  Its `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
 - Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
 - Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero, which is how R12 and R26 both hold.
 - Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
 - Step 5: when a round graded any row, `/review` always hands the fresh pass to the `reviewer` subagent, because the session has read the table and its claims; a first review still chooses as before (N2).
 - Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
+- Step 7: the doubt skill's own `handoff.md` also names the contradicting paths in its `brief` line, so the template the session fills agrees with R28; the field names are unchanged.
 
 ## Noticed but not touched

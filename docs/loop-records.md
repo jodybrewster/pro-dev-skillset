@@ -147,7 +147,8 @@ The decision behind it is [ADR-0027](./decisions/0027-review-memory.md).
 | `status` | `fail` when any Important row is `open` or `not fixed`, `pass` otherwise |
 | `summary` | the round, the Important rows still open or not fixed, the fixed rows and whether the fresh pass ran |
 
-Local copies: the findings table `.pro-dev/review/<key>.json`, where `<key>` is the ref with every `/` written as `--` (never read by mieruka), and `.pro-dev/review/rounds/<evidence_key>.json`.
+Local copies: `.pro-dev/review/rounds/<evidence_key>.json` and the findings table `.pro-dev/review/<key>.json`, where `<key>` is the ref with every `/` written as `--`.
+mieruka never reads the table.
 
 `detail_json` holds:
 
