@@ -20,7 +20,7 @@ Each one has a name that the floor guard reports.
 
 ## Enforced with numbers
 
-A row is here only if its check ran and exited 0 when the row was written.
+A row is here only if its check exited non-zero on a temporary violation of the rule and 0 on the clean tree when the row was written.
 The direction word says which way the number may move: a minimum may only go up and a maximum may only go down.
 
 | Dimension | Rule | Checked by | Runs at |
@@ -39,6 +39,10 @@ Direction says which way it should move.
 |--------|-------|-----------|
 | Line coverage | 62% | at least 80% |
 | Open lint warnings | 14 | at most 0 |
+
+### Not enforced
+
+- `<command>`: violation exit 0, clean exit <code> (a check that passed its violation, so it backs no row)
 
 ## Exceptions
 

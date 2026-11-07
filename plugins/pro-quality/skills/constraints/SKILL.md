@@ -49,15 +49,17 @@ Before writing an Enforced with numbers row, run its command twice:
 2. Clean control: undo the edit, confirm with `git status` that the tree is back as it was and run the command again. Note its exit code.
 
 Write the row only when the violation run exits non-zero and the clean run exits 0.
-When the clean run fails, the rule goes under Measured, not yet enforced as before.
-When the violation run exits 0, the check does not enforce the rule.
+When the violation run exits 0, the check does not enforce the rule, whatever the clean run did.
 List it under a `### Not enforced` heading at the end of the Measured, not yet enforced section, with the command and both exit codes. It never becomes a row:
 
 ```
 ### Not enforced
 
-- `npx semgrep --config auto`: violation exit 0, clean exit 0
+- `npm run lint`: violation exit 0, clean exit 0
 ```
+
+A ratchet's value still gets its Measured row when its check is Not enforced, so the number is kept either way.
+When the violation run exits non-zero and the clean run fails, the rule goes under Measured, not yet enforced as before.
 
 Never leave the violation in the working tree and never commit it.
 No scanner is installed to do this; the proof uses the checks the repo already runs.

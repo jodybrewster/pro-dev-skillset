@@ -92,6 +92,7 @@ Filled in when the build is finished, before sign-off.
 - Visual: none
 - Doubt: none
 - AC1 to AC8: <pass or fail, with what was observed>
+- AC6: pass, by hand on `demo/app` (after `npm ci`) following this branch's `constraints/SKILL.md` and `commands/constraints.md` rather than the installed plugin. Proved and written as rows: `npx tsc --noEmit` (type error in `components/data.ts`: violation exit 2, clean exit 0), `npm test` (failing assertion in `app/__tests__/data.test.ts`: violation exit 1, clean exit 0) and `npm run build` (bad export in `app/page.tsx`: violation exit 1, clean exit 0). Not enforced: a type error in a test file passed both `npx tsc --noEmit` (tsconfig excludes `**/__tests__/**`) and `npm test` (Vitest does not type-check), violation exit 0 and clean exit 0 for each. Measured: 9 passing tests and 102 kB First Load JS for `/`; no coverage provider is installed, so coverage was left out. `floor-guard.py` parses exactly the three rows. `demo/app/CONSTRAINTS.md` was written and not committed.
 - Sign-off: <the date>
 
 ## Departures from plan
