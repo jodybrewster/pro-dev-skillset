@@ -7,7 +7,7 @@ The spec is `intent/2026-11-01-after-build-loop/spec.md`.
 The preflight record that comes before a deploy has its own page, [ship-preflight.md](./ship-preflight.md).
 Nothing here changes it.
 
-Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0; the review round since pro-ai-sdlc 0.18.0.
+Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0; the review round since pro-ai-sdlc 0.19.0.
 
 ## Shared rules
 

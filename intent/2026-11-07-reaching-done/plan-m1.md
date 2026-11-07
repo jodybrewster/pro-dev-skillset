@@ -152,7 +152,7 @@ An empty section tells the reviewer the diff follows the plan.
 - Pre-existing, fixed after the PR review: the pro-ship description in `ship/SKILL.md` and both manifests now says `/ship` reviews from the merge base when pr-check missed a commit; `node tests/route-lexical.mjs --min-rank1 70` stays at rank-1 80/98.
 - Step 9: `/ship` also raises the security review's blocking and should-fix findings (as `important` and `nit` with `--pass security`), so a fixed security finding is graded rather than reported again.
 - Step 9: when the base is the empty tree (a first release of the whole history), the review range starts at the empty tree, since `git merge-base` has no answer there.
-- Step 10: after the rebases onto main the bumps are pro-ai-sdlc 0.18.0 and pro-ship 0.18.0 (main took 0.17.0 for both in #191), pro-quality 0.21.0 and `metadata.version` 1.95.0 (main had 1.94.0); earlier commit messages still name the versions of their day.
+- Step 10: after the rebases onto main the bumps are pro-ai-sdlc 0.19.0 (main took 0.17.0 in #191 and 0.18.0 in #195), pro-ship 0.18.0 (main took 0.17.0 in #191), pro-quality 0.21.0 and `metadata.version` 1.96.0 (main had 1.95.0); earlier commit messages still name the versions of their day.
 - Step 10: ADR-0027's enforcement line now names the versions it is in force from.
 
 ## Noticed but not touched

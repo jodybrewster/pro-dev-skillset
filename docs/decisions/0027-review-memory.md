@@ -79,6 +79,6 @@ Revisit if grading proves no cheaper than a full fresh review, if the merge-base
 - `plugins/pro-ai-sdlc/templates/REVIEW.md` (the `## Rounds` section).
 - `docs/loop-records.md` (the review record) and `tests/mieruka-sync.mjs`.
 - The `sdlc-contract` check in `tests/check.mjs`.
-In force from pro-ai-sdlc 0.18.0, pro-quality 0.21.0 and pro-ship 0.18.0.
+In force from pro-ai-sdlc 0.19.0, pro-quality 0.21.0 and pro-ship 0.18.0.
 
 Adapted in part from super-board (skills/super-review/SKILL.md, "Review remembers"), MIT.
