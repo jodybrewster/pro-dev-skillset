@@ -44,7 +44,9 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 import evidence  # noqa: E402
 from evidence import Refuse  # noqa: E402
 
-FOLDER_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9-]{1,60}$")
+# An intent folder is named by its date or, since change ids (ADR-0026), by its id: 2026-01-02-slug or PDS-51-slug.
+FOLDER_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[1-9][0-9]*)-[a-z0-9-]{1,60}$")
+PREFIX_RE = re.compile(r"^(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[0-9]+)-")
 ROLE_KEYS = ("product_owner", "engineer", "lead", "policy_owner", "platform_owner")
 LEVEL1_AUTHORS = ("product_owner", "engineer")
 STATES = ("queued", "brief", "build", "verify", "merged", "stopped", "error")
@@ -148,6 +150,22 @@ def default_tip(root):
         if resolve(root, cand):
             return cand, cand.split("/", 1)[1]
     return "HEAD", "HEAD"
+
+
+def slug_of(folder):
+    """The folder name without its date or id prefix: the branch /execute and /auto name."""
+    return PREFIX_RE.sub("", folder, count=1)
+
+
+def folder_order(folder):
+    """Sort key: every date folder first in date order, then id folders by number (TST-9 before TST-10)."""
+    m = re.match(r"^[A-Z]{2,6}-([0-9]+)-", folder)
+    return (1, int(m.group(1)), folder) if m else (0, 0, folder)
+
+
+def evidence_key(folder):
+    """factory-<folder>, lowercased so an id-named folder keeps the a-z, 0-9 and - key charset."""
+    return "factory-" + folder.lower()
 
 
 def folder_of(root, arg):
@@ -529,7 +547,7 @@ def take_lock(root, folder):
 
 
 def record_path(root, folder):
-    return os.path.join(root, ".pro-dev", "factory", f"factory-{folder}.json")
+    return os.path.join(root, ".pro-dev", "factory", evidence_key(folder) + ".json")
 
 
 def read_detail(root, folder):
@@ -564,7 +582,7 @@ def write_record(root, folder, state, reason="", **fields):
     else:
         summary = f"running: {state}"
     record = {
-        "schema": 1, "evidence_key": "factory-" + folder, "kind": "doc", "artifact_kind": "factory-run",
+        "schema": 1, "evidence_key": evidence_key(folder), "kind": "doc", "artifact_kind": "factory-run",
         "artifact_key": folder, "status": status, "summary": summary, "detail_json": json.dumps(d),
         "produced_by": f"pro-ai-sdlc:factory@{evidence.plugin_version()}",
     }
@@ -601,7 +619,7 @@ def cmd_record(a):
     d = write_record(root, folder, a.state, a.reason or "", cost_usd=a.cost, level_now=a.level_now,
                      level_at_intake=a.level_at_intake, brief_pr=brief, build_pr=build, unread_lines=a.unread_lines,
                      merged_sha=a.sha, broad_token=True if a.broad_token else None)
-    print(json.dumps({"evidence_key": "factory-" + folder, "state": d["state"]}))
+    print(json.dumps({"evidence_key": evidence_key(folder), "state": d["state"]}))
     return 0
 
 
@@ -653,7 +671,7 @@ def next_folder(root, tip):
     out = git_out(root, "ls-tree", "--name-only", tip, "intent/")
     if out is None:
         return None
-    for name in sorted(p.split("/", 1)[1] for p in out.splitlines() if p.startswith("intent/")):
+    for name in sorted((p.split("/", 1)[1] for p in out.splitlines() if p.startswith("intent/")), key=folder_order):
         if not FOLDER_RE.match(name) or lock_live(root, name):
             continue
         if eligible(root, tip, name) is None:
@@ -1145,7 +1163,7 @@ def missing_trailers(root, base, head, phase, folder):
 def binding_reasons(root, phase, folder, view, base, head, token):
     """[(level, reason)] when the PR is not the one this run's session was told to open."""
     reasons = []
-    slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", folder)
+    slug = slug_of(folder)
     want = f"{slug}-brief" if phase == "brief" else slug
     if view.get("headRefName") != want:
         reasons.append((3, f"the PR head branch is {view.get('headRefName')!r}, not {want!r}"))

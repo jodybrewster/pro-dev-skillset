@@ -126,10 +126,12 @@ Run `/intent` and describe something small, for example "list tasks sorted by ti
 The report ends with the level and the reasons, such as `level: 1 (meets every level 1 rule)`.
 Set `status: accepted`, open a pull request with the intent and merge it as the product owner.
 
+`<folder>` is `<date>-<slug>`, or `<ID>-<slug>` in a repo whose `intent/project.json` sets a shortcode ([ADR-0026](./decisions/0026-change-ids.md)); the factory reads both forms.
+
 Validate:
 
 ```bash
-python3 "$SDLC/scripts/factory.py" level intent/<date>-<slug> --repo .
+python3 "$SDLC/scripts/factory.py" level intent/<folder> --repo .
 ```
 
 prints `level: 1 (meets every level 1 rule)`.
@@ -137,7 +139,7 @@ prints `level: 1 (meets every level 1 rule)`.
 ## Step 6: run the factory once
 
 ```bash
-python3 "$SDLC/scripts/factory.py" run intent/<date>-<slug> --repo . --max-cost-usd 10
+python3 "$SDLC/scripts/factory.py" run intent/<folder> --repo . --max-cost-usd 10
 ```
 
 What you see, from a live run on the demo repo (the trim-titles bug, https://github.com/jodybrewster/factory-demo/pull/5):
@@ -150,7 +152,7 @@ factory: merged d24d4759f0cd, deploy is yours, unread diff: 27 lines
 ```
 
 A run ends with either that merged line or `factory: stopped level <n> (<reason>)`.
-Validate: `gh pr list --state all` shows the brief PR and the build PR; `.pro-dev/factory/factory-<folder>.json` holds the record with `status`, `summary` and `cost_usd`.
+Validate: `gh pr list --state all` shows the brief PR and the build PR; `.pro-dev/factory/factory-<folder in lowercase>.json` holds the record with `status`, `summary` and `cost_usd`.
 The build PR holds a test commit, then the fix, then the plan's Done section; CI ran `npm test` on it before the merge.
 A level 1 run on the demo costs about $1 to $3.
 
@@ -160,7 +162,7 @@ A level 1 run on the demo costs about $1 to $3.
 while true; do python3 "$SDLC/scripts/factory.py" run --next --repo . --max-cost-usd 8; sleep 300; done
 ```
 
-`--next` takes the oldest accepted level 1 intent with no spec and no record.
+`--next` takes the oldest accepted level 1 intent with no spec and no record: every date folder first in date order, then id folders by number (`PDS-9` before `PDS-10`).
 Daily caps stop it at 10 runs or $40 a day by default (`--max-runs`, `--max-daily-usd`).
 A `/loop 5m` in an open session or mieruka's "Run the factory" setting do the same.
 

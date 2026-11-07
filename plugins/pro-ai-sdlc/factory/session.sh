@@ -17,11 +17,20 @@ phase=${3:?phase}
 dir=${4:?intent dir}
 
 case "$phase" in brief|build|verify) ;; *) echo "factory: unknown phase $phase" >&2; exit 64 ;; esac
+# An intent folder is named by its date (intent/2026-01-02-slug) or by its change id (intent/PDS-51-slug);
+# capitals are allowed only in the id prefix. The slug, the folder name without either prefix, names the branch.
+refuse_dir() { echo "factory: refusing intent dir $dir" >&2; exit 64; }
+base=${dir#intent/}
 case "$dir" in
-  intent/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*) ;;
-  *) echo "factory: refusing intent dir $dir" >&2; exit 64 ;;
+  intent/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*) slug=${base#????-??-??-} ;;
+  intent/[ABCDEFGHIJKLMNOPQRSTUVWXYZ]*-*-*)
+    code=${base%%-*}; rest=${base#*-}; num=${rest%%-*}; slug=${rest#*-}
+    case "$code" in ?|???????*|*[!ABCDEFGHIJKLMNOPQRSTUVWXYZ]*) refuse_dir ;; esac
+    case "$num" in ''|0*|*[!0123456789]*) refuse_dir ;; esac
+    ;;
+  *) refuse_dir ;;
 esac
-case "$dir" in *[!a-z0-9/-]*) echo "factory: refusing intent dir $dir" >&2; exit 64 ;; esac
+case "$slug" in ''|*[!abcdefghijklmnopqrstuvwxyz0123456789-]*) refuse_dir ;; esac
 case "$mkt_ref" in *[!A-Za-z0-9._/-]*|-*) echo "factory: refusing marketplace ref" >&2; exit 64 ;; esac
 
 # Every plugin's gates read this mode file, not only the one CLAUDE_GUARD_MODE reaches; the home is
@@ -85,8 +94,6 @@ claude -p "/pro-ai-sdlc:auto ${phase} ${dir}" \
 
 # The PR is found by the branch name the phase is told to use: <slug>-brief for the brief, /execute's
 # own <slug> for the build. There is no fallback to a newer PR; the host checks the same name again.
-base=${dir##*/}
-slug=${base#????-??-??-}
 case "$phase" in brief) want="${slug}-brief" ;; *) want="$slug" ;; esac
 pr=$(gh pr list --head "$want" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
 case "$pr" in ''|*[!0-9]*) echo "factory: no pull request found for branch $want" >&2; exit 1 ;; esac

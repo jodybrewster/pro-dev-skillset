@@ -133,7 +133,7 @@ def cmd_prepare(folder: str) -> dict:
     root = evidence.repo_root()
     if not root:
         raise Refuse("incident: not inside a git repository")
-    key = "incident-" + folder
+    key = "incident-" + folder.lower()  # an id-named folder keeps the key charset
     if "/" in folder or not evidence.safe_key(key):
         raise Refuse(f"incident: the folder name {folder!r} cannot make a key: only a-z, 0-9 and - are allowed")
     d = os.path.join(root, ".pro-dev", "incidents", key)
@@ -160,7 +160,7 @@ def cmd_record(arg: str) -> dict:
         raise Refuse(f"incident: frontmatter id {fm.get('id')!r} must be the folder name {folder!r}")
     if fm.get("commit") and not SHA.match(fm["commit"]):
         raise Refuse("incident: commit must be a full 40-character sha or empty")
-    key = "incident-" + folder
+    key = "incident-" + folder.lower()  # an id-named folder keeps the key charset
     if not evidence.safe_key(key):
         raise Refuse(f"incident: the folder name {folder!r} cannot make a key: only a-z, 0-9 and - are allowed")
     what = summary_line(body) or "no summary written"

@@ -1,4 +1,5 @@
 ---
+id: <change id, or delete this line when the repo has no intent/project.json>
 intent: <relative path to intent.md>
 intent-status: <status from the intent>
 status: draft

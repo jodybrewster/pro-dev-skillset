@@ -397,7 +397,7 @@ async function live(opts) {
             rt.factoryExit = r.status;
             for (const l of rt.factoryLines) console.log(`   ${scrub(l)}`);
             git("pull", "-q", "--ff-only", "origin", "main");
-            const rec = join(repo, ".pro-dev", "factory", `factory-${rt.intentDir.split("/").pop()}.json`);
+            const rec = join(repo, ".pro-dev", "factory", `factory-${rt.intentDir.split("/").pop().toLowerCase()}.json`);
             if (existsSync(rec)) { try { state.cost += Number(JSON.parse(JSON.parse(readFileSync(rec, "utf8")).detail_json).cost_usd) || 0; } catch { /* no cost */ } }
             record({ name: `${tag}: exit 0 and a merged line`, pass: r.status === 0 && rt.factoryLines.some((l) => /merged/.test(l)), detail: `exit ${r.status}, ${rt.factoryLines.length} factory lines` });
           } else if (s.kind === "find-pr") {

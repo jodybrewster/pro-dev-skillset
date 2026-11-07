@@ -59,6 +59,7 @@ When the person has said to go ahead without questions or no one is there to ans
 ### 4. Write spec.md beside the intent
 
 Read the template at `${CLAUDE_PLUGIN_ROOT}/templates/spec.md` and write `<intent dir>/spec.md` from it, one sentence per line.
+When the intent's frontmatter has an `id:`, put `id: <that value>` as the first frontmatter key of every file this command writes (`spec.md`, `capability-map.md` and each `spec-<module-id>.md`); when it has none, delete the template's `id:` line and write no `id:` anywhere.
 List the policy files and skills you loaded under "Skills and policies in force".
 Fill `## Assumptions` and `### Boundaries` from the answers to step 3.
 Every requirement is testable and traces to a line of the intent.
@@ -108,7 +109,7 @@ The level is only ever raised; never edit it down by hand.
 
 - `git add <intent dir>/spec.md` (or `capability-map.md` and each `spec-<module-id>.md`).
   When step 5 wrote an ADR, add that file and the index too so they land in the same commit.
-- `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date prefix.
+- `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date or id prefix.
 
 Never stage other files, never pass `--no-verify` and do not push.
 Check `git status` that nothing else got staged.

@@ -267,6 +267,28 @@ const NEXT_FILES = ["next-cache-components-adoption", "next-cache-components-opt
 
 const CASES = [
   {
+    // The shortcode question in /pro-dev install (intent/2026-11-07-traceable-ids spec-m1 R20, AC9):
+    // status --json proposes a default only when it matches ^[A-Z]{2,6}$ and says whether intent/project.json exists.
+    id: "status/shortcode-default",
+    run: (s) => {
+      const want = { "demo-app": "DA", "mieruka": "MIE", "one-two-three-four-five-six-seven": "OTTFFS", "pro-dev-skillset": "PDS",
+        "x": null, "3d-viewer": null, "my_app": null };
+      for (const [name, code] of Object.entries(want)) {
+        const repo = join(s.root, "repos", name);
+        mkdirSync(repo, { recursive: true });
+        execFileSync("git", ["init", "-q", repo]);
+        const r = spawnSync("python3", [s.script, "--repo", repo, "status", "--json"], { encoding: "utf8", env: s.env() });
+        let st = null;
+        try { st = JSON.parse(r.stdout); } catch { return bad(`${name}: ${r.stdout}${r.stderr}`); }
+        if (st.shortcode?.default !== code || st.shortcode?.projectFile !== false) return bad(`${name}: ${JSON.stringify(st.shortcode)}, want default ${code}`);
+      }
+      mkdirSync(join(s.repo, "intent"), { recursive: true });
+      writeFileSync(join(s.repo, "intent", "project.json"), '{"shortcode": "ZZ"}\n');
+      const st = s.status();
+      return st.shortcode?.projectFile === true ? ok() : bad(`with intent/project.json: ${JSON.stringify(st.shortcode)}`);
+    },
+  },
+  {
     id: "marketplace/add-when-absent",
     run: (s) => {
       s.useRows([egmRow()]);

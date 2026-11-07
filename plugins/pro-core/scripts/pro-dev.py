@@ -1678,6 +1678,23 @@ def foreign_row(row: dict) -> str | None:
     return None
 
 
+SHORTCODE_RE = re.compile(r"^[A-Z]{2,6}$")
+
+
+def shortcode_default(repo: str):
+    """The shortcode /pro-dev install proposes for this repo folder, or None to ask with no default.
+
+    The capitalised initials of the folder's hyphen-separated words for two to six words, the first
+    three letters of a single word and the first six initials beyond six words; proposed only when
+    the result matches ^[A-Z]{2,6}$ (x, 3d-viewer and my_app get none).
+    """
+    words = [w for w in os.path.basename(os.path.normpath(repo)).split("-") if w]
+    if not words:
+        return None
+    code = words[0][:3].upper() if len(words) == 1 else "".join(w[0] for w in words[:6]).upper()
+    return code if SHORTCODE_RE.match(code) else None
+
+
 def cmd_status(args, repo: str) -> int:
     reg = load_registry()
     installs, source = read_installs()
@@ -1712,6 +1729,8 @@ def cmd_status(args, repo: str) -> int:
         "answersFileMalformed": malformed, "savedRegistryVersion": data.get("registryVersion"),
         "plugins": plugins, "engines": engines, "aiSdlcInstallPath": sdlc, "starterShim": starter,
         "staleCount": len(find_stale()[0]),
+        "shortcode": {"projectFile": os.path.exists(os.path.join(repo, "intent", "project.json")),
+                      "default": shortcode_default(repo)},
     }
     if OWNER:
         out["owner"] = OWNER

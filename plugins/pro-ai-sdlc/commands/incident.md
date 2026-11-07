@@ -1,7 +1,7 @@
 ---
 description: "Turn an incident into an incident record, a new intent and a regression test plan: interview, preserve evidence outside git, scan for credentials and commit incident.md and intent.md together. Usage: /incident <what happened>"
 argument-hint: "<what happened, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config user.name), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py":*), Read, Write(intent/**), Write(.pro-dev/incidents/**)
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config user.name), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write(intent/**), Write(.pro-dev/incidents/**)
 ---
 
 ## Context
@@ -49,8 +49,11 @@ Never invent numbers, users or times.
 
 ### 2. Keep the raw evidence out of git
 
-Set the folder name to `<YYYY-MM-DD>-<slug>` (today's date, a slug of two to five lowercase words joined by hyphens; pick another slug if `intent/<folder>` exists).
-The evidence key is `incident-<folder>`.
+Pick a slug of two to five lowercase words joined by hyphens.
+When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next` and set the folder name to `<id>-<slug>`; repeat the line it prints on stderr and stop if it exits 1.
+Otherwise set the folder name to `<YYYY-MM-DD>-<slug>` with today's date.
+Pick another slug if `intent/<folder>` exists.
+The evidence key is `incident-<folder>` in lowercase.
 
 Before saving any paste, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py" prepare <folder>`.
 It makes `.pro-dev/incidents/<evidence key>/`, adds `.pro-dev/` to the repo's exclude file and refuses when git would still track that folder; stop if it refuses.
@@ -68,7 +71,7 @@ Name the files kept in `.pro-dev/incidents/<evidence key>/` under Evidence prese
 
 Write `<repo root>/intent/<folder>/intent.md` from `${CLAUDE_PLUGIN_ROOT}/templates/intent.md`:
 
-- Frontmatter `source: incident <folder>`, `kind: bug`, `breaking: false` unless the person says the fix changes what a consumer relied on, `status: draft` and `risk: high` for `sev1` or `risk: medium` for `sev2`.
+- Frontmatter `id: <id>` as the first key when the folder has one (delete the template's `id:` line otherwise), `source: incident <folder>`, `kind: bug`, `breaking: false` unless the person says the fix changes what a consumer relied on, `status: draft` and `risk: high` for `sev1` or `risk: medium` for `sev2`.
 - Problem, Affected users and systems and Evidence come from the interview; Evidence links `incident.md` and never pastes logs.
 - Success looks like names the regression test: a test that fails on the incident commit and passes on the fix and that the incident's `regression_test` field points to once it exists.
 - Open questions holds the root cause if it is not known.

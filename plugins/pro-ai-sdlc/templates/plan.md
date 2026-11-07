@@ -1,3 +1,7 @@
+---
+id: <change id, or delete this line when the repo has no intent/project.json>
+---
+
 # Plan: <short title>
 
 Built from `spec.md` (commit <sha>) and `intent.md` in this folder.

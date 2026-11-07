@@ -19,6 +19,7 @@ import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
 import { runFactoryCases } from "./factory.mjs";
+import { runIdsCases, changeIdProblems } from "./ids.mjs";
 import { runDemoKitCases } from "./demo-kit.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
@@ -1185,6 +1186,24 @@ checks["factory-scripts"] = () => {
   }
   if (!results.length) failures.push("tests/factory.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`factory ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// Change ids (ADR-0026, intent/2026-11-07-traceable-ids spec-m1 R13 to R16): with intent/project.json
+// every intent carries a well-formed id with the repo's shortcode, no two share one, an id-named
+// folder carries its own id and its spec, plan and capability map agree. Without the file it passes
+// with one warning. It also runs the ids.py case table in tests/ids.mjs and checks that /auto
+// names both folder shapes.
+checks["change-ids"] = () => {
+  const { failures, warnings } = changeIdProblems(ROOT);
+  const auto = join(ROOT, "plugins", "pro-ai-sdlc", "commands", "auto.md");
+  const autoText = existsSync(auto) ? readFileSync(auto, "utf8") : "";
+  for (const a of ["`intent/<YYYY-MM-DD>-<slug>`", "`intent/<ID>-<slug>`", "without its date or id prefix"])
+    if (!autoText.includes(a)) failures.push(`plugins/pro-ai-sdlc/commands/auto.md does not name ${a}`);
+  const { skipped, results } = runIdsCases();
+  if (skipped) warnings.push(`ids.py cases skipped - ${skipped}`);
+  else if (!results.length) failures.push("tests/ids.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`ids ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

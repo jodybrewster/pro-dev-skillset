@@ -111,7 +111,8 @@ SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
 # reaches a command, a gh path or a record only after a full match of this.
 RELEASE_TAG = re.compile(r"(?:([a-z0-9][a-z0-9._-]{0,63})(--|@))?(v?)(\d+)\.(\d+)\.(\d+)", re.ASCII)
 VERSION = re.compile(r"\d+\.\d+\.\d+", re.ASCII)
-INTENT_FOLDER = re.compile(r"\d{4}-\d{2}-\d{2}-[a-z0-9-]{1,60}", re.ASCII)
+# A date folder or, with change ids (ADR-0026), an id folder: 2026-01-02-slug or PDS-51-slug.
+INTENT_FOLDER = re.compile(r"(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[1-9][0-9]*)-[a-z0-9-]{1,60}", re.ASCII)
 CONTROL = re.compile("\x1b\\[[0-?]*[ -/]*[@-~]|\x1b.?|[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb\U000e0000-\U000e007f]")
 TEXT_CAP = 200
 LS_REMOTE_TIMEOUT = 10

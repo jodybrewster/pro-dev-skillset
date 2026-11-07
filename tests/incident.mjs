@@ -85,6 +85,24 @@ export function runIncidentCases() {
     add("record/drops a copy in an ignored .mieruka", "copy written", r.status === 0 && existsSync(join(repo, ".mieruka", "evidence", `incident-${FOLDER}`, "evidence.json")), r.stdout + r.stderr);
   }
 
+  // an id-named folder: the key is lowercased, the artifact key and the frontmatter id keep the folder as written (spec-m1 R12)
+  {
+    const ID_FOLDER = "TST-1-demo";
+    const repo = join(sandbox, `repo${++n}`);
+    mkdirSync(join(repo, "intent", ID_FOLDER), { recursive: true });
+    git(repo, "init", "-q");
+    writeFileSync(join(repo, "intent", ID_FOLDER, "incident.md"), doc({ id: ID_FOLDER }));
+    git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "c");
+    const r = run(repo, "record", `intent/${ID_FOLDER}`);
+    const p = join(repo, ".pro-dev", "incidents", "incident-tst-1-demo.json");
+    const m = existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null;
+    add("record/an id-named folder gives a lowercased key", "incident-tst-1-demo",
+      r.status === 0 && r.json?.evidence_key === "incident-tst-1-demo" && m?.evidence_key === "incident-tst-1-demo" && m?.artifact_key === ID_FOLDER, r.stdout + r.stderr);
+    const prep = run(repo, "prepare", ID_FOLDER);
+    add("prepare/an id-named folder gives the lowercased evidence folder", ".pro-dev/incidents/incident-tst-1-demo",
+      prep.status === 0 && prep.json?.evidence_key === "incident-tst-1-demo" && existsSync(join(repo, ".pro-dev", "incidents", "incident-tst-1-demo")), prep.stdout + prep.stderr);
+  }
+
   // record refusals
   for (const [name, fm] of [["state", { state: "closed" }], ["severity", { severity: "sev3" }], ["id", { id: "other" }], ["commit", { commit: "abc" }]]) {
     const repo = mkrepo(doc(fm));
