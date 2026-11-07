@@ -109,5 +109,15 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 5: `guardlib.warn()` gains an optional `advice` argument so the warn message carries R16's way forward; `guardlib.py` was not in the file list. Existing callers are unchanged.
 - Step 5: a variable the hook's environment does not hold is unknown and skipped like an assigned one, where super-board expands it to an empty string; a `cd -` makes later relative words unknown. A `find` that deletes with no starting path checks the current directory, `-ok` and `-okdir` count like `-exec`, `git clean -n` and `--dry-run` are not deletions and redirect targets (`2> /dev/null`) are not operands.
 - Step 4: the delete-outside fixtures use a project root, `HOME` and `TMPDIR` under `/srv` that need not exist, because the guard only resolves words; a root under the system temp folder would make every sibling exempt on macOS.
+- Review fix, R3: the environment-read skip is dropped. A line that only reads a key from the environment holds no key, so the skip hid only lines that also held one: `os.environ["KEY"] = "<key>"` and `process.env.KEY || "<key>"` passed even in enforce. Both are findings now and AC2's plain read still passes. The stand-in word filter stays.
+- Review fix, R12: only `HOME`, `TMPDIR`, `PWD`, `USER`, `CLAUDE_PROJECT_DIR` and `PRO_DEV_STATE_DIR` are expanded. Any other variable makes the word unknown, because the resolved path goes into the message and `warn.log` and `rm -rf ../cache-$GITHUB_TOKEN` would have printed the token. A case plants a variable value and asserts it appears nowhere.
+- Review fix, R13: inside and exempt are decided on the real path only (the parent resolved, the last part kept unless the word ends in `/`), with the root and the exemptions taken in both their written and real forms. A symlink in the repo that points out of it is now outside; deleting the link itself stays inside. The message names the real path.
+- Review fix, R11 and R12: `pushd` is tracked like `cd` and a wrapper's flags are skipped (`sudo -u someone rm -rf ../z`).
+- Review fix, N1: PreToolUse scans at most 1 MB of text and the first 20 matches per pattern on a line, so a 58 KB one-line write of key-shaped words beside `<` takes about 1 second, inside the 5 second timeout.
 
 ## Noticed but not touched
+
+- A `cd` inside a subshell carries to the commands after it, since `guardlib.segments()` drops the parentheses: `(cd /tmp/a && make); rm -rf ../sibling` resolves under `/tmp` and passes. Tracking subshell depth in the tokenizer would be a small follow-up for both guards that track `cd`.
+- `find ../y -name '*.o' | xargs rm` and `git --work-tree=../w clean -fd` pass; the spec does not list them and `xargs rm` would need the find's paths carried across the pipe.
+- R4 skips a bare `.env`, but some templates (create-vite) ignore only `*.local` and commit `.env`; a key written there gets no warning.
+- Single-quoted `'$HOME/x'` is expanded like `$HOME/x`, because `guardlib.segments()` does not mark single-quoted text the way super-board's tokenizer does; it can only make a word look outside, never hide one.

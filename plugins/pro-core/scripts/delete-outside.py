@@ -8,13 +8,16 @@ of a `git clean` (from `git -C <dir>` or the current directory) that resolve
 outside the project root.
 
 Paths are resolved without running anything: from the payload `cwd`, through
-each `cd <dir>` segment, with `~`, `$HOME`, `${HOME}` and the other variables
-set in the hook's environment expanded. A word holding `$(`, a backtick, a
-variable assigned earlier in the same command or one the hook cannot see is
-unknown and skipped: the guard catches the literal mistakes, not every one.
+each `cd <dir>` segment, with `~`, `$HOME`, `${HOME}`, `$TMPDIR` and the few
+other variables in EXPANDABLE expanded. A word holding
+`$(`, a backtick, a variable assigned earlier in the same command or any other
+variable is unknown and skipped, since its value could be a secret that the
+message and warn.log would print: the guard catches the literal mistakes, not
+every one. `pushd` is tracked like `cd`.
 
 The project root is CLAUDE_PROJECT_DIR, or the payload `cwd` when unset. A
-target is inside when its normal or real path is the root or under it. Targets
+target is inside when its real path is the root or under it (the root in its
+written or real form), so a symlink in the repo that points out of it is outside. Targets
 below (never equal to) /tmp, /private/tmp, /var/folders, /private/var/folders,
 $TMPDIR or the pro-dev state folder (PRO_DEV_STATE_DIR, or ~/.claude/pro-dev)
 are exempt; the guard folder is not.
@@ -37,6 +40,10 @@ HOOK = "delete-outside"
 RM_CMDS = ("rm", "rmdir", "unlink")
 TEMP_ROOTS = ("/tmp", "/private/tmp", "/var/folders", "/private/var/folders")
 WRAPPERS = ("sudo", "command", "nice", "nohup", "time", "env")
+WRAPPER_VALUE_FLAGS = ("-u", "-g", "-n", "-C", "-p")  # sudo -u <user>, nice -n <n> and the like
+# Only these are expanded. Any other variable may hold a secret and the resolved
+# path is printed and logged, so a word that uses one is unknown and skipped.
+EXPANDABLE = ("HOME", "TMPDIR", "PWD", "USER", "CLAUDE_PROJECT_DIR", "PRO_DEV_STATE_DIR")
 DECLARE = ("export", "local", "declare", "typeset", "readonly", "read", "for")
 _PREFILTER = re.compile(r"\b(?:rm|rmdir|unlink|find|clean)\b")
 _ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
@@ -61,7 +68,7 @@ def expand(word: str, env: Dict[str, str], local: Set[str]) -> Optional[str]:
 
     def var(m: "re.Match[str]") -> str:
         name = m.group(1) or m.group(2)
-        if name in local or name not in env:
+        if name in local or name not in env or name not in EXPANDABLE:
             unknown.append(name)
             return ""
         return env[name]
@@ -120,6 +127,9 @@ def targets(command: str, cwd: str, env: Dict[str, str], segments) -> List[Tuple
             if _ASSIGN.match(tokens[0]):
                 local.add(tokens[0].split("=", 1)[0])
             tokens = tokens[1:]
+            while tokens and tokens[0].startswith("-") and len(tokens[0]) > 1:
+                flag = tokens[0]
+                tokens = tokens[2:] if flag in WRAPPER_VALUE_FLAGS else tokens[1:]
         if not tokens:
             continue
         cmd, args = os.path.basename(tokens[0]), tokens[1:]
@@ -129,7 +139,7 @@ def targets(command: str, cwd: str, env: Dict[str, str], segments) -> List[Tuple
                 if m:
                     local.add(m.group(0))
             continue
-        if cmd == "cd":
+        if cmd in ("cd", "pushd"):
             words = operands(args)
             if not words:
                 d = env.get("HOME") or None
@@ -179,15 +189,19 @@ def _below(path: str, root: str) -> bool:
     return path != root and _under(path, root)
 
 
-def _forms(path: str) -> Set[str]:
-    # The real path of the parent: deleting a symlink removes the link, not its target.
-    return {path, os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))}
+def _real(path: str, word: str) -> str:
+    """The real path. A plain last part keeps its name: deleting a symlink removes the link,
+    not its target. A trailing slash follows the link, as rm does."""
+    if word.endswith("/"):
+        return os.path.realpath(path)
+    return os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
 
 
-def outside(path: str, root: str, env: Dict[str, str]) -> bool:
-    forms = _forms(path)
-    roots = {root, os.path.realpath(root)}
-    if any(_under(p, r) for p in forms for r in roots):
+def outside(path: str, word: str, root: str, env: Dict[str, str]) -> bool:
+    """Decided on the real path only, so a symlink inside the repo that points out of it
+    is outside. The root and the exemptions count in both their written and real forms."""
+    real = _real(path, word)
+    if any(_under(real, r) for r in (root, os.path.realpath(root))):
         return False
     exempt = list(TEMP_ROOTS)
     if env.get("TMPDIR"):
@@ -198,7 +212,7 @@ def outside(path: str, root: str, env: Dict[str, str]) -> bool:
     elif env.get("HOME"):
         exempt.append(os.path.join(os.path.normpath(env["HOME"]), ".claude", "pro-dev"))
     exempt += [os.path.realpath(e) for e in exempt]
-    return not any(_below(p, e) for p in forms for e in exempt)
+    return not any(_below(real, e) for e in exempt)
 
 
 def main() -> int:
@@ -224,9 +238,9 @@ def main() -> int:
         import guardlib
 
         for cmd, word, resolved in targets(command, cwd, env, guardlib.segments):
-            if resolved is None or not outside(resolved, root, env):
+            if resolved is None or not outside(resolved, word, root, env):
                 continue
-            summary = f"{cmd} of {word}, which resolves to {resolved} outside {root}"
+            summary = f"{cmd} of {word}, which resolves to {_real(resolved, word)} outside {root}"
             if guardlib.own_mode(HOOK) == "enforce":
                 guardlib.deny(HOOK, f"Blocked: {summary}. {ADVICE}", summary, cwd)
             else:

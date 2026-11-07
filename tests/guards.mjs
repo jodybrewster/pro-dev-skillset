@@ -27,7 +27,7 @@
 // `guards` check. Zero dependencies, no network. Skips cleanly when python3 is
 // not on PATH.
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -103,7 +103,8 @@ for (const [name, { key, kind }] of Object.entries(KEYS)) {
 KEY_CASES.push(
   // AC2: environment reads and stand-in words
   { id: "key-literal/allow/env-read", payload: write(SRC, "const k = process.env.ANTHROPIC_API_KEY;\n"), expect: "allow" },
-  { id: "key-literal/allow/env-read-beside-key", payload: write(SRC, `const k = process.env.KEY || "${ANT}";\n`), secret: ANT, expect: "allow" },
+  { id: "key-literal/write/env-fallback", payload: write(SRC, `const k = process.env.KEY || "${ANT}";\n`), secret: ANT, expect: "warn" },
+  { id: "key-literal/write/env-assignment", payload: write("/srv/fixture-project/app/run.py", `os.environ["ANTHROPIC_API_KEY"] = "${ANT}"\n`), secret: ANT, expect: "warn" },
   { id: "key-literal/allow/aws-example-prefix", payload: write(SRC, `aws = "${P("AK", "IA")}EXAMPLE..."\n`), expect: "allow" },
   { id: "key-literal/allow/example-word-on-line", payload: write(SRC, `aws = "${AWS}" # example\n`), secret: AWS, expect: "allow" },
   { id: "key-literal/allow/prefix-in-prose", payload: write(SRC, `Anthropic keys start with ${P("sk", "-ant-")} and Slack ones with ${P("xo", "xb-")}.\n`), expect: "allow" },
@@ -198,6 +199,7 @@ DEL_CASES.push(
   { id: "delete-outside/allow/up-and-back-in", payload: bash("rm -rf ../app/dist"), expect: "allow" },
   { id: "delete-outside/allow/redirect-target", payload: bash("rm -rf ./x 2> /dev/null"), expect: "allow" },
   { id: "delete-outside/allow/local-variable", payload: bash("X=../other; rm -rf $X"), expect: "allow" },
+  { id: "delete-outside/allow/other-variable-not-expanded", payload: bash("rm -rf ../cache-$GUARDS_FIXTURE_TOKEN"), env: { GUARDS_FIXTURE_TOKEN: P("plant", "ed-", fill(24)) }, secret: P("plant", "ed-", fill(24)), expect: "allow" },
   { id: "delete-outside/allow/unset-variable", payload: bash("rm -rf $GUARDS_FIXTURE_UNSET/x"), expect: "allow" },
   { id: "delete-outside/allow/find-no-delete", payload: bash("find ../y -name '*.log'"), expect: "allow" },
   { id: "delete-outside/allow/echo-only", payload: bash("echo rm -rf ../other"), expect: "allow" },
@@ -212,6 +214,10 @@ DEL_CASES.push(
   { id: "delete-outside/warn/find-execdir-rmdir", payload: bash("find ../z -execdir rmdir {} +"), expect: "warn" },
   { id: "delete-outside/warn/cd-absolute", payload: bash("cd /srv/elsewhere && rm -rf x"), expect: "warn", text: ["/srv/elsewhere/x"] },
   { id: "delete-outside/warn/project-dir-env", payload: { ...bash("rm -rf ../other"), cwd: "/srv/fixture-project/app/sub" }, env: { CLAUDE_PROJECT_DIR: "/srv/fixture-project/app/sub" }, expect: "warn" },
+  { id: "delete-outside/warn/sudo-with-user", payload: bash("sudo -u someone rm -rf ../z"), expect: "warn", text: ["/srv/fixture-project/z"] },
+  { id: "delete-outside/warn/pushd", payload: bash("pushd .. && rm -rf other"), expect: "warn", text: ["/srv/fixture-project/other"] },
+  { id: "delete-outside/warn/symlink-out-of-root", payload: bash("rm -rf link/local/sub"), linkRoot: "/usr", expect: "warn", text: ["/usr/local/sub"] },
+  { id: "delete-outside/allow/symlink-itself", payload: bash("rm link"), linkRoot: "/usr", expect: "allow" },
   // AC7: the global mode file leaves the guard in warn
   { id: "delete-outside/global-enforce-file-stays-warn", payload: bash("rm -rf ../other"), files: { mode: "enforce\n" }, expect: "warn" },
   // AC8: malformed payloads
@@ -254,6 +260,13 @@ function runHookCase(c, env, dir) {
     const file = join(work, c.post.name);
     writeFileSync(file, c.post.body);
     payload = JSON.stringify({ hook_event_name: "PostToolUse", tool_name: "Write", tool_input: { file_path: file, content: "" } });
+  } else if (c.linkRoot) {
+    // A real project folder holding `link` -> linkRoot: the guard decides on the real path.
+    const proj = join(dir, "proj");
+    mkdirSync(proj, { recursive: true });
+    symlinkSync(c.linkRoot, join(proj, "link"));
+    env.CLAUDE_PROJECT_DIR = proj;
+    payload = JSON.stringify({ ...c.payload, cwd: proj });
   } else if (payload === undefined) {
     payload = JSON.stringify(c.payload);
   }

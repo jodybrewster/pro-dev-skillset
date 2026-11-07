@@ -12,9 +12,11 @@ guard stops a credential from reaching a file at all:
                tells the agent about a key already on disk. It never blocks.
 
 A finding names the kind of credential, the file's basename and the line
-numbers, never the value or any part of the line. A line that reads from the
-environment or holds an obvious stand-in word is not a finding, and neither is
-a key whose own word holds `<` or `...` once markup tags around it are removed.
+numbers, never the value or any part of the line. A line that holds an obvious
+stand-in word is not a finding. Neither is a key whose own word holds `<` or
+`...` once markup tags around it are removed. A line that only reads a key from
+the environment holds no key; one that also writes a key into the environment
+or keeps one as a fallback is a finding.
 The uncommitted value files (`.env`, `.env.local`, `.env.*.local`, `.dev.vars`,
 `.dev.vars.<env>`) are never checked: they are where the key belongs. The
 committed templates (`.env.example` and the like) are.
@@ -56,8 +58,7 @@ PATTERNS: List[Tuple[str, "re.Pattern[str]"]] = [
     ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
 ]
 
-# A line that reads the value from the environment is the right pattern.
-SAFE = ("process.env", "import.meta.env", "os.environ", "getenv", "deno.env", "system.getenv", "env[", "${{ secrets.")
+MAX_MATCHES = 20  # per pattern per line: keeps a long one-line write well inside the timeout
 # Obvious stand-ins: templates and docs hold these on purpose.
 STAND_IN = ("your_", "your-", "xxxx", "placeholder", "example", "changeme", "dummy", "fake", "redacted")
 TAG = re.compile(r"<[a-zA-Z/][^>]*>")
@@ -121,10 +122,12 @@ def stand_in_token(line: str, start: int, end: int) -> bool:
 
 def line_kind(line: str) -> Optional[str]:
     low = line.lower()
-    if any(s in low for s in SAFE) or any(w in low for w in STAND_IN):
+    if any(w in low for w in STAND_IN):
         return None
     for kind, pattern in PATTERNS:
-        for m in pattern.finditer(line):
+        for count, m in enumerate(pattern.finditer(line)):
+            if count == MAX_MATCHES:
+                break
             if not stand_in_token(line, m.start(), m.end()):
                 return kind
     return None
@@ -202,7 +205,7 @@ def pre_text(tool: str, ti: dict) -> List[Tuple[str, str]]:
 def pre(tool: str, path: str, ti: dict, cwd: str) -> None:
     where: List[Tuple[str, str]] = []
     for prefix, text in pre_text(tool, ti):
-        for n, kind in scan(text):
+        for n, kind in scan(text[:MAX_BYTES]):
             where.append((f"{prefix}line {n}" if prefix else str(n), kind))
         if len(where) >= MAX_LINES:
             where = where[:MAX_LINES]
