@@ -84,21 +84,57 @@ gh pr checks <PR C>                        # hooks-macos pass
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 6e7e55d9a646
 
-- Build commit: <sha>
-- Checks run: <each command with its real result>
-- Definition of done: <met, or the items not met> (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+PR A (steps 1 to 6) on top of PR B (#174, step 7); PR C fills its own lines.
+
+- Build commit: 6e7e55d9a646 on `build/p2-m1-a`, rebased onto main after #174 merged (1b39e47 steps 1 to 4, 8566ce0 steps 5 and 6, 7d0eee1 and 6e7e55d9a646 review fixes)
+- Checks run, all at 6e7e55d9a646:
+  - `node tests/factory.mjs`: 159/159 factory cases passed (before the build: 149/157, l5 to l7 and m1 to m4 failing).
+  - `node tests/sdlc-hooks.mjs`: 51/51 sdlc hook cases passed (before the review fixes: 46/51, sd6 and sd10 to sd13 failing).
+  - `node tests/check.mjs`: 48 checks, 0 failures, 13 warnings.
+  - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped with no key.
+  - `node tests/route-lexical.mjs --min-rank1 70`: exit 0, rank-1 80/98 (81.6%), top-k 93/98 (94.9%), 0 collision failures, 3 notOneOf warnings.
+  - `node --test tests/unit/*.test.mjs`: pass 198, fail 0.
+  - `claude plugin validate . --strict`: Validation passed.
+  - `claude plugin validate plugins/pro-ai-sdlc --strict`: Validation passed.
+  - `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs`: mieruka sync check passed, loading the preflight record plus deploy, incident, review-lesson, ui-step and factory-run.
+  - `python3 plugins/pro-ai-sdlc/scripts/factory.py level intent/2026-11-04-rollback-path`: `level: 3 (risk: high; stop-list words in Proposed outcome: deploy, release; stop-list words in Affected users and systems: deploy, release; no readable Roles block in REVIEW.md on origin/main (REVIEW.md has no ## Roles block))`.
+  - `/usr/bin/python3 -m py_compile` on `factory.py` and `plan-sync.py` under Python 3.9.6: ok.
+- Definition of done: met for PR A.
 - Visual: none
 - Doubt: none
-- AC1 to AC8: <pass or fail, with what was observed>
+- AC1: pass against the restated criterion. The level is 3 from `risk: high`; the stop-list reasons name Proposed outcome and Affected users and systems only.
+- AC2: pass. Cases l4 to l8: auth under Problem, Out of scope and Risk reads level 1; under Proposed outcome it reads 3 with `stop-list words in Proposed outcome: auth`; l6 names Constraints; l7 ignores code spans, fences and comments; l8 keeps a recorded level 3.
+- AC3: pass. m1 exits 2 with no record for an unmerged-branch sha; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha; m6 refuses with no remote; m7 writes it in a plain `git init` with a pushed and fetched bare origin, as the mieruka sync fixture does.
+- AC4: not run live. `commands/execute.md` writes `Done as of <git rev-parse --short=12 HEAD>` first; sd2 and sd3 show a Done at the head, then the plan committed alone, passes.
+- AC5: pass in the sandbox. sd4 and sd5 warn and log `## Done is stale (written at <sha>, head is <sha>)`; sd6 blocks once under `mode.stale-done` enforce; sd7 passes with `stop_hook_active`; sd10 stays in warn under a global, `mode.plan-sync` and env enforce; sd11 reads a bulleted, backticked line under the lead sentence; sd12 and sd13 cover `plan-m1.md`.
 - AC6: pass, by hand on `demo/app` (after `npm ci`) following this branch's `constraints/SKILL.md` and `commands/constraints.md` rather than the installed plugin. Proved and written as rows: `npx tsc --noEmit` (type error in `components/data.ts`: violation exit 2, clean exit 0), `npm test` (failing assertion in `app/__tests__/data.test.ts`: violation exit 1, clean exit 0) and `npm run build` (bad export in `app/page.tsx`: violation exit 1, clean exit 0). Not enforced: a type error in a test file passed both `npx tsc --noEmit` (tsconfig excludes `**/__tests__/**`) and `npm test` (Vitest does not type-check), violation exit 0 and clean exit 0 for each. Measured: 9 passing tests and 102 kB First Load JS for `/`; no coverage provider is installed, so coverage was left out. `floor-guard.py` parses exactly the three rows. `demo/app/CONSTRAINTS.md` was written and not committed.
-- Sign-off: <the date>
+- AC7: other PR.
+- AC8: `node tests/check.mjs` and `claude plugin validate . --strict` pass after PR A, on top of PR B.
+- Sign-off:
 
 ## Departures from plan
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
+
+- Step 4: a refused `record --state merged` returns 2 from `cmd_record` instead of raising `Refuse`, because `main()` maps a `record` refusal to exit 1 and R5 and AC3 ask for 2.
+- Step 4: `record --state merged` with no `--sha` is refused the same way, since R6 allows a merged record only for a sha on the base.
+- Step 4: `record` does not fetch; it reads the tip `default_tip()` resolves from local refs, as the plan says. The refusal tells the person to run `git fetch` when the merge is newer than the last fetch.
+  R5 says the tip is fetched and the spec's policy line says `record` already fetches; it does not.
+- Steps 1 and 2: `tests/unit/factory-level.test.mjs` and the existing `l3` case in `tests/factory.mjs` put their stop-list words under `## Proposed outcome`, because under `## Problem` they no longer raise the level (R2); the unit file gains a case for a word under Problem staying at level 1.
+- Steps 1 and 2: AC1 cannot pass as written. `intent/2026-11-04-rollback-path` uses release and deploy as the subject of its `## Proposed outcome` and `## Affected users and systems`, so under R1 its reasons still list `stop-list words in Proposed outcome: deploy, release` and the same for Affected users and systems; the level is 3 either way. The build follows R1 to R3 and AC1 is restated in `spec-m1.md` in this PR.
+- Step 5: `stale_done()` reads the plans the working tree changed and the plans the branch's own commits changed since it left the default branch (`origin/HEAD`, `origin/main`, `origin/master`, `main` or `master`, local refs only).
+  R8 names only the working tree, but AC5's later commit leaves a clean tree, so a working-tree-only read would never see the plan; on the default branch itself only the working tree counts, so merged plans never nag.
+- Step 5: a `Done as of` sha the repo does not have passes. The line is read anywhere in the `## Done` section, bare, as a bullet or with the sha in backticks.
+- Step 5: plan-sync counts `plan-<id>.md` as a plan for both checks, since `/plan` writes one per module; the plan.md reminder was blind to them before.
+- Step 5: the stale check has its own mode key, `stale-done`, read only from `mode.stale-done`; the global `mode` file and `CLAUDE_GUARD_MODE` leave it in warn, so it cannot block before its evidence period. When both checks fire, each follows its own mode in one Stop output.
+- Step 5: the stale check opens only the plans the working tree or the branch's commits changed; the sha comparison and `git ls-files` run only when one of them holds a `Done as of` line.
+- Step 4: with no remote, `record --state merged` exits 2 with "no remote to verify the base" instead of checking against `HEAD`.
+  `tests/mieruka-sync.mjs` records a merged state in a fixture with no origin, so its fixture gains a bare origin, pushed and fetched; `tests/factory.mjs` case m7 mirrors it.
+  That check also failed earlier, at the deploy writer, since `ship.py deployed` requires a deploy time; the fixture now passes `--deployed-at`.
+- Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
 
 ## Noticed but not touched
 

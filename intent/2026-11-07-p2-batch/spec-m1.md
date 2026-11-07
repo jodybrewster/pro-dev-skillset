@@ -106,7 +106,7 @@ ADR needed: no, each change applies an accepted rule (ADR-0010, ADR-0016, ADR-00
 
 ## Acceptance criteria
 
-- AC1. `factory.py level intent/2026-11-04-rollback-path` computes 3 from `risk: high` and its reasons list no stop-list reason.
+- AC1. `factory.py level intent/2026-11-04-rollback-path` computes 3 from `risk: high`; any stop-list reason names Proposed outcome, Affected users and systems or Constraints and none names Problem, Out of scope or Risk (restated on 2026-11-07: that intent's Proposed outcome is about releases, so the words are the subject, not a mention).
 - AC2. A fixture intent with `auth` only under `## Out of scope` computes level 1 when its author, source and risk allow it; the same word moved under `## Proposed outcome` computes 3.
 - AC3. `factory.py record --state merged --sha <sha of an unmerged branch>` exits 2 and leaves no record; the same with a sha on the default branch writes the record.
 - AC4. After `/execute` on a demo plan, `## Done` starts with `Done as of <sha>` and `git rev-parse --short=12 HEAD` matches it.

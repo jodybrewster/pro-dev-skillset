@@ -204,6 +204,7 @@ Run every command under the plan's `## Proof of done` and keep each real result.
 Dispatch the `verifier` agent in a fresh context with the plan path and name its model and effort.
 Fix what it finds.
 Fill in the plan's `## Done` section: the build commit, each check with its real result and one line per acceptance criterion with what was observed.
+Its first line is `Done as of <sha>`, where the sha is `git rev-parse --short=12 HEAD` at that moment; the plan-sync hook reports `## Done` as stale once code changes after that head.
 Add one `- Visual:` line per visual check (step, viewport, status and the differences accepted), or `- Visual: none` when stage 6 was skipped.
 Fill one `- Doubt:` line per doubted step, or `- Doubt: none`.
 Fill the `- Definition of done:` line against `${CLAUDE_PLUGIN_ROOT}/references/definition-of-done.md`, naming the items not met or "met".

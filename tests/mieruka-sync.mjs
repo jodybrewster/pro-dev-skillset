@@ -60,6 +60,12 @@ main: try {
   git(repo, "add", "-A");
   git(repo, "commit", "-q", "-m", "fixture");
   const head = git(repo, "rev-parse", "HEAD").stdout.trim();
+  // factory.py record --state merged checks the sha against origin's default branch, so the fixture gets one.
+  const origin = join(work, "origin.git");
+  git(work, "init", "-q", "--bare", origin);
+  git(repo, "remote", "add", "origin", origin);
+  git(repo, "push", "-q", "origin", "HEAD:refs/heads/main");
+  git(repo, "fetch", "-q", "origin");
   const report = {
     verdict: "NO-GO", head, base: head,
     scope: { kind: "tag", range: `${head}..${head}`, prs: [], uncovered: [], last_deploy_source: "none" },
@@ -91,7 +97,7 @@ main: try {
     return true;
   };
   const lessonAdd = (ref) => write("-", join(SDLC, "lessons.py"), ["add", "--ref", ref, "--head", head, "--class", "unchecked-timeout", "--file", "src/x.py"], "no timeout on the call");
-  const written = write("deploy", SHIP, ["deployed", "--target", "web", "--env", "production", "--url", "https://example.test"])
+  const written = write("deploy", SHIP, ["deployed", "--target", "web", "--env", "production", "--url", "https://example.test", "--deployed-at", "2026-11-02T10:00:00+00:00"])
     && write("incident", join(SDLC, "incident.py"), ["record", `intent/${FOLDER}`])
     && lessonAdd("11") && lessonAdd("12")
     && write("lesson", join(SDLC, "lessons.py"), ["mark", "unchecked-timeout", "accepted"], "Give every subprocess call a timeout.")

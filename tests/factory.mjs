@@ -96,8 +96,8 @@ function write(path, text) {
 }
 
 const REVIEW = "# Review\n\n## Roles\n\n```yaml\nroles:\n  product_owner: [t]\n  engineer: [t]\n  lead: [t]\n  policy_owner: [t]\n  platform_owner: [t]\n```\n";
-const intentText = ({ status = "accepted", risk = "low", author = "t", source = "idea", level = "", body = "Fix the greeting typo on the home page." } = {}) =>
-  `---\nsource: ${source}\nkind: bug\nstatus: ${status}\nrisk: ${risk}\n${level ? `level: ${level}\n` : ""}created: 2026-01-02T10:00:00-0500\nauthor: ${author}\n---\n\n# Intent: greeting\n\n## Problem\n\n${body}\n`;
+const intentText = ({ status = "accepted", risk = "low", author = "t", source = "idea", level = "", body = "Fix the greeting typo on the home page.", sections = "" } = {}) =>
+  `---\nsource: ${source}\nkind: bug\nstatus: ${status}\nrisk: ${risk}\n${level ? `level: ${level}\n` : ""}created: 2026-01-02T10:00:00-0500\nauthor: ${author}\n---\n\n# Intent: greeting\n\n## Problem\n\n${body}\n${sections}`;
 const SPEC = (concerns = "") => `---\nstatus: accepted\n---\n\n# Spec\n\n## Flagged concerns\n\n| # | Concern | Policy or owner | Resolution |\n|---|---|---|---|\n${concerns}\n## Open questions\n\nNone.\n`;
 const PLAN = ({ status = "approved", stop = "none", approver = "factory (unattended level 1)" } = {}) =>
   `# Plan\n\nStatus: ${status}.\nApprover: ${approver}.\nStop-list categories: ${stop}.\n`;
@@ -240,9 +240,10 @@ export function runFactoryCases() {
       r = py(["record", DIR, "--repo", fx.repo, "--state", "build", "--pr", "https://github.com/o/r/pull/9", "--cost", "1.5"], fx.repo, stub.env);
       rec = record(fx);
       add("r2 build keeps started, sets build_pr and cost", "info", rec?.status === "info" && rec.detail.build_pr === "https://github.com/o/r/pull/9" && rec.detail.cost_usd === 1.5 && rec.detail.state === "build", brief(r));
-      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", "abcdef1234567890", "--unread-lines", "42"], fx.repo, stub.env);
+      const mainSha = git(fx.repo, "rev-parse", "HEAD").stdout.trim();
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", mainSha, "--unread-lines", "42"], fx.repo, stub.env);
       rec = record(fx);
-      add("r3 merged is pass and says deploy is yours with the unread lines", "pass", rec?.status === "pass" && rec.summary === "level 1: merged abcdef123456, deploy is yours, unread diff: 42 lines", brief(r) + (rec?.summary ?? ""));
+      add("r3 merged is pass and says deploy is yours with the unread lines", "pass", rec?.status === "pass" && rec.summary === `level 1: merged ${mainSha.slice(0, 12)}, deploy is yours, unread diff: 42 lines`, brief(r) + (rec?.summary ?? ""));
       r = py(["record", DIR, "--repo", fx.repo, "--state", "stopped", "--reason", "tier medium", "--level-now", "2"], fx.repo, stub.env);
       rec = record(fx);
       add("r4 stopped is partial with the level raised", "partial", rec?.status === "partial" && rec.detail.level_now === 2 && /raised to 2 \(tier medium\)/.test(rec.summary), brief(r));
@@ -676,7 +677,7 @@ export function runFactoryCases() {
 
     // ── level and roles through the CLI ──
     {
-      const fx = repoWithOrigin(sandbox, "lv", { [FOLDER]: { "intent.md": intentText() }, "2026-01-03-risky": { "intent.md": intentText({ body: "Rotate the API key and log the password." }) } });
+      const fx = repoWithOrigin(sandbox, "lv", { [FOLDER]: { "intent.md": intentText() }, "2026-01-03-risky": { "intent.md": intentText({ sections: "\n## Proposed outcome\n\nRotate the API key and log the password.\n" }) } });
       const stub = makeStub(sandbox, "lv", fx.origin);
       let r = py(["level", DIR, "--repo", fx.repo, "--json"], fx.repo, stub.env);
       add("l1 level prints JSON with the contract's keys", "level 1", r.status === 0 && jsonOf(r)?.level === 1 && "history_max" in jsonOf(r) && "reasons" in jsonOf(r), brief(r));
@@ -684,6 +685,69 @@ export function runFactoryCases() {
       add("l2 roles prints the map", "five keys", r.status === 0 && Object.keys(jsonOf(r) ?? {}).length === 5, brief(r));
       r = py(["level", "intent/2026-01-03-risky", "--repo", fx.repo, "--write"], fx.repo, stub.env);
       add("l3 level --write raises the file and exits 3", "raised", r.status === 3 && /level: 3/.test(r.stdout) && /^level: 3$/m.test(readFileSync(join(fx.repo, "intent", "2026-01-03-risky", "intent.md"), "utf8")), brief(r));
+    }
+
+    // ── level reads stop-list words only in the requirement sections ──
+    {
+      const fx = repoWithOrigin(sandbox, "lvs", {
+        "2026-01-04-oos": { "intent.md": intentText({ body: "Users think the auth page shows a deploy banner.", sections: "\n## Proposed outcome\n\nThe greeting reads Hello.\n\n## Out of scope\n\nAny auth change.\n\n## Risk\n\nA release note is not needed.\n" }) },
+        "2026-01-05-po": { "intent.md": intentText({ sections: "\n## Proposed outcome\n\nThe auth page greets the user.\n\n## Out of scope\n\nNothing.\n" }) },
+        "2026-01-06-cons": { "intent.md": intentText({ sections: "\n## Affected users and systems\n\nNobody.\n\n## Constraints\n\nNo password is logged and no deploy happens.\n" }) },
+        "2026-01-07-code": { "intent.md": intentText({ sections: "\n## Proposed outcome\n\nThe `auth` helper keeps its name.\n\n```\nexport TOKEN=1\n```\n\n<!-- deploy later -->\n" }) },
+        "2026-01-08-kept": { "intent.md": intentText({ level: "3", sections: "\n## Out of scope\n\nAny auth change.\n" }) },
+      });
+      const stub = makeStub(sandbox, "lvs", fx.origin);
+      const lv = (folder) => { const r = py(["level", `intent/${folder}`, "--repo", fx.repo, "--json"], fx.repo, stub.env); return { r, j: jsonOf(r) }; };
+      let o = lv("2026-01-04-oos");
+      add("l4 a stop-list word only under Problem, Out of scope and Risk leaves level 1", "level 1", o.r.status === 0 && o.j?.level === 1 && !/stop-list/.test((o.j?.reasons ?? []).join(";")), brief(o.r));
+      o = lv("2026-01-05-po");
+      add("l5 the same word under Proposed outcome is level 3 and the reason names the section", "level 3", o.r.status === 3 && o.j?.level === 3 && (o.j?.reasons ?? []).includes("stop-list words in Proposed outcome: auth"), brief(o.r));
+      o = lv("2026-01-06-cons");
+      add("l6 words under Constraints count and name that section", "level 3", o.j?.level === 3 && (o.j?.reasons ?? []).includes("stop-list words in Constraints: password, deploy"), brief(o.r));
+      o = lv("2026-01-07-code");
+      add("l7 backticked spans, fenced blocks and HTML comments are not read", "level 1", o.j?.level === 1, brief(o.r));
+      o = lv("2026-01-08-kept");
+      add("l8 a recorded level 3 stays 3 when the words moved out of the requirement sections", "level 3", o.r.status === 0 && o.j?.level === 3 && o.j?.file_level === 3, brief(o.r));
+    }
+
+    // ── record --state merged checks the sha is on the default branch ──
+    {
+      const fx = repoWithOrigin(sandbox, "recm", { [FOLDER]: { "intent.md": intentText() } });
+      const stub = makeStub(sandbox, "recm", fx.origin);
+      const onMain = git(fx.repo, "rev-parse", "HEAD").stdout.trim();
+      git(fx.repo, "checkout", "-q", "-b", "side");
+      write(join(fx.repo, "side.txt"), "side\n");
+      git(fx.repo, "add", "-A");
+      git(fx.repo, "commit", "-q", "-m", "side");
+      const offMain = git(fx.repo, "rev-parse", "HEAD").stdout.trim();
+      git(fx.repo, "checkout", "-q", "main");
+      let r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", offMain], fx.repo, stub.env);
+      add("m1 merged with a sha off the default branch exits 2 and writes no record", "refused", r.status === 2 && record(fx) === null, brief(r));
+      add("m2 the refusal names the sha, the tip and the branch", "named", r.stderr.includes(offMain.slice(0, 12)) && r.stderr.includes("origin/main") && /\bmain\b/.test(r.stderr.replace("origin/main", "")), brief(r));
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged"], fx.repo, stub.env);
+      add("m3 merged with no sha exits 2 and writes no record", "refused", r.status === 2 && record(fx) === null, brief(r));
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", "0123456789abcdef0123456789abcdef01234567"], fx.repo, stub.env);
+      add("m4 merged with a sha the repo does not have exits 2", "refused", r.status === 2 && record(fx) === null, brief(r));
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", onMain], fx.repo, stub.env);
+      add("m5 merged with a sha on the default branch writes the record", "pass", r.status === 0 && record(fx)?.status === "pass" && record(fx)?.detail.merged_sha === onMain, brief(r));
+      git(fx.repo, "remote", "remove", "origin");
+      rmSync(join(fx.repo, ".pro-dev"), { recursive: true, force: true });
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", onMain], fx.repo, stub.env);
+      add("m6 merged with no remote exits 2 with no remote to verify the base", "refused", r.status === 2 && record(fx) === null && /no remote to verify the base/.test(r.stderr), brief(r));
+      // The tests/mieruka-sync.mjs fixture: a plain git init, then a bare origin pushed and fetched.
+      const plain = join(sandbox, "recm-plain");
+      mkdirSync(join(plain, "intent", FOLDER), { recursive: true });
+      git(plain, "init", "-q");
+      write(join(plain, "intent", FOLDER, "plan.md"), "plan\n");
+      git(plain, "add", "-A");
+      git(plain, "commit", "-q", "-m", "fixture");
+      const plainHead = git(plain, "rev-parse", "HEAD").stdout.trim();
+      git(sandbox, "init", "-q", "--bare", join(sandbox, "recm-plain-origin.git"));
+      git(plain, "remote", "add", "origin", join(sandbox, "recm-plain-origin.git"));
+      git(plain, "push", "-q", "origin", "HEAD:refs/heads/main");
+      git(plain, "fetch", "-q", "origin");
+      r = py(["record", DIR, "--repo", plain, "--state", "merged", "--sha", plainHead, "--unread-lines", "42"], plain, stub.env);
+      add("m7 a plain git init with a pushed and fetched bare origin writes the merged record", "pass", r.status === 0 && record({ repo: plain })?.status === "pass", brief(r));
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

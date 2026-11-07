@@ -38,6 +38,12 @@ Deploy is always a person's step.
 | 2 Engineer | risk medium, a new dependency, an author outside the role map, a ticket source | the full loop | the engineer approves the plan and the merge |
 | 3 Escalated | risk high, or a stop-list word: auth, session, permission, migration, payment, deploy, release, secret, token, credential, env var, personal data, export | the full loop plus the `/execute` stop list | engineer, lead and policy owner |
 
+A stop-list word counts only under `## Proposed outcome`, `## Affected users and systems` or `## Constraints`, the sections that say what the change does.
+Under `## Problem`, `## Out of scope` or `## Risk` it is being discussed and does not raise the level.
+Code spans, fenced blocks and HTML comments are never read.
+The reason names the section, such as `stop-list words in Proposed outcome: deploy, release`.
+A reviewer who sees a risky word hidden elsewhere raises `risk:` or the level by hand.
+
 A level only goes up.
 `factory.py level` returns the highest of the computed level and every value the field has had on the default branch.
 `risk-classify.py` raises it again at merge when the real diff reads medium or high.
@@ -163,6 +169,10 @@ Validate: accept a second small intent and watch the loop pick it up within five
 ## Step 8: read a stop
 
 A stop is the factory working.
+`factory.py record --state merged --sha <sha>` writes a merged record only when the sha is on the default branch tip (`git merge-base --is-ancestor`).
+Any other sha, or no sha, exits 2 with no record, naming the sha, the tip and the branch; run `git fetch` first when the merge is newer than the last fetch.
+With no remote there is no base to check against, so it refuses the same way.
+
 The record's `reason` names the rule, for example:
 
 ```
