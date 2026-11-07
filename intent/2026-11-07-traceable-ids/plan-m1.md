@@ -151,6 +151,7 @@ An empty section tells the reviewer the diff follows the plan.
 ## Noticed but not touched
 
 - An intent written in the old date form after this merges, or one on an open branch today, has no `id:` and fails `change-ids` on its PR until `ids.py backfill --write` runs there.
-- `ids.py backfill` numbers from the highest id on any ref, so it cannot renumber ids still unmerged on a branch; that is the never-reuse rule working, and a renumber before merge is a hand edit.
+- `ids.py backfill` numbers from the highest id on any ref and cannot renumber ids still unmerged on a branch; that is the never-reuse rule working.
+  A renumber before merge is a hand edit.
 - The pro-ai-sdlc and marketplace descriptions still say `/intent` writes `intent/<date>-<slug>/intent.md`; the README now names both forms.
 - The eval scaffolds under `plugins/pro-ai-sdlc/evals/*/scaffold.sh` still describe only date folders.
