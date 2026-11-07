@@ -6,7 +6,7 @@
 // `mode.<key>` file says `enforce`: the global `mode` file and
 // CLAUDE_GUARD_MODE leave it in warn so it cannot enforce before its evidence
 // period (ADR-0016, the `stale-done` precedent). A lookup that read the global
-// file would turn every new guard on at once, so each direction is a case.
+// file would turn every new guard on at once. Each direction is a case.
 //
 //   node tests/guards.mjs
 //   node tests/guards.mjs --only=mode     # substring filter on case id

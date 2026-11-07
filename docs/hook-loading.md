@@ -33,6 +33,11 @@ Its default mode only prints a `systemMessage` and never blocks.
 
 ## Registered by pro-core
 
+`pro-core` registers a `PreToolUse` hook on `Bash` that runs `scripts/git-safe.py` with a 10 second timeout.
+Its regex rules exit 2 on the dangerous commands they name.
+Its refspec parser flags the other pushes that would update or delete a protected branch under the `protected-push` mode key, which reads only `mode.protected-push` and starts in warn ([enforce-mode.md](./enforce-mode.md)).
+The shared helper `scripts/guardlib.py` is imported, not registered.
+
 `pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
 It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.
 

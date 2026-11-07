@@ -560,7 +560,7 @@ checks["git-safe"] = () => {
   return { failures, warnings };
 };
 
-// pro-core guard helper. guardlib.py decides each new guard's mode, and a lookup
+// pro-core guard helper. guardlib.py decides each new guard's mode. A lookup
 // that read the global mode file would enforce a guard before its evidence period
 // (ADR-0016). The case table lives in tests/guards.mjs.
 checks["guards"] = () => {

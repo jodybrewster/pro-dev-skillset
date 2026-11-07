@@ -348,7 +348,7 @@ def _summary(kind: str, branch: str) -> str:
 
 
 def protected_push(command: str, cwd: str) -> None:
-    """Warn on, or under its own enforce mode deny, a push onto a protected branch."""
+    """Warn on a push onto a protected branch, or deny it under its own enforce mode."""
     global guardlib
     if not _PUSH_WORD.search(command):
         return

@@ -5,12 +5,12 @@ State lives in the guard folder (CLAUDE_GUARD_DIR, or ~/.claude/hooks when unset
   warn.log     one tab-separated line per finding: time, guard, action, detail, cwd
 
 A pro-core guard enforces only when its own mode file says so. The global `mode`
-file and CLAUDE_GUARD_MODE leave it in warn, so a new guard cannot enforce before
+file and CLAUDE_GUARD_MODE leave it in warn: a new guard cannot enforce before
 its own evidence period (ADR-0016, the same rule as `stale-done` in pro-ai-sdlc).
 
 guard_dir() and log() are copied from plugins/pro-ai-sdlc/scripts/guard.py and
 own_mode() follows stale_mode() in plugins/pro-ai-sdlc/scripts/plan-sync.py.
-Plugins install separately and cannot import each other (ADR-0003), so keep the
+Plugins install separately and cannot import each other (ADR-0003). Keep the
 copies in step by hand.
 
 Every helper is standard library only (Python 3.9) and never raises on a missing
@@ -75,7 +75,7 @@ def segments(command: str) -> List[List[str]]:
     """Split a shell command into simple-command token lists. Quotes are honoured; nothing runs.
 
     Operators (; | & && || newline and parentheses) end a simple command. A quoted
-    string stays one token, so `bash -c "..."` is a shell with one argument here.
+    string stays one token: `bash -c "..."` is a shell with one argument here.
     """
     out: List[List[str]] = []
     tokens: List[str] = []

@@ -13,7 +13,7 @@
 // Exit 2 or a JSON `permissionDecision: deny` = blocked. Exit 0 with a
 // `protected-push` `would-deny` line in warn.log = warn. Anything else = allowed.
 //
-// Every case runs with its own throwaway CLAUDE_GUARD_DIR, so a mode file or a
+// Every case runs with its own throwaway CLAUDE_GUARD_DIR. A mode file or a
 // warn.log on the machine running the tests never changes a result. A case may
 // name a fixture repo (`repo`), mode files (`modes`) and a protected-branches
 // list (`protected`). The protected-push cases (pp-*) cover the push forms the
@@ -188,7 +188,7 @@ const CASES = [
 
   // ── protected push: forms the regex rules miss ──────────────────────────
   // Each runs in a fixture repo with `main` checked out. They warn by default,
-  // deny only under mode.protected-push, and never under the global mode file
+  // deny only under mode.protected-push and never under the global mode file
   // or CLAUDE_GUARD_MODE (ADR-0016).
   ...PP_FORMS.map(([id, command, summary]) => ({ id: `pp-warn/${id}`, expect: WARN, repo: "main", command, has: summary })),
   ...PP_FORMS.map(([id, command, summary]) => ({
@@ -243,7 +243,7 @@ const CASES = [
     ["main-fix", "git push origin main-fix"],
     ["master-dot-bak", "git push origin master.bak"],
     ["force-feature", "git push -f origin feat/thing"],
-    // `-d` is not in the regex delete exemption, so this blocks today.
+    // `-d` is not in the regex delete exemption: this blocks today.
     ["delete-short-flag-main", "git push -d origin main"],
   ].flatMap(([id, command]) => [
     { id: `pin/${id}`, expect: BLOCK, command, exit: 2 },

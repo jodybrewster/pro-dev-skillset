@@ -3,7 +3,7 @@
 Every skill, agent or engine in this marketplace that is not original work, with its upstream and the copyright line from the upstream's own LICENSE file.
 Each plugin that ships forked or adapted content carries `plugins/<name>/LICENSE` with the same lines.
 Each forked file ends with a footer naming its upstream.
-Manifests, templates, hooks, scripts, CI and the test harness are original work, MIT, Copyright (c) 2026 the pro-dev-skillset authors (see the root [`LICENSE`](../LICENSE)).
+Manifests, templates, hooks, scripts, CI and the test harness are original work, MIT, Copyright (c) 2026 the pro-dev-skillset authors (see the root [`LICENSE`](../LICENSE)), apart from the hook scripts with a row below.
 
 How it entered:
 
@@ -20,6 +20,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 |---|---|---|---|---|---|
 | pro-core | find-skills | [vercel-labs/skills](https://github.com/vercel-labs/skills) | MIT | Copyright (c) 2026 Vercel, Inc. | forked |
 | pro-core | dream | [grandamenium/dream-skill](https://github.com/grandamenium/dream-skill) | MIT, stated in the README; no license file | none published | forked |
+| pro-core | `scripts/git-safe.py` (the protected-push refspec parser) and the tokenizer in `scripts/guardlib.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-protected-push.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-data | drizzle-orm-architecture | [Yoraexe/ceobe](https://github.com/Yoraexe/ceobe) | MIT | Copyright (c) 2026 Yoragam1 | forked |
 | pro-data | drizzle-schema-definition | [Intense-Visions/harness-engineering](https://github.com/Intense-Visions/harness-engineering) | MIT | Copyright (c) 2026 Intense Visions, Inc. | forked |
 | pro-data | nextauth-patterns | [a5c-ai/babysitter](https://github.com/a5c-ai/babysitter) | MIT | Copyright (c) 2025 A5C AI | forked |
