@@ -120,6 +120,8 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 3: the round record's `detail_json` also holds `created`, as every other loop record does.
   Its `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
 - Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
+- Step 3, found in the hand run: R22's key `review-round-<first 12 of head>-<round>` let a second ref at the same head and round overwrite the first record, which a branch `/review` and a `/ship` on the same head both reach.
+  The key gains `-<first 8 hex of the SHA-1 of the ref>`; `tests/lessons.mjs` holds two refs at one head and round apart.
 - Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero, which is how R12 and R26 both hold.
 - Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
 - Step 5: when a round graded any row, `/review` always hands the fresh pass to the `reviewer` subagent, because the session has read the table and its claims; a first review still chooses as before (N2).

@@ -12,6 +12,7 @@ import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LESSONS = join(ROOT, "plugins", "pro-ai-sdlc", "scripts", "lessons.py");
@@ -242,7 +243,8 @@ export function runLessonsCases() {
     raise("missing-guard", "src/a.py"); raise("naming", "src/b.py", "nit");
     const roundArgs = (n, fresh = "ran", head = SHA2) => ["round", "--ref", ref, "--base", SHA1, "--head", head, "--round", String(n), "--fresh", fresh];
     const r1 = run(repo, roundArgs(1));
-    const key = `review-round-${SHA2.slice(0, 12)}-1`;
+    const refHash = (r) => createHash("sha1").update(r).digest("hex").slice(0, 8);
+    const key = `review-round-${SHA2.slice(0, 12)}-1-${refHash(ref)}`;
     const recPath = join(repo, ".pro-dev", "review", "rounds", `${key}.json`);
     const rec = existsSync(recPath) ? JSON.parse(readFileSync(recPath, "utf8")) : null;
     const d = rec ? JSON.parse(rec.detail_json) : {};
@@ -264,6 +266,8 @@ export function runLessonsCases() {
       const r = run(repo, ["round", ...Object.entries(base).flat()]);
       add(`round/refuses ${id}`, "exit 1 or 2", r.status === 1 || r.status === 2, r.stdout + r.stderr);
     }
+    const other = run(repo, ["round", "--ref", "ship-aaaaaaaaaaaa", "--base", SHA1, "--head", SHA2, "--round", "1", "--fresh", "ran"]);
+    add("round/two refs at the same head and round keep two records", "distinct keys, both files", other.status === 0 && other.json?.evidence_key !== key && existsSync(recPath) && existsSync(join(repo, other.json?.path ?? "missing")), other.stdout + other.stderr);
     add("round/tree stays clean", "git status clean", git(repo, "status", "--porcelain").stdout === "", git(repo, "status", "--porcelain").stdout);
   }
 

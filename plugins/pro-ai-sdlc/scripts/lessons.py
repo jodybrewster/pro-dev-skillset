@@ -31,6 +31,7 @@ Python 3 standard library only. No network calls.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -301,7 +302,8 @@ def cmd_round(a) -> dict:
                f"fresh pass {a.fresh}")
     record = {
         "schema": 1,
-        "evidence_key": f"review-round-{a.head[:12]}-{a.round}",
+        # Two refs can reach the same head and round (a branch /review and a /ship), so the key names the ref too.
+        "evidence_key": f"review-round-{a.head[:12]}-{a.round}-{hashlib.sha1(ref.encode()).hexdigest()[:8]}",
         "kind": "review",
         "artifact_kind": "review-round",
         "artifact_key": ref,

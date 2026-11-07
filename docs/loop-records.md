@@ -143,7 +143,7 @@ The decision behind it is [ADR-0027](./decisions/0027-review-memory.md).
 | `kind` | `review` |
 | `artifact_kind` | `review-round` |
 | `artifact_key` | the ref of the findings table: a branch name, `pr-<number>` or `ship-<first 12 of the merge base>` |
-| `evidence_key` | `review-round-<first 12 of head>-<round>` |
+| `evidence_key` | `review-round-<first 12 of head>-<round>-<first 8 hex of the SHA-1 of the ref>`; the ref hash keeps a branch review and a `/ship` run at the same head and round apart |
 | `status` | `fail` when any Important row is `open` or `not fixed`, `pass` otherwise |
 | `summary` | the round, the Important rows still open or not fixed, the fixed rows and whether the fresh pass ran |
 
