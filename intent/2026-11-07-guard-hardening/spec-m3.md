@@ -42,9 +42,10 @@ Key literals (item 34):
 - R1. `plugins/pro-security/scripts/key-literal.py` is registered in pro-security's `hooks/hooks.json` as a PreToolUse hook and a PostToolUse hook, each with matcher `Edit|Write|MultiEdit` and a 5 second timeout; it has no Bash matcher.
 - R2. The patterns are the `incident.py` entries for AWS key ids (`AKIA`, `ASIA`), Anthropic keys (`sk-ant-`), GitHub tokens (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`), Slack tokens (`xox[bpa]-`, `xapp-`) and private key blocks, with `xox[a-z]` narrowed to `xox[bpa]` and at least 20 characters after the `sk-ant-`, `xox?-` and `xapp-` prefixes.
 - R3. A line is not a finding when it reads from the environment (`process.env`, `import.meta.env`, `os.environ`, `getenv`, `Deno.env`, `System.getenv`, `ENV[`, `${{ secrets.`) or holds an obvious stand-in word (`your_`, `your-`, `xxxx`, `placeholder`, `example`, `changeme`, `dummy`, `fake`, `redacted`).
-  `<` and `...` count as stand-ins only inside the key-shaped token itself (`sk-ant-<your key>`, `ghp_...`), never elsewhere on the line so a key on a JSX line or beside an ellipsis is still a finding.
-- R4. A file in the m2 dotenv set is never checked, before or after the write: `.env` and `.env.*` (including `.env.example`, `.env.sample` and `.env.template`), `.dev.vars` and `.dev.vars.*`.
-  The local dotenv file is where R8's message tells the agent to put the value so writing it there is allowed; the secret-read guard covers reading it back.
+  The key-shaped token is the space-separated word that contains the pattern match; `<` or `...` anywhere in that word marks a stand-in (`sk-ant-<your-key>`, `sk-ant-...`), while `<` or `...` elsewhere on the line does not; a key on a JSX line or beside an ellipsis is still a finding.
+- R4. The uncommitted value files are never checked, before or after the write: `.env`, `.env.local`, `.env.*.local`, `.dev.vars` and `.dev.vars.*`.
+  They are where R8's message tells the agent to put the value and git ignores them by convention.
+  The committed templates (`.env.example`, `.env.sample`, `.env.template` and `.env.production`) are checked like any other file, since a key written there would be committed.
 - R5. PreToolUse reads `content` for Write, `new_string` for Edit and each `edits[].new_string` for MultiEdit and finds the first five matching lines, numbered within the text (for MultiEdit, as edit and line).
 - R6. PreToolUse mode is `warn` unless `mode.key-literal` in the guard folder holds `enforce`; the global `mode` file and `CLAUDE_GUARD_MODE` leave it in warn.
   Warn mode logs `would-deny`, prints `systemMessage` and `additionalContext` and allows; enforce mode logs `deny` and prints `permissionDecision: deny`.
@@ -133,8 +134,8 @@ ADR needed: no, ADR-0016 governs how a guard starts and moves to enforce, ADR-00
 ## Acceptance criteria
 
 - AC1. In the default mode, a Write whose content holds a fake key of each R2 kind exits 0 and logs a `key-literal` `would-deny` line naming the kind and line; with `mode.key-literal` holding `enforce`, the same payload prints `permissionDecision: deny`.
-- AC2. A Write of `const k = process.env.ANTHROPIC_API_KEY`, of `AKIAEXAMPLE...` with `example` on the line and of any key into `.env.example` passes with no line.
-- AC2a. A Write of a full fake key into `.env.local` and into `.dev.vars` passes with no line, before and after the write; a full fake key on a line that also holds `<div>` or `...` outside the key is a finding.
+- AC2. A Write of `const k = process.env.ANTHROPIC_API_KEY` and of `AKIAEXAMPLE...` with `example` on the line passes with no line; a full fake key written into `.env.example` is a finding while the same key written into `.env.local` passes.
+- AC2a. A Write of a full fake key into `.env.local`, `.env.development.local` and `.dev.vars` passes with no line, before and after the write; `sk-ant-<your-key>` and `sk-ant-...` pass as stand-ins; a real-shaped key inside `<code>` tags (`<code>KEY</code>` with no space) and a full fake key on a line that also holds `<div>` or `...` outside the key's word are findings.
 - AC3. A PostToolUse payload for a file that holds a fake key on line 7 prints `additionalContext` naming line 7 and never denies, in both modes.
 - AC4. The R19 case passes: the planted key appears in no output and no `warn.log` line.
 - AC5. With the project root set to a fixture folder, `rm -rf ../other`, `rm ~/notes.txt`, `find /var/lib/x -delete`, `find ../y -exec rm {} \;`, `git -C ../other clean -fd` and `cd .. && rm -rf other` are `delete-outside` findings; with `mode.delete-outside` holding `enforce` they print `permissionDecision: deny`.

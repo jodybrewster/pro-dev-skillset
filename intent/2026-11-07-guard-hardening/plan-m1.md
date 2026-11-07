@@ -30,7 +30,7 @@ It bumps pro-core from 0.25.0 to 0.26.0 and pro-ship from 0.16.1 to 0.16.2 (a pa
 ## Order of work
 
 1. Write `tests/guards.mjs` with `runGuardCases()`, an `--only=` filter on case ids like `tests/git-safe.mjs` has and failing cases for `guardlib.own_mode()`: no file reads warn, `mode.protected-push` holding `enforce` reads enforce, a global `mode` holding `enforce` reads warn, `CLAUDE_GUARD_MODE=enforce` reads warn; add the `guards` check to `tests/check.mjs` (size S; R9, R16, AC4)
-2. Write `guardlib.py`: `guard_dir()`, `own_mode()`, `log()` with the tab-separated line and the 300-character cap, `warn()` and `deny()` that print the PreToolUse JSON and `segments()` adapted from super-board's tokenizer (size S; R1, R9, R10, R11, N3)
+2. Write `guardlib.py`: `guard_dir()`, `own_mode()`, `log()` with the tab-separated line and the 300-character cap, `warn()` and `deny()` that print the PreToolUse JSON and `segments()` adapted from super-board's tokenizer (size S; R1a, R9, R10, R11, N3)
    Checkpoint: `node tests/guards.mjs` passes; `/usr/bin/python3 -m py_compile plugins/pro-core/scripts/guardlib.py` is clean.
 3. Upgrade the runner in `tests/git-safe.mjs`: a JSON `permissionDecision: deny` reads as block; a case may set `expect: "warn"` (exit 0 and a `protected-push` `would-deny` line), `repo` (a fixture with `main` checked out or one whose `origin/HEAD` points at `trunk`), `modes` and `protected`; every case runs with a throwaway `CLAUDE_GUARD_DIR` (size S; R15)
 4. Add the failing cases: each AC1 command as `warn` in the `main` fixture and as `block` under `mode.protected-push` enforce; `git push origin trunk` in the `trunk` fixture; `git push origin release` with `release` in `protected-branches`; the AC4 global-mode case; each AC5 form (`main:feature`, `bash -c`, `sh -c`, `eval`, `ssh host`, the heredoc, `main-fix`) as `block`, pinning today's behavior; `git push --dry-run origin HEAD:refs/heads/main` and a bare push on a feature branch as `allow`; the AC7 malformed payloads as `allow` (size S; AC1 to AC7)
@@ -85,6 +85,7 @@ claude plugin validate plugins/pro-ship --strict
 /usr/bin/python3 -m py_compile plugins/pro-core/scripts/guardlib.py plugins/pro-core/scripts/git-safe.py
 git grep -n 'diff --cached | grep' -- plugins/   # no output
 # mutation: comment out the --delete branch in protected_findings(), run node tests/git-safe.mjs --only=delete, see the delete cases fail, restore
+# mutation: drop _check_git_push_protected from SEGMENT_RULES, run node tests/git-safe.mjs, see the AC5 bash -c, heredoc and main:feature pins fail, restore
 ```
 
 ## Done
