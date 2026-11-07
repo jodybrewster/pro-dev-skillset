@@ -1,7 +1,7 @@
 ---
 source: idea
 kind: change
-status: draft
+status: done
 risk: medium
 created: 2026-10-28T17:00:00-0400
 author: the maintainer
@@ -12,10 +12,29 @@ author: the maintainer
 Author: the maintainer.
 Source: the maintainer's idea on 2026-10-28, prompted by the four personas in [agent-skills docs/agents.md](https://github.com/addyosmani/agent-skills/blob/main/docs/agents.md) (MIT).
 Those four are a starting point, not the final list.
-Status: draft; the set of agents is still open.
+Status: done on 2026-11-07; every agent it proposed was built by other intents, as listed in [Done](#done).
 Parked on 2026-10-29 until ranked item 18 in [docs/roadmap.md](../../docs/roadmap.md).
 The `code-reviewer` row moved to its own intent, [2026-10-29-code-reviewer](../2026-10-29-code-reviewer/intent.md), on 2026-10-29; this intent keeps the remaining agents.
 Created: 2026-10-28.
+
+## Done
+
+Nothing was built from this intent directly.
+Its agents arrived through the PR gate and the `/ship` preflight:
+
+| Proposed | Built as | Where |
+|---|---|---|
+| `code-reviewer` | `pro-quality:code-reviewer`, opus, four-field handoff | [#87](https://github.com/jodybrewster/pro-dev-skillset/pull/87), intent [2026-10-29-code-reviewer](../2026-10-29-code-reviewer/intent.md) |
+| `test-engineer` | `pro-quality:test-engineer`, opus, four-field handoff; in pro-quality next to the reviewer rather than pro-testing | [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124), intent [2026-10-31-ship-preflight](../2026-10-31-ship-preflight/intent.md) |
+| `web-performance-auditor` | `pro-quality:web-performance-auditor`, opus, dispatched by `/pro-ship:ship` | [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124) |
+| A security agent that hunts for findings | `pro-security:security-architect` in diff mode, which returns scored findings; `/pro-ship:ship` and pr-check run it on security surface and `security-auditor` still judges single findings | already shipped; no new agent or rename needed |
+
+Left out, each with its reason:
+
+- A `/webperf` command: `/pro-ship:ship` dispatches the auditor and it can be invoked by name, so a command adds an entry point with no new behavior. Revisit if someone wants a performance audit outside a release.
+- An accessibility auditor agent: ranked item 27 added an accessibility checklist sidecar to pro-design ([#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)), next to its `accessibility-audit` skill.
+- A docs-drift reviewer: pro-quality's `documentation-engineer` and the required-documents work ([#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103)) cover it.
+- A supply-chain reviewer: `/pro-ship:ship` runs a dependency audit in its checklist; anything deeper waits for a supply-chain intent in pro-ship's later phases.
 
 ## Problem
 
