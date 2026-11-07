@@ -80,7 +80,7 @@ When it is yes:
 - Ask only what the ADR still lacks beyond the spec: at most what would make the person reverse the decision and what must stay true afterwards.
   One question at a time.
 - Find the folder and the numbering as `/adr` step 2 does.
-- Write `<NNNN>-<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/adr.md` with Status `proposed` and Source set to the intent folder.
+- Write `<NNNN>-<slug>.md` from `${CLAUDE_PLUGIN_ROOT}/templates/adr.md` with Status `proposed` and Source set to the intent's id and folder, as in `Source: <id>, intent/<folder>/.`, or to the folder alone when `intent.md` has no `id:` line.
   Follow the folder's existing ADRs for style when they differ from the template.
 - If the folder has a `README.md` with an index table, add a row for it.
 - Link the ADR from the spec's Flagged concerns section.

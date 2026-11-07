@@ -7,7 +7,7 @@ Date: 2026-10-30
 proposed
 
 Decided by: the maintainer (at sign-off).
-Source: intent/2026-10-30-codex-second-reviewer/.
+Source: PDS-34, intent/2026-10-30-codex-second-reviewer/.
 
 ## Context
 

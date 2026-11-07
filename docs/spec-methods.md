@@ -26,7 +26,7 @@ The OpenSpec lane is a candidate for comparison and is not installed by any plug
 | How it ships | Built in (forked skills); lavish is a bridge | Built in | Bridge: Google's `egm@egm` plugin, installed as Google ships it | Bridge: spec-kit's `specify` CLI, pinned to a reviewed release | Adapted into this repo |
 | Comes with the starter | Yes | No | No | No | No |
 | Best for | The simplest path: most everyday work, ideas still being explored, quick features | Changes that should be checked against the repo's rules and signed off | A second opinion on a spec or plan from reviewers with no history | Teams already on spec-kit, or a project that wants a constitution and task lists | Client or team-facing work that needs a written story and a structured prompt |
-| Documents it writes | A design doc under `docs/superpowers/specs/` and a plan under `docs/plans/` | `intent/<date>-<slug>/intent.md`, `spec.md`, `plan.md` | Edits your spec or plan in place; a report in `goldfish_review_report.md` (left untracked) | `.specify/memory/constitution.md` once; `specs/<NNN>-<feature>/spec.md`, `plan.md`, `tasks.md` per feature | `spdd/analysis/`, `spdd/prompt/`, `spdd/review/` |
+| Documents it writes | A design doc under `docs/superpowers/specs/` and a plan under `docs/plans/` | `intent/<id>-<slug>/intent.md` (or `intent/<date>-<slug>/` with no shortcode), `spec.md`, `plan.md` | Edits your spec or plan in place; a report in `goldfish_review_report.md` (left untracked) | `.specify/memory/constitution.md` once; `specs/<NNN>-<feature>/spec.md`, `plan.md`, `tasks.md` per feature | `spdd/analysis/`, `spdd/prompt/`, `spdd/review/` |
 | Who drives it | The skills trigger when you describe the work; `/adhd` and `/lavish` run on demand | You run each command; Claude asks before anything it commits | Offered at `/spec` and `/plan`; you accept or contest each finding | You type every `/speckit-*` command; the model cannot start them | You run each `/spdd-*` command |
 | Policy checks | None built in; the brainstorm asks for your approval of the design before any code | `/spec` checks `REVIEW.md`, `CLAUDE.md` and ADRs; a security challenge before risky plans | Your own goldfish can check policy (a starter policy reviewer is included) | spec-kit's constitution | REASONS Canvas safeguards and its code review |
 | Builds the code | `subagent-driven-development` and `test-driven-development` (pro-execution) | `/execute`, in its own worktree, then the PR | No | `/speckit-implement` | `/spdd-generate` |
@@ -64,7 +64,7 @@ The skills trigger from what you say rather than from a command.
 pro-ai-sdlc is heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) by Louis Claxton; the page links the PDF.
 Its intent, spec, plan, review and sign-off steps follow the playbook's stages.
 
-Each step writes one file in `intent/<date>-<slug>/` and commits it.
+Each step writes one file in `intent/<id>-<slug>/` (or `intent/<date>-<slug>/` in a repo with no shortcode) and commits it.
 
 1. `/intent <idea or bug>` brainstorms the idea with you until it is concrete, then writes `intent.md`: the problem, the outcome and what is out of scope.
 2. `/spec` writes `spec.md`: testable requirements traced to the intent, checked against `REVIEW.md`, `CLAUDE.md` and the repo's ADRs.

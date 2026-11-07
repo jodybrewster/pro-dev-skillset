@@ -16,7 +16,7 @@ Bridge skills route to engines that live outside this marketplace and install on
 Each owning plugin shipped its own command to install them: `/design-engine`, `/design-skills`, `/taste-skills`, `/next-skills`, `/lavish-engine` and `/qa-engine`, with `/pro-starter` as an umbrella over three of them.
 `claude plugin update` brings a new bridge skill but never its engine, so a bridge added in a release did nothing until someone found the right command.
 Setup took nine commands and each new bridge added another.
-Source: intent/2026-10-28-pro-dev-setup/.
+Source: PDS-12, intent/2026-10-28-pro-dev-setup/.
 
 ## Decision
 

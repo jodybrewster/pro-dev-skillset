@@ -7,7 +7,7 @@ Date: 2026-11-03
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-11-03-software-factory/.
+Source: PDS-41, intent/2026-11-03-software-factory/.
 
 ## Context
 

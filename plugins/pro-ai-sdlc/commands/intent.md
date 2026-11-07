@@ -1,5 +1,5 @@
 ---
-description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<date>-<slug>/intent.md from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
+description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<id>-<slug>/intent.md (intent/<date>-<slug>/ in a repo with no shortcode) from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
 argument-hint: "<idea or bug, in a sentence or two>"
 allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write
 ---

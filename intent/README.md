@@ -1,6 +1,10 @@
 # Intents
 
-Every change to this marketplace starts here, one folder per change, named `<id>-<slug>/` (for example `PDS-57-slug/`) now that `intent/project.json` exists and `<date>-<slug>/` before it.
+Every change to this marketplace starts here, one folder per change.
+Each change has an id, `<shortcode>-<n>`, from the shortcode in `intent/project.json` (`PDS` here); `/intent` allocates it and writes it as the `id:` line of `intent.md` ([ADR-0026](../docs/decisions/0026-change-ids.md)).
+A new folder is named `<id>-<slug>/`, for example `PDS-57-slug/`.
+An older folder keeps its `<date>-<slug>/` name and carries its id in that `id:` line; no folder is renamed.
+The id also appears in the branch, commit subjects, pull request titles, the roadmap row and an ADR's Source line, so one search finds the whole change.
 The folder holds the artifacts each stage writes and the next stage reads.
 
 - `intent.md`: why the change is wanted, the problem, the proposed outcome and its risk, with a `status` in the front matter (`proposed`, `accepted`, `done` or `dropped`).

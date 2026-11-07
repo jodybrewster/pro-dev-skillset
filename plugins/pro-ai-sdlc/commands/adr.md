@@ -35,6 +35,8 @@ Rules for the interview:
   Never invent options, dates or consequences; anything unknown is left out or marked as unknown.
 - Ask whether the decision replaces or retires an earlier ADR.
   If so, note its number.
+- Ask whether a change produced the decision.
+  If the person names one, read the `id:` line in the front matter of its `intent/<folder>/intent.md`.
 
 If the decision is empty, ask for it first.
 
@@ -49,7 +51,9 @@ Name the file `<NNNN>-<slug>.md` in that format, where the slug is two to five l
 ### 3. Write the ADR
 
 Write it from the template with Status `accepted`, once the person confirms the content.
-Fill Date from Context, Decided by with the person's name and Source with "conversation" or the link they give.
+Fill Date from Context and Decided by with the person's name.
+Fill Source from the change when the person named one: its id, a comma and its folder, for example `Source: TST-1, intent/2026-01-02-demo/.`; a change with no `id:` line gives its folder alone.
+With no change behind it, Source is "conversation" or the commit or link the person gives.
 One sentence per line.
 Follow the user's writing rules if they have any: by default no em dashes, no Oxford comma and straight quotes.
 

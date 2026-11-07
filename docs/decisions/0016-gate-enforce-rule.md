@@ -7,7 +7,7 @@ Date: 2026-10-30
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-10-30-p0-hardening/.
+Source: PDS-29, intent/2026-10-30-p0-hardening/.
 
 ## Context
 

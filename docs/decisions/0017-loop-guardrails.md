@@ -7,7 +7,7 @@ Date: 2026-10-30
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-10-30-sdlc-loop-upgrades/.
+Source: PDS-30, intent/2026-10-30-sdlc-loop-upgrades/.
 
 ## Context
 

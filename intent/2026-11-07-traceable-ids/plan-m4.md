@@ -86,4 +86,21 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- `tests/check.mjs` is unchanged: the rule lives in `changeIdProblems(root)` in `tests/ids.mjs`, which `checks["change-ids"]` already imports (an m1 departure), so the two new rules and their fixtures sit in one file.
+- N1 is checked for every `](../intent/...)` link on any line of `docs/roadmap.md` and `docs/decisions/*.md`, not only for table rows and Source lines; every link on main resolved before this change.
+- ADR-0026's Source line lost its parenthetical "PDS-50 once the backfill lands", which the id now leading the line makes untrue; the spec references in it are kept.
+  Every other ADR changed only by the id and a comma on its Source line: 21 files, 21 insertions and 21 deletions.
+- Concern 1: each edited ADR was grepped for a quote of chat or a dated attribution; none was found, so nothing else in an ADR changed.
+- The roadmap also names the id before the first intent link of each "Now" item in prose (R1), not only in table rows; the Spec and Plan sub-bullets of constraint-floor are left, since its Folder line carries `PDS-24`.
+  The ranked list, Detail, Dropped and Housekeeping sections are not "Now" items and keep their links as they were; the "Last updated" line is left to the builds ticking items.
+- `AGENTS.md` is a symlink to `CLAUDE.md`, so one edit covers both.
+- Beyond the file list, the docs and descriptions that named only the date form now name both: the pro-ai-sdlc description in both manifests and the marketplace entry, the `/intent` description, `plugins/pro-ai-sdlc/README.md`, `templates/incident.md`, `docs/spec-methods.md` and `docs/loop-records.md`.
+  The descriptions changed, so the keyless routing floor was re-run.
+
 ## Noticed but not touched
+
+- The eval scaffolds under `plugins/pro-ai-sdlc/evals/*/scaffold.sh` still say `intent/<date>-<slug>/`; each builds a fixture repo with no `intent/project.json`, where the date form is the true one.
+- `plugins/pro-core/commands/pro-dev.md` (lines 181 and 193) names only `intent/<date>-<slug>/`; it is pro-core content and would need a pro-core bump.
+- `demo/factory/new-demo.sh` writes a demo `intent/README.md` naming `<date>-<slug>/`; the demo repo has no shortcode.
+- There is no `templates/adr.md` or `templates/intent.md` at the repo root; the only templates are under `plugins/pro-ai-sdlc/templates/`.
+- ADR-0026's Where it is enforced still says none of it exists until the m1 to m4 builds land; its body is out of bounds for this module.

@@ -3,7 +3,7 @@
 Status: proposed | accepted | deprecated | superseded by <NNNN>
 Date: <YYYY-MM-DD>
 Decided by: <name or names>
-Source: <intent folder, commit or conversation this came from>
+Source: <change id and intent folder when a change produced it, else the commit or conversation>
 
 ## Context
 

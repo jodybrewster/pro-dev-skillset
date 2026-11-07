@@ -11,7 +11,7 @@ Amended 2026-10-30 by ADR-0019: a second template is allowed when a sync check h
 Amended 2026-11-07 by ADR-0027 (proposed): a separate grade-mode dispatch carries one extra input, the findings table path; the fresh-pass handoff keeps exactly four fields.
 
 Decided by: the maintainer.
-Source: intent/2026-10-29-code-reviewer/.
+Source: PDS-25, intent/2026-10-29-code-reviewer/.
 
 ## Context
 

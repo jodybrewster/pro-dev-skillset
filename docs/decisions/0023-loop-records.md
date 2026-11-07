@@ -7,7 +7,7 @@ Date: 2026-11-01
 accepted
 
 Decided by: the maintainer.
-Source: intent/2026-11-01-after-build-loop/ (spec R1 to R50).
+Source: PDS-40, intent/2026-11-01-after-build-loop/ (spec R1 to R50).
 
 ## Context
 
