@@ -42,7 +42,7 @@ Direction says which way it should move.
 
 ### Not enforced
 
-- `<command>`: violation exit 0, clean exit <code> (a check that passed its violation, so it backs no row)
+- <rule>: `<command>`, violation exit 0, clean exit <code> (a check that passed its violation, so it backs no row)
 
 ## Exceptions
 

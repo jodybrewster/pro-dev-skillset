@@ -50,12 +50,12 @@ Before writing an Enforced with numbers row, run its command twice:
 
 Write the row only when the violation run exits non-zero and the clean run exits 0.
 When the violation run exits 0, the check does not enforce the rule, whatever the clean run did.
-List it under a `### Not enforced` heading at the end of the Measured, not yet enforced section, with the command and both exit codes. It never becomes a row:
+List it under a `### Not enforced` heading at the end of the Measured, not yet enforced section, with the rule it failed to enforce, the command and both exit codes. It never becomes a row:
 
 ```
 ### Not enforced
 
-- `npm run lint`: violation exit 0, clean exit 0
+- Unused imports: `npm run lint`, violation exit 0, clean exit 0
 ```
 
 A ratchet's value still gets its Measured row when its check is Not enforced, so the number is kept either way.
