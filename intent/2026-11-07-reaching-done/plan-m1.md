@@ -120,20 +120,30 @@ The sign-off moves `status` in the intent and the spec to `accepted` and ADR-002
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
-- Step 2: `lessons.py table --ref <ref> --tally` prints the grade-mode summary line and the grade line computed from the table, so `/review` and `/ship` check the agent's tally against the table and `tests/lessons.mjs` proves R12's `important: 1` without a model (AC10).
+- Step 2: `lessons.py table --ref <ref> --tally` prints the summary line and the grade line from the table, so `tests/lessons.mjs` proves R12's `important: 1` without a model (AC10).
+  After the PR review its first line counts every row still `open` or `not fixed` by severity, which after the fresh pass's raises is the round's total.
 - Step 2: a table whose stored `ref` differs from the one asked for is refused, because `a/b` and `a--b` share a key once `/` is written as `--`; the message says to use `pr-<number>`.
 - Step 3: the round record's `detail_json` also holds `created`, as every other loop record does.
   Its `counts` uses the keys `open`, `fixed`, `not_fixed` and `no_longer_applies`.
 - Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
 - Step 3, found in the hand run: R22's key `review-round-<first 12 of head>-<round>` let a second ref at the same head and round overwrite the first record, which a branch `/review` and a `/ship` on the same head both reach.
   The key gains `-<first 8 hex of the SHA-1 of the ref>`; `tests/lessons.mjs` holds two refs at one head and round apart.
-- Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero, which is how R12 and R26 both hold.
+- Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero.
+  After the PR review the grade line reads `graded: fixed <n> not fixed <n> no longer applies <n>` and a round's report opens with the round's total, computed after the fresh pass; R12, R26 and ADR-0027 now say so, which settles how the summary line of ADR-0011 reads across grading and the fresh pass.
 - Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
-- Step 5: when a round graded any row, `/review` always hands the fresh pass to the `reviewer` subagent, because the session has read the table and its claims; a first review still chooses as before (N2).
+- Step 5: when `lessons.py table` printed any row, the session has read the table and never runs the passes itself; the fresh pass always goes to the `reviewer` subagent (ADR-0012), in `/review` and in `/ship`.
+  A first review with no table still chooses as before (N2).
+- Step 5, after the PR review: the caller never dedupes against its copy of the table from before grading.
+  Every fresh finding goes to `lessons.py raise`, which applies R6 against the live table; `/review` now raises in step 5 before writing the report so the total counts after dedupe.
+- Step 2, after the PR review: R6 gains severity; an Important finding that matches a live nit row raises that row to Important and `raise` reports `severity_raised`.
+  A table that is not UTF-8 or holds a row whose `id` is missing or differs from its key is set aside as `.bad`.
 - Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
 - Step 7: the doubt skill's own `handoff.md` also names the contradicting paths in its `brief` line, so the template the session fills agrees with R28; the field names are unchanged.
 - Step 8: the fixtures are listed file by file, so the runner copies each to the repo root and the prompts name `before.py`, `after.py`, `clean.py` and `CONTRACT.md` without the folder; expectations that joined two checks are split into one check each.
 - Step 9: `/ship` grades before its one turn of specialists, since an unfixed Important row skips the code reviewer's fresh pass; the security review and the test engineer still run that round.
+- Step 9, after the PR review: `/ship` finds `lessons.py` with `pr-check.py find --enabled`, which counts an install only when the plugin settings do not disable it and never counts the repo's own `plugins/` folder (the rule of `verifier_state`, now `plugin_state`).
+  It prints `not-installed` for a disabled install, so `/ship` says `grading skipped: pro-ai-sdlc not installed`.
+- Pre-existing, fixed after the PR review: the pro-ship description in `ship/SKILL.md` and both manifests now says `/ship` reviews from the merge base when pr-check missed a commit; `node tests/route-lexical.mjs --min-rank1 70` stays at rank-1 80/98.
 - Step 9: `/ship` also raises the security review's blocking and should-fix findings (as `important` and `nit` with `--pass security`), so a fixed security finding is graded rather than reported again.
 - Step 9: when the base is the empty tree (a first release of the whole history), the review range starts at the empty tree, since `git merge-base` has no answer there.
 - Step 10: after the rebase onto main the bumps are pro-ai-sdlc 0.17.0, pro-quality 0.21.0, pro-ship 0.17.0 (main had 0.16.2) and `metadata.version` 1.94.0 (main had 1.93.0); the first commit's message still names 1.93.0.

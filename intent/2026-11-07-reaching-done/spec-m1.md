@@ -49,6 +49,8 @@ The findings table (intent: "a persisted findings table under `.pro-dev/` with s
 - R6. Precedence for a `raise` that names a file and class already in the table: when any `open` or `not fixed` row matches, `raise` adds no row and prints that row's id.
   Otherwise, when a `fixed` or `no longer applies` row matches, it adds a new row with `reopened_from` set to the newest matching row's id.
   Dedupe applies only to `open` and `not fixed` rows; `raise` never refuses a finding for matching a graded row.
+  The match is always against the live table after the round's grades; the caller never drops a finding against an earlier copy.
+  An Important finding that matches a live nit row raises that row's severity to Important and `raise` reports it; a nit never lowers a row.
 - R7. `lessons.py grade --ref <ref> --head <40 hex> <id> fixed|not-fixed|no-longer-applies --evidence <path:line>` sets `status`, `graded_at` and `evidence` on one row and refuses an unknown id, a missing `--evidence`, an `--evidence` that is not `path:line` (a repo-relative path, a colon and a positive line number) or a head that is not 40 hex.
 - R8. `lessons.py table --ref <ref>` prints the rows as JSON in id order; with no table it prints `{"findings": {}}`.
 - R9. A table that cannot be parsed is renamed to `<key>.json.bad`, a warning names it and the round runs as a first review.
@@ -59,12 +61,14 @@ Round 1 grades (intent: "round 1 grades each earlier finding fixed, not fixed or
 - R11. In grade mode `fixed` cites the `path:line` that shows the fix, `not fixed` means the claim is still true of the code at HEAD and `no longer applies` means the code it named is gone or the brief changed.
   A reply, a commit message or a resolved thread is never evidence.
 - R12. Grade mode runs no passes and raises no new finding.
-  Its report opens with the summary line `important: <n>  nits: <n>  pre-existing: <n>  skipped: 0`, where each count is the rows of that severity graded `not fixed`, then `fixed: <n>  not fixed: <n>  no longer applies: <n>` as the second line, then one line per row: id, grade, `path:line`.
+  Its report opens with the summary line `important: <n>  nits: <n>  pre-existing: <n>  skipped: 0`, where each count is the rows of that severity graded `not fixed`, then `graded: fixed <n> not fixed <n> no longer applies <n>` as the second line, then one line per row: id, grade, `path:line`.
+  The round's own report opens with the round's total instead, computed after the fresh pass: the rows still `open` or `not fixed` by severity (the unfixed graded rows plus the fresh findings, from `lessons.py table --tally`) plus the fresh pass's Pre-existing and skipped counts.
+  The grade line is its second line when the round graded rows.
   A round with an unfixed Important row therefore never reads as clean.
 - R13. `/review` runs grade mode first on every round whose ref has a table with an `open` or `not fixed` row, then writes each grade with `lessons.py grade`.
 - R14. When any Important row is `not fixed` after grading, `/review` reports those rows first under their original ids, skips the fresh pass, says `fresh pass skipped: <n> not fixed` and counts the round toward ADR-0011's cap.
 - R15. Otherwise the fresh pass runs with ADR-0012's four fields and no table; each new Important or nit finding is written with `lessons.py raise`.
-- R16. The fresh pass follows R6's precedence: a finding whose file and class match an `open` or `not fixed` row is dropped and counted as already raised.
+- R16. The fresh pass follows R6's precedence through `raise`: a finding whose file and class match an `open` or `not fixed` row is reported under that row's id as already raised.
   Otherwise a finding that matches a `fixed` or `no longer applies` row is kept with a new id and `reopened_from` naming that row, which keeps a regression visible.
 
 The range (intent: "`/ship` and `/review` review merge-base..head instead of the first and last uncovered commit"):
@@ -87,7 +91,8 @@ Findings checked against the code (intent: item 39):
 
 - R25. `code-reviewer.md`, `reviewer.md` and both Codex twins say: before reporting a finding, find the callers, guards and tests that reach the changed code and drop the finding when one of them rules it out, listing it under skipped with that `path:line`.
 - R26. Both agents say zero findings is a valid result and never invent one; the `Nothing to fix.` line is unchanged.
-  In grade mode `Nothing to fix.` follows the summary line only when its tally is all zero after grading.
+  `Nothing to fix.` is the third line of a round's report, after the total and the grade line.
+  It appears only when the total's important and nits are both zero.
 - R27. Both agents tag a finding Pre-existing when its failure also occurs with the base version of the code, even on a line the change touched; they list it apart from regressions the change brings.
 - R28. `doubt-driven-development/SKILL.md` says in Extract to strip reasoning and keep evidence: when the session knows a caller, guard or test that contradicts its own claim, that file's path goes in `brief` after the plan, spec and intent paths, as a path only.
 - R29. `doubt-instructions.md` tells the reviewer to read the callers, guards and tests that reach the range before raising a finding.
