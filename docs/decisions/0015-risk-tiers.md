@@ -9,7 +9,7 @@ accepted (2026-10-30) (2026-10-30)
 Amended 2026-10-30 by intent/2026-10-30-p0-hardening/: the merge gate reads the PR head through `gh pr view` and may fetch it, which replaces the rejected alternative of checking the head over the network.
 
 Decided by: the maintainer.
-Source: intent/2026-10-29-risk-tiers/.
+Source: PDS-28, intent/2026-10-29-risk-tiers/.
 
 ## Context
 

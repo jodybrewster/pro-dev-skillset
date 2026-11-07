@@ -59,6 +59,7 @@ export function changeIdProblems(root) {
     return { failures, warnings };
   }
   const seen = new Map();
+  const folderIds = new Map();
   const dir = join(root, "intent");
   for (const folder of readdirSync(dir).sort()) {
     const intentPath = join(dir, folder, "intent.md");
@@ -68,6 +69,7 @@ export function changeIdProblems(root) {
     if (!id) { failures.push(`${rel}: no id: line (run ids.py backfill --write)`); continue; }
     if (!ID_RE.test(id)) { failures.push(`${rel}: id ${id} does not match ${ID_RE.source}`); continue; }
     if (id.replace(/-\d+$/, "") !== code) failures.push(`${rel}: id ${id} does not carry the shortcode ${code} from intent/project.json`);
+    folderIds.set(folder, id);
     if (seen.has(id)) failures.push(`${rel}: id ${id} is also used by ${seen.get(id)}`);
     else seen.set(id, rel);
     const prefix = folder.match(ID_PREFIX_RE);
@@ -78,7 +80,52 @@ export function changeIdProblems(root) {
       if (other !== undefined && other !== id) failures.push(`intent/${folder}/${f}: id ${other || "(empty)"} does not match ${id} in ${rel}`);
     }
   }
+  failures.push(...docIdProblems(root, folderIds));
   return { failures, warnings };
+}
+
+// spec-m4 R7 and N1: an ADR `Source:` line under docs/decisions/ and a table row of
+// docs/roadmap.md that name an intent folder carrying an id name that id too (in the same cell
+// for a row); every ../intent/ link in those files must resolve. Each failure names file:line.
+const namesId = (text, id) => new RegExp(`(^|[^A-Za-z0-9-])${id}(?![0-9])`).test(text);
+function docIdProblems(root, folderIds) {
+  const failures = [];
+  const intentDir = join(root, "intent");
+  const linkProblems = (rel, n, line) => {
+    for (const m of line.matchAll(/\]\(((?:\.\.\/)+intent\/[^)#\s]+)/g)) {
+      if (!existsSync(resolve(root, dirname(rel), m[1]))) failures.push(`${rel}:${n}: ${m[1]} does not resolve`);
+    }
+  };
+  const decisions = join(root, "docs", "decisions");
+  if (existsSync(decisions)) {
+    for (const f of readdirSync(decisions).filter((x) => x.endsWith(".md")).sort()) {
+      const rel = `docs/decisions/${f}`;
+      readFileSync(join(decisions, f), "utf8").split("\n").forEach((line, i) => {
+        linkProblems(rel, i + 1, line);
+        if (!/^Source:/.test(line)) return;
+        for (const folder of new Set([...line.matchAll(/(?:^|[^A-Za-z0-9._/-]|\.\.\/)intent\/([A-Za-z0-9._-]+)\//g)].map((m) => m[1]))) {
+          if (!existsSync(join(intentDir, folder))) { failures.push(`${rel}:${i + 1}: intent/${folder}/ does not exist`); continue; }
+          const id = folderIds.get(folder);
+          if (id && !namesId(line, id)) failures.push(`${rel}:${i + 1}: Source names intent/${folder}/ without its id ${id}`);
+        }
+      });
+    }
+  }
+  const roadmap = join(root, "docs", "roadmap.md");
+  if (existsSync(roadmap)) {
+    const rel = "docs/roadmap.md";
+    readFileSync(roadmap, "utf8").split("\n").forEach((line, i) => {
+      linkProblems(rel, i + 1, line);
+      if (!line.startsWith("|")) return;
+      for (const cell of line.split("|")) {
+        for (const folder of new Set([...cell.matchAll(/\]\(\.\.\/intent\/([A-Za-z0-9._-]+)\//g)].map((m) => m[1]))) {
+          const id = folderIds.get(folder);
+          if (id && !namesId(cell, id)) failures.push(`${rel}:${i + 1}: the row links intent/${folder}/ without its id ${id}`);
+        }
+      }
+    });
+  }
+  return failures;
 }
 
 function git(cwd, ...args) {
@@ -257,6 +304,36 @@ export function runIdsCases() {
         "intent/TST-2-demo/intent.md": intentText({ id: "TST-2" }), "intent/TST-2-demo/spec.md": "---\nid: TST-2\n---\n", "intent/README.md": "x\n",
       });
       add("check/both folder forms with matching ids pass", "0 failures", p.failures.length === 0 && p.warnings.length === 0, JSON.stringify(p));
+
+      // spec-m4 R7 and N1: an ADR Source line or a roadmap table row that names an id-bearing
+      // intent folder names its id too; every ../intent/ link in those docs must resolve.
+      const base = { "intent/project.json": PROJECT(), "intent/2026-01-01-a/intent.md": intentText({ id: "TST-1" }) };
+      const adr = (source) => `# ADR-0001: demo\n\nDate: 2026-01-01\n\n## Status\n\naccepted\n\n${source}\n\n## Context\n\nx\n`;
+      p = fixture("adr-noid", { ...base, "docs/decisions/0001-demo.md": adr("Source: intent/2026-01-01-a/.") });
+      add("check/m4 AC3 an ADR Source naming an id-bearing folder without the id fails with the file and line", "one failure",
+        p.failures.length === 1 && p.failures[0] === "docs/decisions/0001-demo.md:9: Source names intent/2026-01-01-a/ without its id TST-1", JSON.stringify(p));
+      p = fixture("adr-id", { ...base, "docs/decisions/0001-demo.md": adr("Source: TST-1, intent/2026-01-01-a/ (spec R1 to R3).") });
+      add("check/m4 AC3 the same Source with the id passes", "0 failures", p.failures.length === 0, JSON.stringify(p));
+      p = fixture("adr-prefix", { ...base, "docs/decisions/0001-demo.md": adr("Source: TST-10, intent/2026-01-01-a/.") });
+      add("check/m4 R7 a longer id that starts with the right one does not count", "one failure",
+        p.failures.length === 1 && /without its id TST-1$/.test(p.failures[0]), JSON.stringify(p));
+      p = fixture("adr-conv", { ...base, "docs/decisions/0001-demo.md": adr("Source: conversation.") });
+      add("check/m4 R4 a Source with no intent folder passes", "0 failures", p.failures.length === 0, JSON.stringify(p));
+      p = fixture("adr-gone", { ...base, "docs/decisions/0001-demo.md": adr("Source: TST-9, intent/2026-01-09-gone/.") });
+      add("check/m4 N1 an ADR Source naming a folder that does not exist fails", "one failure",
+        p.failures.length === 1 && p.failures[0] === "docs/decisions/0001-demo.md:9: intent/2026-01-09-gone/ does not exist", JSON.stringify(p));
+      const roadmap = (row) => `# Roadmap\n\n| Intent | Risk |\n|---|---|\n${row}\n`;
+      p = fixture("road-noid", { ...base, "docs/roadmap.md": roadmap("| [a](../intent/2026-01-01-a/intent.md) | low |") });
+      add("check/m4 AC1 a roadmap row linking an id-bearing folder without the id fails with the line", "one failure",
+        p.failures.length === 1 && p.failures[0] === "docs/roadmap.md:5: the row links intent/2026-01-01-a/ without its id TST-1", JSON.stringify(p));
+      p = fixture("road-id", { ...base, "docs/roadmap.md": roadmap("| TST-1 [a](../intent/2026-01-01-a/intent.md) | low |") });
+      add("check/m4 AC1 the same row with the id passes", "0 failures", p.failures.length === 0, JSON.stringify(p));
+      p = fixture("road-cell", { ...base, "docs/roadmap.md": roadmap("| [a](../intent/2026-01-01-a/intent.md) | TST-1 |") });
+      add("check/m4 R2 the id in another cell of the row does not count", "one failure", p.failures.length === 1, JSON.stringify(p));
+      p = fixture("road-gone", { ...base, "docs/roadmap.md": roadmap("| TST-9 [gone](../intent/2026-01-09-gone/intent.md) | low |\n\nSee [old](../intent/2026-01-08-old/intent.md).") });
+      add("check/m4 N1 a roadmap link to a folder that does not exist fails, in a row or in prose", "two failures",
+        p.failures.length === 2 && p.failures[0] === "docs/roadmap.md:5: ../intent/2026-01-09-gone/intent.md does not resolve" &&
+        p.failures[1] === "docs/roadmap.md:7: ../intent/2026-01-08-old/intent.md does not resolve", JSON.stringify(p));
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

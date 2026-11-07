@@ -12,7 +12,7 @@ Repos that use pro-ai-sdlc kept decisions in chat or in a spec that nobody reads
 The loop had intent, spec and plan but no place where a lasting decision was written down with its reasons.
 A decision recorded at intent time has no options weighed yet.
 A decision recorded only after the build drifts away from the change that caused it.
-Source: intent/2026-10-27-adrs-in-the-sdlc-loop/.
+Source: PDS-8, intent/2026-10-27-adrs-in-the-sdlc-loop/.
 
 ## Decision
 

@@ -15,7 +15,7 @@ spec-kit shipped five releases in two weeks; a git tag can be moved upstream and
 The files it writes include shell scripts its skills run.
 spec-kit's own `specify integration status` trusts manifest hashes that the repo itself can rewrite.
 The maintainer is new to spec-kit and wants plain slash commands with every safety check built in.
-Source: intent/2026-10-28-pro-speckit/.
+Source: PDS-11, intent/2026-10-28-pro-speckit/.
 
 ## Decision
 

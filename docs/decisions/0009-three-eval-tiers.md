@@ -14,7 +14,7 @@ Nothing measured whether a skill changes what the agent does.
 Nothing in CI failed when a description drifted.
 [agent-skills](https://github.com/addyosmani/agent-skills) measures routing without a key, runs behavioral evals against fixtures and ships `claude plugin eval` cases.
 The repo has no API secret in GitHub Actions.
-Source: intent/2026-10-29-evals-three-tiers/.
+Source: PDS-21, intent/2026-10-29-evals-three-tiers/.
 
 ## Decision
 

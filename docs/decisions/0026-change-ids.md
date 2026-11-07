@@ -7,7 +7,7 @@ Date: 2026-11-07
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-11-07-traceable-ids/ (PDS-50 once the backfill lands; spec-m1 R1 to R20).
+Source: PDS-50, intent/2026-11-07-traceable-ids/ (spec-m1 R1 to R20).
 
 ## Context
 

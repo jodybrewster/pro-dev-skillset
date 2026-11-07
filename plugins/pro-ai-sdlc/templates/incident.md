@@ -102,7 +102,7 @@ Lifecycle:
   open       the harm is going on
   mitigated  the harm has stopped, the root cause is not fixed
   resolved   the fix is deployed, the regression test passes and the runbook is current
-Location: intent/<YYYY-MM-DD>-<slug>/incident.md, beside the intent it starts.
+Location: intent/<ID>-<slug>/incident.md when the repo has intent/project.json, else intent/<YYYY-MM-DD>-<slug>/incident.md, beside the intent it starts.
 Re-run `incident.py record <intent dir>` after the state changes.
 -->
 

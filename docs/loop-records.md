@@ -85,7 +85,7 @@ The checks follow the target's kind (`ship.py checks --target <id>`):
 
 ## The incident record
 
-The record of an incident is a tracked file, `intent/<YYYY-MM-DD>-<slug>/incident.md`, beside the new `intent.md` it starts.
+The record of an incident is a tracked file, `intent/<ID>-<slug>/incident.md` (or `intent/<YYYY-MM-DD>-<slug>/incident.md` in a repo with no `intent/project.json`), beside the new `intent.md` it starts.
 The intent's frontmatter says `source: incident <id>` and `kind: bug`.
 `incident.py record <intent dir>` reads the file's frontmatter and writes the manifest.
 

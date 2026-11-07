@@ -7,7 +7,7 @@ Date: 2026-11-07
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-11-07-reaching-done/ (spec-m1, R1 to R24).
+Source: PDS-52, intent/2026-11-07-reaching-done/ (spec-m1, R1 to R24).
 
 ## Context
 

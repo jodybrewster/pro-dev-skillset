@@ -7,7 +7,7 @@ Date: 2026-10-30
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-10-30-doubt-driven-execute/.
+Source: PDS-33, intent/2026-10-30-doubt-driven-execute/.
 
 ## Context
 

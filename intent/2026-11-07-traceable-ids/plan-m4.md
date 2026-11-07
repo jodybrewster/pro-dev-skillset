@@ -69,15 +69,27 @@ claude plugin validate . --strict          # Validation passed
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 544ce43642af.
 
-- Build commit:
+- Build commit: 544ce43642af on `PDS-50/build-m4`, based on `6d8170a`.
 - Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
-- Visual: none
-- Doubt:
-- AC1 to AC5:
-- Sign-off:
+  - `node tests/check.mjs`: `✓ 50 checks · 0 failures · 13 warnings`, `change-ids pass`.
+  - `node tests/eval.mjs --dry`: `✓ 99 cases reference real skills · 107 skills in catalog + 7 distractors` (live routing skipped, no key).
+  - `node tests/route-lexical.mjs --min-rank1 70`: `rank-1: 80/98 (81.6%)  top-k: 93/98 (94.9%)  notOneOf failures: 3`, exit 0.
+  - `node --test tests/unit/*.test.mjs`: `# pass 200`, `# fail 0`.
+  - `node tests/ids.mjs`: `36/36 ids cases passed` (nine new m4 cases).
+  - `grep "^Source: intent/" docs/decisions/*.md`: prints nothing, exit 1.
+  - `claude plugin validate . --strict` and `claude plugin validate plugins/pro-ai-sdlc --strict`: `✔ Validation passed` each.
+  - Before the change, the repo check failed with 32 lines: 20 ADR Source lines and 12 roadmap rows, each named by file and line.
+- Definition of done: tests first (the m4 fixtures failed 6 of 36 before the rule), the version bump in the same commit, no names, no em dashes; no runtime code outside the test rule.
+- Visual: none.
+- Doubt: no hard-to-undo step; every edit is a docs or prose line.
+- AC1: every table row of `docs/roadmap.md` that holds `](../intent/` names its `PDS-` id (12 rows) and `change-ids` passes.
+- AC2: `grep "^Source: intent/"` prints nothing; `grep -c "^Source: PDS-"` counts 1 in each of the 21 ADRs that had an intent Source.
+- AC3: fixtures `check/m4 AC3` in `tests/ids.mjs`: without the id it fails with `docs/decisions/0001-demo.md:9: Source names intent/2026-01-01-a/ without its id TST-1`; with the id it passes.
+- AC4: a hand run of `/pro-ai-sdlc:adr` (Sonnet, `--plugin-dir` on this branch) in a scratch repo with change `TST-1` at `intent/2026-01-02-demo/` wrote `Source: TST-1, intent/2026-01-02-demo/.` and committed `adr: 0001 cache-catalog-in-memory`.
+- AC5: `node tests/check.mjs` and `claude plugin validate . --strict` pass, above.
+- Sign-off: waiting on the maintainer.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 
@@ -86,4 +98,21 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- `tests/check.mjs` is unchanged: the rule lives in `changeIdProblems(root)` in `tests/ids.mjs`, which `checks["change-ids"]` already imports (an m1 departure), so the two new rules and their fixtures sit in one file.
+- N1 is checked for every `](../intent/...)` link on any line of `docs/roadmap.md` and `docs/decisions/*.md`, not only for table rows and Source lines; every link on main resolved before this change.
+- ADR-0026's Source line lost its parenthetical "PDS-50 once the backfill lands", which the id now leading the line makes untrue; the spec references in it are kept.
+  Every other ADR changed only by the id and a comma on its Source line: 21 files, 21 insertions and 21 deletions.
+- Concern 1: each edited ADR was grepped for a quote of chat or a dated attribution; none was found, so nothing else in an ADR changed.
+- The roadmap also names the id before the first intent link of each "Now" item in prose (R1), not only in table rows; the Spec and Plan sub-bullets of constraint-floor are left, since its Folder line carries `PDS-24`.
+  The ranked list, Detail, Dropped and Housekeeping sections are not "Now" items and keep their links as they were; the "Last updated" line is left to the builds ticking items.
+- `AGENTS.md` is a symlink to `CLAUDE.md`, so one edit covers both.
+- Beyond the file list, the docs and descriptions that named only the date form now name both: the pro-ai-sdlc description in both manifests and the marketplace entry, the `/intent` description, `plugins/pro-ai-sdlc/README.md`, `templates/incident.md`, `docs/spec-methods.md` and `docs/loop-records.md`.
+  The descriptions changed, so the keyless routing floor was re-run.
+
 ## Noticed but not touched
+
+- The eval scaffolds under `plugins/pro-ai-sdlc/evals/*/scaffold.sh` still say `intent/<date>-<slug>/`; each builds a fixture repo with no `intent/project.json`, where the date form is the true one.
+- `plugins/pro-core/commands/pro-dev.md` (lines 181 and 193) names only `intent/<date>-<slug>/`; it is pro-core content and would need a pro-core bump.
+- `demo/factory/new-demo.sh` writes a demo `intent/README.md` naming `<date>-<slug>/`; the demo repo has no shortcode.
+- There is no `templates/adr.md` or `templates/intent.md` at the repo root; the only templates are under `plugins/pro-ai-sdlc/templates/`.
+- ADR-0026's Where it is enforced still says none of it exists until the m1 to m4 builds land; its body is out of bounds for this module.

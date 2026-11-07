@@ -7,7 +7,7 @@ Date: 2026-10-29
 accepted (2026-10-30)
 
 Decided by: the maintainer.
-Source: intent/2026-10-29-constraint-floor/.
+Source: PDS-24, intent/2026-10-29-constraint-floor/.
 
 ## Context
 

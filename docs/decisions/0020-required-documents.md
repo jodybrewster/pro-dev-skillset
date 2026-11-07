@@ -7,7 +7,7 @@ Date: 2026-10-30
 proposed
 
 Decided by: the maintainer.
-Source: intent/2026-10-30-required-documents/.
+Source: PDS-32, intent/2026-10-30-required-documents/.
 
 ## Context
 

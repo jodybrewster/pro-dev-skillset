@@ -12,7 +12,7 @@ The maintainer wants to try several spec-driven methods side by side by installi
 Nothing said how they relate, so with two installed a session could start the same feature in two places.
 EGM is Google's own plugin, `egm@egm`, in its own marketplace, which a registry row from ADR-0006 could not register.
 Its `egm-review-loop` reads reviewer persona and standard files by path, so a repo can bring its own goldfish without a fork.
-Source: intent/2026-10-28-spec-methods/.
+Source: PDS-13, intent/2026-10-28-spec-methods/.
 
 ## Decision
 

@@ -8,7 +8,7 @@ Its board and chat start the plugin's commands and its autorun works accepted in
 It is a Claude Code only plugin: its commands target Claude Code and make no promise for Codex.
 
 Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this one if present, the kit installed into a repo.
-`/pro-dev install` writes toward that shape, with one departure: `intent/<date>-<slug>/{intent,spec,plan}.md` live in one folder instead of flat `specs/` and `plans/`.
+`/pro-dev install` writes toward that shape, with one departure: `intent/<id>-<slug>/{intent,spec,plan}.md` (or `intent/<date>-<slug>/` in a repo with no shortcode) live in one folder instead of flat `specs/` and `plans/`.
 
 ## The loop
 
