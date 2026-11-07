@@ -575,6 +575,8 @@ def write_record(root, folder, state, reason="", **fields):
 def merged_refusal(root, sha):
     """None when <sha> is on the default branch tip, else the reason a merged record is refused."""
     tip, branch = default_tip(root)
+    if tip == "HEAD":
+        return "factory: refusing --state merged: no remote to verify the base (no origin/HEAD, origin/main or origin/master)"
     if not sha:
         return f"factory: refusing --state merged with no --sha: a merged record names the commit on {branch}"
     tip_sha = resolve(root, tip) or tip

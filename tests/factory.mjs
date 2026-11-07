@@ -730,6 +730,10 @@ export function runFactoryCases() {
       add("m4 merged with a sha the repo does not have exits 2", "refused", r.status === 2 && record(fx) === null, brief(r));
       r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", onMain], fx.repo, stub.env);
       add("m5 merged with a sha on the default branch writes the record", "pass", r.status === 0 && record(fx)?.status === "pass" && record(fx)?.detail.merged_sha === onMain, brief(r));
+      git(fx.repo, "remote", "remove", "origin");
+      rmSync(join(fx.repo, ".pro-dev"), { recursive: true, force: true });
+      r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", onMain], fx.repo, stub.env);
+      add("m6 merged with no remote exits 2 with no remote to verify the base", "refused", r.status === 2 && record(fx) === null && /no remote to verify the base/.test(r.stderr), brief(r));
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

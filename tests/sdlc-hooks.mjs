@@ -22,9 +22,10 @@ function git(cwd, ...args) {
   return spawnSync("git", args, { cwd, encoding: "utf8", env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null" } });
 }
 
-function run(script, payload, { mode = null, env = {}, raw = null } = {}) {
+function run(script, payload, { mode = null, env = {}, raw = null, modes = {} } = {}) {
   const guardDir = mkdtempSync(join(tmpdir(), "sdlc-guard-"));
   if (mode) writeFileSync(join(guardDir, "mode"), mode + "\n");
+  for (const [name, value] of Object.entries(modes)) writeFileSync(join(guardDir, `mode.${name}`), value + "\n");
   const input = raw !== null ? raw : JSON.stringify(payload);
   const r = spawnSync("python3", [S(script)], {
     input, encoding: "utf8", timeout: 30_000,
@@ -180,9 +181,11 @@ export function runSdlcHookCases() {
     r = run("plan-sync.py", stop(stale));
     add("sd4 warn mode reports a stale Done after a later code commit and does not block", "warn", r, warned(r) && !r.json?.decision && r.json.systemMessage.includes(want));
     add("sd5 warn mode logs the stale Done to warn.log", "logged", r, r.log.includes("would-block") && r.log.includes(want));
-    r = run("plan-sync.py", stop(stale), { mode: "enforce" });
-    add("sd6 enforce mode blocks once on a stale Done", "block", r, r.json?.decision === "block" && r.json.reason.includes(want));
-    r = run("plan-sync.py", stop(stale, { stop_hook_active: true }), { mode: "enforce" });
+    r = run("plan-sync.py", stop(stale), { modes: { "stale-done": "enforce" } });
+    add("sd6 mode.stale-done enforce blocks once on a stale Done", "block", r, r.json?.decision === "block" && r.json.reason.includes(want));
+    r = run("plan-sync.py", stop(stale), { mode: "enforce", modes: { "plan-sync": "enforce" }, env: { CLAUDE_GUARD_MODE: "enforce" } });
+    add("sd10 enforce in mode, mode.plan-sync and CLAUDE_GUARD_MODE with no mode.stale-done only warns", "warn", r, warned(r) && !r.json?.decision && r.json.systemMessage.includes(want));
+    r = run("plan-sync.py", stop(stale, { stop_hook_active: true }), { modes: { "stale-done": "enforce" } });
     add("sd7 the second stop passes", "allow", r, r.status === 0 && !r.stdout);
     writeFileSync(join(stale, "intent", "2026-01-01-x", "notes.md"), "x\n");
     git(stale, "add", "-A");
@@ -190,9 +193,28 @@ export function runSdlcHookCases() {
     commit(stale, "plan: done again");
     r = run("plan-sync.py", stop(stale), { mode: "enforce" });
     add("sd8 Done rewritten at the new head clears it", "allow", r, r.status === 0 && !r.stdout);
-    writeFileSync(planPath, "# Plan\n\n## Done\n\nDone as of 0123456789ab\n");
-    commit(stale, "plan: unknown sha");
+    writeFileSync(join(stale, "app.js"), "4\n");
+    commit(stale, "another fix");
+    writeFileSync(planPath, `# Plan\n\n## Done\n\nFilled in when the build is finished, before sign-off.\n\n- Done as of \`${later.slice(0, 12)}\`\n- Build commit: x\n\n## Departures from plan\n`);
+    commit(stale, "plan: lead sentence and a bullet");
+    r = run("plan-sync.py", stop(stale), { modes: { "stale-done": "enforce" } });
+    add("sd11 a bulleted, backticked Done as of under the lead sentence is still read", "block", r, r.json?.decision === "block" && r.json.reason.includes(`written at ${later.slice(0, 12)}`));
+    const mod = join(stale, "intent", "2026-01-02-y", "plan-m1.md");
+    mkdirSync(dirname(mod), { recursive: true });
+    writeFileSync(planPath, "# Plan\n\n## Done\n\nNot yet.\n");
+    writeFileSync(mod, `# Plan m1\n\n## Done\n\nDone as of ${later.slice(0, 12)}\n`);
+    git(stale, "add", "-A");
+    commit(stale, "plan-m1: done");
+    r = run("plan-sync.py", stop(stale), { modes: { "stale-done": "enforce" } });
+    add("sd12 a plan-m1.md beside plan.md is read for a stale Done", "block", r, r.json?.decision === "block" && r.json.reason.includes("plan-m1.md"));
+    writeFileSync(join(stale, "app.js"), "5\n");
+    writeFileSync(mod, `# Plan m1\n\n## Done\n\nDone as of ${head(stale).slice(0, 12)}\n\nDeparture noted.\n`);
     r = run("plan-sync.py", stop(stale), { mode: "enforce" });
+    add("sd13 a changed plan-m1.md counts as the plan touched", "allow", r, r.status === 0 && !r.stdout);
+    writeFileSync(planPath, "# Plan\n\n## Done\n\nDone as of 0123456789ab\n");
+    writeFileSync(mod, "# Plan m1\n");
+    commit(stale, "plan: unknown sha");
+    r = run("plan-sync.py", stop(stale), { mode: "enforce", modes: { "stale-done": "enforce" } });
     add("sd9 a Done sha the repo does not have passes", "allow", r, r.status === 0 && !r.stdout);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

@@ -171,6 +171,7 @@ Validate: accept a second small intent and watch the loop pick it up within five
 A stop is the factory working.
 `factory.py record --state merged --sha <sha>` writes a merged record only when the sha is on the default branch tip (`git merge-base --is-ancestor`).
 Any other sha, or no sha, exits 2 with no record, naming the sha, the tip and the branch; run `git fetch` first when the merge is newer than the last fetch.
+With no remote there is no base to check against, so it refuses the same way.
 
 The record's `reason` names the rule, for example:
 
