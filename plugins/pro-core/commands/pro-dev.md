@@ -52,6 +52,7 @@ The status JSON lists:
 - `aiSdlcInstallPath`: where pro-ai-sdlc is installed, or null.
 - `starterShim`: installs of the old `pro-starter` that cover this repo.
 - `staleCount`: installs whose project folder no longer exists.
+- `shortcode`: `projectFile` (true when `intent/project.json` exists) and `default` (the shortcode to propose for this repo, or null).
 - `tools`: whether `claude`, `npx` and `uv` are on PATH.
 
 If the status block above is empty or is an error, say so and run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status` yourself to show the message.
@@ -202,6 +203,12 @@ The "How work flows here" section says, in short sentences, one per line:
 ### Create the folders and the review policy
 
 - Create `intent/` with a short `README.md` that says what an intent folder holds (intent.md, spec.md, plan.md), unless `intent/` exists.
+- When `shortcode.projectFile` is false, ask once for the repo's shortcode: two to six capital letters that start every change id, as in `PDS-51` (ADR-0026 in pro-dev-skillset).
+  Offer `shortcode.default` as the default when it is not null; when it is null, ask with no default.
+  Accept only an answer matching `^[A-Z]{2,6}$` and ask again on anything else.
+  On an answer write `intent/project.json` holding `{"shortcode": "<answer>"}` and a newline.
+  On a skip write nothing and say that `/intent` keeps date folders until a shortcode is set.
+  Never overwrite an existing `intent/project.json`: the shortcode never changes in place.
 - If the repo has no `REVIEW.md`, write one from the template at `<aiSdlcInstallPath>/templates/REVIEW.md`, replacing the generated-files placeholder with the paths found in the inspection.
   If it has one, leave it alone.
 - Make sure `REVIEW.md` has a `## Roles` section.
