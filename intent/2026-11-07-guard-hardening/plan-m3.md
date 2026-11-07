@@ -103,4 +103,8 @@ Filled in when the build is finished, before sign-off.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 2: R3 strips every markup tag from the key's word before it looks for `<`, but `<x>` and `<your-key>` match the same tag pattern, so the literal rule would strip the stand-in it is meant to catch. The guard treats a tag glued between two key characters (`KEY<x>KEY`) as a stand-in and strips only the tags around the key (`<code>KEY</code>`), then reads a `<` or `...` still in the word as a stand-in. The AC2a cases pin both directions.
+- Step 2: an Edit's line numbers count within `new_string`, so its message reads `line 2 of the edit to config.ts`; a MultiEdit's reads `edit 2 line 1 of config.ts`.
+- Steps 3 and 6: each plugin's version bump lands in the commit that first changes its content, as the version-bump law asks, not in step 7.
+
 ## Noticed but not touched
