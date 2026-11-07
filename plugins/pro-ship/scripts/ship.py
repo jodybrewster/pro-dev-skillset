@@ -77,6 +77,7 @@ repo that holds the current directory):
            [--outcome succeeded|failed|rolled-back] [--checks FILE]
   deployed --from-tag TAG --target ID [--env ENV] [--checks FILE]
   deployed --from-github --target ID [--env production]
+           [--confirm-pr N | --confirm-commit SHA]
                                    write the deploy record of docs/loop-records.md to
                                    .pro-dev/ship/deploys/<evidence_key>.json (plus the ignored
                                    mieruka copy) and print {path, mieruka, why, status,
@@ -88,10 +89,28 @@ repo that holds the current directory):
                                    run, the tagger date and the commit date that answers. The time
                                    the record is written is never the deploy time. Only http and
                                    https URLs are kept; ENV is a-z, 0-9 and - and URL-encoded in
-                                   the query.
+                                   the query. A check given as confirm becomes pass when a
+                                   confirmation that binds the deployed commit lists it: on that
+                                   PR (its head or its merge commit is the deployed commit) with
+                                   --confirm-pr, on the commit with --confirm-commit, else on the
+                                   merged PR gh finds for the commit or the commit itself.
+  confirm request --head SHA --items JSON [--pr N]
+                                   post one request, bound to repo, head and scope, for a person
+                                   with write access to reply confirmed: a PR comment when a PR
+                                   has that head, else a commit comment. Only after the person's
+                                   yes; refuses a factory session and any item that is neither a
+                                   confirm check of the preflight record for SHA nor a deploy
+                                   check. Prints {posted, scope, pr, head, items, url}.
+  confirm read --head SHA [--pr N] read the reply: the earliest unedited confirmed after the
+                                   newest request, both from logins with write access. When it
+                                   counts it moves the listed confirm checks of the preflight
+                                   record for SHA to pass and adds confirmation to detail_json;
+                                   otherwise it prints {confirmed: false, why} and writes nothing.
 
 Python 3 standard library only. The only network calls are the gh calls in scope,
-coverage, protection and deployed --from-github or --from-tag and git ls-remote in version, each with a timeout. Nothing here deploys, tags, publishes or pushes.
+coverage, protection, confirm and deployed and git ls-remote in version, each with a timeout.
+The one GitHub write is the comment confirm request posts. Nothing here deploys, tags,
+publishes or pushes.
 """
 from __future__ import annotations
 
@@ -1596,7 +1615,8 @@ OUTCOMES = ("succeeded", "failed", "rolled-back")
 CHANGE_ID_SUBJECT = re.compile(r"^(([A-Z]{2,6})-[1-9][0-9]*)(:? )")
 SHORTCODE = re.compile(r"[A-Z]{2,6}")
 CHECK_STATUSES = ("pass", "finding", "confirm")
-DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks", "--from-tag")
+DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks", "--from-tag",
+                "--confirm-pr", "--confirm-commit")
 LIBRARY_KINDS = ("tag-release", "publish", "desktop")
 LIBRARY_CHECKS = ["tests on a clean checkout of the tag", "documented use runs", "rollback dry run"]
 SERVICE_CHECKS = ["health endpoint", "error rate", "latency", "critical user flow", "logs", "rollback mechanism"]
@@ -1753,6 +1773,25 @@ def shortcode_at(root: str, commit: str) -> str | None:
     return code if isinstance(code, str) and SHORTCODE.fullmatch(code) else None
 
 
+def deploy_confirmation(root: str, commit: str, cpr: int | None, ccommit: str | None) -> dict:
+    """A confirmation that binds the deployed commit, read with the reply rule (R5, R10)."""
+    repo = repo_name(root)
+    if ccommit:
+        scope, pr = "tag", None
+    else:
+        scope, pr = pick_scope(root, commit, cpr, merged=True)
+    if scope == "pr":
+        view = pr_view(root, pr, merge=True)
+        head = view["head"]
+        if not isinstance(head, str) or not SHA.match(head) or commit not in (head, view["merge"]):
+            return {"confirmed": False, "why": f"PR {pr} neither has the deployed commit {commit[:8]} as its head nor merged as it"}
+        return read_reply(root, scope, pr, head, repo, view["comments"])
+    head = ccommit or commit
+    if head != commit:
+        return {"confirmed": False, "why": f"the confirmed commit {head[:8]} is not the deployed commit {commit[:8]}"}
+    return read_reply(root, scope, None, head, repo, commit_comments(root, head))
+
+
 def cmd_deployed(root: str, args: list[str]) -> dict:
     refuse_headless("deployed")
     rest = [a for a in args if a != "--from-github"]
@@ -1772,6 +1811,10 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
         listed = ", ".join(sorted(known)) or "none found"
         raise Refuse(f"ship: --target {tid!r} is not a target of this repo. Targets: {listed}")
     from_tag = opt["from_tag"]
+    if opt["confirm_pr"] and opt["confirm_commit"]:
+        raise Refuse("ship: --confirm-pr and --confirm-commit are separate scopes; give one")
+    confirm_pr = pr_number(opt["confirm_pr"])
+    confirm_commit = commit_sha(root, opt["confirm_commit"], "--confirm-commit") if opt["confirm_commit"] else None
     if from_github and from_tag:
         raise Refuse("ship: --from-github and --from-tag are separate sources")
     if from_tag and not tag_parts(from_tag):
@@ -1822,6 +1865,17 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
             raise Refuse(f"ship: a {known[tid]['kind']} target has no server to check, so {clean(wrong[0], 80)!r} does not apply. "
                          f"It takes: {', '.join(LIBRARY_CHECKS)}.")
     commit, outcome, when = facts["commit"], facts["outcome"], facts["deployed_at"]
+    confirmation = None
+    if confirm_pr or confirm_commit or any(c["status"] == "confirm" for c in checks):
+        try:
+            confirmation = deploy_confirmation(root, commit, confirm_pr, confirm_commit)
+        except Refuse as e:
+            confirmation = {"confirmed": False, "why": str(e)}
+        if confirmation.get("confirmed"):
+            for c in checks:
+                if c["status"] == "confirm" and c["item"] in confirmation["items"]:
+                    c["status"] = "pass"
+                    c["evidence"] = f"confirmed by {confirmation['by']} in {confirmation['reply_url']}"
     pre = check(root, commit)
     pre_rec = read_json(os.path.join(root, ".pro-dev", "ship", "preflight.json")) if pre["cause"] != "missing" else None
     pre_key = pre_rec.get("evidence_key") if isinstance(pre_rec, dict) and isinstance(pre_rec.get("evidence_key"), str) else None
@@ -1847,6 +1901,8 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
         "preflight": {"state": "fresh" if pre["cause"] is None else pre["cause"], "evidence_key": pre_key},
         "checks": checks, "rollback": known[tid].get("rollback") or None,
     }
+    if confirmation and confirmation.get("confirmed"):
+        detail["confirmation"] = {k: v for k, v in confirmation.items() if k != "confirmed"}
     record = {
         "schema": 1, "head": commit, "evidence_key": key, "kind": "deploy", "artifact_kind": "deploy",
         "artifact_key": tid, "status": status, "summary": summary, "detail_json": json.dumps(detail),
@@ -1860,7 +1916,11 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
     local = os.path.join(root, ".pro-dev", "ship", "deploys", key + ".json")
     write_atomic(local, text)
     copy, why = mieruka_copy(root, key, text)
-    return {"path": os.path.relpath(local, root), "mieruka": copy, "why": why, "status": status, "evidence_key": key}
+    out = {"path": os.path.relpath(local, root), "mieruka": copy, "why": why, "status": status, "evidence_key": key}
+    if confirmation is not None:
+        out["confirmation"] = ({"confirmed": True, "by": confirmation["by"], "items": confirmation["items"],
+                                "reply_url": confirmation["reply_url"]} if confirmation.get("confirmed") else confirmation)
+    return out
 
 
 # ---------------------------------------------------------------------------
