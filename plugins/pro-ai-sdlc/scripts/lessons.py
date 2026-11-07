@@ -168,6 +168,12 @@ def fid_num(fid: str) -> int:
     return int(m.group(1)) if m else 0
 
 
+def row_ok(key, row) -> bool:
+    """A row that raise and grade can trust: its id is its key and it names a file, a class, a severity and a status."""
+    return (bool(FID.match(key)) and isinstance(row, dict) and row.get("id") == key and row.get("status") in STATUSES
+            and row.get("severity") in SEVERITIES and isinstance(row.get("file"), str) and isinstance(row.get("class"), str))
+
+
 def read_table(root: str, ref: str) -> dict:
     """The table for a ref, or an empty one. A table that cannot be parsed is set aside as .bad."""
     path = table_path(root, ref)
@@ -176,10 +182,12 @@ def read_table(root: str, ref: str) -> dict:
         text = open(path, encoding="utf-8").read()
     except FileNotFoundError:
         return empty
+    except ValueError:  # UnicodeDecodeError: bytes that are not UTF-8 are a damaged table too
+        text = None
     try:
-        data = json.loads(text)
+        data = json.loads(text) if text is not None else None
         ok = (isinstance(data, dict) and isinstance(data.get("findings"), dict)
-              and all(FID.match(k) and isinstance(v, dict) and v.get("status") in STATUSES for k, v in data["findings"].items()))
+              and all(row_ok(k, v) for k, v in data["findings"].items()))
     except ValueError:
         ok = False
     if not ok:
@@ -204,7 +212,8 @@ def write_table(root: str, table: dict) -> str:
 
 
 def cmd_raise(a) -> dict:
-    """Add a finding with the next free id, unless an open or not fixed row has the same file and class."""
+    """Add a finding with the next free id, unless an open or not fixed row has the same file and class.
+    The match is always against the live table, after this round's grades, never a caller's earlier copy."""
     root = need_root()
     ref = check_ref(a.ref)
     check_sha(a.base, "--base")
@@ -224,8 +233,14 @@ def cmd_raise(a) -> dict:
     live = [r for r in same if r.get("status") in LIVE]
     table["base"], table["head"] = a.base, a.head
     if live:
+        # A fresh Important finding on a live nit row raises that row to Important; a nit never lowers a row.
+        row = live[0]
+        raised = a.severity == "important" and row.get("severity") == "nit"
+        if raised:
+            row["severity"] = "important"
         path = write_table(root, table)
-        return {"id": live[0]["id"], "stored": False, "reopened_from": None, "table": path}
+        return {"id": row["id"], "stored": False, "reopened_from": None, "severity_raised": raised,
+                "severity": row["severity"], "table": path}
     graded = [r for r in same if r.get("status") in ("fixed", "no longer applies")]
     reopened = graded[-1]["id"] if graded else None
     fid = f"F{max([fid_num(k) for k in rows] + [0]) + 1}"
@@ -261,12 +276,13 @@ def cmd_grade(a) -> dict:
 
 
 def tally(rows: dict) -> list[str]:
-    """The summary line and the grade line of a graded table: each count is the rows still not fixed."""
-    nf = [r for r in rows.values() if r.get("status") == "not fixed"]
-    n = {s: sum(1 for r in nf if r.get("severity") == s) for s in SEVERITIES}
+    """The summary line and the grade line. The summary counts the live rows (open or not fixed) by
+    severity, so after grading and the fresh pass's raises it is the round's total."""
+    live = [r for r in rows.values() if r.get("status") in LIVE]
+    n = {s: sum(1 for r in live if r.get("severity") == s) for s in SEVERITIES}
     by = {s: sum(1 for r in rows.values() if r.get("status") == s) for s in STATUSES}
     return [f"important: {n['important']}  nits: {n['nit']}  pre-existing: {n['pre-existing']}  skipped: 0",
-            f"fixed: {by['fixed']}  not fixed: {by['not fixed']}  no longer applies: {by['no longer applies']}"]
+            f"graded: fixed {by['fixed']} not fixed {by['not fixed']} no longer applies {by['no longer applies']}"]
 
 
 def cmd_table(a):

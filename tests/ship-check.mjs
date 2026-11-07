@@ -466,6 +466,25 @@ export function runShipCheckCases() {
     const unlisted = mkrepo({ ".claude-plugin/marketplace.json": JSON.stringify({ name: "m", plugins: [] }), "plugins/pro-quality/scripts/floor-guard.py": FAKE });
     add("f5b a plugins/ copy the marketplace does not list is not used", "not-installed", find(unlisted, lay) === "not-installed", find(unlisted, lay));
 
+    // find --enabled (reaching-done m1): /ship grades only when pro-ai-sdlc is installed and enabled.
+    {
+      const sdlc = (n) => { const d = join(sandbox, "inst", `sdlc${n}`); mkdirSync(join(d, "scripts"), { recursive: true }); writeFileSync(join(d, "scripts", "lessons.py"), "# lessons\n"); return d; };
+      const findE = (r, l) => pc(r, ["find", "--enabled", "pro-ai-sdlc", "lessons.py"], { script: l.script }).stdout.trim();
+      const cacheLay = layout("cache");
+      const er = mkrepo({});
+      const d1 = sdlc(1);
+      records({ "pro-ai-sdlc@mkt": [{ scope: "user", installPath: d1, version: "1" }] });
+      add("f6 find --enabled resolves an enabled user install", "the install path", findE(er, cacheLay) === join(d1, "scripts", "lessons.py"), findE(er, cacheLay));
+      mkdirSync(join(env.HOME, ".claude"), { recursive: true });
+      writeFileSync(join(env.HOME, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "pro-ai-sdlc@mkt": false } }));
+      add("f6b find --enabled treats an install disabled in settings as missing", "not-installed", findE(er, cacheLay) === "not-installed", findE(er, cacheLay));
+      add("f6c plain find still resolves the disabled install", "the install path", pc(er, ["find", "pro-ai-sdlc", "lessons.py"], { script: cacheLay.script }).stdout.trim() === join(d1, "scripts", "lessons.py"), "");
+      rmSync(join(env.HOME, ".claude"), { recursive: true, force: true });
+      none();
+      const own = mkrepo({ ".claude-plugin/marketplace.json": JSON.stringify({ name: "m", plugins: [{ name: "pro-ai-sdlc", source: "./plugins/pro-ai-sdlc" }] }), "plugins/pro-ai-sdlc/scripts/lessons.py": "# lessons\n" });
+      add("f6d find --enabled never counts the repo's own plugins/ folder", "not-installed", findE(own, cacheLay) === "not-installed", findE(own, cacheLay));
+    }
+
     // run --step floor maps exit 0, 1 and 2 (R5).
     lay = layout("place", { sibling: true });
     const floorRepo = mkrepo({});

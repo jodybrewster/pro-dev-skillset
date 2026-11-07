@@ -210,7 +210,12 @@ export function runLessonsCases() {
     grade(ref2, "F2", "fixed", "src/b.py:9");
     const tally = run(repo, ["table", "--ref", ref2, "--tally"]);
     const lines = tally.stdout.split("\n");
-    add("table --tally/an unfixed Important row opens with important: 1", "important: 1  nits: 0  pre-existing: 0  skipped: 0", tally.status === 0 && lines[0] === "important: 1  nits: 0  pre-existing: 0  skipped: 0" && lines[1] === "fixed: 1  not fixed: 1  no longer applies: 0", tally.stdout + tally.stderr);
+    add("table --tally/an unfixed Important row opens with important: 1", "important: 1  nits: 0  pre-existing: 0  skipped: 0", tally.status === 0 && lines[0] === "important: 1  nits: 0  pre-existing: 0  skipped: 0" && lines[1] === "graded: fixed 1 not fixed 1 no longer applies 0", tally.stdout + tally.stderr);
+    // After the fresh pass's raises the first line is the round's total: unfixed graded rows plus new rows.
+    raise(ref2, "new-thing", "src/c.py", "a new important finding");
+    raise(ref2, "new-nit", "src/d.py", "a new nit", { severity: "nit" });
+    const total = run(repo, ["table", "--ref", ref2, "--tally"]).stdout.split("\n");
+    add("table --tally/after raises the first line is the round total", "important: 2  nits: 1", total[0] === "important: 2  nits: 1  pre-existing: 0  skipped: 0" && total[1] === "graded: fixed 1 not fixed 1 no longer applies 0", total.join(" | "));
 
     for (const [id, args] of [
       ["a bad severity", ["--severity", "critical"]], ["line 0", ["--line", "0"]], ["a word for a line", ["--line", "ten"]],
@@ -233,6 +238,29 @@ export function runLessonsCases() {
     writeFileSync(tablePath("pr-56"), "[1, 2]");
     const fresh = raise("pr-56", "ok-class", "src/x.py", "first claim");
     add("raise/on a damaged table starts fresh at F1", "F1", fresh.status === 0 && fresh.json?.id === "F1" && existsSync(tablePath("pr-56") + ".bad"), fresh.stdout + fresh.stderr);
+    writeFileSync(tablePath("pr-57"), Buffer.from([0x7b, 0xff, 0xfe, 0x7d]));
+    const undecodable = run(repo, ["table", "--ref", "pr-57"]);
+    add("table/an undecodable file is renamed to .bad", ".bad exists, empty table", undecodable.status === 0 && JSON.stringify(undecodable.json) === '{"findings":{}}' && existsSync(tablePath("pr-57") + ".bad"), undecodable.stdout + undecodable.stderr);
+    writeFileSync(tablePath("pr-58"), JSON.stringify({ schema: 1, ref: "pr-58", base: SHA1, head: SHA2, round: 1, findings: { F1: { file: "src/x.py", class: "ok-class", status: "open", severity: "nit" } } }));
+    const noId = run(repo, ["table", "--ref", "pr-58"]);
+    add("table/a live row without an id is treated as damaged", ".bad exists, empty table", noId.status === 0 && JSON.stringify(noId.json) === '{"findings":{}}' && existsSync(tablePath("pr-58") + ".bad"), noId.stdout + noId.stderr);
+
+    // Dedupe is always against the live table (R6): F1 open, graded fixed, the same file and class again is a new row.
+    const ref3 = "pr-60";
+    const a1 = raise(ref3, "missing-guard", "src/r.py", "no guard");
+    grade(ref3, "F1", "fixed", "src/r.py:4");
+    const a2 = raise(ref3, "missing-guard", "src/r.py", "no guard again");
+    add("raise/after F1 is graded fixed the same file and class gives a new row with reopened_from", "F2 reopened_from F1", a1.json?.id === "F1" && a2.status === 0 && a2.json?.id === "F2" && a2.json?.stored === true && a2.json?.reopened_from === "F1", a2.stdout + a2.stderr);
+
+    // A fresh Important finding that matches a live nit row raises that row to Important.
+    const ref4 = "pr-61";
+    raise(ref4, "loose-check", "src/s.py", "check is loose", { severity: "nit" });
+    grade(ref4, "F1", "not-fixed", "src/s.py:2");
+    const up = raise(ref4, "loose-check", "src/s.py", "the loose check now breaks payment", { severity: "important" });
+    const upRow = readTable(ref4)?.findings?.F1 ?? {};
+    add("raise/an Important match on a live nit row raises its severity", "F1 important, reported", up.status === 0 && up.json?.id === "F1" && up.json?.stored === false && up.json?.severity_raised === true && upRow.severity === "important" && Object.keys(readTable(ref4)?.findings ?? {}).length === 1, up.stdout + up.stderr + JSON.stringify(upRow));
+    const same = raise(ref4, "loose-check", "src/s.py", "still loose", { severity: "nit" });
+    add("raise/a nit match never lowers an Important row", "still important", same.json?.id === "F1" && same.json?.severity_raised === false && readTable(ref4)?.findings?.F1?.severity === "important", same.stdout + same.stderr);
   }
 
   {

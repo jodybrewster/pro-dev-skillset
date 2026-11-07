@@ -558,22 +558,22 @@ def enabled_plugins(root: str) -> dict:
     return merged
 
 
-def verifier_state(root: str) -> tuple[bool, str | None]:
-    """(available, disabled_by): whether pro-ai-sdlc's verifier can be dispatched, and which settings
-    source disabled an install that would otherwise have counted (None when none did).
-    Available means the in-place sibling or an install record (project or local scope covering root,
-    then user scope) whose plugin settings do not disable.
+def plugin_state(root: str, plugin: str, rel: str) -> tuple[str | None, str | None]:
+    """(path, disabled_by): the path of <plugin>/<rel> from an install that is not disabled; disabled_by
+    names the settings source that disabled an install that would otherwise have counted (None when none did).
+    Counted are the in-place sibling and an install record (project or local scope covering root, then
+    user scope) whose plugin settings do not disable it.
     The repo's own plugins/ folder never counts, it proves a file and not an install."""
-    rel = os.path.join("agents", "verifier.md")
-    if os.path.isfile(os.path.join(os.path.dirname(OWN_ROOT), "pro-ai-sdlc", rel)):
-        return True, None
+    inplace = os.path.join(os.path.dirname(OWN_ROOT), plugin, rel)
+    if os.path.isfile(inplace):
+        return inplace, None
     installed = read_installed()
     mkt = own_marketplace(installed)
     enabled = enabled_plugins(root)
     disabled_by = None
     for key, recs in installed.items():
         name, _, m = key.partition("@")
-        if name != "pro-ai-sdlc" or (mkt and m != mkt) or not isinstance(recs, list):
+        if name != plugin or (mkt and m != mkt) or not isinstance(recs, list):
             continue
         off = enabled.get(key, (None, None))
         for r in recs:
@@ -585,8 +585,14 @@ def verifier_state(root: str) -> tuple[bool, str | None]:
             if off[0] is False:
                 disabled_by = off[1]
                 continue
-            return True, None
-    return False, disabled_by
+            return os.path.join(str(r["installPath"]), rel), None
+    return None, disabled_by
+
+
+def verifier_state(root: str) -> tuple[bool, str | None]:
+    """(available, disabled_by): whether pro-ai-sdlc's verifier can be dispatched (plugin_state)."""
+    path, disabled_by = plugin_state(root, "pro-ai-sdlc", os.path.join("agents", "verifier.md"))
+    return path is not None, disabled_by
 
 
 def verifier_available(root: str) -> bool:
@@ -1243,9 +1249,20 @@ def main(argv: list[str]) -> int:
             print(cmd_marker(repo_root()))
             return 0
         if cmd == "find":
+            # --enabled: only an install that is not disabled counts, never the repo's own plugins/ folder.
+            enabled_only = rest[:1] == ["--enabled"]
+            rest = rest[1:] if enabled_only else rest
             if len(rest) != 2:
-                raise Refuse("pr-check: usage: find <plugin> <file>")
-            print(find_sibling(repo_root(), rest[0], rest[1]))
+                raise Refuse("pr-check: usage: find [--enabled] <plugin> <file>")
+            if not enabled_only:
+                print(find_sibling(repo_root(), rest[0], rest[1]))
+                return 0
+            parts = rest[1].replace("\\", "/").split("/")
+            if rest[1].startswith("/") or ".." in parts or "\\" in rest[1] or not re.fullmatch(r"[A-Za-z0-9_.-]+", rest[0]):
+                print("not-installed")
+                return 0
+            rel = rest[1] if "/" in rest[1] else os.path.join("scripts", rest[1])
+            print(plugin_state(repo_root(), rest[0], rel)[0] or "not-installed")
             return 0
         if cmd == "codex-trigger":
             emit(cmd_codex_trigger(repo_root(), rest))
