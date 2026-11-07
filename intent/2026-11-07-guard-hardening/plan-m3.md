@@ -80,22 +80,24 @@ claude plugin validate plugins/pro-core --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 6c258a4e5e73.
 
-- Build commit:
-- Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+- Build commit: 6c258a4e5e73 on `build/guard-hardening-m3`, [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194)
+- Checks run: `node tests/guards.mjs` 118 cases, 0 failures; `node tests/git-safe.mjs` 148 cases, 0 failures; `node tests/security-hooks.mjs` 50 cases, 0 failures; `node tests/check.mjs` 49 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 198, fail 0; `claude plugin validate . --strict` and for `plugins/pro-core` and `plugins/pro-security` all passed; `/usr/bin/python3 -m py_compile` (3.9.6) clean on both scripts.
+- Mutations: dropping `ASIA` fails the two `aws-asia` cases; removing the `cd` tracking fails `cd-then-rm` (warn and enforce), `cd-absolute` and `pushd`. Both restored.
+- Definition of done: met. A pr-check stamp was not run; the pr-gate warned and allowed the PR.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
+- Doubt: none. A fresh-context security-architect review of the diff found 0 blocking and 2 should-fix items, both folded in (see Departures).
+- AC1: all 14 kinds warn with the kind and line 3 and deny under `mode.key-literal` enforce.
+- AC2: the env read, `AKIA` plus `EXAMPLE...` and the `example` line pass; `.env.example` is a finding; `.env.local` passes.
+- AC2a: `.env.local`, `.env.development.local` and `.dev.vars` pass before and after the write; the `<x>`, `<your-key>` and `...` stand-ins pass; `<code>`, JSX and ellipsis-elsewhere lines are findings; `.dev.vars.example` is a finding.
+- AC3: `post/line-7` names line 7 in both modes and never denies.
+- AC4: `no-leak/full-length-key` passes and every key-literal case asserts the key is in no output or `warn.log` line.
+- AC5: the six commands warn and deny under `mode.delete-outside` enforce, naming the resolved path and the root.
+- AC6: the six allows pass with no line; `rm -rf /tmp` and the guard-folder mode file are findings.
+- AC7: the global `mode` file leaves both guards in warn.
+- AC8: malformed payloads exit 0 with no output for both scripts.
+- AC9: the checks above pass.
 - Sign-off:
 
 ## Departures from plan
