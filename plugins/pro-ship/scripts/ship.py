@@ -1177,7 +1177,7 @@ def deployed_change_id(root: str, commit: str) -> str | None:
     """The change id the deployed commit's subject starts with, or None (a release commit names none)."""
     try:
         r = sh(["git", "log", "-1", "--format=%s", commit], root)
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):  # a subject git cannot decode names no change
         return None
     m = CHANGE_ID_SUBJECT.match(r.stdout) if r.returncode == 0 else None
     if not m:

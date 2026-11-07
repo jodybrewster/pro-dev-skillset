@@ -781,6 +781,9 @@ export function runShipCheckCases() {
         ["c5 a branch prefix that fails the pattern is not an id", "tst-2/build", { "a.txt": "2\n" }, null],
         ["c6 an intent id: that fails the pattern is left out", "feature/x", { "intent/TST-3-demo/intent.md": idIntent("TST-3; rm") }, null],
         ["c7 two intent folders in the diff give no id", "feature/x", { "intent/TST-3-demo/intent.md": idIntent("TST-3"), "intent/TST-4-demo/intent.md": idIntent("TST-4") }, null],
+        ["c8 two id: lines: the last one wins, as ids.frontmatter reads it", "feature/x", { "intent/TST-3-demo/intent.md": "---\nid: TST-3\nid: TST-4\n---\n\n# Intent\n" }, "TST-4"],
+        ["c9 an unclosed frontmatter gives no id", "feature/x", { "intent/TST-3-demo/intent.md": "---\nid: TST-3\n\n# Intent\n" }, null],
+        ["c10 an intent.md holding byte 0xff still writes the stamp, with no id", "feature/x", { "intent/TST-3-demo/intent.md": Buffer.concat([Buffer.from("---\nid: TST-3\ntitle: "), Buffer.from([0xff]), Buffer.from("\n---\n")]) }, null],
       ]) {
         const o = prepB(branch, files);
         add(`stamp/${id}`, want ?? "absent", o.x.status === 0 && o.st && (want === null ? !("change_id" in o.st) : o.st.change_id === want), o.x.stdout + o.x.stderr + JSON.stringify(o.st?.change_id));

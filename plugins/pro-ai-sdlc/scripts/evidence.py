@@ -76,7 +76,7 @@ def default_tip(root: str) -> str:
     try:
         r = sh(["git", "symbolic-ref", "-q", "refs/remotes/origin/HEAD"], root)
         ref = r.stdout.strip()[len("refs/remotes/"):] if r.returncode == 0 and r.stdout.strip().startswith("refs/remotes/") else ""
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):
         ref = ""
     for cand in ([ref] if ref else []) + ["origin/main", "origin/master"]:
         if rev(root, cand):
@@ -103,7 +103,7 @@ def change_id_of(root: str, intent_dir: str) -> str | None:
             try:
                 r = sh(["git", "show", f"{default_tip(root)}:{rel}/intent.md"], root)
                 text = r.stdout if r.returncode == 0 else None
-            except (OSError, subprocess.SubprocessError):
+            except (OSError, subprocess.SubprocessError, ValueError):  # undecodable bytes name no change
                 text = None
     return valid_change_id(id_of(text)) if text else None
 

@@ -130,7 +130,7 @@ export function runShipDeployCases() {
   // at the deployed commit, so UTF-8, SHA-256 or ISO-8601 at the start of a subject is never read as an id.
   function changeIdCases() {
     const PDS = { "intent/project.json": '{"shortcode": "PDS"}\n' };
-    for (const [label, subject, want, extra] of [
+    for (const [label, subject, want, extra, latin1] of [
       ["TST-1: feat: x gives TST-1", "TST-1: feat: x", "TST-1", {}],
       ["a squash merge titled PDS-50 title (#12) with shortcode PDS gives PDS-50", "PDS-50 title (#12)", "PDS-50", PDS],
       ["ABC-1 title with shortcode PDS leaves it out", "ABC-1 title", null, PDS],
@@ -140,11 +140,15 @@ export function runShipDeployCases() {
       ["release v1.2.0 leaves it out", "release v1.2.0", null, {}],
       ["an id that fails the pattern leaves it out", "tst-1: feat: x", null, {}],
       ["an id glued to more text leaves it out", "TST-1x: feat", null, {}],
+      // git re-encodes a subject that is not UTF-8 unless the log output encoding says otherwise; latin-1 output hands ship.py byte 0xff.
+      ["a subject git prints with byte 0xff still writes the record, with no id", Buffer.concat([Buffer.from("TST-1: caf"), Buffer.from([0xff])]), null, {}, true],
     ]) {
       const repo = mkrepo();
+      if (latin1) git(repo, "config", "i18n.logOutputEncoding", "ISO-8859-1");
       for (const [f, c] of Object.entries(extra)) { mkdirSync(dirname(join(repo, f)), { recursive: true }); writeFileSync(join(repo, f), c); }
       writeFileSync(join(repo, "b.txt"), "b\n");
-      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", subject);
+      writeFileSync(join(repo, "..", `msg${n}.txt`), subject);
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-F", join(repo, "..", `msg${n}.txt`));
       const h = head(repo);
       const r = ship(repo, ["deployed", "--target", "web", "--env", "production", "--deployed-at", "2026-11-02T10:15:30+00:00"]);
       const rc = r.status === 0 && r.json ? rec(repo, r) : null;

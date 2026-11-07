@@ -952,34 +952,39 @@ def intent_only(root: str, base: str | None, head: str) -> bool:
 
 
 def intent_id(text: str) -> str | None:
-    """The id: value in an intent.md's frontmatter, or None."""
+    """The id: value in an intent.md's frontmatter, or None. The rule of pro-ai-sdlc's ids.frontmatter,
+    copied because plugins cannot import each other (ADR-0003): the last id: line wins and an
+    unclosed frontmatter has none."""
     lines = (text or "").replace("\r\n", "\n").split("\n")
     if not lines or lines[0].strip() != "---":
         return None
-    for ln in lines[1:]:
-        if ln.strip() == "---":
-            return None
-        m = re.match(r"^id:\s*(.*?)\s*$", ln)
-        if m:
-            v = re.sub(r"\s+#.*$", "", m.group(1))
-            return v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'" else v
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            found = None
+            for ln in lines[1:i]:
+                m = re.match(r"^id:\s*(.*?)\s*$", ln)
+                if m:
+                    v = re.sub(r"\s+#.*$", "", m.group(1))
+                    found = v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'" else v
+            return found or None
     return None
 
 
 def change_id(root: str, base: str, head: str) -> str | None:
     """The branch prefix before the first / when it is a whole id, else the id: of the only intent
     folder base..head touches. Both are text a diff or a branch name can shape, so only a full
-    match of ID_RE is returned."""
+    match of ID_RE is returned. Output git cannot decode (a ValueError, UnicodeError among them)
+    leaves the field out and never stops the stamp."""
     try:
         branch = sh(["git", "branch", "--show-current"], root).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):
         branch = ""
     first, sep, _ = branch.partition("/")
     if sep and ID_RE.fullmatch(first):
         return first
     try:
         r = sh(["git", "diff", "--name-only", "--no-renames", "-z", base, head], root)
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):
         return None
     if r.returncode != 0:
         return None
@@ -988,7 +993,7 @@ def change_id(root: str, base: str, head: str) -> str | None:
         return None
     try:
         shown = sh(["git", "show", f"{head}:intent/{folders.pop()}/intent.md"], root)
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError, ValueError):
         return None
     cid = intent_id(shown.stdout) if shown.returncode == 0 else None
     return cid if cid and ID_RE.fullmatch(cid) else None

@@ -86,6 +86,17 @@ export function runVisualCases() {
       add(`record/change_id with ${label}`, want ?? "absent",
         r.status === 0 && rec?.evidence_key === KEY && (want === null ? !("change_id" in rec) : rec.change_id === want), r.stderr + JSON.stringify(rec));
     }
+    // An intent.md holding byte 0xff, read from the default tip because the working tree has none, still records, with no id.
+    {
+      const repo = mkrepo();
+      const p = join(repo, "intent", "2026-01-01-demo", "intent.md");
+      writeFileSync(p, Buffer.concat([Buffer.from("---\nid: TST-1\ntitle: "), Buffer.from([0xff]), Buffer.from("\n---\n")]));
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "intent");
+      rmSync(p);
+      const r = visual(repo, [...base, "--status", "pass"]);
+      const rec = existsSync(keyFile(repo, ".json")) ? JSON.parse(readFileSync(keyFile(repo, ".json"), "utf8")) : null;
+      add("record/an undecodable intent.md at the tip still records, with no change_id", "exit 0, absent", r.status === 0 && rec && !("change_id" in rec), r.stderr);
+    }
     // Mobile key and width.
     {
       const repo = mkrepo();

@@ -85,7 +85,7 @@ Reuse a class from "Known finding classes" in Context when one fits; invent a ne
 Hand every one of them to `lessons.py raise` before you write the report; never drop one yourself against the table you read in step 3.
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" raise --ref '<ref>' --base <merge base> --head <40 hex> --pass <pass> --severity important|nit --class <slug> --file <path> --line <n> <<'CLAIM_7h2q9w'
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" raise --ref '<ref>' --base <merge base> --head <40 hex> --pass <pass> --severity important|nit --class <slug> --file <path> --line <n> [--change-id <id>] <<'CLAIM_7h2q9w'
 <one sentence claim>
 CLAIM_7h2q9w
 ```
@@ -141,7 +141,7 @@ The same ref and class is stored once, so a second round on a PR adds nothing ne
 Close the round once its grades and new findings are written:
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped [--change-id <id>]
 ```
 
 `<n>` is the table's `round` from step 3 plus one, or 1 when there was no table.
