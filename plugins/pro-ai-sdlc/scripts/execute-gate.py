@@ -69,7 +69,8 @@ def main():
         stop(f"plan was already built (Build commit: {built.group(1)})")
 
     intent_dir = os.path.dirname(rel)
-    slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", os.path.basename(intent_dir))
+    # The folder name without its date or change id prefix: PDS-51-fix-greeting gives fix-greeting.
+    slug = re.sub(r"^(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[0-9]+)-", "", os.path.basename(intent_dir), count=1)
     if not slug:
         stop(f"cannot name a branch from {intent_dir or 'the repo root'}")
     if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{slug}").returncode == 0:

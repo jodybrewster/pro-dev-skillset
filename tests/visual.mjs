@@ -66,6 +66,17 @@ export function runVisualCases() {
       add("record/the PNG is copied", "same bytes beside the record", pngs(repo) && readFileSync(keyFile(repo, ".png")).equals(PNG), "");
       add("record/the tree stays clean", "git status empty", git(repo, "status", "--porcelain").stdout.trim() === "?? shot.png", git(repo, "status", "--porcelain").stdout);
     }
+    // An id-named folder lowercases into the key; the artifact key keeps the folder as written (spec-m1 R12).
+    {
+      const repo = mkrepo();
+      mkdirSync(join(repo, "intent", "TST-1-demo"), { recursive: true });
+      writeFileSync(join(repo, "intent", "TST-1-demo", "plan.md"), "plan\n");
+      const r = spawnSync("python3", [VISUAL, "record", "--intent", "intent/TST-1-demo", ...base, "--status", "pass"], { cwd: repo, encoding: "utf8", timeout: 60000, env });
+      const f = join(repo, ".pro-dev", "visual", "visual-tst-1-demo-step-2-desktop.json");
+      const rec = existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : null;
+      add("record/an id-named folder gives a lowercased key", "visual-tst-1-demo-step-2-desktop",
+        r.status === 0 && rec?.evidence_key === "visual-tst-1-demo-step-2-desktop" && rec?.artifact_key === "TST-1-demo" && existsSync(join(repo, ".pro-dev", "visual", "visual-tst-1-demo-step-2-desktop.png")), r.stdout + r.stderr);
+    }
     // Mobile key and width.
     {
       const repo = mkrepo();

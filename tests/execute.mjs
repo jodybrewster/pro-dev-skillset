@@ -118,6 +118,16 @@ export function runExecuteCases() {
     r = run("execute-gate.py", [], g);
     add("g10 no argument stops with usage", "stop", r, r.status === 1 && /usage/i.test(r.stderr));
 
+    // An id-named folder and a plan that opens with an id: frontmatter block (spec-m1 R7, R10).
+    const idRel = "intent/TST-1-demo-two/plan.md";
+    write(join(g, idRel), `---\nid: TST-1\n---\n\n${PLAN("approved", "<sha>")}`);
+    git(g, "add", "-A");
+    git(g, "commit", "-q", "-m", "id plan");
+    r = run("execute-gate.py", [join(g, idRel)], g);
+    add("g11 an id-named folder gives the branch without its id prefix", "demo-two", r,
+      r.status === 0 && r.json?.slug === "demo-two" && r.json?.branch === "demo-two" && r.json?.intent_dir === "intent/TST-1-demo-two");
+    add("g12 a plan with an id: frontmatter block still reads its Status", "pass", r, r.status === 0);
+
     // ── copy-env.py ──
     const m = repoWithOrigin(sandbox, "app", {
       ".gitignore": ".env\n.env.*\n!.env.example\n.dev.vars\nnode_modules/\n",

@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, loadScenario, validateScenario, setStatus, resolveConcerns } from "../e2e-sdlc.mjs";
-import { parseRoles, frontmatter, CHECKS } from "../e2e-sdlc/checks.mjs";
+import { parseRoles, frontmatter, CHECKS, intentDirsOf } from "../e2e-sdlc/checks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -41,6 +41,11 @@ test("the roles block parses inline lists and item lines", () => {
   assert.deepEqual(roles, { engineer: ["A B"], lead: ["C"] });
   assert.equal(parseRoles("# nothing"), null);
   assert.equal(frontmatter("---\nlevel: 3\n---\n").level, "3");
+});
+
+test("intentDirs keeps both folder forms and drops anything else", () => {
+  const listing = "intent/README.md\nintent/2026-01-02-greeting/\nintent/PDS-51-fix-greeting/\nintent/TST-1-Demo/\nintent/TST-01-x/\nintent/TOOLONG-1-x/\nintent/notes/\n";
+  assert.deepEqual(intentDirsOf(listing), ["intent/2026-01-02-greeting", "intent/PDS-51-fix-greeting"]);
 });
 
 test("the check registry is callable and unknown names fail", () => {

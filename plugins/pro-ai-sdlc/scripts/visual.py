@@ -129,7 +129,8 @@ def record(a: argparse.Namespace) -> int:
     png = read_shot(a.shot) if a.shot else None
 
     width = WIDTHS[a.viewport]
-    key = f"visual-{name}-step-{a.step}-{a.viewport}"
+    # Lowercased so an id-named folder (PDS-51-slug) keeps the key charset; a date folder gives the same key as before.
+    key = f"visual-{name.lower()}-step-{a.step}-{a.viewport}"
     if not evidence.safe_key(key):
         raise Refuse(f"visual: the intent folder name {name!r} cannot make a record key (only a-z, 0-9 and -)")
     shot_rel = None

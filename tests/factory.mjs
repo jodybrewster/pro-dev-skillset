@@ -469,6 +469,50 @@ export function runFactoryCases() {
       add("s2 session.sh writes enforce into the container's own hooks mode file", "enforce", existsSync(join(r.home, ".claude", "hooks", "mode")) && readFileSync(join(r.home, ".claude", "hooks", "mode"), "utf8").trim() === "enforce", r.stderr);
       r = runSh("build");
       add("s3 the build phase looks for the slug branch and never falls back to another PR", "no pr", r.status === 1 && !/factory: pr/.test(r.stdout) && /branch greeting/.test(r.stderr), `${r.status} ${r.stdout} ${r.stderr}`);
+      // An id-named folder (spec-m1 R9, R10): accepted by the argument checks, its slug drops the id prefix.
+      const runDir = (name, dir) => {
+        const home = join(sandbox, `sh-home-${name}`);
+        mkdirSync(home, { recursive: true });
+        const env = { PATH: `${bin}:${process.env.PATH}`, HOME: home, STUB: stubDir, FACTORY_WORK: join(sandbox, `sh-work-${name}`), GH_TOKEN: "t" };
+        return spawnSync("sh", [SESSION, fx.origin, "main", "brief", dir], { encoding: "utf8", env });
+      };
+      write(join(stubDir, "head-demo-brief"), "8\n");
+      r = runDir("id", "intent/TST-1-demo");
+      add("s4 session.sh accepts intent/TST-1-demo and looks for the brief PR on demo-brief", "pr 8", r.status === 0 && /^factory: pr 8$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr}`);
+      for (const [i, bad] of [["5", "intent/TST-1-Demo"], ["6", "intent/tst-1-demo-X"], ["7", "intent/TST-01-demo"], ["8", "intent/TOOLONG-1-demo"], ["9", "intent/2026-01-02-Greeting"]]) {
+        r = runDir(`bad${i}`, bad);
+        add(`s${i} session.sh refuses ${bad}`, "exit 64", r.status === 64 && /refusing intent dir/.test(r.stderr), `${r.status} ${r.stdout} ${r.stderr}`);
+      }
+    }
+
+    // ── an id-named intent folder (spec-m1 R9, R10, R12, AC7) ──
+    {
+      const ID_FOLDER = "TST-1-demo";
+      const fx = repoWithOrigin(sandbox, "idf", {
+        [ID_FOLDER]: { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-1\nsource:") },
+        "TST-2-Bad": { "intent.md": intentText() },
+      });
+      const stub = makeStub(sandbox, "idf", fx.origin);
+      let r = py(["level", `intent/${ID_FOLDER}`, "--repo", fx.repo, "--json"], fx.repo, stub.env);
+      add("i1 level runs on intent/TST-1-demo", "level 1", r.status === 0 && jsonOf(r)?.level === 1, brief(r));
+      r = py(["record", `intent/${ID_FOLDER}`, "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
+      const p = join(fx.repo, ".pro-dev", "factory", "factory-tst-1-demo.json");
+      const rec = existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null;
+      add("i2 record writes factory-tst-1-demo.json with a lowercased key and the folder as written", "factory-tst-1-demo",
+        r.status === 0 && rec?.evidence_key === "factory-tst-1-demo" && rec?.artifact_key === ID_FOLDER && jsonOf(r)?.evidence_key === "factory-tst-1-demo", brief(r) + JSON.stringify(rec));
+      r = py(["next", "--repo", fx.repo], fx.repo, stub.env);
+      add("i3 next skips the id-named folder once it has a record", "nothing", r.status === 0 && r.stdout.trim() === "", brief(r));
+      rmSync(join(fx.repo, ".pro-dev"), { recursive: true, force: true });
+      r = py(["next", "--repo", fx.repo], fx.repo, stub.env);
+      add("i4 next picks an accepted id-named folder and skips one outside the pattern", `intent/${ID_FOLDER}`, r.status === 0 && r.stdout.trim() === `intent/${ID_FOLDER}`, brief(r));
+      for (const [i, bad] of [["5", "TST-2-Bad"], ["6", "TST-02-demo"], ["7", "tst-1-demo"]]) {
+        mkdirSync(join(fx.repo, "intent", bad), { recursive: true });
+        r = py(["record", `intent/${bad}`, "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
+        add(`i${i} record refuses intent/${bad}`, "must match", r.status === 1 && /must match/.test(r.stderr), brief(r));
+      }
+      const slug = spawnSync("python3", ["-I", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import factory; print(' '.join(factory.slug_of(f) for f in sys.argv[2:]))",
+        dirname(FACTORY), "TST-1-demo", "PDS-51-fix-greeting", "2026-01-02-greeting", "AB-123-x"], { encoding: "utf8", env: stub.env });
+      add("i8 slug_of strips a date or an id prefix", "demo fix-greeting greeting x", slug.stdout.trim() === "demo fix-greeting greeting x", slug.stdout + slug.stderr);
     }
 
     // ── run, end to end ──

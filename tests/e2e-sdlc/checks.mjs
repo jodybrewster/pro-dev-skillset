@@ -48,8 +48,16 @@ function context(repo, sc) {
   return c;
 }
 
+// An intent folder is named by its date or by its change id (spec-m1 R9): intent/2026-01-02-slug or intent/PDS-51-slug.
+export const INTENT_DIR_RE = /^intent\/(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[1-9][0-9]*)-[a-z0-9-]+$/;
+
+// The intent folders in an `ls-tree --name-only intent/` listing.
+export function intentDirsOf(listing) {
+  return String(listing ?? "").split("\n").map((s) => s.replace(/\/$/, "")).filter((p) => INTENT_DIR_RE.test(p));
+}
+
 function intentDirs(c) {
-  return c.git("ls-tree", "--name-only", c.ref, "intent/").out.split("\n").map((s) => s.replace(/\/$/, "")).filter((p) => /^intent\/\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(p));
+  return intentDirsOf(c.git("ls-tree", "--name-only", c.ref, "intent/").out);
 }
 
 function resolveIntentDir(c) {
@@ -117,7 +125,7 @@ const buildPrs = (c, prs) => prs.filter((p) => !isBrief(c, p) && filesOf(p).some
 function record(c) {
   if (!c.intentDir) return null;
   const folder = c.intentDir.split("/").pop();
-  const path = join(c.repo, ".pro-dev", "factory", `factory-${folder}.json`);
+  const path = join(c.repo, ".pro-dev", "factory", `factory-${folder.toLowerCase()}.json`);
   if (!existsSync(path)) return null;
   try { return JSON.parse(readFileSync(path, "utf8")); } catch { return null; }
 }
@@ -366,7 +374,7 @@ export const CHECKS = {
   },
   "incident-intent": {
     run(c) {
-      const dirs = c.git("ls-tree", "--name-only", "HEAD", "intent/").out.split("\n").map((s) => s.replace(/\/$/, "")).filter((p) => /^intent\/\d{4}-/.test(p));
+      const dirs = intentDirsOf(c.git("ls-tree", "--name-only", "HEAD", "intent/").out);
       const before = new Set(c.rt.intentDirsBefore || []);
       const found = dirs.filter((d) => !before.has(d) && d !== c.intentDir).map((d) => ({ d, fm: frontmatter(c.show(`${d}/intent.md`, "HEAD")) })).filter((x) => /^incident\b/.test(x.fm.source || ""));
       const lv = found.map((x) => Number(x.fm.level));
