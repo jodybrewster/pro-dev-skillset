@@ -510,6 +510,9 @@ export function runFactoryCases() {
         r = py(["record", `intent/${bad}`, "--repo", fx.repo, "--state", "queued"], fx.repo, stub.env);
         add(`i${i} record refuses intent/${bad}`, "must match", r.status === 1 && /must match/.test(r.stderr), brief(r));
       }
+      const order = repoWithOrigin(sandbox, "idorder", { "TST-10-b": { "intent.md": intentText() }, "TST-9-a": { "intent.md": intentText() } });
+      r = py(["next", "--repo", order.repo], order.repo, makeStub(sandbox, "idorder", order.origin).env);
+      add("i9 next takes TST-9-a before TST-10-b: id folders sort by number, not as text", "intent/TST-9-a", r.status === 0 && r.stdout.trim() === "intent/TST-9-a", brief(r));
       const slug = spawnSync("python3", ["-I", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import factory; print(' '.join(factory.slug_of(f) for f in sys.argv[2:]))",
         dirname(FACTORY), "TST-1-demo", "PDS-51-fix-greeting", "2026-01-02-greeting", "AB-123-x"], { encoding: "utf8", env: stub.env });
       add("i8 slug_of strips a date or an id prefix", "demo fix-greeting greeting x", slug.stdout.trim() === "demo fix-greeting greeting x", slug.stdout + slug.stderr);

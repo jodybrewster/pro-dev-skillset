@@ -162,7 +162,7 @@ A level 1 run on the demo costs about $1 to $3.
 while true; do python3 "$SDLC/scripts/factory.py" run --next --repo . --max-cost-usd 8; sleep 300; done
 ```
 
-`--next` takes the oldest accepted level 1 intent with no spec and no record.
+`--next` takes the oldest accepted level 1 intent with no spec and no record: every date folder first in date order, then id folders by number (`PDS-9` before `PDS-10`).
 Daily caps stop it at 10 runs or $40 a day by default (`--max-runs`, `--max-daily-usd`).
 A `/loop 5m` in an open session or mieruka's "Run the factory" setting do the same.
 

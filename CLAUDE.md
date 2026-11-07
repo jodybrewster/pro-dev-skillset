@@ -12,7 +12,7 @@ It has no UI, no server and no database.
 It ships workflow intelligence to Claude Code sessions.
 The longer version, the Mieruka bridge and the two use cases it is testing are in [docs/overview.md](./docs/overview.md).
 
-Work enters through an intent: `intent/<date>-<slug>/` holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
+Work enters through an intent: `intent/<id>-<slug>/` (or `intent/<date>-<slug>/` for changes from before `intent/project.json`) holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
 Nothing is pushed straight to `main`: every change, intents and specs included, is its own pull request that the agent merges once its checks pass, with no approval needed.
 Intents and specs are written in the main checkout on a short branch, never in a worktree; a worktree starts at the plan stage.
 Nothing in this repo or on its PRs names the maintainer or records who said what in chat: intents, specs, plans, ADRs, docs, code comments, the roadmap, commit messages and PR bodies state the problem and the decision directly, with no quotes and no "(<name>, <date>)" attributions.

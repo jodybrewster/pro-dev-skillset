@@ -1,6 +1,6 @@
 # Intents
 
-Every change to this marketplace starts here, one folder per change, named `<date>-<slug>/`.
+Every change to this marketplace starts here, one folder per change, named `<id>-<slug>/` (for example `PDS-57-slug/`) now that `intent/project.json` exists and `<date>-<slug>/` before it.
 The folder holds the artifacts each stage writes and the next stage reads.
 
 - `intent.md`: why the change is wanted, the problem, the proposed outcome and its risk, with a `status` in the front matter (`proposed`, `accepted`, `done` or `dropped`).

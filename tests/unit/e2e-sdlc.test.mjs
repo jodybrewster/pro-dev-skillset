@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, loadScenario, validateScenario, setStatus, resolveConcerns } from "../e2e-sdlc.mjs";
-import { parseRoles, frontmatter, CHECKS, intentDirsOf } from "../e2e-sdlc/checks.mjs";
+import { parseRoles, frontmatter, CHECKS, intentDirsOf, resolveIntentDir } from "../e2e-sdlc/checks.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -46,6 +46,13 @@ test("the roles block parses inline lists and item lines", () => {
 test("intentDirs keeps both folder forms and drops anything else", () => {
   const listing = "intent/README.md\nintent/2026-01-02-greeting/\nintent/PDS-51-fix-greeting/\nintent/TST-1-Demo/\nintent/TST-01-x/\nintent/TOOLONG-1-x/\nintent/notes/\n";
   assert.deepEqual(intentDirsOf(listing), ["intent/2026-01-02-greeting", "intent/PDS-51-fix-greeting"]);
+});
+
+test("date folders come first in date order, then id folders by number", () => {
+  const listing = "intent/TST-10-b/\nintent/TST-9-a/\nintent/2026-01-03-y/\nintent/2026-01-02-x/\n";
+  assert.deepEqual(intentDirsOf(listing), ["intent/2026-01-02-x", "intent/2026-01-03-y", "intent/TST-9-a", "intent/TST-10-b"]);
+  const c = { rt: {}, sc: {}, ref: "HEAD", git: () => ({ out: "intent/TST-10-b/\nintent/TST-9-a/\n" }) };
+  assert.equal(resolveIntentDir(c), "intent/TST-10-b");
 });
 
 test("the check registry is callable and unknown names fail", () => {

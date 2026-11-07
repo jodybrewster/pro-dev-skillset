@@ -82,7 +82,7 @@ export function changeIdProblems(root) {
 }
 
 function git(cwd, ...args) {
-  return spawnSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8", env: ENV });
+  return spawnSync("git", ["-c", "user.name=t", "-c", "user.email=fixture", "-c", "commit.gpgsign=false", ...args], { cwd, encoding: "utf8", env: ENV });
 }
 function write(path, text) {
   mkdirSync(dirname(path), { recursive: true });

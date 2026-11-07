@@ -157,6 +157,12 @@ def slug_of(folder):
     return PREFIX_RE.sub("", folder, count=1)
 
 
+def folder_order(folder):
+    """Sort key: every date folder first in date order, then id folders by number (TST-9 before TST-10)."""
+    m = re.match(r"^[A-Z]{2,6}-([0-9]+)-", folder)
+    return (1, int(m.group(1)), folder) if m else (0, 0, folder)
+
+
 def evidence_key(folder):
     """factory-<folder>, lowercased so an id-named folder keeps the a-z, 0-9 and - key charset."""
     return "factory-" + folder.lower()
@@ -665,7 +671,7 @@ def next_folder(root, tip):
     out = git_out(root, "ls-tree", "--name-only", tip, "intent/")
     if out is None:
         return None
-    for name in sorted(p.split("/", 1)[1] for p in out.splitlines() if p.startswith("intent/")):
+    for name in sorted((p.split("/", 1)[1] for p in out.splitlines() if p.startswith("intent/")), key=folder_order):
         if not FOLDER_RE.match(name) or lock_live(root, name):
             continue
         if eligible(root, tip, name) is None:
