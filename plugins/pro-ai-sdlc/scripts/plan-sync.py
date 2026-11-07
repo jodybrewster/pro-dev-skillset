@@ -100,8 +100,13 @@ def done_sha(text):
 
 def stale_done(top, paths):
     """[(plan, written at, head)] for each changed plan whose ## Done is older than a code change."""
+    head = full_sha(top, "HEAD")
+    if not head:
+        return []
+    # Only plans this branch or the working tree changed are opened, so a finished plan elsewhere costs nothing.
+    changed = sorted(p for p in set(paths) | set(branch_paths(top, head)) if is_plan(p))
     written = {}
-    for plan in plan_files(top):
+    for plan in changed:
         try:
             with open(os.path.join(top, plan), encoding="utf-8") as fh:
                 sha = done_sha(fh.read())
@@ -109,16 +114,10 @@ def stale_done(top, paths):
             continue
         if sha:
             written[plan] = sha
-    if not written:
-        return []
-    head = full_sha(top, "HEAD")
-    if not head:
-        return []
-    changed = set(paths) | set(branch_paths(top, head))
     untracked = None
     found = []
-    for plan in sorted(changed.intersection(written)):
-        at = full_sha(top, written[plan])
+    for plan, sha in written.items():
+        at = full_sha(top, sha)
         if not at or at == head:
             continue
         r = git(top, "diff", "--name-only", at)

@@ -734,6 +734,20 @@ export function runFactoryCases() {
       rmSync(join(fx.repo, ".pro-dev"), { recursive: true, force: true });
       r = py(["record", DIR, "--repo", fx.repo, "--state", "merged", "--sha", onMain], fx.repo, stub.env);
       add("m6 merged with no remote exits 2 with no remote to verify the base", "refused", r.status === 2 && record(fx) === null && /no remote to verify the base/.test(r.stderr), brief(r));
+      // The tests/mieruka-sync.mjs fixture: a plain git init, then a bare origin pushed and fetched.
+      const plain = join(sandbox, "recm-plain");
+      mkdirSync(join(plain, "intent", FOLDER), { recursive: true });
+      git(plain, "init", "-q");
+      write(join(plain, "intent", FOLDER, "plan.md"), "plan\n");
+      git(plain, "add", "-A");
+      git(plain, "commit", "-q", "-m", "fixture");
+      const plainHead = git(plain, "rev-parse", "HEAD").stdout.trim();
+      git(sandbox, "init", "-q", "--bare", join(sandbox, "recm-plain-origin.git"));
+      git(plain, "remote", "add", "origin", join(sandbox, "recm-plain-origin.git"));
+      git(plain, "push", "-q", "origin", "HEAD:refs/heads/main");
+      git(plain, "fetch", "-q", "origin");
+      r = py(["record", DIR, "--repo", plain, "--state", "merged", "--sha", plainHead, "--unread-lines", "42"], plain, stub.env);
+      add("m7 a plain git init with a pushed and fetched bare origin writes the merged record", "pass", r.status === 0 && record({ repo: plain })?.status === "pass", brief(r));
     }
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

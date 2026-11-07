@@ -127,8 +127,10 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 5: a `Done as of` sha the repo does not have passes. The line is read anywhere in the `## Done` section, bare, as a bullet or with the sha in backticks.
 - Step 5: plan-sync counts `plan-<id>.md` as a plan for both checks, since `/plan` writes one per module; the plan.md reminder was blind to them before.
 - Step 5: the stale check has its own mode key, `stale-done`, read only from `mode.stale-done`; the global `mode` file and `CLAUDE_GUARD_MODE` leave it in warn, so it cannot block before its evidence period. When both checks fire, each follows its own mode in one Stop output.
-- Step 5: the stale check reads the plan files first and runs the base diff and `git ls-files` only when some plan holds a `Done as of` line.
+- Step 5: the stale check opens only the plans the working tree or the branch's commits changed; the sha comparison and `git ls-files` run only when one of them holds a `Done as of` line.
 - Step 4: with no remote, `record --state merged` exits 2 with "no remote to verify the base" instead of checking against `HEAD`.
+  `tests/mieruka-sync.mjs` records a merged state in a fixture with no origin, so its fixture gains a bare origin, pushed and fetched; `tests/factory.mjs` case m7 mirrors it.
+  That check also failed earlier, at the deploy writer, since `ship.py deployed` requires a deploy time; the fixture now passes `--deployed-at`.
 - Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
 
 ## Noticed but not touched
