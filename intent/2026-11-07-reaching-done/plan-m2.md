@@ -1,0 +1,129 @@
+# Plan m2: the reviewer's model on the record
+
+Built from `spec-m2.md` and `intent.md` in this folder, committed with them.
+Status: approved (pre-approved on 2026-11-07).
+Approver: the engineer; no lead needed, the change adds fields to existing records and starts its one deny path in warn, each with behavior cases.
+Dated: 2026-11-07.
+
+One pull request on its own worktree, branch `build/reaching-done-m2`, built after m1 merges because `lessons.py round` comes from m1.
+It bumps three plugins to their next minor version from main at build time: pro-ship (0.17.0 after m1, which makes 0.18.0), pro-ai-sdlc (0.17.0 after m1, which makes 0.18.0) and pro-quality (0.21.0 after m1, which makes 0.22.0), plus one minor bump of `metadata.version` (1.93.0 after m1, which makes 1.94.0), in each commit that changes plugin content.
+When another PR lands a bump first, rebase and take the next free minor.
+
+## Files that change
+
+- `REVIEW.md` (modified): the `## Review model` section with `claude: opus` and `codex: any`.
+- `plugins/pro-ai-sdlc/templates/REVIEW.md` (modified): the same section for every repo.
+- `plugins/pro-ship/scripts/pr-check.py` (modified): `review_model(root, host)`, `family`, `model_mode`, the `review-model` subcommand, `host`, `model` and `model_ok` in `reviewer_record`, the result rule and the two marker fields.
+- `plugins/pro-ship/scripts/ship.py` (modified): the optional `model=` and `host=` in `MARKER` and `parse_marker`, `model_mismatch` and `model_unrecorded` in coverage, the reviewer check in `validate_report`.
+- `plugins/pro-ship/skills/pr-check/SKILL.md` and `plugins/pro-ship/skills/ship/SKILL.md` (modified): ask `review-model`, name the family at dispatch, pass host and model on.
+- `plugins/pro-ai-sdlc/commands/execute.md` (modified): stage 8 appends the line from `pr-check.py marker` to the PR body when pro-ship is installed.
+- `plugins/pro-ai-sdlc/scripts/factory.py` (modified): `body` in the `verify` view and the marker check for the build phase.
+- `plugins/pro-ai-sdlc/scripts/lessons.py` (modified): `round --model --host`.
+- `plugins/pro-ai-sdlc/agents/reviewer.md`, `plugins/pro-ai-sdlc/.codex-plugin/agents/reviewer.toml`, `plugins/pro-quality/agents/code-reviewer.md`, `plugins/pro-quality/.codex-plugin/agents/code-reviewer.toml` (modified): the closing `model:` line with the host.
+- `plugins/pro-ai-sdlc/commands/review.md`, `plugins/pro-ai-sdlc/skills/doubt-driven-development/SKILL.md` (modified): ask `review-model` and name the family at dispatch.
+- Both manifests of pro-ship, pro-ai-sdlc and pro-quality and `.claude-plugin/marketplace.json` (modified): the bumps.
+- `docs/pr-check-stamp.md` (modified): `host`, `model` and `model_ok` in the reviewers table, the warn and enforce rule and the marker fields.
+- `docs/loop-records.md` (modified): `model` and `host` in the review round.
+- `docs/enforce-mode.md` (modified): the `review-model` row.
+- `tests/fixtures/pr-check-stamp/` (modified): a Sonnet stamp, a stamp with no model and a Codex stamp.
+- `tests/ship-check.mjs`, `tests/ship-preflight.mjs`, `tests/factory.mjs`, `tests/lessons.mjs`, `tests/mieruka-sync.mjs` (modified): the cases below.
+- `tests/check.mjs` (modified): `stamp-contract` knows the new fields; a `review-model` check holds the three copies of `family`, `model_mode` and the `REVIEW.md` reader to one fixture; `sdlc-contract` asserts the `model:` line and the marker step in `execute.md`.
+- `docs/roadmap.md` (modified): item 36 ticked with the PR.
+
+## Order of work
+
+1. Failing cases in `tests/ship-check.mjs` with `CLAUDE_GUARD_DIR` pointing at a temp folder: a `claude` code reviewer on `claude-sonnet-4-5` gives `model_ok: false`, the warn line and `pass` in warn, `incomplete` with `mode.review-model` holding `enforce`; `claude-opus-5-5` gives `pass` in both; no `model` gives `model_ok: false`; a `codex` reviewer passes under `codex: any` and gets `model_ok: null` and the note with no `codex` entry, in both modes; `review-model --host claude` reads the tip and ignores a feature-branch `REVIEW.md`; the marker carries `model=` and `host=` (size S; R2 to R4, R7 to R11, AC1 to AC6)
+2. `pr-check.py`: `review_model(root, host)` reads `REVIEW.md` from the default branch tip with `git show` and falls back to `claude: opus`; `family(model)`; `model_mode()` reads only `mode.review-model`; the `review-model` subcommand; `reviewer_record` takes `host` and `model` and sets `model_ok`; `compute_result` treats `model_ok: false` as `incomplete` only in enforce; `cmd_marker` adds the two fields (size M; R2 to R4, R7 to R11)
+   Checkpoint: `node tests/ship-check.mjs` passes; `docs/pr-check-stamp.md` and the fixtures updated; `node tests/check.mjs stamp-contract` passes.
+3. `REVIEW.md` and the template gain `## Review model` with a fenced `yaml` block `claude: opus` and `codex: any` (size XS; R1)
+4. Failing cases in `tests/ship-preflight.mjs`, then `ship.py`: `MARKER` accepts optional `model=` and `host=`; `cmd_coverage` fills `model_mismatch` and `model_unrecorded` and leaves a mismatched commit uncovered only in enforce; `validate_report` refuses a GO with a mismatched `done` reviewer only in enforce and otherwise adds the note to the summary (size M; R13, R14, R16, AC7, AC8)
+   Checkpoint: `node tests/ship-preflight.mjs` and `node tests/ship-hooks.mjs` pass, which shows pr-gate still reads the marker.
+5. `execute.md` stage 8: after pr-check writes its stamp, append the line from `pr-check.py marker` to the PR body when pro-ship is installed; `sdlc-contract` asserts it (size XS; R17, AC10)
+6. Failing cases in `tests/factory.mjs`, then `factory.py verify`: add `body` to the existing `gh pr view` fields; for the build phase, when `find_script` finds pro-ship's `pr-check.py`, raise to level 2 on no marker and check the marker's family against the tip's `REVIEW.md` for its host, raising only in enforce; without `pr-check.py` add the note and raise nothing for the marker (size M; R18, AC9)
+7. The `review-model` check in `tests/check.mjs`: run the copies of `family`, `model_mode` and the reader in `pr-check.py`, `ship.py` and `factory.py` on one fixture list and fail on any difference (size S; spec System)
+   Checkpoint: `node tests/factory.mjs` and `node tests/check.mjs` pass.
+8. The closing `model:` line with the host in `reviewer.md`, `code-reviewer.md` and both twins; `review.md`, `doubt-driven-development/SKILL.md`, the pr-check skill and the ship skill ask `pr-check.py review-model`, name the family at dispatch and pass host and model into `--reviewers` and `report.json`; `sdlc-contract` asserts the line (size S; R5, R6, R15)
+9. `lessons.py round --model --host` writes both keys into `detail_json`; `docs/loop-records.md` adds them; `tests/lessons.mjs` and `tests/mieruka-sync.mjs` cover it (size S; R12, AC11)
+10. The `review-model` row in `docs/enforce-mode.md` (warn start, its own evidence period, the accepted limit that the model is self-reported), the bumps and the roadmap tick for 36 (size XS; N2, N3, N4)
+    Checkpoint: the full proof of done below (AC12).
+
+No step is irreversible.
+
+## Tests that prove it
+
+- `tests/ship-check.mjs` covers the stamp in warn and enforce for Opus, Sonnet, no model and a Codex reviewer with and without a `codex` entry, the `review-model` subcommand and the marker fields.
+- `tests/ship-preflight.mjs` covers coverage with three markers in both modes and the GO refusal in enforce only.
+- `tests/factory.mjs` covers verify with and without pro-ship's `pr-check.py`, a missing marker and a mismatched family in both modes, with a fake `gh` that serves a PR body.
+- `tests/lessons.mjs` and `tests/mieruka-sync.mjs` cover `model` and `host` in the review record.
+- The `review-model` check holds the three copies to one fixture list.
+- A hand run of `/execute` on a demo plan proves the marker in the PR body (AC10).
+
+## Risks
+
+Step 2 is the most likely to go wrong: every pr-check stamp now records a model; a skill that forgets to pass one prints a warn line on every PR.
+The guards are step 8 landing in the same PR, the `sdlc-contract` assertion and the warn start; in enforce a forgotten model turns the stamp `incomplete`, which is why enforce waits for its evidence period.
+Step 6 adds a level 2 raise for a missing marker, which would stop every factory build until step 5 has landed in the image; both are in this PR and the image is rebuilt from the plugin version.
+Step 4 changes coverage; old markers stay covered (R14) and a mismatch only uncovers in enforce, which bounds it.
+Step 3 edits `REVIEW.md`, a policy path, which would stop a factory run of this module at level 3; this module is built by a person.
+Nothing here is irreversible.
+
+Stop-list categories: none; the plan reads and writes local records and PR bodies it already reads, with no auth, migration, payment, deploy or secret handling.
+
+## Options not taken
+
+- One PR per plugin: the stamp, its marker, `/execute` and the readers change together; a split leaves a reader that cannot parse the writer.
+- A shared module for `family` and the reader: plugins do not import each other (ADR-0003), which leaves three copies under one check.
+- One model for every host: a Codex twin would always be refused.
+- `fail` on a mismatch: `incomplete` already blocks pr-gate and tells the person to run the review again.
+
+## Proof of done
+
+```
+node tests/check.mjs                         # 0 failures, review-model and stamp-contract pass
+node tests/eval.mjs --dry
+node tests/route-lexical.mjs --min-rank1 70
+node --test tests/unit/*.test.mjs
+node tests/ship-check.mjs
+node tests/ship-preflight.mjs
+node tests/ship-hooks.mjs
+node tests/factory.mjs
+node tests/lessons.mjs
+MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs
+python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude   # {"host": "claude", "required": "opus", ...}
+claude plugin validate . --strict            # Validation passed
+claude plugin validate plugins/pro-ship --strict
+claude plugin validate plugins/pro-ai-sdlc --strict
+claude plugin validate plugins/pro-quality --strict
+```
+
+## Done
+
+Filled in when the build is finished, before sign-off.
+
+- Build commit:
+- Checks run:
+- Definition of done:
+- Visual: none
+- Doubt:
+- AC1:
+- AC2:
+- AC3:
+- AC4:
+- AC5:
+- AC6:
+- AC7:
+- AC8:
+- AC9:
+- AC10:
+- AC11:
+- AC12:
+- Sign-off:
+
+The sign-off moves `status` in the intent and the spec to `accepted`.
+
+## Departures from plan
+
+Added in the same commit as the change that departs.
+An empty section tells the reviewer the diff follows the plan.
+
+## Noticed but not touched
