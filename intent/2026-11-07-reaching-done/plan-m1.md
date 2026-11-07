@@ -121,5 +121,7 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 3: `tests/mieruka-sync.mjs` now expects seven records from the sync, one more for the review round.
 - Step 4: in grade mode the grade line stays second (R12) and `Nothing to fix.` comes third when the tally is all zero, which is how R12 and R26 both hold.
 - Step 4: grade mode ignores a `since` in the diff spec, which is R17's rule stated inside the agent.
+- Step 5: when a round graded any row, `/review` always hands the fresh pass to the `reviewer` subagent, because the session has read the table and its claims; a first review still chooses as before (N2).
+- Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
 
 ## Noticed but not touched
