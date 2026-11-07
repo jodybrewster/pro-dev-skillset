@@ -39,7 +39,8 @@ Deploy is always a person's step.
 | 3 Escalated | risk high, or a stop-list word: auth, session, permission, migration, payment, deploy, release, secret, token, credential, env var, personal data, export | the full loop plus the `/execute` stop list | engineer, lead and policy owner |
 
 A stop-list word counts only under `## Proposed outcome`, `## Affected users and systems` or `## Constraints`, the sections that say what the change does.
-Under `## Problem`, `## Out of scope` or `## Risk` it is being discussed and does not raise the level, and code spans, fenced blocks and HTML comments are never read.
+Under `## Problem`, `## Out of scope` or `## Risk` it is being discussed and does not raise the level.
+Code spans, fenced blocks and HTML comments are never read.
 The reason names the section, such as `stop-list words in Proposed outcome: deploy, release`.
 A reviewer who sees a risky word hidden elsewhere raises `risk:` or the level by hand.
 

@@ -97,7 +97,7 @@ test("each stop-list word is level 3", () => {
   assert.equal(level(repo(ROLES(ALL), intent({ outcome: "Users are Deployed and Sessions end." }))).json.level, 3);
 });
 
-test("a stop-list word only under Problem is discussed, not built, and stays level 1", () => {
+test("a stop-list word only under Problem is discussed, not built: it stays level 1", () => {
   assert.equal(level(repo(ROLES(ALL), intent({ body: "Touches the deploy handling." }))).json.level, 1);
 });
 
