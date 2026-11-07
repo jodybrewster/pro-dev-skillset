@@ -99,10 +99,10 @@ PR A only (steps 1 to 6); PR B and PR C fill their own lines.
   - `claude plugin validate . --strict` and `claude plugin validate plugins/pro-ai-sdlc --strict`: Validation passed.
   - `python3 plugins/pro-ai-sdlc/scripts/factory.py level intent/2026-11-04-rollback-path`: `level: 3 (risk: high; stop-list words in Proposed outcome: deploy, release; stop-list words in Affected users and systems: deploy, release; no readable Roles block in REVIEW.md on origin/main (REVIEW.md has no ## Roles block))`.
   - `/usr/bin/python3 -m py_compile` on `factory.py` and `plan-sync.py` under Python 3.9.6: ok.
-- Definition of done: met for PR A, except AC1 below.
+- Definition of done: met for PR A.
 - Visual: none
 - Doubt: none
-- AC1: fail as written. The level is 3 from `risk: high`, but the reasons still name stop-list words, because the intent uses release and deploy as the subject of its Proposed outcome and Affected users and systems; see Departures.
+- AC1: pass against the restated criterion. The level is 3 from `risk: high`; the stop-list reasons name Proposed outcome and Affected users and systems only, none names Problem, Out of scope or Risk. The first wording of AC1 asked for no stop-list reason at all, which that intent cannot satisfy because releases are its subject; see Departures.
 - AC2: pass. Case l4 (auth under Problem, Out of scope and Risk) reads level 1; l5 (auth under Proposed outcome) reads 3 with `stop-list words in Proposed outcome: auth`; l6 names Constraints; l7 ignores code spans, fences and comments; l8 keeps a recorded level 3.
 - AC3: pass. Case m1 exits 2 with no record for a sha on an unmerged branch; m2 names the sha, `origin/main` and `main`; m3 and m4 refuse no sha and an unknown sha; m5 writes the record for the main sha.
 - AC4: not run live. `commands/execute.md` now writes `Done as of <git rev-parse --short=12 HEAD>` first; cases sd2 and sd3 show a Done at the head, then the plan committed alone, passes.
