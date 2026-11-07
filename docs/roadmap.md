@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-11-04: the next run drives mieruka's board in a browser, after mieruka's trace reader.
+Last updated 2026-11-07: the specialist-agents intent is done, closing items 15 and 18; the next run still drives mieruka's board in a browser, after mieruka's trace reader.
 
 A fresh session starts here: read "Now", then the intent folder it names.
 The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
@@ -172,7 +172,6 @@ Decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, suba
 
 | Intent | Status | Why parked | Comes back when |
 |---|---|---|---|
-| [2026-10-28-specialist-agents](../intent/2026-10-28-specialist-agents/intent.md) | draft | `code-reviewer` moved to its own intent; the rest is ranked item 18 (P2). | Item 18 starts: the security finder, `web-performance-auditor` and possibly `test-engineer`. |
 | [2026-10-28-rename-pro-dev](../intent/2026-10-28-rename-pro-dev/intent.md) | draft | The intent itself says "not for today". | The maintainer decides to rename the plugins. |
 | [2026-10-28-taste-skill-v2](../intent/2026-10-28-taste-skill-v2/intent.md) | draft | Not on the ranked list; nobody has started it. | pro-design is next touched, or the bridge's smoke test fails. |
 
@@ -258,10 +257,10 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 
 ### P2: situational, or past one person
 
-- [ ] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): intent and spec in [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/spec.md)
+- [x] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124) as [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/spec.md), see [Now](#now)
 - [ ] 16. `pipeline`: the gate as required CI checks (L, pro-ship)
 - [ ] 17. Architecture review with twelve-factor (L, pro-quality)
-- [ ] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality)
+- [x] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality): `test-engineer` and `web-performance-auditor` built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124); `security-architect` in diff mode is the finder; [specialist-agents](../intent/2026-10-28-specialist-agents/intent.md) is done
 - [ ] 19. Source-driven development and a docs cache (M, pro-execution)
 - [ ] 20. Installed skills declare runnable checks (M, pro-core, stack plugins)
 - [ ] 21. The scaling block and `repo-hygiene` (M, pro-ship)
@@ -301,7 +300,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - Safety batch: 11 with 26 and 27.
 - Intent C, docs and architecture (pro-ship brainstorm): 14 and 17.
 - Intent B, the rest of pro-ship: 15, 16, 21.
-- Specialist agents (intent already drafted): 18, plus 10 if the verifier lens is not enough.
+- Specialist agents: 18, done through the `/ship` preflight; the intent is closed.
 - Single items: 12, 19, 20, 22, 23, 28.
 - Guard hardening: 32, 33, 34 and 43, with a row each in [docs/enforce-mode.md](./enforce-mode.md) so they join the warn period.
 - Reaching Done: 35 to 39 and 46, before the board rerun in [Now](#now).
@@ -468,6 +467,7 @@ Source: pro-ship feature 17.
 ### 18. Specialist agents
 
 What: a first-pass `security-reviewer` that hunts for findings (our `security-auditor` only judges one), a `web-performance-auditor` with `/webperf` and possibly a `test-engineer`.
+Done: `test-engineer` and `web-performance-auditor` shipped in pro-quality with the `/ship` preflight (#124); `security-architect` in diff mode already hunts for findings, so no new security agent was added; `/webperf` was left out because `/ship` dispatches the auditor. Reasons are in the intent's Done section.
 Source: [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md); `agents/security-auditor.md`, `agents/web-performance-auditor.md`, `agents/test-engineer.md`.
 
 ### 19. Source-driven development and a docs cache
@@ -612,10 +612,10 @@ The last column is blank where there is nothing to take.
 
 | Agent | What it does | Ours | Items |
 |---|---|---|---|
-| code-reviewer | Reviews a change on correctness, readability, architecture, security and performance | `reviewer` (opus) | 3 |
-| security-auditor | Finds vulnerabilities, models threats, suggests hardening | pro-security `security-auditor` (judges one finding, does not hunt) | 18 |
-| test-engineer | Plans test strategy, writes tests, analyzes coverage | none (the verifier only runs checks) | 10, 18 |
-| web-performance-auditor | Audits Core Web Vitals, loading, rendering and the network | none | 18 |
+| code-reviewer | Reviews a change on correctness, readability, architecture, security and performance | pro-quality `code-reviewer` (opus) | 3 |
+| security-auditor | Finds vulnerabilities, models threats, suggests hardening | pro-security `security-architect` in diff mode finds; `security-auditor` judges one finding | 18 |
+| test-engineer | Plans test strategy, writes tests, analyzes coverage | pro-quality `test-engineer` (opus) | 10, 18 |
+| web-performance-auditor | Audits Core Web Vitals, loading, rendering and the network | pro-quality `web-performance-auditor` (opus) | 18 |
 
 ### Their commands (9)
 
