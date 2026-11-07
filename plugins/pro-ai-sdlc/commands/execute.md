@@ -133,10 +133,10 @@ Without the skill, print `classifier could not run: pro-ship not installed` and 
 For each step write or extend the test first, see it fail, then write the code until it passes.
 A step counts as built only when its tests pass and, where the stack has them, type checking and linting pass too (the repo's own commands, found as in the baseline).
 Commit each step, or a small group of steps, with a message that names the step, staging only its files as `## Scope discipline` says.
-After each step's commit, append the test files that commit added or changed to `<worktree>/.claude/test-lock`, one path relative to the worktree per line.
+After each step's commit, freeze the test files that commit added or changed with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/test-lock.py" <worktree> <path> [<path> ...]`, each path relative to the worktree.
 A step that only adds failing tests and leaves the code to a later step is built together with that step, so a test has passed once before it is frozen.
 The `protect-tests` hook then flags any later edit to a listed file; new test files stay free.
-Before the first append make sure `.claude/test-lock` is git-excluded: add the line to the worktree's exclude file (`git rev-parse --git-path info/exclude`) when it is missing, and never stage the lock.
+The script appends them to `.claude/test-lock` and keeps that file git-excluded; never stage the lock.
 After the commit of a step marked `irreversible`, run `## Doubt` before the next step.
 At a checkpoint whose group range (since the previous checkpoint) reads high tier on more than the size signal, run it on each undoubted step in that range before the next group.
 When the build has to stray from the plan, add a line under `## Departures from plan` in plan.md in the same commit as the change that departs.
@@ -217,7 +217,7 @@ Without the skill, print `pr-check could not run: pro-ship not installed` and li
 A pr-check result that is not a pass is listed under "Potential concerns" and opens the pull request as a draft.
 
 Push with `git push -u origin <branch>`.
-Open the pull request with `gh pr create` against `<default_branch>`, adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
+Open the pull request with `gh pr create` against `<default_branch>`, its title starting `fix:` when the intent's `kind` is `bug` and `feat:` otherwise, because `ship.py version` reads that word, adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
 Its body links the intent folder, lists each acceptance criterion with its proof and names any departures.
 The body ends with "Things I didn't touch" (the `## Noticed but not touched` lines and neighboring work left out on purpose) and "Potential concerns" (consented stop-list steps, open doubt findings, what the verifier could not check and risks seen), each "None" when empty.
 If `gh` fails, give the compare URL for the branch instead.

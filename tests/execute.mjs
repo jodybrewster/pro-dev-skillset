@@ -189,6 +189,9 @@ export function runExecuteCases() {
     const b = repoWithOrigin(sandbox, "bold", { [planRel]: PLAN("approved", "<sha>").replace("- Build commit: <sha>", "- **Build commit:** abc1234") });
     r = run("execute-gate.py", [join(b, planRel)], b);
     add("g11 a bold Build commit line counts as built", "stop", r, r.status === 1 && /built/i.test(r.stderr));
+    { const blank = repoWithOrigin(sandbox, "blank", { [planRel]: PLAN("approved", "<sha>").replace("- Build commit: <sha>", "- Build commit:") });
+      const rb = run("execute-gate.py", [join(blank, planRel)], blank);
+      add("g11b a blank Build commit line is not read as built from the line after it", "pass", rb, rb.status === 0); }
 
     const n = join(sandbox, "noorigin");
     mkdirSync(n);

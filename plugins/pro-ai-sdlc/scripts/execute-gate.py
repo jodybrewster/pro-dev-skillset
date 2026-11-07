@@ -64,7 +64,7 @@ def main():
         stop(f"plan Status is {value}, not approved; approve it in {rel} and commit")
 
     done = re.search(r"^## Done\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    built = re.search(r"^-\s*(?:\*\*)?Build commit:(?:\*\*)?\s*(.*?)\s*$", done.group(1), re.M) if done else None
+    built = re.search(r"^-[ \t]*(?:\*\*)?Build commit:(?:\*\*)?[ \t]*(.*?)[ \t]*$", done.group(1), re.M) if done else None
     if built and built.group(1) and not built.group(1).startswith("<"):
         stop(f"plan was already built (Build commit: {built.group(1)})")
 
