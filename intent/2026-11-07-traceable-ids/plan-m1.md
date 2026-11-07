@@ -102,14 +102,29 @@ git grep -c "^id: PDS-" -- 'intent/*/intent.md' | wc -l  # 50
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of fe7642ddc6ac
 
-- Build commit:
-- Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+- Build commit: fe7642ddc6ac on `build/traceable-ids-m1`, rebased on main at 8924c54 (one PR for all three plugins; see Departures).
+- Checks run: `node tests/check.mjs` 49 checks, 0 failures, 13 warnings (all pre-existing: Codex agent twins and routing coverage in other plugins), `change-ids` pass.
+  `node tests/eval.mjs --dry` 99 cases reference real skills.
+  `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), top-k 93/98, 3 notOneOf warnings.
+  `node --test tests/unit/*.test.mjs` 199 pass, 0 fail.
+  `node tests/ids.mjs` 27/27; `node tests/factory.mjs` 173/173; `node tests/execute.mjs` 31/31; `node tests/visual.mjs` 32/32; `node tests/incident.mjs` 41/41; `node tests/ship-version.mjs` 152/152; `node tests/pro-dev.mjs` 198 cases, 0 failures.
+  `claude plugin validate . --strict` passed; pro-ai-sdlc, pro-core and pro-ship strict passed; all 21 plugins strict passed.
+  `/usr/bin/python3` (3.9.6) `-m py_compile` clean on `ids.py` and `pro-dev.py`.
+- Definition of done: met; every R has a case or a line in a command and the versions are bumped (pro-ai-sdlc 0.17.0, pro-ship 0.17.0, pro-core 0.26.0, marketplace 1.93.0).
 - Visual: none
-- Doubt:
-- AC1 to AC10:
+- Doubt: step 8 (irreversible) was not sent to a reviewer subagent; the backfill was checked by an independent recomputation in Node (56 intents, 0 mismatches) and the first 50 rows by a byte diff against spec-m1's table.
+- AC1: `python3 plugins/pro-ai-sdlc/scripts/ids.py next` prints `PDS-57` (spec-m1 AC1 as amended for the six late intents).
+- AC2: `tests/ids.mjs` next/AC2 gives TST-8 with TST-7 only on a fetched `origin/other` and TST-10 with an unpushed local branch.
+- AC3: next/AC3 with `origin` pointing at a missing path prints TST-12, exits 0 and stderr starts `ids: offline, allocated from the last fetch (`; under 15 seconds.
+- AC4: next/AC4 exits 1 with `ids: no intent/project.json`; `/intent` keeps the date path with no `id:` (the `sdlc-contract` check still finds `intent/<YYYY-MM-DD>-<slug>/intent.md`).
+- AC5: check/AC5 fixtures fail on TST-2 twice (naming both files) and on a missing `id:`; `node tests/check.mjs` passes `change-ids` on this repo.
+- AC6: `ids.py backfill` printed 56 rows, the first 50 identical to spec-m1's table; after `--write` the diff against main is 56 files, 56 insertions, 0 deletions; a second run prints `ids: nothing to backfill`.
+- AC7: factory i1 runs `level` on `intent/TST-1-demo`; i2 writes `.pro-dev/factory/factory-tst-1-demo.json`; every date-folder case passes unchanged.
+- AC8: ship-version `version/AC8` counts `kind: bug` in `intent/TST-1-demo/` as a patch, 1.0.1.
+- AC9: pro-dev `status/shortcode-default` offers DA, MIE, OTTFFS and PDS and no default for `x`, `3d-viewer` and `my_app`; writing the file on an answer and nothing on a skip is prose in `pro-dev.md` and was not run by hand in a live session.
+- AC10: `node tests/check.mjs` and `claude plugin validate . --strict` pass on this one PR.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -134,3 +149,8 @@ An empty section tells the reviewer the diff follows the plan.
 - The `change-ids` rule lives in `tests/ids.mjs` as `changeIdProblems(root)` so its fixtures and this repo run the same code; `tests/check.mjs` imports it.
 
 ## Noticed but not touched
+
+- An intent written in the old date form after this merges, or one on an open branch today, has no `id:` and fails `change-ids` on its PR until `ids.py backfill --write` runs there.
+- `ids.py backfill` numbers from the highest id on any ref, so it cannot renumber ids still unmerged on a branch; that is the never-reuse rule working, and a renumber before merge is a hand edit.
+- The pro-ai-sdlc and marketplace descriptions still say `/intent` writes `intent/<date>-<slug>/intent.md`; the README now names both forms.
+- The eval scaffolds under `plugins/pro-ai-sdlc/evals/*/scaffold.sh` still describe only date folders.
