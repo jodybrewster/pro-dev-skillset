@@ -35,11 +35,11 @@ The id appears in every artifact of the change:
 - the branch for each stage, `PDS-50/spec`, `PDS-50/plan`, `PDS-50/build-m1`;
 - the first words of every commit subject, `PDS-50: ...`, plus every pull request title;
 - the pr-check stamp, the factory record and the deploy record, as `change_id`, which mieruka reads to put a card and its evidence together;
-- every review finding, so a finding can be traced to the change it was raised on and to the round that closed it;
+- every review finding; a finding can then be traced to the change it was raised on and to the round that closed it;
 - the roadmap row and any ADR the change produced.
 
-`/intent` allocates the next number from the ids already present on `origin/main` and on every remote branch, so two sessions writing intents at the same time do not collide; a `check.mjs` check fails on a duplicate or missing id.
-The 49 existing intent folders keep their names and gain an `id:` line in creation order, PDS-1 to PDS-49, so no link in the docs, the roadmap or the ADRs breaks.
+`/intent` allocates the next number from the ids already present on `origin/main` and on every remote branch; two sessions writing intents at the same time do not collide; a `check.mjs` check fails on a duplicate or missing id.
+The 49 existing intent folders keep their names and gain an `id:` line in creation order, PDS-1 to PDS-49; no link in the docs, the roadmap or the ADRs breaks.
 A hook warns when a commit on a change branch lacks the id, in warn mode first.
 
 ## Affected users and systems
@@ -71,7 +71,7 @@ A hook warns when a commit on a change branch lacks the id, in warn mode first.
 ## Risk
 
 Medium.
-It touches every command in the loop and the record format mieruka reads, so a slip shows up everywhere at once.
+It touches every command in the loop and the record format mieruka reads; a slip shows up everywhere at once.
 Each piece is additive and a missing id degrades to today's behavior with a warning.
 
 ## Check
