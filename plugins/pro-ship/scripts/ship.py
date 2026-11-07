@@ -1547,13 +1547,13 @@ def write_confirmation(root: str, head: str, conf: dict) -> dict:
     rec = read_json(path)
     if (not isinstance(rec, dict) or rec.get("head") != head or rec.get("schema") != 1
             or not str(rec.get("produced_by") or "").startswith("pro-ship:ship") or not isinstance(rec.get("detail_json"), str)):
-        return {"cleared": [], "written": [], "skipped": [f"no preflight record for {head[:8]}, so nothing was written"]}
+        return {"cleared": [], "written": [], "skipped": [f"no preflight record for {head[:8]} so nothing was written"]}
     try:
         detail = json.loads(rec["detail_json"])
     except ValueError:
-        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail cannot be read, so nothing was written"]}
+        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail cannot be read so nothing was written"]}
     if not isinstance(detail, dict):
-        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail is not an object, so nothing was written"]}
+        return {"cleared": [], "written": [], "skipped": ["the preflight record's detail is not an object so nothing was written"]}
     cleared = []
     for c in detail.get("checks") if isinstance(detail.get("checks"), list) else []:
         if isinstance(c, dict) and c.get("status") == "confirm" and c.get("item") in conf["items"]:
@@ -1591,7 +1591,7 @@ def cmd_confirm(root: str, args: list[str]) -> dict:
     if scope == "pr":
         view = pr_view(root, pr)
         if view["head"] != head:
-            return {"confirmed": False, "why": f"the head of PR {pr} has moved on to {str(view['head'])[:8]}, so a reply for {head[:8]} no longer binds it"}
+            return {"confirmed": False, "why": f"the head of PR {pr} has moved on to {str(view['head'])[:8]} so a reply for {head[:8]} no longer binds it"}
         comments = view["comments"]
     else:
         comments = commit_comments(root, head)

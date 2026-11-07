@@ -7,7 +7,7 @@
 #   commit-<sha>.json   the comments on a commit (default [])
 #   perm-<login>.txt    a login's permission (default read)
 # `gh pr comment <n>` keeps stdin in posted-pr-<n>.txt; a commit comment post keeps it in
-# posted-commit-<sha>.txt. Any other call exits 2, so nothing reaches the network.
+# posted-commit-<sha>.txt. Any other call exits 2 so nothing reaches the network.
 d="$GH_STUB_DIR"
 echo "$*" >> "$d/calls.log"
 case "$1 $2" in

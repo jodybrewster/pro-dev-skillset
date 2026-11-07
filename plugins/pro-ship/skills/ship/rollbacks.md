@@ -19,7 +19,7 @@ The triggers below apply to every deploy target unless the entry says otherwise:
 
 ## How a step is written
 
-Every step is either a command or a step for a person, so the readiness check at the start of `/ship` (`ship.py ready`) can read it:
+Every step is either a command or a step for a person so the readiness check at the start of `/ship` (`ship.py ready`) can read it:
 
 - A command: one line in backticks (`` `vercel rollback` ``), a fenced block marked `sh`, `bash` or `shell` or an argv list in the Ship block (`[git, push, origin, main]`).
 - A step for a person: a line that starts with `manual:`, such as `manual: notify the team in the release channel`.
@@ -66,7 +66,7 @@ In the entries below, text after a command is a note for the report: the step it
   1. `vercel rollback`
   2. `vercel promote <previous deployment url>` when `vercel rollback` picks the wrong deployment.
   3. `curl -fsS <production url>/<health path>`
-  4. `git revert --no-edit <merge commit>` on a branch off the default branch, merged through a PR, so the next merge does not redeploy the bad commit.
+  4. `git revert --no-edit <merge commit>` on a branch off the default branch, merged through a PR so the next merge does not redeploy the bad commit.
 - Recovery time: under 2 minutes for the promote, under 10 minutes with the revert and its deploy.
 - Note: environment variables changed in the range are not rolled back by promoting an old deployment. Name them.
 
@@ -87,7 +87,7 @@ For a workflow that deploys on push to the default branch with a host not listed
 - Steps:
   1. `netlify api restoreSiteDeploy --data '{"site_id":"<site id>","deploy_id":"<previous deploy id>"}'`
   2. `curl -fsS <site url>`
-  3. `git revert --no-edit <commit>` on a branch off the default branch, merged through a PR, so auto-publishing does not redeploy it.
+  3. `git revert --no-edit <commit>` on a branch off the default branch, merged through a PR so auto-publishing does not redeploy it.
 - Recovery time: under 2 minutes.
 
 ## Manual deploy
@@ -123,7 +123,7 @@ For a repo whose release is a tag (a plugin marketplace, a library installed fro
 - Steps:
   1. `git revert --no-edit <first release commit>^..<last release commit>` on a branch off the default branch, merged through a PR.
   2. manual: tell consumers to pin the previous tag (`git checkout <previous tag>` or the install command with that ref).
-  3. manual: a fixed release goes through `/ship` with its own bump and tag. Do not move or delete the published tag: caches and clones hold it, and a rollback never tags.
+  3. manual: a fixed release goes through `/ship` with its own bump and tag. Do not move or delete the published tag: caches and clones hold it. A rollback never tags.
 - Recovery time: minutes for a consumer to pin, a PR cycle for the fix.
 
 ## Desktop
@@ -157,7 +157,7 @@ For a build users download by hand.
   1. manual: if a secret shipped, rotate it first.
   2. `npm dist-tag add <name>@<good version> latest`
   3. `npm deprecate <name>@<version> "<reason>, use <good version>"`
-  4. manual: publish a fixed patch version through `/ship`. `npm unpublish` only works inside the registry's window and breaks dependents, so use it only for leaked secrets.
+  4. manual: publish a fixed patch version through `/ship`. `npm unpublish` only works inside the registry's window and breaks dependents so use it only for leaked secrets.
 - Recovery time: under 5 minutes for the dist-tag move. Installs that already resolved the bad version keep it.
 - Other registries (PyPI, crates.io, RubyGems): yank the version (`twine` has no yank, use the PyPI console or `cargo yank`, `gem yank`) and publish a fixed version.
 

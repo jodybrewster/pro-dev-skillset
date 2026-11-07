@@ -87,7 +87,7 @@ Local copy: `.pro-dev/ship/deploys/<evidence_key>.json`, one file per deploy; no
 | `confirmation` | object | optional: `{repo, scope, pr, head, items, request_id, request_url, reply_id, reply_url, by, at}`, present when a confirmation cleared a check |
 
 mieruka's deploy panel reads `url`, `env` and `commit`, so those keep these names.
-`env_source`, `time_source` and `confirmation` are optional additions, so `schema` stays 1.
+`env_source`, `time_source` and `confirmation` are optional additions so `schema` stays 1.
 
 ### Clearing a check left at confirm
 
@@ -95,7 +95,7 @@ A check given as `confirm` becomes `pass` with the evidence `confirmed by <login
 The reply rule is in [ship-preflight.md](./ship-preflight.md), "The confirmation".
 `deployed` reads the reply itself:
 
-- `--confirm-pr <n>` reads PR n; it binds when the PR's head or its merge commit is the deployed commit, so a squash merge still counts.
+- `--confirm-pr <n>` reads PR n; it binds when the PR's head or its merge commit is the deployed commit so a squash merge still counts.
 - `--confirm-commit <sha>` reads the comments on that commit; it binds when the sha is the deployed commit, which is how a tag release with no PR for its tagged sha is confirmed.
 - With neither, when a check is `confirm`, it looks for a merged PR whose merge commit or head is the deployed commit, then falls back to the deployed commit's comments.
 

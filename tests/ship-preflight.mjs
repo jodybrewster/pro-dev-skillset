@@ -708,7 +708,7 @@ export function runShipPreflightCases() {
     repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\""], ["\"`curl -fsS https://example.com/health`\"", "\"manual: open the dashboard\""]) });
     r = ship(repo, ["ready"]);
     add("ready/a verify list of a code span and a manual: line passes (R18)", "exit 0", r.status === 0 && r.json.ready === true, r.stdout + r.stderr);
-    // The sh fence cannot sit inside the Ship block's yaml fence, so its form is pinned through runnable().
+    // The sh fence cannot sit inside the Ship block's yaml fence so its form is pinned through runnable().
     const py = spawnSync("python3", ["-c", "import importlib.util,sys,json\nsp=importlib.util.spec_from_file_location('ship',sys.argv[1]);m=importlib.util.module_from_spec(sp);sp.loader.exec_module(m)\nprint(json.dumps([m.runnable(s) for s in json.loads(sys.argv[2])]))",
       SHIP, JSON.stringify(["```sh\ngit revert --no-edit HEAD\ngit push origin main\n```", "```bash\nvercel rollback\n```", "```shell\n\n```", "```js\nx()\n```", "`one`", "manual: a person step", ["git", "push"], ["git", ""], "Revert it"])], { encoding: "utf8", env });
     add("ready/runnable() reads sh, bash and shell fences as commands and an empty or js fence as prose", "command,command,prose,prose,command,manual,command,prose,prose",
@@ -810,7 +810,7 @@ export function runShipPreflightCases() {
       add(`confirm/read does not count ${label}`, "confirmed false with its why, record untouched",
         r.status === 0 && r.json?.confirmed === false && why.test(r.json.why || "") && readFileSync(t.pj, "utf8") === before, r.stdout + r.stderr);
     }
-    // A label alone and a longer reply both leave no confirmed reply, so they share one why.
+    // A label alone and a longer reply both leave no confirmed reply so they share one why.
     add("confirm/each refusal of read gives its own why", `${reads.length - 1} distinct whys`, whys.size === reads.length - 1, [...whys].join(" | "));
 
     t = recRepo();

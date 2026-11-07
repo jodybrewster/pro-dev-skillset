@@ -134,8 +134,8 @@ It reads every target's `rollback.steps` and its optional `verify` list (post-de
 
 A string that starts with `manual:` is a step for a person and is accepted when the target also has a runnable rollback step.
 Anything else is prose and is rejected.
-On a rejected step `ready` prints `{"ready": false, "problems": [{target, field, index, text}]}`, with each text cut to 80 characters and a null index for a target whose rollback is only `manual:` lines, and exits 9.
-It reads files only and writes nothing, so every earlier record stays byte for byte; the skill stops with `ship stopped before review: fix the steps above, nothing was written`.
+On a rejected step `ready` exits 9 and prints `{"ready": false, "problems": [{target, field, index, text}]}`, with each text cut to 80 characters and a null index for a target whose rollback is only `manual:` lines.
+It reads files only and writes nothing so every earlier record stays byte for byte; the skill stops with `ship stopped before review: fix the steps above, nothing was written`.
 `ready` accepts a `<placeholder>` inside a command, because the report fills it from the release; `record` refuses a GO whose command still holds one and `manual:` lines may keep one.
 
 ## The confirmation
@@ -162,7 +162,7 @@ The reply rule, which `confirm read`, `deployed` and the merge gate share:
    `confirm read` then prints `{"confirmed": false, "why": <reason>}` and writes nothing.
 
 On a valid reply, when `.pro-dev/ship/preflight.json` is a record for that head, `confirm read` rewrites it and its mieruka copy (by "The mieruka drop") in one step: `confirmation` goes inside `detail_json` and each listed check moves from `confirm` to `pass` with the evidence `confirmed by <login> in <reply url>`.
-`status`, `head`, `schema` and every other field stay as they were, so the freshness verdict does not change.
+`status`, `head`, `schema` and every other field stay as they were so the freshness verdict does not change.
 
 The merge gate re-reads a `pr`-scope confirmation at medium and high tier with one `gh pr view <n> --json comments` and adds `confirmation: <login> for <head8>` when the recorded request and reply still stand unedited, by the same login, for the current head, or `confirmation: missing (<cause>)` otherwise.
 It stays silent when the fresh record lists no `confirm` check and no confirmation.

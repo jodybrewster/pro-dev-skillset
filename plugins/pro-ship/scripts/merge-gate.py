@@ -578,7 +578,7 @@ def confirmation_check(directory: str | None, pr: int, head: str, repo: str | No
     conf = need["conf"]
 
     def missing(cause: str) -> dict:
-        return {"line": f"confirmation: missing ({cause})", "missing": True, "items": need["items"]}
+        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": need["items"]}
     if conf is None:
         return missing("no confirmation recorded")
     if conf.get("head") != head:
@@ -773,7 +773,7 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str, session_i
                f"--pr {res['pr']} --items {shlex.quote(items)}")
     log(HOOK, "deny", f"confirmation missing PR {res['pr']} {res['head'][:8]}", cwd)
     return 3, (f"[{HOOK}] PR {res['pr']} has checks left at confirm and no confirmation bound to {res['head'][:8]} "
-               f"({cf['line'].split('(', 1)[-1].rstrip(')')}). Ask the person whether to post a request; on a yes run "
+               f"({cf['cause']}). Ask the person whether to post a request; on a yes run "
                f"{command}, then wait for a person with write access to reply confirmed and run confirm read. "
                f"The identical command passes if you run it again. {text}")
 
