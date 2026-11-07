@@ -73,6 +73,8 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-ai-sdlc | `templates/incident.md` (stop-the-line, regression and verification steps from `debugging-and-error-recovery`, the runbook rule from `observability-and-instrumentation`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ai-sdlc | the visual check in `/execute` (from `browser-testing-with-devtools`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ai-sdlc | `skills/doubt-driven-development` and the `## Doubt` section of `/execute` | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ai-sdlc | the finding checks in `agents/reviewer.md` (with its Codex twin) and the evidence rule in `skills/doubt-driven-development` (commits 353ae84 and c55b842) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ai-sdlc | grade mode in `agents/reviewer.md` and its Codex twin, the grade step of `/review` and the `## Rounds` section of `templates/REVIEW.md` | [super-board](https://github.com/EricTechPro/super-board) | MIT | Copyright (c) 2026 Eric Tech | adapted (the "Review remembers" rule of `skills/super-review/SKILL.md`) |
 | pro-ai-sdlc | section names and schema comment in `templates/PRODUCT.md` | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Apache-2.0 | Copyright 2025 Paul Bakaus | adapted (section names and the schema comment only) |
 | pro-quality | receiving-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
 | pro-quality | requesting-code-review | [obra/superpowers](https://github.com/obra/superpowers) | MIT | Copyright (c) 2025 Jesse Vincent | forked |
@@ -81,7 +83,8 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-quality | documentation-engineer (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
 | pro-quality | api-documenter (agent) | [VoltAgent/awesome-codex-subagents](https://github.com/VoltAgent/awesome-codex-subagents) and [awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) | MIT | Copyright (c) 2026 VoltAgent; Copyright (c) 2025 VoltAgent | adapted |
 | pro-quality | constraints | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
-| pro-quality | code-reviewer (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | code-reviewer (agent), with the finding checks of commit 353ae84 | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-quality | the `requesting-code-review` behavioral cases (`evals/cases/requesting-code-review.json` and `evals/fixtures/review-evidence/`, from commit 353ae84) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-quality | test-engineer (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-quality | web-performance-auditor (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-security | security-audit | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted |
@@ -92,6 +95,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-ship | deployed (post-deploy checks from `shipping-and-launch` and `ci-cd-and-automation`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | documentation-and-adrs | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | ship (SKILL.md, release-checks.md, rollbacks.md and report.md, from `shipping-and-launch` and `commands/ship.toml`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | the grade step in `ship/SKILL.md` | [super-board](https://github.com/EricTechPro/super-board) | MIT | Copyright (c) 2026 Eric Tech | adapted (the "Review remembers" rule of `skills/super-review/SKILL.md`) |
 | pro-ship | ship/references/performance-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | ship/references/security-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | ship/references/observability-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
