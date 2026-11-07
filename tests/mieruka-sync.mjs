@@ -7,7 +7,8 @@
 //   MIERUKA_ROOT=<path to a mieruka checkout> node tests/mieruka-sync.mjs
 //
 // It builds a throwaway repo shaped like mieruka (`.mieruka/` ignored), records a NO-GO there
-// with ship.py and writes one record of each loop type with its real writer, then drops one vitest file into the mieruka checkout that runs mieruka's real
+// with ship.py, clears its check left at confirm with `ship.py confirm read` through the fake gh
+// of tests/fixtures/ship-preflight/confirm/gh and writes one record of each loop type with its real writer, then drops one vitest file into the mieruka checkout that runs mieruka's real
 // `syncFromFilesystem` against the throwaway root on an in-memory database. The vitest file is
 // removed afterwards and the sync writes only inside the throwaway root, so the mieruka checkout
 // is left as it was. Skips (exit 0) when MIERUKA_ROOT is unset or has no installed web app.
@@ -16,7 +17,7 @@
 // deploy, incident, review round, visual and factory records carry "change_id": "TST-1" and the lesson's seen
 // entries do too (intent/2026-11-07-traceable-ids spec-m3 R13); mieruka must still load them.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, copyFileSync, chmodSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -76,7 +77,7 @@ main: try {
     verdict: "NO-GO", head, base: head,
     scope: { kind: "tag", range: `${head}..${head}`, prs: [], uncovered: [], last_deploy_source: "none" },
     blockers: [{ text: "Fixture record for the mieruka sync check.", evidence: "tests/mieruka-sync.mjs" }],
-    fixes: [], risks: [], checks: [],
+    fixes: [], risks: [], checks: [{ section: "release", item: "env vars set in production", status: "confirm", evidence: "look at the host" }],
     legal: { status: "not-installed", verdict: null, base: null, head: null, blocking: 0, required: 0 },
     targets: [{ id: "fixture", kind: "tag-release", env: null, url: null, commit: head,
       rollback: { triggers: ["the release breaks"], steps: ["Check out the previous tag."], rto: "minutes" } }],
@@ -89,6 +90,23 @@ main: try {
   const key = out?.evidence_key;
   if (!key || !out.written.some((w) => w.startsWith(".mieruka/evidence/"))) {
     console.error(`ship.py record did not drop the mieruka copy:\n${rec.stdout}${rec.stderr}`);
+    break main;
+  }
+
+  // A confirmation read rewrites the record and its copy (reaching-done m3, AC3), through the fake gh.
+  const ghBin = join(work, "gh-bin"), ghDir = join(work, "gh-stub");
+  mkdirSync(ghBin, { recursive: true });
+  mkdirSync(ghDir, { recursive: true });
+  copyFileSync(join(ROOT, "tests", "fixtures", "ship-preflight", "confirm", "gh"), join(ghBin, "gh"));
+  chmodSync(join(ghBin, "gh"), 0o755);
+  writeFileSync(join(ghDir, "perm-maint.txt"), "write\n");
+  const reqLine = "pro-ship-confirm-request: " + JSON.stringify({ head, items: ["env vars set in production"], pr: 42, repo: "o/r", scope: "pr" });
+  writeFileSync(join(ghDir, "pr-42.json"), JSON.stringify({ number: 42, headRefOid: head, url: "https://github.com/o/r/pull/42", comments: [
+    { id: "IC_1", author: { login: "maint" }, body: reqLine, createdAt: "2026-11-07T10:00:00Z", includesCreatedEdit: false, url: "https://github.com/o/r/pull/42#issuecomment-1" },
+    { id: "IC_2", author: { login: "maint" }, body: "confirmed", createdAt: "2026-11-07T11:00:00Z", includesCreatedEdit: false, url: "https://github.com/o/r/pull/42#issuecomment-2" }] }));
+  const conf = run("python3", [SHIP, "confirm", "read", "--head", head, "--pr", "42", "--root", repo], repo, { PATH: `${ghBin}:${process.env.PATH}`, GH_STUB_DIR: ghDir });
+  if (conf.status !== 0 || !JSON.parse(conf.stdout || "{}").confirmed || !conf.stdout.includes(".mieruka/evidence/")) {
+    console.error(`ship.py confirm read did not rewrite the record and its copy:\n${conf.stdout}${conf.stderr}`);
     break main;
   }
 
@@ -153,6 +171,8 @@ it('loads a pro-ship preflight record with no sync error', () => {
   expect(rec!.artifactKind).toBe('ship-preflight');
   expect(rec!.status).toBe('fail');
   expect(JSON.parse(rec!.detailJson!).verdict).toBe('NO-GO');
+  expect(JSON.parse(rec!.detailJson!).confirmation.by).toBe('maint');
+  expect(JSON.parse(rec!.detailJson!).checks[0].status).toBe('pass');
   expect(listEvidence(db, { artifactKind: 'ship-preflight' } as never).map((e) => e.evidenceKey)).toContain(${JSON.stringify(key)});
 });
 

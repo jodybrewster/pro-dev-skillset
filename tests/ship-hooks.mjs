@@ -302,11 +302,13 @@ export function runShipHookCases() {
         'if [ "$1 $2" = "pr view" ]; then',
         '  while [ $# -gt 0 ]; do if [ "$1" = "--json" ]; then fields="$2"; fi; shift; done',
         '  for fld in $(echo "$fields" | tr , " "); do',
-        '    case "$fld" in number|headRefOid|baseRefName|headRepository) ;; *) echo "Unknown JSON field: \\"$fld\\"" >&2; exit 1 ;; esac',
+        '    case "$fld" in number|headRefOid|baseRefName|headRepository|comments) ;; *) echo "Unknown JSON field: \\"$fld\\"" >&2; exit 1 ;; esac',
         "  done",
         "  set -- pr view",
         "fi",
         'if [ -n "$GH_STUB_EXIT" ]; then echo "stub gh failed" >&2; exit "$GH_STUB_EXIT"; fi',
+        // the confirmation read: `gh pr view <n> --json comments` prints GH_STUB_COMMENTS after GH_STUB_COMMENTS_SLEEP seconds
+        'case ",$fields," in *,comments,*) if [ -n "$GH_STUB_COMMENTS_SLEEP" ]; then sleep "$GH_STUB_COMMENTS_SLEEP"; fi; if [ -n "$GH_STUB_COMMENTS" ]; then cat "$GH_STUB_COMMENTS"; exit 0; fi; echo "no comments" >&2; exit 1 ;; esac',
         'if [ -n "$GH_STUB_OUT" ]; then cat "$GH_STUB_OUT"; exit 0; fi',
         `printf '{"number":42,"headRefOid":"%s","baseRefName":"main","headRepository":{"name":"r"}}\\n' "$(git rev-parse HEAD)"`,
         "",
@@ -454,6 +456,70 @@ export function runShipHookCases() {
         sh(tr, "tag", "v1.0.0");
         r = mrun(pin(sha(tr)), { cwd: tr, env: MENF() });
         add("mg311 a tag-only repo shows no preflight line", "ask, no line", r, asks(r) && !r.text.includes("preflight"));
+      }
+
+      // ---- confirmation line (reaching-done m3, R12 to R14, N1, AC6): one gh pr view, read only ----
+      {
+        const cfRepo = () => featRepo({ "package.json": JSON.stringify({ name: "x", dependencies: { a: "1.0.0", "left-pad": "1.0.0" } }, null, 2) + "\n" });
+        const REQ = "pro-ship-confirm-request: ";
+        const writeRec = (repo, head, detail) => {
+          mkdirSync(join(repo, ".pro-dev", "ship"), { recursive: true });
+          writeFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), JSON.stringify({ schema: 1, head, status: "pass", produced_by: "pro-ship:ship@0.0.0", detail_json: JSON.stringify(detail) }));
+        };
+        const confirmCheck = { section: "release", item: "env vars set", status: "confirm", evidence: "look" };
+        const conf = (h, extra = {}) => ({ repo: "o/r", scope: "pr", pr: 42, head: h, items: ["env vars set"], request_id: "IC_1", request_url: "https://github.com/o/r/pull/42#issuecomment-1",
+          reply_id: "IC_2", reply_url: "https://github.com/o/r/pull/42#issuecomment-2", by: "maint", at: "2026-11-07T11:00:00Z", ...extra });
+        const comments = (h, reply = {}) => {
+          const f = join(sandbox, `comments${++n}.json`);
+          writeFileSync(f, JSON.stringify({ comments: [
+            { id: "IC_1", author: { login: "maint" }, body: REQ + JSON.stringify({ head: h, items: ["env vars set"], pr: 42, repo: "o/r", scope: "pr" }), createdAt: "2026-11-07T10:00:00Z", includesCreatedEdit: false },
+            ...(reply === null ? [] : [{ id: "IC_2", author: { login: "maint" }, body: "confirmed", createdAt: "2026-11-07T11:00:00Z", includesCreatedEdit: false, ...reply }]),
+          ] }));
+          return f;
+        };
+        const cenv = (mergeMode, confMode) => { const e = menv(mergeMode); if (confMode) writeFileSync(join(e.gdir, "mode.confirmation"), confMode + "\n"); return e; };
+        const pin = (h) => `${MERGE} --match-head-commit ${h}`;
+        let cr = cfRepo(), ch = sha(cr);
+        writeRec(cr, ch, { checks: [confirmCheck] });
+        let argsLog = join(sandbox, `cargs${++n}.log`);
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn"), extraEnv: { GH_STUB_ARGS: argsLog } });
+        add("mg400 a confirm check and no confirmation: warn adds the missing line and allows, with no comments read", "message + missing line, no comments call", r,
+          allowsMsg(r) && r.text.includes("confirmation: missing (no confirmation recorded)") && !readFileSync(argsLog, "utf8").includes("comments"));
+        let e = cenv("warn", "enforce");
+        r = mrun(pin(ch), { cwd: cr, env: e });
+        add("mg401 mode.confirmation enforce denies a missing confirmation once and names the request command", "deny + confirm request", r,
+          denies(r) && r.text.includes(`confirm request --head ${ch} --pr 42 --items`) && r.text.includes("env vars set") && /identical command passes/.test(r.text));
+        r = mrun(pin(ch), { cwd: cr, env: e });
+        add("mg402 the identical retry passes", "message + missing line", r, allowsMsg(r) && r.text.includes("confirmation: missing"));
+        e = cenv("enforce");
+        r = mrun(pin(ch), { cwd: cr, env: e });
+        add("mg403 the global mode file never reaches mode.confirmation", "ask, not deny", r, asks(r) && r.text.includes("confirmation: missing"));
+        writeRec(cr, ch, { checks: [{ ...confirmCheck, status: "pass" }], confirmation: conf(ch) });
+        argsLog = join(sandbox, `cargs${++n}.log`);
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn", "enforce"), extraEnv: { GH_STUB_COMMENTS: comments(ch), GH_STUB_ARGS: argsLog } });
+        const calls = readFileSync(argsLog, "utf8").split("\n").filter((l) => l.includes("comments"));
+        add("mg404 a recorded reply that still stands gives the login and the head, with one comments read", "message + maint line, one call", r,
+          allowsMsg(r) && r.text.includes(`confirmation: maint for ${ch.slice(0, 8)}`) && calls.length === 1 && /^pr view 42 --json comments/.test(calls[0]));
+        for (const [id, label, reply, cause] of [["mg405", "an edited reply", { includesCreatedEdit: true }, "the reply was edited"],
+          ["mg406", "a reply that is gone", null, "the reply is gone"], ["mg407", "a reply by another login", { author: { login: "other" } }, "the reply is not by maint"]]) {
+          r = mrun(pin(ch), { cwd: cr, env: cenv("warn"), extraEnv: { GH_STUB_COMMENTS: comments(ch, reply) } });
+          add(`${id} ${label} is missing`, `message + missing (${cause})`, r, allowsMsg(r) && r.text.includes(`confirmation: missing (${cause})`));
+        }
+        writeRec(cr, ch, { checks: [], confirmation: conf("0".repeat(40)) });
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn"), extraEnv: { GH_STUB_COMMENTS: comments(ch) } });
+        add("mg408 a confirmation recorded for another head is missing", "missing (recorded for another head)", r, allowsMsg(r) && r.text.includes("confirmation: missing (recorded for 00000000"));
+        writeRec(cr, ch, { checks: [{ ...confirmCheck, status: "pass" }] });
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn", "enforce") });
+        add("mg409 no confirm check and no confirmation adds nothing", "message, no confirmation line", r, allowsMsg(r) && !r.text.includes("confirmation"));
+        writeRec(cr, ch, { checks: [confirmCheck] });
+        const lr2 = featRepo({ "README.md": "hi there\n" });
+        writeRec(lr2, sha(lr2), { checks: [confirmCheck] });
+        r = mrun(MERGE, { cwd: lr2, env: cenv("warn", "enforce") });
+        add("mg410 a low merge reads nothing and says nothing", "silent", r, allowsQuiet(r));
+        writeRec(cr, ch, { checks: [], confirmation: conf(ch) });
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn"), extraEnv: { GH_STUB_COMMENTS: comments(ch), GH_STUB_COMMENTS_SLEEP: "15" } });
+        add("mg411 a comments read that hangs answers inside the deadline and logs could-not-run", "under 20 s, missing (comments could not be read)", r,
+          r.ms < 20_000 && allowsMsg(r) && r.text.includes("confirmation: missing (comments could not be read)") && /could-not-run\tconfirmation/.test(r.log));
       }
 
       // ---- step 10: medium and high with a matching pin -------------------------------

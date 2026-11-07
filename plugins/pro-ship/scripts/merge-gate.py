@@ -29,13 +29,22 @@ sha is read from FETCH_HEAD and the PR is classified against it, never a stale l
                "preflight: GO for <sha>", "preflight: GO with <n> accepted risks" or "preflight: no
                fresh GO for this PR (<cause>)". It changes no decision, adds no prompt and stays
                silent at low, on a repo with no such target and on any error. File reads only.
+  confirmation at medium and high, when the fresh preflight record for the PR head lists a check
+               left at confirm or a pr-scope confirmation, one `gh pr view <n> --json comments`
+               (5 second timeout) re-reads the recorded reply and the text ends with
+               "confirmation: <login> for <sha>" or "confirmation: missing (<cause>)". Its mode is
+               mode.confirmation alone (default warn): warn changes no decision; enforce denies a
+               missing confirmation once per head per session with the `ship.py confirm request`
+               command and the identical retry passes. It never writes to GitHub.
 Mode: mode.merge-gate, then mode, in CLAUDE_GUARD_DIR or ~/.claude/hooks (default warn).
 A malformed payload exits 0 with no output. A command with no merge in it makes no call;
 nothing from the payload is executed. The gate answers within 20 seconds, before the hook's
-30 second timeout, with both calls inside it.
+30 second timeout, with every call inside it. Besides warn.log it writes only its session state
+file, for the once-per-head confirmation deny.
 """
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -44,6 +53,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 HOOK = "merge-gate"
@@ -502,6 +512,143 @@ def preflight_line(directory: str | None, head: str) -> str:
         return ""
 
 
+# ---------------------------------------------------------------------------
+# Confirmation re-check (reaching-done m3, R12 to R14). The reply rule is written once in
+# docs/ship-preflight.md; ship.py applies it when it records a confirmation and this gate keeps
+# its own copy of the re-check (ADR-0003). Comment text is data: parsed, never run.
+# ---------------------------------------------------------------------------
+
+CONFIRM_PREFIX = "pro-ship-confirm-request: "
+CONFIRMED = re.compile(r"\s*confirmed\.?\s*", re.I)
+LOGIN = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})")
+
+
+def confirmation_mode() -> str:
+    """mode.confirmation alone: neither the global mode file nor mode.merge-gate reaches it (ADR-0016)."""
+    try:
+        with open(os.path.join(guard_dir(), "mode.confirmation"), encoding="utf-8") as fh:
+            return "enforce" if fh.readline().strip() == "enforce" else "warn"
+    except OSError:
+        return "warn"
+
+
+def confirmation_need(root: str, head: str) -> dict | None:
+    """{items, conf} when the fresh record for head lists a confirm check or a pr-scope confirmation."""
+    try:
+        with open(os.path.join(root, ".pro-dev", "ship", "preflight.json"), encoding="utf-8") as f:
+            rec = json.load(f)
+        detail = json.loads(rec["detail_json"])
+    except Exception:
+        return None
+    if (not isinstance(rec, dict) or type(rec.get("schema")) is not int or rec["schema"] != 1
+            or not str(rec.get("produced_by") or "").startswith("pro-ship:ship") or rec.get("head") != head
+            or rec.get("status") not in ("pass", "partial") or not isinstance(detail, dict)):
+        return None
+    checks = detail.get("checks") if isinstance(detail.get("checks"), list) else []
+    items = [c["item"] for c in checks if isinstance(c, dict) and c.get("status") == "confirm" and isinstance(c.get("item"), str)]
+    conf = detail.get("confirmation")
+    conf = conf if isinstance(conf, dict) and conf.get("scope") == "pr" else None
+    if not items and conf is None:
+        return None
+    if not items and isinstance(conf.get("items"), list):
+        items = [i for i in conf["items"] if isinstance(i, str)]
+    return {"items": items, "conf": conf}
+
+
+def request_binds(body, head: str, pr: int) -> bool:
+    lines = [ln for ln in (body if isinstance(body, str) else "").splitlines() if ln.startswith(CONFIRM_PREFIX)]
+    if len(lines) != 1:
+        return False
+    try:
+        v = json.loads(lines[0][len(CONFIRM_PREFIX):])
+    except ValueError:
+        return False
+    return isinstance(v, dict) and v.get("scope") == "pr" and v.get("head") == head and v.get("pr") == pr
+
+
+def confirmation_check(directory: str | None, pr: int, head: str, repo: str | None, cwd: str) -> dict | None:
+    """None when the record asks for no confirmation, else {line, missing, items}. One gh read, no write."""
+    try:
+        root = repo_root(directory)
+    except CouldNotRun:
+        return None
+    need = confirmation_need(root, head)
+    if need is None:
+        return None
+    conf = need["conf"]
+
+    def missing(cause: str) -> dict:
+        return {"line": f"confirmation: missing ({cause})", "missing": True, "items": need["items"]}
+    if conf is None:
+        return missing("no confirmation recorded")
+    if conf.get("head") != head:
+        return missing(f"recorded for {str(conf.get('head'))[:8]}, not this head")
+    if conf.get("pr") != pr:
+        return missing("recorded for another PR")
+    by = conf.get("by")
+    if not isinstance(by, str) or not LOGIN.fullmatch(by):
+        return missing("the recorded login cannot be read")
+    try:
+        r = subprocess.run(["gh", "pr", "view", str(pr), "--json", "comments"] + (["-R", repo] if repo else []),
+                           capture_output=True, text=True, timeout=5, errors="replace", cwd=root,
+                           env={**os.environ, "GH_PROMPT_DISABLED": "1"})
+        data = json.loads(r.stdout) if r.returncode == 0 else None
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        data = None
+    comments = data.get("comments") if isinstance(data, dict) else None
+    if not isinstance(comments, list):
+        log(HOOK, "could-not-run", f"confirmation: the comments of PR {pr} could not be read", cwd)
+        return missing("comments could not be read")
+    by_id = {c.get("id"): c for c in comments if isinstance(c, dict) and c.get("id") is not None}
+    req = by_id.get(conf.get("request_id"))
+    if req is None or not request_binds(req.get("body"), head, pr):
+        return missing("the request is gone")
+    reply = by_id.get(conf.get("reply_id"))
+    if reply is None:
+        return missing("the reply is gone")
+    author = reply.get("author") if isinstance(reply.get("author"), dict) else {}
+    if author.get("login") != by:
+        return missing(f"the reply is not by {by}")
+    if reply.get("includesCreatedEdit") is not False:
+        return missing("the reply was edited")
+    if not isinstance(reply.get("body"), str) or not CONFIRMED.fullmatch(reply["body"]):
+        return missing("the reply no longer says confirmed")
+    return {"line": f"confirmation: {by} for {head[:8]}", "missing": False, "items": need["items"]}
+
+
+def state_path(session_id: str, root: str) -> str:
+    # The key and folder of ship-gate.py's state file; this gate keeps its own key in it.
+    home = os.environ.get("PRO_DEV_STATE_DIR") or os.path.expanduser("~/.claude/pro-dev")
+    key = hashlib.sha256(f"{session_id}:{root}".encode()).hexdigest()[:16]
+    return os.path.join(home, "ship", f"{key}.json")
+
+
+def first_confirmation_deny(session_id: str, root: str, head: str, cwd: str) -> bool:
+    """True the first time this head is denied for a missing confirmation in this session."""
+    path = state_path(session_id or "nosession", root)
+    try:
+        with open(path) as fh:
+            state = json.load(fh)
+        state = state if isinstance(state, dict) else {}
+    except Exception:
+        state = {}
+    seen = state.get("confirmation_denied")
+    seen = seen if isinstance(seen, list) else []
+    if head in seen:
+        return False
+    state["confirmation_denied"] = seen[-50:] + [head]
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".tmp")
+        with os.fdopen(fd, "w") as fh:
+            json.dump(state, fh)
+        os.replace(tmp, path)
+    except Exception:
+        log(HOOK, "could-not-run", "confirmation: session state not writable (allowed)", cwd)
+        return False
+    return True
+
+
 def run_git(root: str, *args: str, timeout: float = 5) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", root, *args], capture_output=True, text=True, timeout=timeout,
                           errors="replace", env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"})
@@ -609,7 +756,29 @@ def summary(res: dict) -> str:
 
 
 # rank: 0 allow quiet, 1 message (warn), 2 ask, 3 deny
-def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[int, str]:
+def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str, session_id: str = "") -> tuple[int, str]:
+    seen: dict = {}
+    rank, text = decide_tier(hit, enforcing, permission_mode, cwd, seen)
+    cf, res = seen.get("confirmation"), seen.get("res")
+    if not (cf and cf["missing"] and rank < 3 and confirmation_mode() == "enforce"):
+        return rank, text
+    try:
+        root = repo_root(hit["dir"])
+    except CouldNotRun:
+        return rank, text
+    if not first_confirmation_deny(session_id, root, res["head"], cwd):
+        return rank, text
+    items = json.dumps(cf["items"] or ["<check name>"])
+    command = (f"python3 {shlex.quote(os.path.join(HERE, 'ship.py'))} confirm request --head {res['head']} "
+               f"--pr {res['pr']} --items {shlex.quote(items)}")
+    log(HOOK, "deny", f"confirmation missing PR {res['pr']} {res['head'][:8]}", cwd)
+    return 3, (f"[{HOOK}] PR {res['pr']} has checks left at confirm and no confirmation bound to {res['head'][:8]} "
+               f"({cf['line'].split('(', 1)[-1].rstrip(')')}). Ask the person whether to post a request; on a yes run "
+               f"{command}, then wait for a person with write access to reply confirmed and run confirm read. "
+               f"The identical command passes if you run it again. {text}")
+
+
+def decide_tier(hit: dict, enforcing: bool, permission_mode: str, cwd: str, seen: dict) -> tuple[int, str]:
     args = hit["args"]
     unknown = None
     res = None
@@ -623,8 +792,9 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str) -> tuple[
     no_prompt = permission_mode in NO_PROMPT_MODES
     pf = ""
     if res is not None:
-        pf = preflight_line(hit["dir"], res["head"])
-        pf = "\n" + pf if pf else ""
+        cf = confirmation_check(hit["dir"], res["pr"], res["head"], hit["repo"], cwd)
+        seen.update(confirmation=cf, res=res)
+        pf = "".join("\n" + line for line in (preflight_line(hit["dir"], res["head"]), cf and cf["line"]) if line)
     if unknown is not None:
         log(HOOK, "could-not-run", f"{unknown} (treated as high)", cwd)
         head_note = ""
@@ -724,7 +894,7 @@ def main_hook() -> int:
     best = (0, "")
     try:
         for hit in hits:
-            got = decide(hit, enforcing, pm, cwd)
+            got = decide(hit, enforcing, pm, cwd, str(payload.get("session_id") or ""))
             if got[0] > best[0]:
                 best = got
     except Deadline:
@@ -751,3 +921,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+# The confirmation re-check is adapted from super-board scripts/super-board-approval.py (MIT,
+# Copyright (c) 2026 Eric Tech); see docs/licenses.md.

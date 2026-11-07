@@ -3186,3 +3186,7 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
+
+# The confirmation (confirm, read_reply) and the readiness check (ready, runnable) are adapted from
+# super-board scripts/super-board-approval.py and scripts/super-board-verification-ready.py (MIT,
+# Copyright (c) 2026 Eric Tech); see docs/licenses.md.
