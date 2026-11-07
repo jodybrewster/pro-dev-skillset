@@ -14,6 +14,7 @@ import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runGitSafeCases } from "./git-safe.mjs";
+import { runGuardCases } from "./guards.mjs";
 import { runSecurityHookCases } from "./security-hooks.mjs";
 import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
@@ -556,6 +557,21 @@ checks["git-safe"] = () => {
       `git-safe.py ${r.id}: expected ${r.expect}, hook ${verb} it (exit ${r.status}) - command: ${JSON.stringify(r.command)}`
     );
   }
+  return { failures, warnings };
+};
+
+// pro-core guard helper. guardlib.py decides each new guard's mode, and a lookup
+// that read the global mode file would enforce a guard before its evidence period
+// (ADR-0016). The case table lives in tests/guards.mjs.
+checks["guards"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runGuardCases();
+  if (skipped) {
+    warnings.push(`guard helper cases skipped - ${skipped}`);
+    return { failures, warnings };
+  }
+  if (!results.length) failures.push("tests/guards.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`guards ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 
