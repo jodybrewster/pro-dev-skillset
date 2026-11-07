@@ -25,6 +25,24 @@ A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md
 The AI-native SDLC playbook is the guide and `pro-ai-sdlc` is where it is encoded, so the whole loop works from Claude Code alone in any repo with the plugin installed (it is opt-in and not part of `pro-dev-starter`).
 Mieruka is only a UI over it and reads the plugin's templates and rules.
 
+### Dogfood it: every change goes through mieruka and the loop
+
+Since 2026-11-07 this repo and mieruka are built through mieruka's board and the `pro-ai-sdlc` loop, nothing else.
+No Orca worktrees, no bare Claude Code terminals running changes on the side, no second session in the same checkout.
+A change starts as a card (an intent), moves through spec, plan, build, review, ship and Done on the board, and its status is read from the board, not from a terminal.
+The reason: on 2026-11-07 three sessions in one checkout landed spec commits on each other's branches and nobody could say where any change stood.
+When work shows up outside the board, say so and route it back through `/intent`.
+Where the loop or mieruka cannot yet do a step, that gap is itself the next card.
+
+### Dogfood it: every change goes through mieruka and the loop
+
+Since 2026-11-07 this repo and mieruka are built through mieruka's board and the `pro-ai-sdlc` loop, nothing else.
+No Orca worktrees, no bare Claude Code terminals running changes on the side, no second session in the same checkout.
+A change starts as a card (an intent), moves through spec, plan, build, review, ship and Done on the board, and its status is read from the board, not from a terminal.
+The reason: on 2026-11-07 three sessions in one checkout landed spec commits on each other's branches and nobody could say where any change stood.
+When work shows up outside the board, say so and route it back through `/intent`.
+Where the loop or mieruka cannot yet do a step, that gap is itself the next card.
+
 ## Model split
 
 - Opus runs the orchestrating session: planning, synthesis and judgment.
