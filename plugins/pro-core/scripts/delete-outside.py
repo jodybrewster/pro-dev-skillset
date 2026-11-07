@@ -13,7 +13,9 @@ other variables in EXPANDABLE expanded. A word holding
 `$(`, a backtick, a variable assigned earlier in the same command or any other
 variable is unknown and skipped, since its value could be a secret that the
 message and warn.log would print: the guard catches the literal mistakes, not
-every one. `pushd` is tracked like `cd`.
+every one. `pushd` is tracked like `cd` and `popd` returns to the directory
+it saved; `$PWD` is the tracked directory. Shell keywords (`then`, `do`, `{`,
+`!`) and wrapper flags before the command word are skipped.
 
 The project root is CLAUDE_PROJECT_DIR, or the payload `cwd` when unset. A
 target is inside when its real path is the root or under it (the root in its
@@ -40,7 +42,15 @@ HOOK = "delete-outside"
 RM_CMDS = ("rm", "rmdir", "unlink")
 TEMP_ROOTS = ("/tmp", "/private/tmp", "/var/folders", "/private/var/folders")
 WRAPPERS = ("sudo", "command", "nice", "nohup", "time", "env")
-WRAPPER_VALUE_FLAGS = ("-u", "-g", "-n", "-C", "-p")  # sudo -u <user>, nice -n <n> and the like
+# The flags that take a value, per wrapper: sudo -u <user>, env -u <name>, nice -n <n>.
+# Any other flag (time -p) stands alone.
+WRAPPER_VALUE_FLAGS = {
+    "sudo": ("-u", "-g", "-C", "-h", "-p", "-U", "-r", "-t", "-D"),
+    "env": ("-u", "-C", "-S"),
+    "nice": ("-n",),
+}
+# Shell keywords that can stand before a command word: `then rm -rf ../old`.
+KEYWORDS = ("then", "do", "else", "elif", "if", "while", "until", "{", "}", "!", "(", ")")
 # Only these are expanded. Any other variable may hold a secret and the resolved
 # path is printed and logged, so a word that uses one is unknown and skipped.
 EXPANDABLE = ("HOME", "TMPDIR", "PWD", "USER", "CLAUDE_PROJECT_DIR", "PRO_DEV_STATE_DIR")
@@ -111,9 +121,14 @@ def targets(command: str, cwd: str, env: Dict[str, str], segments) -> List[Tuple
     found: List[Tuple[str, str, Optional[str]]] = []
     d: Optional[str] = cwd
     local: Set[str] = set()
+    stack: List[Optional[str]] = []  # the directories pushd saved, for popd
 
     def resolve(word: str, base: Optional[str]) -> Optional[str]:
-        ex = expand(word, env, local)
+        # $PWD is the tracked directory, not the hook process's own; unknown after `cd -`.
+        here = {k: v for k, v in env.items() if k != "PWD"}
+        if d is not None:
+            here["PWD"] = d
+        ex = expand(word, here, local)
         if ex is None:
             return None
         if not os.path.isabs(ex):
@@ -123,13 +138,15 @@ def targets(command: str, cwd: str, env: Dict[str, str], segments) -> List[Tuple
         return os.path.normpath(ex)
 
     for tokens in segments(command):
-        while tokens and (_ASSIGN.match(tokens[0]) or tokens[0] in WRAPPERS):
-            if _ASSIGN.match(tokens[0]):
-                local.add(tokens[0].split("=", 1)[0])
+        while tokens and (_ASSIGN.match(tokens[0]) or tokens[0] in WRAPPERS or tokens[0] in KEYWORDS):
+            word = tokens[0]
+            if _ASSIGN.match(word):
+                local.add(word.split("=", 1)[0])
             tokens = tokens[1:]
-            while tokens and tokens[0].startswith("-") and len(tokens[0]) > 1:
-                flag = tokens[0]
-                tokens = tokens[2:] if flag in WRAPPER_VALUE_FLAGS else tokens[1:]
+            if word in WRAPPERS:
+                takes = WRAPPER_VALUE_FLAGS.get(word, ())
+                while tokens and tokens[0].startswith("-") and len(tokens[0]) > 1:
+                    tokens = tokens[2:] if tokens[0] in takes else tokens[1:]
         if not tokens:
             continue
         cmd, args = os.path.basename(tokens[0]), tokens[1:]
@@ -139,7 +156,12 @@ def targets(command: str, cwd: str, env: Dict[str, str], segments) -> List[Tuple
                 if m:
                     local.add(m.group(0))
             continue
+        if cmd == "popd":
+            d = stack.pop() if stack else None
+            continue
         if cmd in ("cd", "pushd"):
+            if cmd == "pushd":
+                stack.append(d)
             words = operands(args)
             if not words:
                 d = env.get("HOME") or None

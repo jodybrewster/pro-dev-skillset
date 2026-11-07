@@ -117,7 +117,11 @@ An empty section tells the reviewer the diff follows the plan.
 - Review fix, R11 and R12: `pushd` is tracked like `cd` and a wrapper's flags are skipped (`sudo -u someone rm -rf ../z`).
 - Review fix, N1: PreToolUse scans at most 1 MB of text and the first 20 matches per pattern on a line, so a 58 KB one-line write of key-shaped words beside `<` takes about 1 second, inside the 5 second timeout.
 
+- PR review nits: shell keywords before the command word are skipped (`then rm -rf ../old` is a finding), `popd` restores the directory `pushd` saved, only the flags that take a value for their wrapper consume one (`sudo -u`, `env -u`, `nice -n`, so `time -p rm -rf ../x` is a finding) and `$PWD` is the tracked directory, not the hook process's own.
+
 ## Noticed but not touched
+
+- Heredoc bodies stay in scope for delete-outside as for every guard on `guardlib.segments()`: a heredoc that only quotes `rm -rf ../x` gives a warn line. m2 is handling heredoc bodies in `guardlib.segments()`; delete-outside picks that up with no change of its own.
 
 - A `cd` inside a subshell carries to the commands after it, since `guardlib.segments()` drops the parentheses: `(cd /tmp/a && make); rm -rf ../sibling` resolves under `/tmp` and passes. Tracking subshell depth in the tokenizer would be a small follow-up for both guards that track `cd`.
 - `find ../y -name '*.o' | xargs rm` and `git --work-tree=../w clean -fd` pass; the spec does not list them and `xargs rm` would need the find's paths carried across the pipe.
