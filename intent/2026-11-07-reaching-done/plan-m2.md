@@ -98,25 +98,25 @@ claude plugin validate plugins/pro-quality --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 550e27689883
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: 550e27689883 on `PDS-52/build-m2`, based on origin/main at 3af9bdd.
+- Checks run: `node tests/check.mjs` 51 checks, 0 failures, 13 warnings (all existing: Codex counterparts of pro-research agents, routing cases for subagents, one pro-egm eval prompt, the router and the deployed skill); `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `node tests/ship-check.mjs` 272/272; `node tests/ship-preflight.mjs` 103/103; `node tests/ship-hooks.mjs` 355/355; `node tests/factory.mjs` 184/184; `node tests/lessons.mjs` 102/102; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round among the records; `python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude` printed `{"host": "claude", "required": "opus", "source": "default"}` (the tip has no section until this merges); `claude plugin validate . --strict` and each of pro-ship, pro-ai-sdlc and pro-quality: Validation passed.
+- Definition of done: met except the hand run of `/execute` in AC10.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- AC10:
-- AC11:
-- AC12:
+- Doubt: none
+- AC1: ship-check rm1 and rm1b: a Sonnet code review in warn gives `model_ok: false`, status `done`, the warn line, a `review-model` line in `warn.log` and `pass`.
+- AC2: rm2 gives `incomplete` under `mode.review-model` enforce; rm2b shows the global `mode` file leaves it in warn; rm3 gives `pass` on `claude-opus-5-5` in both modes.
+- AC3: rm4 and rm4b: no model gives `model_ok: false` with the warn line in warn and `incomplete` in enforce.
+- AC4: rm5 covers `codex: any`, the exact id and a different id (true, true, false); rm6 gives `model_ok: null`, the note and `pass` in warn and in enforce with no codex entry.
+- AC5: rm9 prints `opus` with source `main:REVIEW.md` while the feature branch's `REVIEW.md` names sonnet; rm9c shows a working-tree edit changes nothing.
+- AC6: rm10 prints `model=opus host=claude`, rm10b `model=none`, rm10c `model=gpt-5.1-codex host=codex`.
+- AC7: ship-preflight model cases list PR 2 under `model_mismatch` with `review ran on sonnet (claude)` and PR 3 under `model_unrecorded`; every commit is covered in warn and PR 2's two commits are uncovered in enforce.
+- AC8: record refuses the Sonnet GO in enforce with no record written and records it in warn with `, review ran on sonnet (claude)` in the summary.
+- AC9: factory v37 raises to level 2 with `no pr-check marker`; v38 passes with only the note `pr-check not installed, reviewer model not checked`; v39 notes the Sonnet marker in warn and v40 raises it to level 2 in enforce.
+- AC10: `sdlc-contract` asserts that stage 8 names `pr-check.py marker` and appends its line; the hand run of `/execute` on a demo plan was not done in this build.
+- AC11: lessons round cases write `model: claude-opus-5-5`, `host: claude` and `model_ok: true`; `tests/mieruka-sync.mjs` loads the round written with `--model` and `--host`.
+- AC12: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass as above.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
