@@ -28,7 +28,7 @@ It bumps pro-core from 0.26.0 to 0.27.0 in both manifests and its marketplace en
 1. Add failing `env-check.py` cases to `tests/guards.mjs`: a fixture dotenv with `SET=<sentinel>`, `EMPTY=` and `export QUOTED="<sentinel>"`, a commented `# MISSING=x`; assert each line of output, the exit codes 0, 1 and 64 and that the sentinel is absent from stdout and stderr in every case, including an unreadable `--file` (size S; R15 to R19, AC6)
 2. Write `env-check.py` (size S; R15 to R19)
    Checkpoint: `node tests/guards.mjs --only=env-check` passes; `/usr/bin/python3 -m py_compile plugins/pro-core/scripts/env-check.py` is clean.
-3. Add failing `secret-read` cases: each AC1 Read as `warn`, each AC2 Read as `allow`, the AC3 Bash commands both ways, the AC4 Grep payloads, the AC5 enforce and global-mode cases, the AC7 env-check calls and the AC8 malformed payloads (size S; R20, AC1 to AC5, AC7, AC8)
+3. Add failing `secret-read` cases: each AC1 Read as `warn`, each AC2 Read as `allow`, the AC3 Bash commands both ways, the AC4 and AC4a payloads (`*.json`, `cat *`, `credentials.ts` passing), the AC5 enforce and global-mode cases, the AC7 env-check calls and the AC8 malformed payloads (size S; R20, AC1 to AC5, AC4a, AC7, AC8)
 4. Write `secret-read.py`: `is_secret()` for the R2 kinds, `glob_is_secret()` for R3, then Read and Grep (size S; R2 to R5, R14)
 5. Add the Bash rules on `guardlib.segments()`: reader commands with the pattern-word exception, input redirects, `xargs` pipelines, the plain `env-check.py` call and `source`; then the mode routing and messages with the absolute `env-check.py` path (size M; R6 to R13, N1, N2)
    Checkpoint: `node tests/guards.mjs` all green; `node tests/git-safe.mjs` still green; `/usr/bin/python3 -m py_compile plugins/pro-core/scripts/secret-read.py` is clean.
@@ -41,7 +41,7 @@ Steps 1 and 2 and steps 3 to 5 touch separate scripts and could run in parallel 
 
 ## Tests that prove it
 
-- `tests/guards.mjs` covers every R2 kind on Read, the allows (`.env.example`, `.pub`), the Bash readers and their non-reading neighbors, Grep path and glob, both modes, the plain env-check call and malformed payloads.
+- `tests/guards.mjs` covers every R2 kind on Read, the allows (`.env.example`, `.pub`, `credentials.ts`, `*.json`, `cat *`), the Bash readers and their non-reading neighbors, Grep path and glob, both modes, the plain env-check call and malformed payloads.
 - The env-check cases assert the sentinel never reaches stdout or stderr.
 - `node tests/check.mjs` runs both through the `guards` check.
 - A mutation run proves the cases bite: remove `.npmrc` from `is_secret()` and the `.npmrc` cases fail; drop the pattern-word skip for `grep` and `grep -r ".env" src/` turns into a finding; restore both.

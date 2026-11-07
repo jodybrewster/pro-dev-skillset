@@ -57,7 +57,7 @@ How often: the holes have not fired in the warn log yet, which is the point: not
 
 Each hole is closed by a guard or a doc fix that names what it caught and never prints a secret:
 
-1. Item 32: `git-safe.py` parses each `git push` into its flags and refspecs instead of matching regexes.
+1. Item 32: `git-safe.py` parses each `git push` into its flags and refspecs, beside the regexes it keeps.
    It flags a push that would update or delete a protected branch: `--delete` or `-d` of one, `:<protected>`, `refs/heads/<protected>`, `+<ref>`, a bare push or `HEAD` while one is checked out and `--all` or `--mirror`.
    The protected set is `main`, `master`, the repo's default branch read from `origin/HEAD` and any name listed one per line in a `protected-branches` file in the guard folder.
 2. Item 33: a secret-read guard on `Read`, `Grep` and `Bash` (`cat`, `less`, `more`, `head`, `tail`, `sed`, `grep`, `xargs` and input redirects) for dotenv files except `.env.example`, `id_*` keys, `.pem` files, `.npmrc`, `credentials*` files and service-account JSON.
@@ -106,7 +106,6 @@ Where each lands: 32, 33 and 43 in pro-core, where `git-safe.py` gains a sibling
 ## Success looks like
 
 Every command in the Problem section that passes today is flagged in warn mode and denied under its own enforce mode file.
-`git push origin main-fix` passes.
 An agent asked whether `OPENAI_API_KEY` is set answers from `env-check.py` without the value entering the transcript.
 `warn.log` gains lines from the four new guards during the warn period and none of them holds a secret.
 

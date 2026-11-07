@@ -41,8 +41,10 @@ Key literals (item 34):
 
 - R1. `plugins/pro-security/scripts/key-literal.py` is registered in pro-security's `hooks/hooks.json` as a PreToolUse hook and a PostToolUse hook, each with matcher `Edit|Write|MultiEdit` and a 5 second timeout; it has no Bash matcher.
 - R2. The patterns are the `incident.py` entries for AWS key ids (`AKIA`, `ASIA`), Anthropic keys (`sk-ant-`), GitHub tokens (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`), Slack tokens (`xox[bpa]-`, `xapp-`) and private key blocks, with `xox[a-z]` narrowed to `xox[bpa]` and at least 20 characters after the `sk-ant-`, `xox?-` and `xapp-` prefixes.
-- R3. A line is not a finding when it reads from the environment (`process.env`, `import.meta.env`, `os.environ`, `getenv`, `Deno.env`, `System.getenv`, `ENV[`, `${{ secrets.`) or holds an obvious stand-in (`your_`, `your-`, `xxxx`, `<` followed by a letter, `...`, `placeholder`, `example`, `changeme`, `dummy`, `fake`, `redacted`).
-- R4. A file whose name is `.env.example`, `.env.sample` or `.env.template` is never checked.
+- R3. A line is not a finding when it reads from the environment (`process.env`, `import.meta.env`, `os.environ`, `getenv`, `Deno.env`, `System.getenv`, `ENV[`, `${{ secrets.`) or holds an obvious stand-in word (`your_`, `your-`, `xxxx`, `placeholder`, `example`, `changeme`, `dummy`, `fake`, `redacted`).
+  `<` and `...` count as stand-ins only inside the key-shaped token itself (`sk-ant-<your key>`, `ghp_...`), never elsewhere on the line so a key on a JSX line or beside an ellipsis is still a finding.
+- R4. A file in the m2 dotenv set is never checked, before or after the write: `.env` and `.env.*` (including `.env.example`, `.env.sample` and `.env.template`), `.dev.vars` and `.dev.vars.*`.
+  The local dotenv file is where R8's message tells the agent to put the value so writing it there is allowed; the secret-read guard covers reading it back.
 - R5. PreToolUse reads `content` for Write, `new_string` for Edit and each `edits[].new_string` for MultiEdit and finds the first five matching lines, numbered within the text (for MultiEdit, as edit and line).
 - R6. PreToolUse mode is `warn` unless `mode.key-literal` in the guard folder holds `enforce`; the global `mode` file and `CLAUDE_GUARD_MODE` leave it in warn.
   Warn mode logs `would-deny`, prints `systemMessage` and `additionalContext` and allows; enforce mode logs `deny` and prints `permissionDecision: deny`.
@@ -61,7 +63,7 @@ Delete outside (item 43):
 - R15. A target outside the root that is not exempt is a `delete-outside` finding; the mode is `warn` unless `mode.delete-outside` holds `enforce`, with the same warn and enforce output as R6.
 - R16. The message names the command, the word as written, the resolved path and the project root.
   It says to delete inside the repo or a temp folder or ask the person to run it.
-- R17. A malformed payload or any exception exits 0 with no output; the guard reads no file and runs no subprocess.
+- R17. A malformed payload or any exception exits 0 with no output; the guard reads no file other than its own mode file, writes nothing but its `warn.log` line and runs no subprocess.
 
 Tests:
 
@@ -132,6 +134,7 @@ ADR needed: no, ADR-0016 governs how a guard starts and moves to enforce, ADR-00
 
 - AC1. In the default mode, a Write whose content holds a fake key of each R2 kind exits 0 and logs a `key-literal` `would-deny` line naming the kind and line; with `mode.key-literal` holding `enforce`, the same payload prints `permissionDecision: deny`.
 - AC2. A Write of `const k = process.env.ANTHROPIC_API_KEY`, of `AKIAEXAMPLE...` with `example` on the line and of any key into `.env.example` passes with no line.
+- AC2a. A Write of a full fake key into `.env.local` and into `.dev.vars` passes with no line, before and after the write; a full fake key on a line that also holds `<div>` or `...` outside the key is a finding.
 - AC3. A PostToolUse payload for a file that holds a fake key on line 7 prints `additionalContext` naming line 7 and never denies, in both modes.
 - AC4. The R19 case passes: the planted key appears in no output and no `warn.log` line.
 - AC5. With the project root set to a fixture folder, `rm -rf ../other`, `rm ~/notes.txt`, `find /var/lib/x -delete`, `find ../y -exec rm {} \;`, `git -C ../other clean -fd` and `cd .. && rm -rf other` are `delete-outside` findings; with `mode.delete-outside` holding `enforce` they print `permissionDecision: deny`.

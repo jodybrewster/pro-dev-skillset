@@ -29,8 +29,8 @@ Steps 1 to 3 (pro-security) and steps 4 to 6 (pro-core) touch separate files and
 
 ## Order of work
 
-1. Add failing key-literal cases to `tests/guards.mjs`, every fixture key assembled from parts at run time: a Write per R2 kind as `warn` and under `mode.key-literal` enforce as `block`; the AC2 allows; a MultiEdit with the key in its second edit; a PostToolUse on a fixture file with the key on line 7; the R19 no-leak assertion over stdout, stderr and `warn.log`; the global-mode case; malformed payloads (size S; R18, R19, AC1 to AC4, AC7, AC8)
-2. Write `key-literal.py` PreToolUse: the R2 patterns, the R3 safe and stand-in filters, the R4 template-file skip, text from Write, Edit and MultiEdit, the first five lines, own-key mode routing and messages that name kind, basename and lines (size M; R1 to R6, R8, R9, N1)
+1. Add failing key-literal cases to `tests/guards.mjs`, every fixture key assembled from parts at run time: a Write per R2 kind as `warn` and under `mode.key-literal` enforce as `block`; the AC2 allows; the AC2a dotenv writes passing and the JSX and ellipsis lines flagged; a MultiEdit with the key in its second edit; a PostToolUse on a fixture file with the key on line 7; the R19 no-leak assertion over stdout, stderr and `warn.log`; the global-mode case; malformed payloads (size S; R18, R19, AC1, AC2, AC2a, AC3, AC4, AC7, AC8)
+2. Write `key-literal.py` PreToolUse: the R2 patterns, the R3 safe and stand-in filters (stand-in `<` and `...` only inside the token), the R4 dotenv-set skip, text from Write, Edit and MultiEdit, the first five lines, own-key mode routing and messages that name kind, basename and lines (size M; R1 to R6, R8, R9, N1)
 3. Add the PostToolUse path: read the one written file under 1 MB with no NUL byte, log `found-on-disk`, print the context message, never deny; register both entries in `plugins/pro-security/hooks/hooks.json` (size S; R1, R7)
    Checkpoint: `node tests/guards.mjs --only=key-literal` passes; `/usr/bin/python3 -m py_compile plugins/pro-security/scripts/key-literal.py` is clean; `claude plugin validate plugins/pro-security --strict` passes.
 4. Add failing delete-outside cases, with `CLAUDE_PROJECT_DIR` and `cwd` set to a fixture folder and `HOME`, `TMPDIR` and `PRO_DEV_STATE_DIR` set per case: each AC5 command as `warn` and under `mode.delete-outside` enforce as `block`; each AC6 allow and the two AC6 findings; the global-mode case; malformed payloads (size S; R18, AC5 to AC8)
@@ -44,7 +44,7 @@ No step is irreversible.
 
 ## Tests that prove it
 
-- `tests/guards.mjs` covers each credential kind before and after the write, the safe and stand-in lines, template files, MultiEdit, the no-leak assertion, each delete form inside and outside the root, the exemptions, the guard folder as a finding, both modes and malformed payloads.
+- `tests/guards.mjs` covers each credential kind before and after the write, the safe and stand-in lines, the dotenv set, MultiEdit, the no-leak assertion, each delete form inside and outside the root, the exemptions, the guard folder as a finding, both modes and malformed payloads.
 - `node tests/check.mjs` runs them through the `guards` check.
 - A mutation run proves the cases bite: drop `ASIA` from the AWS pattern and the `ASIA` case fails; remove the `cd` tracking in `delete-outside.py` and `cd .. && rm -rf other` stops being a finding; restore both.
 

@@ -35,8 +35,9 @@ Confirmed by the maintainer on 2026-11-07:
 ### Functional
 
 - R1. `plugins/pro-core/scripts/secret-read.py` is registered in pro-core's `hooks/hooks.json` as a PreToolUse hook with matcher `Read|Grep|Bash` and a 5 second timeout (intent: "a secret-read guard on `Read`, `Grep` and `Bash`").
-- R2. A path is secret when its last component is `.env` or starts with `.env.`, other than `.env.example`, `.env.sample` and `.env.template`; is `.dev.vars` or starts with `.dev.vars.`; is `id_rsa`, `id_ed25519`, `id_ecdsa` or `id_dsa` (a `.pub` key is not secret); ends in `.pem`; is `.npmrc`; starts with `credentials`; or contains `service-account` and ends in `.json`.
-- R3. A glob word (`*`, `?` or `[`) is secret when it matches, with `fnmatch`, one of `.env`, `.env.local`, `.env.production`, `.dev.vars`, `id_rsa`, `id_ed25519`, `key.pem`, `.npmrc`, `credentials.json` or `service-account.json`.
+- R2. A path is secret when its last component is `.env` or starts with `.env.`, other than `.env.example`, `.env.sample` and `.env.template`; is `.dev.vars` or starts with `.dev.vars.`; starts with `id_` and has no extension (so `id_rsa` and `id_ed25519` are secret; `id_ed25519.pub` and any other extension are not); ends in `.pem`; is `.npmrc`; starts with `credentials` and has no extension or one of `.json`, `.yml`, `.yaml`, `.ini`, `.toml` or `.txt` (so `src/auth/credentials.ts` is not secret); or contains `service-account` and ends in `.json`.
+  R2 applies to concrete paths only: a word holding `*`, `?` or `[` is never matched against it.
+- R3. A glob word (`*`, `?` or `[`) is secret only when the literal text of its last component before the first glob character is `.env`, starts with `.env.` or starts with `.dev.vars`, as in `.env*` and `.env.*`; no glob is ever expanded or matched against file names so `*`, `*.json` and `*.pem` are not findings.
 - R4. Read: a finding when `file_path` is secret.
 - R5. Grep: a finding when `path` is secret or `glob` is secret by R3.
 - R6. Bash: a finding when a simple command is `cat`, `less`, `more`, `head`, `tail`, `sed`, `grep`, `egrep`, `fgrep` or `rg` and one of its file words is secret; for `grep`, `egrep`, `fgrep`, `rg` and `sed` the first non-flag word is the pattern or script and is not a file word, unless `-e`, `-f` or `--regexp` supplied it.
@@ -49,7 +50,7 @@ Confirmed by the maintainer on 2026-11-07:
   Enforce mode logs `deny` and prints `permissionDecision: deny`.
 - R13. Both messages say which kind of file was touched and never its content.
   They give the way forward: read `.env.example` for key names, run `python3 <absolute path of env-check.py> KEY [KEY ...]` or ask the person to run the command.
-- R14. The guard reads no file, runs no subprocess and makes no network call; a malformed payload or any exception exits 0 with no output (intent: "fails open on its own errors").
+- R14. The guard reads no file other than its own mode file, writes nothing but its `warn.log` line, runs no subprocess and makes no network call; a malformed payload or any exception exits 0 with no output (intent: "fails open on its own errors").
 - R15. `plugins/pro-core/scripts/env-check.py [--file <path>] KEY [KEY ...]` prints one line per key, `KEY present`, `KEY empty` or `KEY missing`, with nothing else on stdout.
 - R16. With no `--file`, `env-check.py` reads the first of `.env.local` and `.env` that exists in the working directory; with none, every key is `missing`.
 - R17. `env-check.py` reads `KEY=value` and `export KEY=value` lines, ignores lines whose first non-blank character is `#` and treats a value that is empty after trimming quotes and blanks as `empty`; the last assignment of a key wins.
@@ -106,7 +107,7 @@ ADR needed: no, ADR-0016 already governs how a new guard starts and ADR-0017 the
 |---|---------|-----------------|------------|
 | 1 | The intent names only `.env.example` as readable but `.env.sample` and `.env.template` play the same role | intent, out of scope | resolved on 2026-11-07: all three stay readable (R2); none holds a real value by convention and blocking them would push agents to guess key names |
 | 2 | `.dev.vars` is not in the roadmap item but holds Cloudflare secrets and `copy-env.py` already treats it as an env file | intent | resolved on 2026-11-07: included in R2 to match `copy-env.py` |
-| 3 | `grep -r KEY .` and `cat *` can still reach a secret file through a directory or a broad glob | REVIEW.md pass 1 | resolved on 2026-11-07: accepted limit written in the `docs/enforce-mode.md` row; R3 catches globs that name a secret and the guard is a guard rail, not a sandbox |
+| 3 | `grep -r KEY .` and `cat *` can still reach a secret file through a directory or a broad glob | REVIEW.md pass 1 | resolved on 2026-11-07: accepted limit written in the `docs/enforce-mode.md` row; R2 and R3 match concrete paths and `.env` prefixes only, never a broad glob, since the guard is a guard rail, not a sandbox |
 | 4 | `source .env && echo $KEY` prints a value and passes | REVIEW.md pass 1 | resolved on 2026-11-07: accepted limit in the same row; R10 keeps `source` working because dev servers and scripts need it |
 | 5 | A machine with a user-level env guard sees two warnings for one `cat .env` | `docs/enforce-mode.md` | resolved on 2026-11-07: accepted; the plugin guard is the one this repo ships and a user-level hook is the person's own choice |
 
@@ -119,7 +120,8 @@ ADR needed: no, ADR-0016 already governs how a new guard starts and ADR-0017 the
 - AC1. In the default mode, Read of `.env`, `.env.local`, `config/.env.production`, `~/.ssh/id_ed25519`, `certs/server.pem`, `.npmrc`, `credentials.json` and `gcp-service-account.json` each exit 0 with a `secret-read` `would-deny` line in `warn.log`.
 - AC2. Read of `.env.example`, `.env.sample`, `id_ed25519.pub` and `src/env.ts` exit 0 with no line.
 - AC3. Bash `cat .env`, `head -5 .env.local`, `grep KEY .env`, `sed -n 1p .npmrc`, `python3 x.py < .env` and `echo .env | xargs cat` are findings; `grep -r ".env" src/`, `cp .env.example .env`, `source .env` and `ls -la .env` are not.
-- AC4. Grep with `path: ".env"` and with `glob: ".env*"` are findings; Grep with `glob: "*.ts"` is not.
+- AC4. Grep with `path: ".env"` and with `glob: ".env*"` are findings; Grep with `glob: "*.ts"` or `glob: "*.json"` is not.
+- AC4a. Bash `cat *` and `head *.pem` are not findings; Read of `src/auth/credentials.ts` and of `scripts/id_helpers.py` is not a finding; Read of `config/credentials.yml` is.
 - AC5. With `mode.secret-read` holding `enforce`, the AC1 and AC3 findings print `permissionDecision: deny`; with only a global `mode` holding `enforce`, they stay in warn.
 - AC6. `python3 env-check.py --file <fixture> SET EMPTY MISSING` prints `SET present`, `EMPTY empty` and `MISSING missing` and exits 1; the fixture's sentinel value appears in neither stdout nor stderr; `env-check.py 'BAD-KEY'` exits 64.
 - AC7. `python3 <path>/env-check.py KEY` is not a finding; `python3 <path>/env-check.py KEY | cat .env` is.
