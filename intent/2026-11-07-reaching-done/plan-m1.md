@@ -125,5 +125,6 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 5: when a round graded any row, `/review` always hands the fresh pass to the `reviewer` subagent, because the session has read the table and its claims; a first review still chooses as before (N2).
 - Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
 - Step 7: the doubt skill's own `handoff.md` also names the contradicting paths in its `brief` line, so the template the session fills agrees with R28; the field names are unchanged.
+- Step 8: the fixtures are listed file by file, so the runner copies each to the repo root and the prompts name `before.py`, `after.py`, `clean.py` and `CONTRACT.md` without the folder; expectations that joined two checks are split into one check each.
 
 ## Noticed but not touched
