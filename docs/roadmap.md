@@ -233,7 +233,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md), in warn under `mode.protected-push`
-- [ ] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core)
+- [x] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core): shipped in [#193](https://github.com/jodybrewster/pro-dev-skillset/pull/193) as [guard-hardening m2](../intent/2026-11-07-guard-hardening/plan-m2.md), in warn under `mode.secret-read`
 - [x] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as [guard-hardening m3](../intent/2026-11-07-guard-hardening/plan-m3.md), in warn under `mode.key-literal`
 
 ### P1: every feature through the loop plus safety
