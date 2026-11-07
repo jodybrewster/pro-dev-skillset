@@ -179,6 +179,7 @@ PP_HOOK = "protected-push"
 _PUSH_WORD = re.compile(r"\bpush\b")
 _ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 _REDIRECT = re.compile(r"^\d*[<>]")
+_BARE_REDIRECT = re.compile(r"^\d*[<>]+$")  # `>`, `2>`, `>>`, `<`: the next token is its target
 _REMOTE_NAME = re.compile(r"^[A-Za-z0-9._-]+$")
 _WRAPPERS = ("sudo", "env", "command")
 _PUSH_VALUE_OPTS = ("--repo", "--receive-pack", "--exec", "-o", "--push-option")
@@ -189,6 +190,20 @@ _GIT_TIMEOUT = 5
 
 def _join(base: str, path: str) -> str:
     return os.path.normpath(os.path.join(base, os.path.expanduser(path)))
+
+
+def _words(args: List[str]) -> List[str]:
+    """Drop redirects: an attached one (`>push.log`) alone, a bare one with its target."""
+    out: List[str] = []
+    skip = False
+    for a in args:
+        if skip:
+            skip = False
+        elif _BARE_REDIRECT.match(a):
+            skip = True
+        elif not _REDIRECT.match(a):
+            out.append(a)
+    return out
 
 
 def parse_pushes(command: str, cwd: str) -> List[dict]:
@@ -233,7 +248,7 @@ def parse_pushes(command: str, cwd: str) -> List[dict]:
         while j < len(args):
             a = args[j]
             if a == "--":
-                positional += [x for x in args[j + 1:] if not _REDIRECT.match(x)]
+                positional += _words(args[j + 1:])
                 break
             if a in _PUSH_VALUE_OPTS:
                 j += 2
@@ -247,6 +262,8 @@ def parse_pushes(command: str, cwd: str) -> List[dict]:
                             j += 1
                         break
                     letters.add(ch)
+            elif _BARE_REDIRECT.match(a):
+                j += 1  # the redirect target is not a refspec
             elif not _REDIRECT.match(a):
                 positional.append(a)
             j += 1

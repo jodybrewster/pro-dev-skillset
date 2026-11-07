@@ -218,6 +218,9 @@ const CASES = [
   { id: "pp-warn/branches", expect: WARN, repo: "feature", command: "git push --branches", has: "every branch (--branches)" },
   { id: "pp-warn/push-option-value-skipped", expect: WARN, repo: "feature", command: "git push -o ci.skip origin :main", has: "delete of main" },
   { id: "pp-warn/plus-refs-heads", expect: WARN, repo: "feature", command: "git push origin +HEAD:refs/heads/main", has: "force push to main" },
+  { id: "pp-warn/bare-push-redirect", expect: WARN, repo: "main", command: "git push origin > push.log", has: "direct push to main" },
+  { id: "pp-warn/bare-push-stderr-redirect", expect: WARN, repo: "main", command: "git push origin 2> push.err", has: "direct push to main" },
+  { id: "pp-allow/feature-push-redirect", expect: ALLOW, repo: "main", command: "git push origin feat/thing >> push.log" },
   { id: "pp-warn/delete-short-flag", expect: WARN, repo: "feature", protected: "release\n", command: "git push -d origin release", has: "delete of release" },
   {
     id: "pp-warn/url-remote-no-leak",
@@ -280,13 +283,20 @@ const NO_GIT_ENV = () => {
   return env;
 };
 
+// Fixture git calls ignore the machine's signing, hooks and identity settings.
+const FIXTURE_GIT = [
+  "-c", "commit.gpgsign=false",
+  "-c", "core.hooksPath=/dev/null",
+  "-c", "user.name=t",
+  "-c", "user.email=fixture",
+  "-c", "init.defaultBranch=main",
+];
+
 function git(cwd, ...args) {
-  const r = spawnSync("git", ["-c", "user.name=fixture", "-c", "user.email=fixture", "-c", "init.defaultBranch=main", ...args], {
-    cwd,
-    encoding: "utf8",
-    env: NO_GIT_ENV(),
-  });
-  if (r.status !== 0) throw new Error(`git ${args.join(" ")} failed: ${r.stderr}`);
+  const r = spawnSync("git", [...FIXTURE_GIT, ...args], { cwd, encoding: "utf8", env: NO_GIT_ENV(), timeout: 20_000 });
+  if (r.error || r.status !== 0) {
+    throw new Error(`git ${args.join(" ")} failed: ${r.error ? r.error.message : (r.stderr || "").trim()}`);
+  }
   return r.stdout;
 }
 
@@ -356,7 +366,12 @@ export function runGitSafeCases({ only = null } = {}) {
 
   const root = mkdtempSync(join(tmpdir(), "git-safe-"));
   try {
-    const repos = buildFixtures(root);
+    let repos;
+    try {
+      repos = buildFixtures(root);
+    } catch (e) {
+      return { ...out, skipped: `could not build the fixture repos (${e.message})` };
+    }
     for (const c of selected) {
       const guardDir = mkdtempSync(join(root, "guard-"));
       for (const [name, body] of Object.entries(c.modes || {})) writeFileSync(join(guardDir, name), `${body}\n`);

@@ -117,5 +117,10 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 4: `git push -d origin main` exits 2 today because `_GIT_PUSH_DELETE` exempts only `--delete`. It is pinned as a block (`pin/delete-short-flag-main`) and `-d` is tested as a `protected-push` finding on a declared branch (`git push -d origin release`).
 - Step 5: `git-safe.py` imports `guardlib` only after the command is seen to hold the word `push`: a Bash command with no push reads no extra file (N1); an import error is caught after the regex rules ran.
 - Step 4: the runner gives each case its own throwaway guard folder, strips `GIT_*`, `CLAUDE_GUARD_MODE` and `CLAUDE_GUARD_DIR` from the environment and runs the cases with no `repo` in an empty temp folder outside any git repo. A machine's own mode files or checked-out branch never change a result.
+- Review nit on the fixture builder: the fixture git calls take `user.email=fixture` in place of an example address, because REVIEW.md pass 2 allows no email address outside manifest author fields; signing and hooks are off, each call has a 20 second timeout and a failed fixture build is a reported skip.
 
 ## Noticed but not touched
+
+- A delete inside a shell string passes both layers: `bash -c "git push origin --delete main"` is exempt from the regex because of `--delete` and the tokenizer keeps the quoted string as one argument. Recursing into `bash -c`, `sh -c` and `eval` would be a small follow-up.
+- Heredoc bodies stay in scope for the parser as they do for the regexes: a commit message that quotes `git push --all` gives a warn line.
+- The session's own hooks read the session's main checkout rather than the build worktree on push: `production-gate.py` warned "push while on main" for a push made from the worktree and the floor guard skipped a push that named several refspecs.
