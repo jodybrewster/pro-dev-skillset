@@ -90,27 +90,37 @@ git grep -n 'diff --cached | grep' -- plugins/   # no output
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of e4d9fa174b2a
 
-- Build commit:
-- Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+- Build commit: e4d9fa174b2a on `build/guard-hardening-m1` over `origin/main` at 8924c54, with the review nits of #190 (bare redirect targets, fixture git settings, noticed items).
+- Checks run: `node tests/git-safe.mjs` 148 cases (83 must block, 36 must warn, 29 must pass), 0 failures; `node tests/guards.mjs` 8 cases, 0 failures; `node tests/check.mjs` 49 checks, 0 failures, 13 warnings (all from agents and evals this change does not touch), `guards` and `git-safe` listed as pass; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 198, fail 0; `claude plugin validate . --strict`, `plugins/pro-core --strict` and `plugins/pro-ship --strict` each Validation passed; `/usr/bin/python3 -m py_compile` (3.9.6) on both scripts clean; `git grep -n 'diff --cached | grep' -- plugins/` no output.
+- Mutations: with `deleting = False` in `protected_findings()`, `--only=delete` shows 6 failures of 17 (the delete cases name a direct push instead of a delete); with `own_mode()` falling back to the global `mode` file, `tests/guards.mjs` fails `mode/global-file-enforce-stays-warn` and all 10 `pp-global-mode` cases fail; with `_check_git_push_protected` out of `SEGMENT_RULES`, 38 of 145 fail including the `bash -c`, heredoc, `main:feature` and `feat:main` pins. All three restored and green.
+- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more) tests written first and seen failing (45 new cases failed with the push passing and no warn line, every old case and pin passing), laws checked by `tests/check.mjs`, attribution footer and rows added.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- Sign-off:
+- Doubt: none; no step is hard to undo and the regex rules are untouched (the only changed line above the parser is the `typing` import).
+- AC1: `pp-warn/*` 10 forms in the `main` fixture exit 0 with a `protected-push` `would-deny` line, for example `[protected-push] warn mode: would deny delete of main (logged to warn.log, allowed)`.
+- AC2: `pp-enforce/*` 10 forms print `permissionDecision: deny` with a `deny` line in warn.log.
+- AC3: `pp-warn/default-branch-trunk` (origin/HEAD at trunk) and `pp-warn/declared-release` (`release` in `protected-branches`) warn; `pp-allow/undeclared-release` passes.
+- AC4: `pp-global-mode/*` 10 forms and two `pp-env-mode` cases stay in warn.
+- AC5: every old case passes; `pin/*` 14 forms exit 2 in three settings each (no repo, the `main` fixture, `mode.protected-push` enforce), and the same 14 commands exit 2 on the `origin/main` script.
+- AC6: `pp-allow/feature-from-main`, `pp-allow/dry-run-refs-heads` and `pp-allow/bare-push-on-feature` pass with no warn.log line, with seven more allows.
+- AC7: `pp-malformed/*` (`not json`, `{}`, `[]`, a number as command, empty stdin) exit 0 with no output.
+- AC8: line 32 of `security-checklist.md` holds the `--name-only` command; the grep finds nothing.
+- AC9: see Checks run.
+- Sign-off: pending, the maintainer on the PR.
 
 ## Departures from plan
 
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 4: `git push -d origin main` exits 2 today because `_GIT_PUSH_DELETE` exempts only `--delete`. It is pinned as a block (`pin/delete-short-flag-main`) and `-d` is tested as a `protected-push` finding on a declared branch (`git push -d origin release`).
+- Step 5: `git-safe.py` imports `guardlib` only after the command is seen to hold the word `push`: a Bash command with no push reads no extra file (N1); an import error is caught after the regex rules ran.
+- Step 4: the runner gives each case its own throwaway guard folder, strips `GIT_*`, `CLAUDE_GUARD_MODE` and `CLAUDE_GUARD_DIR` from the environment and runs the cases with no `repo` in an empty temp folder outside any git repo. A machine's own mode files or checked-out branch never change a result.
+- Review nit on the fixture builder: the fixture git calls take `user.email=fixture` in place of an example address, because REVIEW.md pass 2 allows no email address outside manifest author fields; signing and hooks are off, each call has a 20 second timeout and a failed fixture build is a reported skip.
+
 ## Noticed but not touched
+
+- A delete inside a shell string passes both layers: `bash -c "git push origin --delete main"` is exempt from the regex because of `--delete` and the tokenizer keeps the quoted string as one argument. Recursing into `bash -c`, `sh -c` and `eval` would be a small follow-up.
+- Heredoc bodies stay in scope for the parser as they do for the regexes: a commit message that quotes `git push --all` gives a warn line.
+- The session's own hooks read the session's main checkout rather than the build worktree on push: `production-gate.py` warned "push while on main" for a push made from the worktree and the floor guard skipped a push that named several refspecs.

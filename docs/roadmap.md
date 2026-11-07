@@ -231,7 +231,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 4. Risk classifier and approval tiers (M, pro-ship): shipped in #88 as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
 - [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
-- [ ] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core)
+- [x] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md), in warn under `mode.protected-push`
 - [ ] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core)
 - [ ] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security)
 
@@ -250,7 +250,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [ ] 37. A human confirmation bound to the PR head, which clears a check left at `confirm` (M, pro-ship)
 - [ ] 38. A readiness check in the `/ship` preflight that rejects a rollback or verify step that is not a runnable command (S, pro-ship)
 - [ ] 39. Validate each finding against the callers, guards and tests that reach the changed code; keep contradicting evidence in the doubt step's review unit (S, pro-quality, pro-ai-sdlc)
-- [ ] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship)
+- [x] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md)
 - [ ] 41. A test-gap ledger in `test-engineer`: each acceptance criterion mapped to an assertion or `none`, exact edge-case values and a step that tests the tests (M, pro-quality)
 - [ ] 42. A retry path for a factory run that errored before opening a PR, with an attempt cap per intent that escalates to level 3 (M, pro-ai-sdlc)
 - [ ] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core)
@@ -302,9 +302,9 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - Intent B, the rest of pro-ship: 15, 16, 21.
 - Specialist agents: 18, done through the `/ship` preflight; the intent is closed.
 - Single items: 12, 19, 20, 22, 23, 28.
-- Guard hardening: 32, 33, 34 and 43, with a row each in [docs/enforce-mode.md](./enforce-mode.md) so they join the warn period.
+- Guard hardening: 32, 33, 34, 40 and 43, with a row each in [docs/enforce-mode.md](./enforce-mode.md) so they join the warn period.
 - Reaching Done: 35 to 39 and 46, before the board rerun in [Now](#now).
-- Small sync batch: 40, 49, 51 and 52.
+- Small sync batch: 49, 51 and 52.
 
 ## What's worth doing from agent-skills, by size
 

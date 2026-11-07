@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/git-safe.py\""
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/git-safe.py\"",
+            "timeout": 10
           }
         ]
       }

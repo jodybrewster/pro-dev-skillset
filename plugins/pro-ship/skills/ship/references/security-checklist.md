@@ -29,7 +29,7 @@ Before reaching for controls, spend five minutes thinking like an attacker:
 
 ## Pre-Commit Checks
 
-- [ ] No secrets in code (`git diff --cached | grep -i "password\|secret\|api_key\|token"`)
+- [ ] No secrets in code: `git diff --cached -i -G'password|secret|api_key|token' --name-only` lists only the names of files whose staged diff matches and never prints the matching line; any output means reviewing those files before committing
 - [ ] `.gitignore` covers: `.env`, `.env.local`, `*.pem`, `*.key`
 - [ ] `.env.example` uses placeholder values (not real secrets)
 
