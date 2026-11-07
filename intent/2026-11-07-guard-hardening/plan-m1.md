@@ -90,10 +90,10 @@ git grep -n 'diff --cached | grep' -- plugins/   # no output
 
 ## Done
 
-Done as of b58fe7cedb5b
+Done as of e4d9fa174b2a
 
-- Build commit: b58fe7cedb5b on `build/guard-hardening-m1`, five commits over `origin/main` at 8924c54.
-- Checks run: `node tests/git-safe.mjs` 145 cases (83 must block, 34 must warn, 28 must pass), 0 failures; `node tests/guards.mjs` 8 cases, 0 failures; `node tests/check.mjs` 49 checks, 0 failures, 13 warnings (all from agents and evals this change does not touch), `guards` and `git-safe` listed as pass; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 198, fail 0; `claude plugin validate . --strict`, `plugins/pro-core --strict` and `plugins/pro-ship --strict` each Validation passed; `/usr/bin/python3 -m py_compile` (3.9.6) on both scripts clean; `git grep -n 'diff --cached | grep' -- plugins/` no output.
+- Build commit: e4d9fa174b2a on `build/guard-hardening-m1` over `origin/main` at 8924c54, with the review nits of #190 (bare redirect targets, fixture git settings, noticed items).
+- Checks run: `node tests/git-safe.mjs` 148 cases (83 must block, 36 must warn, 29 must pass), 0 failures; `node tests/guards.mjs` 8 cases, 0 failures; `node tests/check.mjs` 49 checks, 0 failures, 13 warnings (all from agents and evals this change does not touch), `guards` and `git-safe` listed as pass; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 198, fail 0; `claude plugin validate . --strict`, `plugins/pro-core --strict` and `plugins/pro-ship --strict` each Validation passed; `/usr/bin/python3 -m py_compile` (3.9.6) on both scripts clean; `git grep -n 'diff --cached | grep' -- plugins/` no output.
 - Mutations: with `deleting = False` in `protected_findings()`, `--only=delete` shows 6 failures of 17 (the delete cases name a direct push instead of a delete); with `own_mode()` falling back to the global `mode` file, `tests/guards.mjs` fails `mode/global-file-enforce-stays-warn` and all 10 `pp-global-mode` cases fail; with `_check_git_push_protected` out of `SEGMENT_RULES`, 38 of 145 fail including the `bash -c`, heredoc, `main:feature` and `feat:main` pins. All three restored and green.
 - Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more) tests written first and seen failing (45 new cases failed with the push passing and no warn line, every old case and pin passing), laws checked by `tests/check.mjs`, attribution footer and rows added.
 - Visual: none
