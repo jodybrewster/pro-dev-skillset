@@ -50,7 +50,7 @@ Confirmed on 2026-11-07:
 - REVIEW.md pass 2: the conditional GET is a new network call; the ADR-0015 amendment line gains `sdd-cache.py`, limited to the URL the model already asked WebFetch for.
 - Codex parity (ADR-0004): the skill prose names no harness; the hooks are Claude-only and documented as such in `docs/codex-parity.md`.
 - Forked content rule: footer and licenses row (N3).
-- addyosmani is the baseline: the skill's steps are adopted in full; the shell hooks are rewritten with a written reason (this repo's hooks are Python).
+- agent-skills is the baseline: the skill's steps are adopted in full; the shell hooks are rewritten with a written reason (this repo's hooks are Python).
 
 ### Boundaries
 
