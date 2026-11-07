@@ -93,25 +93,25 @@ claude plugin validate plugins/pro-ship --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 1cd1d79ebe27
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: 1cd1d79ebe27 on `PDS-52/build-m3`, based on origin/main at 3af9bdd.
+- Checks run: `node tests/ship-preflight.mjs` 136/136; `node tests/ship-deploy.mjs` 151/151; `node tests/ship-hooks.mjs` 364/364; `node tests/ship-check.mjs` 245/245; the first three also pass under Python 3.9.6; `node tests/check.mjs` 50 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), 3 notOneOf warnings; `node --test tests/unit/*.test.mjs` 200 pass, 0 fail; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with the confirmed preflight record loaded; `python3 plugins/pro-ship/scripts/ship.py ready` exit 0 in 0.09 s; `claude plugin validate . --strict` and every plugin strict print Validation passed.
+- Definition of done: met for the scripted parts; no `/ship` or `/pro-ship:deployed` hand run posted a real comment on GitHub.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- AC10:
-- AC11:
-- AC12:
+- Doubt: none; the one GitHub write is a comment the person approves and can delete.
+- AC1: `confirm/request posts one PR comment...` parses the request line to the head, the items, PR 42, repo o/r and scope pr with sorted keys; a factory session, an unknown item, a check not at confirm and an empty list are each refused with nothing posted.
+- AC2: `confirm/read` clears the check for the earliest later unedited `confirmed` from a write login (an earlier read-only reply is skipped) and refuses a label alone, an edited reply, an earlier reply, a request for another head, a read-only replier and a read-only requester, six distinct whys.
+- AC3: after a valid read `ship.py check` reports the record fresh with status pass, the mieruka copy has the same bytes and `tests/mieruka-sync.mjs` loads the record with `confirmation.by` and the check at pass.
+- AC4: `deployed --confirm-pr 42` with `rollback dry run` at confirm writes status pass for the PR head and for the PR's merge commit; a PR that has neither stays partial with a why.
+- AC5: with no PR for the head `confirm request` posts through `gh api repos/{owner}/{repo}/commits/<sha>/comments -F body=@-` in scope tag; `deployed --from-tag v1.2.0 --target library --confirm-commit <sha>` with both library checks at confirm writes pass.
+- AC6: mg400 to mg411: warn adds the line and allows; `mode.confirmation` enforce denies once with the `confirm request` command and the identical retry passes; the global mode file does not reach it; no confirm check adds nothing; a hanging comments read answers inside the deadline and logs could-not-run.
+- AC7: `ready` on `Revert the release commits on main` exits 9 naming target, field and index; `preflight.json` and `report.json` keep their sha256.
+- AC8: an argv list, a code span and `manual:` lines pass; a manual-only target fails; the `sh` fence is pinned through `runnable()` and `record` (see Departures).
+- AC9: a `verify` step `check the health page` fails and a `curl -fsS` code span passes.
+- AC10: `record` refuses `<previous version>` in a command step and accepts it in a `manual:` line beside a command.
+- AC11: `ship.py ready` passes on this repo; the steps hold `` `git push origin main` ``, two `manual:` lines and no `git tag`.
+- AC12: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -127,3 +127,6 @@ An empty section tells the reviewer the diff follows the plan.
 - A `- manual: text` line in the Ship block parses as a one-key map in the small yaml reader so `runnable()` reads that map as a `manual:` step instead of rejecting it; this repo's block quotes its `manual:` lines.
 
 ## Noticed but not touched
+
+- Open PR #196 also bumps pro-ship (0.20.0) and both #196 and #193 claim `metadata.version` 1.98.0, so whichever merges second rebases and takes the next free minor.
+- `tests/mieruka-sync.mjs` and the `SHIP_BLOCK` constants in `tests/ship-deploy.mjs` still hold prose rollback steps; they feed `deployed` only, which `ready` does not read.
