@@ -69,15 +69,27 @@ claude plugin validate . --strict          # Validation passed
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 544ce43642af.
 
-- Build commit:
+- Build commit: 544ce43642af on `PDS-50/build-m4`, based on `6d8170a`.
 - Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
-- Visual: none
-- Doubt:
-- AC1 to AC5:
-- Sign-off:
+  - `node tests/check.mjs`: `✓ 50 checks · 0 failures · 13 warnings`, `change-ids pass`.
+  - `node tests/eval.mjs --dry`: `✓ 99 cases reference real skills · 107 skills in catalog + 7 distractors` (live routing skipped, no key).
+  - `node tests/route-lexical.mjs --min-rank1 70`: `rank-1: 80/98 (81.6%)  top-k: 93/98 (94.9%)  notOneOf failures: 3`, exit 0.
+  - `node --test tests/unit/*.test.mjs`: `# pass 200`, `# fail 0`.
+  - `node tests/ids.mjs`: `36/36 ids cases passed` (nine new m4 cases).
+  - `grep "^Source: intent/" docs/decisions/*.md`: prints nothing, exit 1.
+  - `claude plugin validate . --strict` and `claude plugin validate plugins/pro-ai-sdlc --strict`: `✔ Validation passed` each.
+  - Before the change, the repo check failed with 32 lines: 20 ADR Source lines and 12 roadmap rows, each named by file and line.
+- Definition of done: tests first (the m4 fixtures failed 6 of 36 before the rule), the version bump in the same commit, no names, no em dashes; no runtime code outside the test rule.
+- Visual: none.
+- Doubt: no hard-to-undo step; every edit is a docs or prose line.
+- AC1: every table row of `docs/roadmap.md` that holds `](../intent/` names its `PDS-` id (12 rows) and `change-ids` passes.
+- AC2: `grep "^Source: intent/"` prints nothing; `grep -c "^Source: PDS-"` counts 1 in each of the 21 ADRs that had an intent Source.
+- AC3: fixtures `check/m4 AC3` in `tests/ids.mjs`: without the id it fails with `docs/decisions/0001-demo.md:9: Source names intent/2026-01-01-a/ without its id TST-1`; with the id it passes.
+- AC4: a hand run of `/pro-ai-sdlc:adr` (Sonnet, `--plugin-dir` on this branch) in a scratch repo with change `TST-1` at `intent/2026-01-02-demo/` wrote `Source: TST-1, intent/2026-01-02-demo/.` and committed `adr: 0001 cache-catalog-in-memory`.
+- AC5: `node tests/check.mjs` and `claude plugin validate . --strict` pass, above.
+- Sign-off: waiting on the maintainer.
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
 
