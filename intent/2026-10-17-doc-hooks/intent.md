@@ -3,6 +3,7 @@ source: planning-session
 kind: bug
 status: accepted
 risk: medium
+level: 3
 created: 2026-10-17
 author: the maintainer
 ---
