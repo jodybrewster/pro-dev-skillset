@@ -158,9 +158,5 @@
   {
     "id": "pro-ai-sdlc/command:auto",
     "reason": "unattended factory phase; covered by tests/factory.mjs and the live e2e, not a routing case"
-  },
-  {
-    "id": "pro-ai-sdlc/command:deliver",
-    "reason": "it runs a whole change with real merges and a tag; proved by the driven mieruka chat run, not a routing case"
   }
 ]
