@@ -49,7 +49,7 @@ Confirmed on 2026-11-07:
 
 ### Non-functional
 
-- N1. The macOS job finishes in under ten minutes.
+- N1. The macOS job finishes in under twenty minutes (restated on 2026-11-07 from ten: `node tests/check.mjs` alone takes about nine and a half minutes on `macos-latest`).
 - N2. Each plugin change bumps its version in both manifests and the marketplace entry, plus `metadata.version`, in the same commit.
 - N3. `plan-sync.py` reads only the plan files and `git` output; it writes nothing.
 

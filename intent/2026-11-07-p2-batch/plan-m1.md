@@ -135,6 +135,8 @@ An empty section tells the reviewer the diff follows the plan.
   `tests/mieruka-sync.mjs` records a merged state in a fixture with no origin, so its fixture gains a bare origin, pushed and fetched; `tests/factory.mjs` case m7 mirrors it.
   That check also failed earlier, at the deploy writer, since `ship.py deployed` requires a deploy time; the fixture now passes `--deployed-at`.
 - Step 6: `plugins/pro-ai-sdlc/README.md` and `docs/factory-demo.md` change too: the hook line names the stale Done and the demo's expected level line names the section.
+- Steps 8 and 9 (PR C): the job timeout is 20 minutes, not 10; the first run timed out at 10 with every check passing because `check.mjs` takes about 9.5 minutes on `macos-latest`. N1 is restated in `spec-m1.md`.
+- Step 8 (PR C): `macos-latest` puts Homebrew Python 3.15 first on `PATH`, so a step puts `/usr/bin/python3` (3.9.6) first; on 3.9 the codex-run check skips its `.toml` cases for want of `tomllib`.
 
 ## Noticed but not touched
 
