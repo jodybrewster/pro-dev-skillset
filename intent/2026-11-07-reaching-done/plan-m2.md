@@ -144,9 +144,11 @@ An empty section tells the reviewer the diff follows the plan.
   The tests serve every build PR a body that ends with an Opus marker as `/execute` now writes one; they point `CLAUDE_GUARD_DIR` at the stub folder.
 - Step 4 (R16): `reviewers` in `report.json` is a list of `{agent, status, host, model}`; a reviewer with no host reads as `claude` and a `done` reviewer with no model is a mismatch, as in the stamp.
   A NO-GO is recorded in enforce too, with the note in its summary.
+  After the PR review `record` judges a reviewer as the stamp does: `done` and `inline` are judged, a host other than `claude` or `codex` or a model id the stamp would refuse is refused and a host with no rule is a note in its output, never a mismatch.
+- Step 5, after the PR review: stage 8 runs `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" marker`, which finds pro-ship's `pr-check.py` as `factory.py` does (repo layout or plugin cache) and prints its marker, because a `$CHECK` from the pr-check skill does not carry across shell calls; `allowed-tools` names that one command.
+- Step 7, after the PR review: the marker regex `MARKER` moved inside the shared block: the `review-model` check holds it byte for byte and runs each copy on marker cases.
 - Step 8: a reviewer's closing line names the model it ran on and wins over the dispatch model when the two differ, since the host ran it; the skills say to report the difference.
 
 ## Noticed but not touched
 
-- `/execute`'s `allowed-tools` has no `python3` entry for pro-ship's scripts: `pr-check.py marker` asks once per run as the pr-check steps it follows already do.
 - `pro-security:security-architect` has no closing `model:` line (R6 names the two code reviewers); pr-check and `/ship` record its dispatch model.

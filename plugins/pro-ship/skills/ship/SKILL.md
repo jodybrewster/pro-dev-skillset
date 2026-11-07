@@ -277,7 +277,7 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
 
 3. `python3 "$SHIP" record .pro-dev/ship/report.json` writes the record and the report.
    It refuses a GO with a Blocker, a GO with no target, a target without rollback steps, a done legal review whose `head` is not HEAD and a dirty tree.
-   A `done` reviewer whose model misses its host's rule adds `review ran on <model> (<host>)` to the summary in warn; under `mode.review-model` enforce the GO is refused until that review runs again on the model `REVIEW.md` names.
+   A `done` or `inline` reviewer whose model misses its host's rule adds `review ran on <model> (<host>)` to the summary in warn; under `mode.review-model` enforce the GO is refused until that review runs again on the model `REVIEW.md` names.
 4. Print the verdict, the paths it wrote and, when one was written, the mieruka copy.
    Say "run /pro-ship:ship again after any new commit".
    After a GO, add one line: once the deploy has happened, run `/pro-ship:deployed` to record it and walk the post-deploy checks.

@@ -107,10 +107,6 @@ PULLS_LOOKUP_CAP = 60
 KINDS = ("deploy-on-merge", "tag-release", "manual-deploy", "desktop", "publish")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-# model= and host= are optional: a marker written before spec-m2 has neither (R14).
-MARKER = re.compile(
-    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
-    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
 SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
 # The whole name of a release tag. git accepts names that hold a command substitution, so a tag
 # reaches a command, a gh path or a record only after a full match of this.
@@ -728,6 +724,11 @@ FAMILIES = ("opus", "sonnet", "haiku", "fable")
 MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99}$")
 DEFAULT_RULES = {"claude": "opus"}
 TIP_REFS = ("origin/HEAD", "origin/main", "main", "origin/master", "master")
+# The PR body marker `pr-check.py marker` prints (docs/pr-check-stamp.md). model= and host= are
+# optional: a marker written before spec-m2 has neither (R14).
+MARKER = re.compile(
+    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
+    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
 
 
 def family(model):
@@ -1034,24 +1035,35 @@ def validate_report(report, head: str) -> None:
                 raise Refuse(f"ship: refusing to record GO: target {tid} has no rollback steps (a missing rollback is a Blocker).")
 
 
-def reviewer_mismatches(report: dict, rules: dict) -> list[tuple[str, str]]:
-    """R16: (`review ran on <model> (<host>)`, the rule) for each done reviewer in report.json whose model
-    misses its host's rule. A reviewer with no host is read as claude."""
-    out = []
+def reviewer_mismatches(report: dict, rules: dict) -> tuple[list[tuple[str, str]], list[str]]:
+    """R16, judged as pr-check.py stamp judges a reviewer: ([(`review ran on <model> (<host>)`, the rule)],
+    [notes]). A done or inline reviewer whose model misses its host's rule is a mismatch; a host with no
+    rule is a note and never a mismatch. A missing host reads as claude; any other host or a model id
+    the stamp would refuse is refused here too."""
+    out, notes = [], []
     revs = report.get("reviewers")
     if revs is None:
-        return out
+        return out, notes
     if not isinstance(revs, list):
         raise Refuse("ship: reviewers must be a list")
     for r in revs:
-        if not isinstance(r, dict) or r.get("status") != "done":
+        if not isinstance(r, dict):
+            raise Refuse("ship: each reviewer must be an object")
+        host = r.get("host", "claude")
+        if not isinstance(host, str) or host not in REVIEW_HOSTS:
+            raise Refuse(f"ship: reviewers host must be one of {', '.join(REVIEW_HOSTS)}")
+        model = r.get("model")
+        if model is not None and not (isinstance(model, str) and MODEL_ID.match(model)):
+            raise Refuse("ship: reviewers model must be a model id (letters, digits and ._:/@[]-) or null")
+        if r.get("status") not in ("done", "inline"):
             continue
-        host = r.get("host") or "claude"
-        model = r.get("model") if isinstance(r.get("model"), str) and r.get("model") else None
-        if model_ok(host, model, rules) is False:
+        ok = model_ok(host, model, rules)
+        if ok is None:
+            notes.append(f"review ran on {model or 'none'} ({host}), REVIEW.md names no model for {host}")
+        elif ok is False:
             shown = (family(model) or model) if model and host == "claude" else (model or "none")
             out.append((f"review ran on {shown} ({host})", str(rules.get(host))))
-    return out
+    return out, notes
 
 
 def mieruka_copy(root: str, key: str, text: str) -> tuple[str | None, str]:
@@ -1086,7 +1098,8 @@ def cmd_record(root: str, args: list[str]) -> dict:
         raise Refuse(f"ship: {args[0]} is not valid JSON ({e})")
     validate_report(report, head)
     rules, _source = review_rules(root)
-    wrong = sorted(set(reviewer_mismatches(report, rules)))
+    found, notes = reviewer_mismatches(report, rules)
+    wrong = sorted(set(found))
     if wrong and report["verdict"] == "GO" and model_mode() == "enforce":
         raise Refuse("ship: refusing to record GO: " + "; ".join(f"{w}, REVIEW.md names {req}" for w, req in wrong)
                      + ". Run that review again on the model REVIEW.md names or record NO-GO.")
@@ -1136,7 +1149,10 @@ def cmd_record(root: str, args: list[str]) -> dict:
         written.append(copy)
     else:
         skipped.append(why)
-    return {"status": status, "evidence_key": record["evidence_key"], "written": written, "skipped": skipped}
+    out = {"status": status, "evidence_key": record["evidence_key"], "written": written, "skipped": skipped}
+    if notes:
+        out["notes"] = notes
+    return out
 
 
 # ---------------------------------------------------------------------------

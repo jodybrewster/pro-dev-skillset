@@ -51,8 +51,9 @@ Dispatch a fresh subagent with the full text of `doubt-instructions.md` followed
 No claim, no author description, no session summary, no plan excerpt and no earlier findings go in.
 Never fork the session to be the reviewer.
 Name the model and effort at dispatch: the model `REVIEW.md` names for this host at high effort.
-Ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host <claude or codex>`, which reads the `## Review model` section from the default branch tip and never from the working tree; with no section it answers `opus` for `claude`.
-Under Codex the host picks the model.
+Under Claude Code ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host claude`, which reads the `## Review model` section from the default branch tip and never from the working tree; with no section it answers `opus` for `claude`.
+Under Codex run `python3 <plugin root>/scripts/reviewmodel.py --host codex`, where the plugin root is the parent of the `skills/` folder that holds this skill.
+The Codex host picks the model: name the answer in the `Doubt:` line rather than at dispatch.
 Name the model you dispatched the reviewer on in the `Doubt:` line.
 Under Codex, start a fresh agent run with the same text.
 

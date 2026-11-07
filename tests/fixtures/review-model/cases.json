@@ -239,5 +239,45 @@
       "",
       "warn"
     ]
+  ],
+  "marker": [
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=opus host=claude -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "low",
+        "opus",
+        "claude"
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=medium -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "medium",
+        null,
+        null
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=gpt-5.1-codex host=codex -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "low",
+        "gpt-5.1-codex",
+        "codex"
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=opus -->",
+      null
+    ],
+    [
+      "no marker",
+      null
+    ]
   ]
 }

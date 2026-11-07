@@ -865,6 +865,11 @@ FAMILIES = ("opus", "sonnet", "haiku", "fable")
 MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99}$")
 DEFAULT_RULES = {"claude": "opus"}
 TIP_REFS = ("origin/HEAD", "origin/main", "main", "origin/master", "master")
+# The PR body marker `pr-check.py marker` prints (docs/pr-check-stamp.md). model= and host= are
+# optional: a marker written before spec-m2 has neither (R14).
+MARKER = re.compile(
+    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
+    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
 
 
 def family(model):
@@ -986,15 +991,16 @@ def reviewer_record(raw, which: str, rules: dict | None = None) -> dict:
             "host": host, "model": model, "model_ok": ok}
 
 
-def model_lines(reviewers: dict, rules: dict, mode: str) -> list[str]:
-    """The warn and note lines of R9 and R10, one per code or security reviewer they apply to."""
+def model_lines(reviewers: dict, rules: dict) -> list[str]:
+    """The warn and note lines of R9 and R10, one per code or security reviewer they apply to. R10 prints
+    the same warn line in enforce; only the result differs."""
     out = []
     for which in ("code", "security"):
         r = reviewers[which]
         if r["status"] not in ("done", "inline"):
             continue
         if r["model_ok"] is False:
-            out.append(f"pr-check: {mode}, {which} review ran on {r['model'] or 'none'} ({r['host']}), REVIEW.md names {rules.get(r['host'])}")
+            out.append(f"pr-check: warn, {which} review ran on {r['model'] or 'none'} ({r['host']}), REVIEW.md names {rules.get(r['host'])}")
         elif r["model_ok"] is None:
             out.append(f"pr-check: note, {which} review ran on {r['model'] or 'none'} ({r['host']}), REVIEW.md names no model for {r['host']}")
     return out
@@ -1404,7 +1410,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         missing.append("floor")
     if not isinstance(run.get("mutation"), dict):
         missing.append("mutation")
-    for line in model_lines(reviewers, rules, mode):
+    for line in model_lines(reviewers, rules):
         print(line, file=sys.stderr)
         if ", REVIEW.md names no model" not in line:
             log_review_model(root, "deny" if mode == "enforce" else "warn", line)

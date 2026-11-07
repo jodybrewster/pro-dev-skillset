@@ -1424,7 +1424,7 @@ checks["stamp-contract"] = () => {
 };
 
 // The reviewer's model (intent/2026-11-07-reaching-done spec-m2): pr-check.py and ship.py in pro-ship
-// and reviewmodel.py in pro-ai-sdlc each carry the block that reads `## Review model`, because plugins
+// and reviewmodel.py in pro-ai-sdlc each carry the block that reads `## Review model` and the PR marker, because plugins
 // do not import each other. The copies must be byte for byte the same and each must give the answers
 // tests/fixtures/review-model/cases.json records. factory.py and lessons.py import reviewmodel.py.
 checks["review-model"] = () => {
@@ -1456,6 +1456,7 @@ for path in sys.argv[2:]:
     res = {"family": [mod.family(m) for m, _ in cases["family"]],
            "parse": [mod.parse_review_model(t) for t, _ in cases["parse"]],
            "model_ok": [mod.model_ok(h, m, r) for h, m, r, _ in cases["model_ok"]],
+           "marker": [list(x.groups()) if (x := mod.MARKER.search(t)) else None for t, _ in cases["marker"]],
            "mode": []}
     for content, _ in cases["mode"]:
         with tempfile.TemporaryDirectory() as d:
@@ -1473,7 +1474,7 @@ print(json.dumps(out))
   try { got = JSON.parse(r.stdout); } catch { failures.push(`the review model fixture run printed no JSON: ${(r.stderr || "").slice(-300)}`); return { failures, warnings }; }
   for (const f of copies) {
     const res = got[join(ROOT, f)];
-    for (const kind of ["family", "parse", "model_ok", "mode"]) {
+    for (const kind of ["family", "parse", "model_ok", "marker", "mode"]) {
       cases[kind].forEach((c, i) => {
         const want = c[c.length - 1];
         if (JSON.stringify(res[kind][i]) !== JSON.stringify(want))
@@ -1658,7 +1659,7 @@ checks["sdlc-contract"] = () => {
     const body = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
     if (!body.includes(modelLine)) failures.push(`pro-quality: ${f} lacks the closing model line ${modelLine}`);
   }
-  need("commands/execute.md", ["`python3 \"$CHECK\" marker`", "append the one line `pr-check.py marker` prints as the last line of the body"]);
+  need("commands/execute.md", ["`python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py\" marker`", "append the one line `pr-check.py marker` prints as the last line of the body"]);
   need("commands/review.md", ["scripts/reviewmodel.py\" --host", "--fresh ran|skipped --model <id> --host claude|codex", "Never pass the required model in place of the one that ran"]);
   need("skills/doubt-driven-development/SKILL.md", ["scripts/reviewmodel.py\" --host"]);
   need("templates/REVIEW.md", ["## Review model"]);

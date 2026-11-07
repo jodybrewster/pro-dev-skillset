@@ -5,7 +5,11 @@
                                          `pr-check.py review-model`: the rule from REVIEW.md on the
                                          default branch tip, never the working tree.
 
-factory.py and lessons.py import it; /review and the doubt step run it. pro-ship's pr-check.py and ship.py hold the same block, because
+  reviewmodel.py marker                  print the pr-check marker line through pro-ship's pr-check.py,
+                                         found in the repo layout or the plugin cache; not-installed
+                                         and exit 3 without pro-ship (/execute stage 8)
+
+factory.py and lessons.py import it; /review, the doubt step and /execute run it. pro-ship's pr-check.py and ship.py hold the same block, because
 plugins do not import each other; the review-model check in tests/check.mjs keeps the copies equal.
 
 Python 3 standard library only. No network calls.
@@ -27,6 +31,11 @@ FAMILIES = ("opus", "sonnet", "haiku", "fable")
 MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99}$")
 DEFAULT_RULES = {"claude": "opus"}
 TIP_REFS = ("origin/HEAD", "origin/main", "main", "origin/master", "master")
+# The PR body marker `pr-check.py marker` prints (docs/pr-check-stamp.md). model= and host= are
+# optional: a marker written before spec-m2 has neither (R14).
+MARKER = re.compile(
+    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
+    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
 
 
 def family(model):
@@ -107,19 +116,29 @@ def model_mode():
 # --- review model: end -------------------------------------------------------------------------
 
 
-# The PR body marker `pr-check.py marker` prints (pro-ship's docs/pr-check-stamp.md). model= and host=
-# are optional: a marker written before spec-m2 has neither.
-MARKER = re.compile(
-    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
-    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
+def cmd_marker():
+    """/execute stage 8 (spec-m2 R17): find pro-ship's pr-check.py as factory.py finds it, in the repo
+    layout or the plugin cache; print its marker line. not-installed and exit 3 when it is absent."""
+    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+    import factory  # imported here, since factory imports this module
+    script = factory.find_script("FACTORY_PR_CHECK", "pro-ship", "pr-check.py")
+    if not script:
+        print("not-installed")
+        return 3
+    r = subprocess.run([sys.executable, script, "marker"], capture_output=True, text=True, timeout=60)
+    sys.stdout.write(r.stdout)
+    sys.stderr.write(r.stderr)
+    return r.returncode
 
 
 def main(argv):
+    if argv == ["marker"]:
+        return cmd_marker()
     host = "claude"
     if argv[:1] == ["--host"] and len(argv) == 2:
         host = argv[1]
     elif argv:
-        print("reviewmodel: usage: reviewmodel.py [--host claude|codex]", file=sys.stderr)
+        print("reviewmodel: usage: reviewmodel.py [--host claude|codex] | marker", file=sys.stderr)
         return 2
     if host not in REVIEW_HOSTS:
         print(f"reviewmodel: --host must be one of {', '.join(REVIEW_HOSTS)}", file=sys.stderr)

@@ -372,6 +372,24 @@ export function runShipPreflightCases() {
     add("model/a reviewer that did not run is not judged", "exit 0", r.status === 0, r.stdout + r.stderr);
     r = rec(tip, base, "nope", WARN);
     add("model/reviewers that are not a list are refused", "exit 1", r.status === 1 && /reviewers must be a list/.test(r.stderr), r.stdout + r.stderr);
+    // PR 197 review: host and inline are judged as the stamp judges them.
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "Claude", model: "claude-opus-5-5" }], WARN);
+    add("model/a host spelled Claude is refused", "exit 1, names the hosts", r.status === 1 && /host must be one of claude, codex/.test(r.stderr) && !/Traceback/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: ["claude"], model: "claude-opus-5-5" }], WARN);
+    add("model/a host that is not a string is refused with a reason", "exit 1, no traceback", r.status === 1 && /host must be one of/.test(r.stderr) && !/Traceback/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "claude", model: "opus --> x" }], WARN);
+    add("model/a model id the stamp would refuse is refused", "exit 1", r.status === 1 && /model must be a model id/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "inline", host: "claude", model: "claude-sonnet-4-5" }], ENFORCE);
+    add("model/an inline Sonnet reviewer under enforce refuses the GO", "exit 1", r.status === 1 && /review ran on sonnet \(claude\)/.test(r.stderr), r.stdout + r.stderr);
+    const lone = mkrepo({ "a.txt": "0\n", "REVIEW.md": "# Review\n\n## Review model\n\n```yaml\nclaude: opus\n```\n" });
+    const lb = head(lone), lh = commit(lone, { "a.txt": "1\n" });
+    const pl = join(sandbox, `report-model-${++repoN}.json`);
+    writeFileSync(pl, JSON.stringify({ verdict: "GO", head: lh, base: lb, scope: { kind: "tag", range: `${lb}..${lh}`, prs: [], uncovered: [], last_deploy_source: "tag" },
+      blockers: [], fixes: [], risks: [], checks: [], legal: { status: "not-installed", verdict: null, base: null, head: null, blocking: 0, required: 0 },
+      targets: [{ id: "web", kind: "tag-release", env: null, url: null, commit: lh, rollback }], reviewers: [{ agent: "x", status: "done", host: "codex", model: "gpt-5.1-codex" }], report_md: "# Ship\n" }));
+    r = ship(lone, ["record", pl], { env: { CLAUDE_GUARD_DIR: ENFORCE } });
+    add("model/a host with no rule records the GO in enforce with a note, never a mismatch", "exit 0, note",
+      r.status === 0 && JSON.stringify(r.json?.notes) === JSON.stringify(["review ran on gpt-5.1-codex (codex), REVIEW.md names no model for codex"]), r.stdout + r.stderr);
   }
 
   function scopeCases() {

@@ -464,6 +464,26 @@ export function runFactoryCases() {
       add("c6 pull_request_review and event fields are not a pull_request trigger", "container", o.r.status === 0 && review.stub.read("docker.log").includes("FACTORY_HEAD="), brief(o.r));
     }
 
+    // ── reviewmodel.py marker: /execute stage 8 finds pro-ship's pr-check.py and prints the marker (spec-m2 R17) ──
+    {
+      const RMP = join(ROOT, "plugins", "pro-ai-sdlc", "scripts", "reviewmodel.py");
+      const repo = join(sandbox, "rmmarker");
+      mkdirSync(repo);
+      git(repo, "init", "-q", "-b", "main");
+      write(join(repo, "a.txt"), "1\n");
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "init");
+      const sha = git(repo, "rev-parse", "HEAD").stdout.trim();
+      const stamp = JSON.parse(readFileSync(join(ROOT, "tests", "fixtures", "pr-check-stamp", "valid-pass.json"), "utf8").split("HEAD").join(sha));
+      write(join(repo, ".pro-dev", "ship", "pr-check.json"), JSON.stringify(stamp));
+      const env = { ...GENV, CLAUDE_CODE_PLUGIN_CACHE_DIR: join(sandbox, "rm-cache") };
+      const runRm = (e) => spawnSync("python3", ["-I", RMP, "marker"], { cwd: repo, encoding: "utf8", env: e });
+      let r = runRm(env);
+      add("k1 reviewmodel.py marker runs pro-ship's pr-check.py marker from pro-ai-sdlc", "the marker line",
+        r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${sha} result=pass tier=unclassified model=opus host=claude -->\n`, `${r.status} ${r.stdout} ${r.stderr}`);
+      r = runRm({ ...env, FACTORY_PR_CHECK: join(sandbox, "none.py") });
+      add("k2 with pro-ship not found it prints not-installed and exits 3", "not-installed, 3", r.status === 3 && r.stdout.trim() === "not-installed", `${r.status} ${r.stdout} ${r.stderr}`);
+    }
+
     // ── session.sh: the mode file and the PR found by branch name ──
     {
       const fx = repoWithOrigin(sandbox, "sh", { [FOLDER]: { "intent.md": intentText() } });

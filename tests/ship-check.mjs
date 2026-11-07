@@ -130,7 +130,7 @@ export function runShipCheckCases() {
     p = prep();
     r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), ENFORCE);
     add("rm2 the same stamp under mode.review-model enforce is incomplete (AC2)", "incomplete with the line",
-      r.status === 0 && r.json?.result === "incomplete" && r.stderr.includes("pr-check: enforce, code review ran on claude-sonnet-4-5 (claude), REVIEW.md names opus"), r.stdout + r.stderr);
+      r.status === 0 && r.json?.result === "incomplete" && r.stderr.includes(warnLine("claude-sonnet-4-5", "claude", "opus")), r.stdout + r.stderr);
     p = prep();
     r = stampWith(p, code({ host: "claude", model: "claude-sonnet-4-5" }), GLOBAL);
     add("rm2b the global mode file alone leaves the model check in warn", "pass", r.json?.result === "pass", r.stdout + r.stderr);

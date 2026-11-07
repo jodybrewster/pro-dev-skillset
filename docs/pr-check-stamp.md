@@ -184,7 +184,7 @@ A tip with no file or no readable section means `claude: opus` and no rule for a
 - `any` matches every model; a missing model never matches a rule.
 - A host with no rule gets `model_ok` null and the line `pr-check: note, <which> review ran on <model> (<host>), REVIEW.md names no model for <host>`; it never changes the result.
 
-A `done` or `inline` reviewer with `model_ok` false prints `pr-check: warn, <which> review ran on <model> (<host>), REVIEW.md names <required>` (with `enforce` in place of `warn` under enforce) and appends a `review-model` line to `warn.log` in the guard folder.
+A `done` or `inline` reviewer with `model_ok` false prints `pr-check: warn, <which> review ran on <model> (<host>), REVIEW.md names <required>` and appends a `review-model` line to `warn.log` in the guard folder.
 The mode is `mode.review-model` in the guard folder alone, never the global `mode` file. It is warn by default ([ADR-0016](./decisions/0016-gate-enforce-rule.md)).
 In warn the result is computed as if the model matched.
 In enforce it is `incomplete` (rule 2 of the result rule).

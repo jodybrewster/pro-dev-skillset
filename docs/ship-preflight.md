@@ -84,7 +84,8 @@ A `Hold` verdict makes the report NO-GO.
 When `status` is `done`, `head` must equal the report's `head`, because a review of another commit says nothing about the commit shipped.
 `record` refuses a GO that has blockers, a GO with no target, a GO target with no rollback steps and a `done` legal review whose `head` is another commit.
 It accepts only the verdicts `GO` and `NO-GO`; there is no "GO with acknowledged risks" verdict.
-A `done` reviewer whose model misses its host's rule in `REVIEW.md` on the default branch tip (see "The review model" in [pr-check-stamp.md](./pr-check-stamp.md)) adds `review ran on <model> (<host>)` to the summary; when `mode.review-model` holds `enforce`, `record` refuses a GO with one.
+A `done` or `inline` reviewer whose model misses its host's rule in `REVIEW.md` on the default branch tip (see "The review model" in [pr-check-stamp.md](./pr-check-stamp.md)) adds `review ran on <model> (<host>)` to the summary; when `mode.review-model` holds `enforce`, `record` refuses a GO with one.
+A host with no rule is a note in `record`'s output and never a mismatch; a host other than `claude` or `codex` and a model id the stamp would refuse are refused.
 
 ## The freshness rule
 
