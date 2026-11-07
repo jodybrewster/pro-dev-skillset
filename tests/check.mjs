@@ -1573,6 +1573,22 @@ checks["sdlc-contract"] = () => {
     const body = read(f) ?? "";
     for (const w of ["Pre-existing", "since"]) if (!body.includes(w)) failures.push(`pro-ai-sdlc: ${f} does not name "${w}"`);
   }
+  // review memory and checked findings (intent/2026-11-07-reaching-done, spec-m1 R10 to R20, R25 to R27, ADR-0027).
+  const validation = ["find the callers, guards and tests that reach the changed code", "list it under skipped with that `path:line`", "Zero findings is a valid result", "also occurs with the base version of the code"];
+  for (const f of ["agents/reviewer.md", ".codex-plugin/agents/reviewer.toml"])
+    need(f, ["## Grade mode", "grade <table path>", "A reply, a commit message or a resolved thread is never evidence.", "Grade mode runs no passes and raises no new finding",
+      "`important: <n>  nits: <n>  pre-existing: <n>  skipped: 0`", "`fixed: <n>  not fixed: <n>  no longer applies: <n>`", ...validation]);
+  for (const f of ["plugins/pro-quality/agents/code-reviewer.md", "plugins/pro-quality/.codex-plugin/agents/code-reviewer.toml"]) {
+    const body = existsSync(join(ROOT, f)) ? readFileSync(join(ROOT, f), "utf8") : "";
+    for (const a of validation) if (!body.includes(a)) failures.push(`pro-quality: ${f} lacks the anchor "${a}"`);
+  }
+  need("commands/review.md", ["lessons.py\" table --ref", "lessons.py\" grade --ref", "lessons.py\" raise --ref", "lessons.py\" round --ref",
+    "fresh pass skipped: <n> not fixed", "never narrows grade mode", "Never pass the table to the fresh pass"]);
+  need("templates/REVIEW.md", ["merge-base..head", "grade"]);
+  const shipSkill = join(ROOT, "plugins", "pro-ship", "skills", "ship", "SKILL.md");
+  const shipT = existsSync(shipSkill) ? readFileSync(shipSkill, "utf8") : "";
+  for (const a of ["grading skipped: pro-ai-sdlc not installed", "ship-<first 12 of the merge base>", "pr-check.py\" find pro-ai-sdlc lessons.py", "<git merge-base base head>..<head>", "Never pass the table to the fresh pass"])
+    if (!shipT.includes(a)) failures.push(`pro-ship: skills/ship/SKILL.md lacks the anchor "${a}"`);
   const babyC = read("commands/pr-babysit.md") ?? "";
   if (!babyC.includes("three rounds")) failures.push('pro-ai-sdlc: commands/pr-babysit.md does not say "three rounds"');
   if (/\bfive\b/i.test(babyC)) failures.push('pro-ai-sdlc: commands/pr-babysit.md still says "five"');
@@ -1620,11 +1636,13 @@ checks["doubt"] = () => {
   if (instr !== null) {
     if (/\{[^}\n]*\}/.test(instr) || /<[A-Za-z][^>\n]*>/.test(instr)) failures.push("doubt-instructions.md has a placeholder in braces or angle brackets");
     if (!instr.includes("Do not validate")) failures.push('doubt-instructions.md lacks "Do not validate"');
+    if (!instr.includes("read the callers, guards and tests that reach the range")) failures.push('doubt-instructions.md does not tell the reviewer to "read the callers, guards and tests that reach the range"');
   }
   const skill = rd(`${dir}/SKILL.md`);
   if (skill !== null) {
     if (!skill.includes("three rounds")) failures.push('SKILL.md does not say "three rounds"');
     if (!skill.includes("never sent to the reviewer")) failures.push('SKILL.md does not say the claim is "never sent to the reviewer"');
+    if (!skill.includes("Strip reasoning, not evidence")) failures.push('SKILL.md lacks "Strip reasoning, not evidence"');
   }
   const mine = rd(`${dir}/handoff.md`), theirs = rd("plugins/pro-quality/skills/requesting-code-review/handoff.md");
   if (mine !== null && theirs !== null) {

@@ -126,5 +126,8 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 5: the ref is worked out in step 1 (by the rule that stays in step 6), since step 3 needs it to read the table.
 - Step 7: the doubt skill's own `handoff.md` also names the contradicting paths in its `brief` line, so the template the session fills agrees with R28; the field names are unchanged.
 - Step 8: the fixtures are listed file by file, so the runner copies each to the repo root and the prompts name `before.py`, `after.py`, `clean.py` and `CONTRACT.md` without the folder; expectations that joined two checks are split into one check each.
+- Step 9: `/ship` grades before its one turn of specialists, since an unfixed Important row skips the code reviewer's fresh pass; the security review and the test engineer still run that round.
+- Step 9: `/ship` also raises the security review's blocking and should-fix findings (as `important` and `nit` with `--pass security`), so a fixed security finding is graded rather than reported again.
+- Step 9: when the base is the empty tree (a first release of the whole history), the review range starts at the empty tree, since `git merge-base` has no answer there.
 
 ## Noticed but not touched
