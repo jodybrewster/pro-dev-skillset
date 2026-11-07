@@ -234,7 +234,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
 - [x] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md), in warn under `mode.protected-push`
 - [ ] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core)
-- [ ] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security)
+- [x] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as [guard-hardening m3](../intent/2026-11-07-guard-hardening/plan-m3.md), in warn under `mode.key-literal`
 
 ### P1: every feature through the loop plus safety
 
@@ -254,7 +254,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md)
 - [ ] 41. A test-gap ledger in `test-engineer`: each acceptance criterion mapped to an assertion or `none`, exact edge-case values and a step that tests the tests (M, pro-quality)
 - [ ] 42. A retry path for a factory run that errored before opening a PR, with an attempt cap per intent that escalates to level 3 (M, pro-ai-sdlc)
-- [ ] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core)
+- [x] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as [guard-hardening m3](../intent/2026-11-07-guard-hardening/plan-m3.md), in warn under `mode.delete-outside`
 
 ### P2: situational, or past one person
 

@@ -36,10 +36,21 @@ Its default mode only prints a `systemMessage` and never blocks.
 `pro-core` registers a `PreToolUse` hook on `Bash` that runs `scripts/git-safe.py` with a 10 second timeout.
 Its regex rules exit 2 on the dangerous commands they name.
 Its refspec parser flags the other pushes that would update or delete a protected branch under the `protected-push` mode key, which reads only `mode.protected-push` and starts in warn ([enforce-mode.md](./enforce-mode.md)).
+The same `Bash` matcher also runs `scripts/delete-outside.py` with a 5 second timeout.
+It flags `rm`, `rmdir`, `unlink`, `find -delete`, `find -exec rm` and `git clean` whose target resolves outside the project root under the `delete-outside` mode key, which reads only `mode.delete-outside` and starts in warn.
 The shared helper `scripts/guardlib.py` is imported, not registered.
 
 `pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
 It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.
+
+## Registered by pro-security
+
+`pro-security` registers a `PreToolUse` hook on `Bash` that runs `scripts/push-gate.py` with a 15 second timeout.
+It holds a `git push` or `gh pr create` whose diff touches security surface once per distinct diff.
+
+`pro-security` registers `scripts/key-literal.py` twice, as a `PreToolUse` and a `PostToolUse` hook on `Edit|Write|MultiEdit`, each with a 5 second timeout.
+Before the write it flags a live-looking key under the `key-literal` mode key, which reads only `mode.key-literal` and starts in warn; after the write it reads the one file written and informs only.
+It has no `Bash` matcher, so it never sees a push the push gate holds.
 
 ## Registered by pro-ship
 

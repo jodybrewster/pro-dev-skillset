@@ -15,11 +15,17 @@
 # The security-architect skill and agent draw on cso Phases 0, 10 and 11 (mental
 # model, STRIDE, data classification), its confidence calibration and pre-emit
 # gate, and gstack's review security specialist checklist. The challenge
-# procedure, the hooks and the scripts are original to this marketplace.
+# procedure, the push gate and its scripts are original to this marketplace.
+#
+# scripts/key-literal.py is adapted from hooks/guard-key-literals.py in
+# EricTechPro/super-board (https://github.com/EricTechPro/super-board), MIT
+# licensed, Copyright (c) 2026 Eric Tech, under the same MIT license text below
+# with that copyright line.
 
 MIT License
 
 Copyright (c) 2026 Garry Tan
+Copyright (c) 2026 Eric Tech (scripts/key-literal.py)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -21,6 +21,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-core | find-skills | [vercel-labs/skills](https://github.com/vercel-labs/skills) | MIT | Copyright (c) 2026 Vercel, Inc. | forked |
 | pro-core | dream | [grandamenium/dream-skill](https://github.com/grandamenium/dream-skill) | MIT, stated in the README; no license file | none published | forked |
 | pro-core | `scripts/git-safe.py` (the protected-push refspec parser) and the tokenizer in `scripts/guardlib.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-protected-push.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
+| pro-core | `scripts/delete-outside.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-delete-outside.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-data | drizzle-orm-architecture | [Yoraexe/ceobe](https://github.com/Yoraexe/ceobe) | MIT | Copyright (c) 2026 Yoragam1 | forked |
 | pro-data | drizzle-schema-definition | [Intense-Visions/harness-engineering](https://github.com/Intense-Visions/harness-engineering) | MIT | Copyright (c) 2026 Intense Visions, Inc. | forked |
 | pro-data | nextauth-patterns | [a5c-ai/babysitter](https://github.com/a5c-ai/babysitter) | MIT | Copyright (c) 2025 A5C AI | forked |
@@ -85,6 +86,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-quality | web-performance-auditor (agent) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-security | security-audit | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted |
 | pro-security | security-architect (skill and agent) | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted (draws on the threat framing; the challenge procedure is original) |
+| pro-security | `scripts/key-literal.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-key-literals.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-egm | egm-bridge | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) | Apache-2.0 | no copyright line in the upstream LICENSE | bridged |
 | pro-speckit | spec-kit-bridge | [github/spec-kit](https://github.com/github/spec-kit) | MIT | Copyright GitHub, Inc. | bridged (nothing copied) |
 | pro-ship | deployed (post-deploy checks from `shipping-and-launch` and `ci-cd-and-automation`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |

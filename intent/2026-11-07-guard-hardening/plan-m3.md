@@ -80,22 +80,24 @@ claude plugin validate plugins/pro-core --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 12fd42911aab.
 
-- Build commit:
-- Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+- Build commit: 12fd42911aab (rebased onto main after #191 and #195; pro-core 0.28.0, pro-security 0.4.0, metadata 1.96.0) on `build/guard-hardening-m3`, [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194)
+- Checks run: `node tests/guards.mjs` 127 cases, 0 failures; `node tests/git-safe.mjs` 148 cases, 0 failures; `node tests/security-hooks.mjs` 50 cases, 0 failures; `node tests/check.mjs` 50 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `claude plugin validate . --strict` and for `plugins/pro-core` and `plugins/pro-security` all passed; `/usr/bin/python3 -m py_compile` (3.9.6) clean on both scripts.
+- Mutations: dropping `ASIA` fails the two `aws-asia` cases; removing the `cd` tracking fails `cd-then-rm` (warn and enforce), `cd-absolute` and `pushd`. Both restored.
+- Definition of done: met. A pr-check stamp was not run; the pr-gate warned and allowed the PR.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
+- Doubt: none. A fresh-context security-architect review of the diff found 0 blocking and 2 should-fix items, both folded in (see Departures).
+- AC1: all 14 kinds warn with the kind and line 3 and deny under `mode.key-literal` enforce.
+- AC2: the env read, `AKIA` plus `EXAMPLE...` and the `example` line pass; `.env.example` is a finding; `.env.local` passes.
+- AC2a: `.env.local`, `.env.development.local` and `.dev.vars` pass before and after the write; the `<x>`, `<your-key>` and `...` stand-ins pass; `<code>`, JSX and ellipsis-elsewhere lines are findings; `.dev.vars.example` is a finding.
+- AC3: `post/line-7` names line 7 in both modes and never denies.
+- AC4: `no-leak/full-length-key` passes and every key-literal case asserts the key is in no output or `warn.log` line.
+- AC5: the six commands warn and deny under `mode.delete-outside` enforce, naming the resolved path and the root.
+- AC6: the six allows pass with no line; `rm -rf /tmp` and the guard-folder mode file are findings.
+- AC7: the global `mode` file leaves both guards in warn.
+- AC8: malformed payloads exit 0 with no output for both scripts.
+- AC9: the checks above pass.
 - Sign-off:
 
 ## Departures from plan
@@ -103,4 +105,25 @@ Filled in when the build is finished, before sign-off.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 2: R3 strips every markup tag from the key's word before it looks for `<`, but `<x>` and `<your-key>` match the same tag pattern, so the literal rule would strip the stand-in it is meant to catch. The guard treats a tag glued between two key characters (`KEY<x>KEY`) as a stand-in and strips only the tags around the key (`<code>KEY</code>`), then reads a `<` or `...` still in the word as a stand-in. The AC2a cases pin both directions.
+- Step 2: an Edit's line numbers count within `new_string`, so its message reads `line 2 of the edit to config.ts`; a MultiEdit's reads `edit 2 line 1 of config.ts`.
+- Steps 3 and 6: each plugin's version bump lands in the commit that first changes its content, as the version-bump law asks, not in step 7.
+- Step 5: `guardlib.warn()` gains an optional `advice` argument so the warn message carries R16's way forward; `guardlib.py` was not in the file list. Existing callers are unchanged.
+- Step 5: a variable the hook's environment does not hold is unknown and skipped like an assigned one, where super-board expands it to an empty string; a `cd -` makes later relative words unknown. A `find` that deletes with no starting path checks the current directory, `-ok` and `-okdir` count like `-exec`, `git clean -n` and `--dry-run` are not deletions and redirect targets (`2> /dev/null`) are not operands.
+- Step 4: the delete-outside fixtures use a project root, `HOME` and `TMPDIR` under `/srv` that need not exist, because the guard only resolves words; a root under the system temp folder would make every sibling exempt on macOS.
+- Review fix, R3: the environment-read skip is dropped. A line that only reads a key from the environment holds no key, so the skip hid only lines that also held one: `os.environ["KEY"] = "<key>"` and `process.env.KEY || "<key>"` passed even in enforce. Both are findings now and AC2's plain read still passes. The stand-in word filter stays.
+- Review fix, R12: only `HOME`, `TMPDIR`, `PWD`, `USER`, `CLAUDE_PROJECT_DIR` and `PRO_DEV_STATE_DIR` are expanded. Any other variable makes the word unknown, because the resolved path goes into the message and `warn.log` and `rm -rf ../cache-$GITHUB_TOKEN` would have printed the token. A case plants a variable value and asserts it appears nowhere.
+- Review fix, R13: inside and exempt are decided on the real path only (the parent resolved, the last part kept unless the word ends in `/`), with the root and the exemptions taken in both their written and real forms. A symlink in the repo that points out of it is now outside; deleting the link itself stays inside. The message names the real path.
+- Review fix, R11 and R12: `pushd` is tracked like `cd` and a wrapper's flags are skipped (`sudo -u someone rm -rf ../z`).
+- Review fix, N1: PreToolUse scans at most 1 MB of text and the first 20 matches per pattern on a line, so a 58 KB one-line write of key-shaped words beside `<` takes about 1 second, inside the 5 second timeout.
+
+- PR review nits: shell keywords before the command word are skipped (`then rm -rf ../old` is a finding), `popd` restores the directory `pushd` saved, only the flags that take a value for their wrapper consume one (`sudo -u`, `env -u`, `nice -n`, so `time -p rm -rf ../x` is a finding) and `$PWD` is the tracked directory, not the hook process's own.
+
 ## Noticed but not touched
+
+- Heredoc bodies stay in scope for delete-outside as for every guard on `guardlib.segments()`: a heredoc that only quotes `rm -rf ../x` gives a warn line. m2 is handling heredoc bodies in `guardlib.segments()`; delete-outside picks that up with no change of its own.
+
+- A `cd` inside a subshell carries to the commands after it, since `guardlib.segments()` drops the parentheses: `(cd /tmp/a && make); rm -rf ../sibling` resolves under `/tmp` and passes. Tracking subshell depth in the tokenizer would be a small follow-up for both guards that track `cd`.
+- `find ../y -name '*.o' | xargs rm` and `git --work-tree=../w clean -fd` pass; the spec does not list them and `xargs rm` would need the find's paths carried across the pipe.
+- R4 skips a bare `.env`, but some templates (create-vite) ignore only `*.local` and commit `.env`; a key written there gets no warning.
+- Single-quoted `'$HOME/x'` is expanded like `$HOME/x`, because `guardlib.segments()` does not mark single-quoted text the way super-board's tokenizer does; it can only make a word look outside, never hide one.

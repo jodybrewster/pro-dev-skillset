@@ -14,11 +14,12 @@ This plugin contains skills forked from the following upstream repositories:
 - EricTechPro/super-board (https://github.com/EricTechPro/super-board)
   Copyright (c) 2026 Eric Tech
   Used for: the protected-push refspec parser in scripts/git-safe.py and the
-  tokenizer in scripts/guardlib.py, adapted from hooks/guard-protected-push.py
+  tokenizer in scripts/guardlib.py, adapted from hooks/guard-protected-push.py,
+  and scripts/delete-outside.py, adapted from hooks/guard-delete-outside.py
 
 All other content in this plugin, including the `using-pro-dev` skill, the commands
-and the hook scripts apart from the adapted parts of scripts/git-safe.py and
-scripts/guardlib.py, is original work, Copyright (c) 2026 the pro-dev-skillset authors.
+and the hook scripts apart from the adapted parts of scripts/git-safe.py,
+scripts/guardlib.py and scripts/delete-outside.py, is original work, Copyright (c) 2026 the pro-dev-skillset authors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
