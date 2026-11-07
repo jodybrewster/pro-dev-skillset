@@ -90,17 +90,17 @@ claude plugin validate plugins/pro-ship --strict
 
 ## Done
 
-Done as of e726a031099b
+Done as of ea20ed78e284
 
-- Build commit: e726a031099b on `build/reaching-done-m1`, rebased onto origin/main at c22f221.
-- Checks run: `node tests/check.mjs` 49 checks, 0 failures, 13 warnings; `node tests/lessons.mjs` 86/86; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), 3 notOneOf warnings; `node --test tests/unit/*.test.mjs` 198 pass, 0 fail; `node tests/behavioral.mjs --dry-run` 7 case files, 11 runs planned; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round loaded; `claude plugin validate . --strict` and the three touched plugins each print Validation passed; `tests/lessons.mjs` also passes under Python 3.9.6.
+- Build commit: ea20ed78e284 on `build/reaching-done-m1`, rebased onto origin/main at c22f221, with the PR review fixes.
+- Checks run: `node tests/check.mjs` 49 checks, 0 failures, 13 warnings; `node tests/lessons.mjs` 92/92; `node tests/ship-check.mjs` 236/236; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), 3 notOneOf warnings, also after the pro-ship description change; `node --test tests/unit/*.test.mjs` 198 pass, 0 fail; `node tests/behavioral.mjs --dry-run` 7 case files, 11 runs planned; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round loaded; `claude plugin validate . --strict` and the three touched plugins each print Validation passed; `tests/lessons.mjs` also passes under Python 3.9.6.
 - Definition of done: met, apart from the hand runs of `/review` and `/ship` end to end noted under AC3 to AC5 and AC11 to AC12.
 - Visual: none
 - Doubt: none; no step was marked irreversible.
 - AC1: `tests/lessons.mjs` shows `raise` giving F1 then F2, a duplicate open row printing F1 with nothing added, a match with a `fixed` row adding F4 with `reopened_from` F1, `grade` refusing an unknown id and a missing `--evidence`, `table` on a missing file printing `{"findings": {}}` and a damaged table renamed to `.bad`.
 - AC2: a case reads the table back and finds only the twelve R3 keys on every row.
 - AC3: on a demo branch a grade-mode dispatch of the new reviewer text graded F1 `fixed` at `pay.py:9` after a fix commit, with the summary line all zero; `lessons.py grade` and `round` wrote it and the round record is `pass`. The fresh pass was not run in the demo; the duplicate rule that stops it raising F1 again is covered by `tests/lessons.mjs`.
-- AC4: the same with no fix graded F1 `not fixed` at `pay.py:9`, the agent and `table --tally` both opened with `important: 1`, the round was closed `--fresh skipped` and its record is `fail`.
+- AC4: the same with no fix graded F1 `not fixed` at `pay.py:9`, the agent and `table --tally` both opened with `important: 1` (the hand run predates the `graded:` line format), the round was closed `--fresh skipped` and its record is `fail`.
 - AC5: scripted part only: the ship table `ship-7ab5a947f2f8` shows F1 `fixed` at `pay.py:9` and `.pro-dev/review/rounds/` holds its `review-round` record; `pr-check.py find pro-ai-sdlc lessons.py` resolves the script. A full `/ship` hand run waits for the board rerun.
 - AC6: `tests/mieruka-sync.mjs` loads a `review-round` record with mieruka's own sync.
 - AC7: `sdlc-contract` asserts the validation, zero-findings and base-version lines in both agents and both Codex twins; `agent-twins` holds the code-reviewer twin identical.
@@ -108,7 +108,7 @@ Done as of e726a031099b
 - AC9: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass.
 - AC10: `grade` refuses evidence with no line, line 0, an absolute path and `..`; a `no longer applies` match adds a row with `reopened_from` F3; `table --tally` opens with `important: 1` for one unfixed Important row; `sdlc-contract` asserts the never-evidence sentence in `reviewer.md` and its twin.
 - AC11: `review.md` step 1 sets every round to `<merge base>..<head>` and says `--since` never narrows grade mode, asserted by `sdlc-contract`; not hand-run.
-- AC12: `pr-check.py find` prints `not-installed` for a missing plugin and `ship/SKILL.md` then says `grading skipped: pro-ai-sdlc not installed`, asserted by `sdlc-contract`; not hand-run.
+- AC12: `pr-check.py find --enabled` prints `not-installed` for a missing plugin, a disabled install and the repo's own `plugins/` copy (`tests/ship-check.mjs` f6 to f6d) and `ship/SKILL.md` then says `grading skipped: pro-ai-sdlc not installed`, asserted by `sdlc-contract`; not hand-run.
 - AC13: the `doubt` check asserts the callers, guards and tests line in `doubt-instructions.md`.
 - AC14: `node tests/behavioral.mjs --dry-run` lists `requesting-code-review` #1 to #3 with their `review-evidence` fixture files.
 - Sign-off:
