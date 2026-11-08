@@ -535,11 +535,15 @@ export function runShipHookCases() {
         r = mrun(pin(ch), { cwd: cr, env: cenv("enforce"), extraEnv: { GH_STUB_COMMENTS: odd } });
         add("mg415 an error inside the re-check still asks by tier and names the error", "ask + confirmation unreadable: TypeError", r,
           asks(r) && /medium/.test(r.text) && r.text.includes("confirmation: missing (confirmation unreadable: TypeError)"));
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn", "enforce"), extraEnv: { GH_STUB_COMMENTS: odd } });
+        add("mg416 a deny after an error inside the re-check names the record's real items", "deny, env vars set, no <check name>", r,
+          denies(r) && r.text.includes("env vars set") && !r.text.includes("<check name>") && r.text.includes("confirmation unreadable: TypeError"));
         // A comments read that failed asks for the read again, not for a new request.
         writeRec(cr, ch, { checks: [], confirmation: conf(ch) });
         r = mrun(pin(ch), { cwd: cr, env: cenv("warn", "enforce") });
         add("mg414 an enforce deny after a failed comments read says to run the merge again, not to post a request", "deny, no confirm request", r,
-          denies(r) && r.text.includes("could not be read") && /run the merge again/.test(r.text) && !r.text.includes("confirm request"));
+          denies(r) && r.text.includes("could not be read") && /run the merge again/.test(r.text) && !r.text.includes("confirm request")
+            && r.text.includes(`passes on this head (${ch.slice(0, 8)})`) && /read again on the next new head/.test(r.text));
       }
 
       // ---- step 10: medium and high with a matching pin -------------------------------

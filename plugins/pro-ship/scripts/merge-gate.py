@@ -533,7 +533,15 @@ def confirmation_mode() -> str:
 
 
 def confirmation_need(root: str, head: str) -> dict | None:
-    """{items, conf} when the fresh record for head lists a confirm check or a pr-scope confirmation."""
+    """{items, conf} when the fresh record for head lists a confirm check or a pr-scope confirmation.
+    Never raises: a record it cannot read asks for nothing."""
+    try:
+        return record_need(root, head)
+    except Exception:
+        return None
+
+
+def record_need(root: str, head: str) -> dict | None:
     try:
         with open(os.path.join(root, ".pro-dev", "ship", "preflight.json"), encoding="utf-8") as f:
             rec = json.load(f)
@@ -572,21 +580,21 @@ def confirmation_check(directory: str | None, pr: int, head: str, repo: str | No
     Wrapped like preflight_line: any error in the record becomes a missing confirmation, never an
     exception that would end the gate with no answer."""
     try:
-        return read_confirmation(directory, pr, head, repo, cwd)
-    except Exception as e:
-        cause = f"confirmation unreadable: {type(e).__name__}"
-        log(HOOK, "could-not-run", f"confirmation: {cause}", cwd)
-        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": []}
-
-
-def read_confirmation(directory: str | None, pr: int, head: str, repo: str | None, cwd: str) -> dict | None:
-    try:
         root = repo_root(directory)
     except CouldNotRun:
         return None
-    need = confirmation_need(root, head)
+    need = confirmation_need(root, head)  # reads the items first and never raises, so a deny can name them
     if need is None:
         return None
+    try:
+        return read_confirmation(root, need, pr, head, repo, cwd)
+    except Exception as e:
+        cause = f"confirmation unreadable: {type(e).__name__}"
+        log(HOOK, "could-not-run", f"confirmation: {cause}", cwd)
+        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": need["items"]}
+
+
+def read_confirmation(root: str, need: dict, pr: int, head: str, repo: str | None, cwd: str) -> dict:
     conf = need["conf"]
 
     def missing(cause: str, retry: bool = False) -> dict:
@@ -785,8 +793,9 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str, session_i
     log(HOOK, "deny", f"confirmation missing PR {res['pr']} {res['head'][:8]}", cwd)
     if cf.get("retry"):
         return 3, (f"[{HOOK}] PR {res['pr']} has a recorded confirmation for {res['head'][:8]} but its comments could not be read, "
-                   "so it could not be checked. Check that gh can reach GitHub here and run the merge again; "
-                   f"the identical command passes if you run it again. {text}")
+                   "so it could not be checked. Check that gh can reach GitHub here and run the merge again: "
+                   f"the identical command passes on this head ({res['head'][:8]}) and the confirmation is read again "
+                   f"on the next new head. {text}")
     items = json.dumps(cf["items"] or ["<check name>"])
     command = (f"python3 {shlex.quote(os.path.join(HERE, 'ship.py'))} confirm request --head {res['head']} "
                f"--pr {res['pr']} --items {shlex.quote(items)}")
