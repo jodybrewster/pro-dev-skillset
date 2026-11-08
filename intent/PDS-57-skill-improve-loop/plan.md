@@ -1,8 +1,8 @@
 # Plan: grade real sessions and improve the skills and the loop from them
 
 Built from `spec.md` (commit bdac455006d53c91997b17036e2175a97605acc4) and `intent.md` in this folder.
-Status: draft.
-Approver: the maintainer, acting as lead for the architecture decision (the fifth eval tier, ADR-0009 superseded) and the loop-records contract change (a seventh record).
+Status: approved.
+Approver: Jody Brewster, 2026-11-08 (approved the plan in Mieruka).
 Dated: 2026-11-08.
 
 All assumptions from the spec are carried here unconfirmed; nobody was available to answer when this plan was written, so each open question takes the spec's proposed default and the maintainer can overturn it at review.
