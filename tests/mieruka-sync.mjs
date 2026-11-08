@@ -108,7 +108,7 @@ main: try {
     && lessonAdd("11") && lessonAdd("12")
     && write("lesson", join(SDLC, "lessons.py"), ["mark", "unchecked-timeout", "accepted"], "Give every subprocess call a timeout.")
     && write("-", join(SDLC, "lessons.py"), ["raise", "--ref", "feat/x", "--base", head, "--head", head, "--pass", "bugs", "--severity", "important", "--class", "unchecked-timeout", "--file", "src/x.py", "--line", "3"], "no timeout on the call")
-    && write("round", join(SDLC, "lessons.py"), ["round", "--ref", "feat/x", "--base", head, "--head", head, "--round", "1", "--fresh", "ran", "--change-id", CHANGE_ID])
+    && write("round", join(SDLC, "lessons.py"), ["round", "--ref", "feat/x", "--base", head, "--head", head, "--round", "1", "--fresh", "ran", "--change-id", CHANGE_ID, "--model", "claude-opus-5-5", "--host", "claude"])
     && write("visual", join(SDLC, "visual.py"), ["record", "--intent", `intent/${FOLDER}`, "--step", "1", "--viewport", "desktop", "--status", "pass", "--shot", "shot.png", "--url", "http://localhost:3000/"])
     && write("factory", join(SDLC, "factory.py"), ["record", `intent/${FOLDER}`, "--state", "merged", "--sha", head, "--unread-lines", "42"]);
   if (!written) break main;

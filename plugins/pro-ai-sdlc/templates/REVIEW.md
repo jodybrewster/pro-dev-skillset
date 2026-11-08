@@ -137,6 +137,20 @@ remove: []
 ```
 -->
 
+## Review model
+
+The model a review must run on, per host.
+`claude` names a family (`opus`, `sonnet`, `haiku` or `fable`) and a Claude model id meets it when it holds that family.
+`codex` is `any` or one exact model id, because a Codex reviewer runs on whatever model the Codex host gives it.
+A host with no line here has no rule: its model is recorded and never refused.
+Reviews read this block from the default branch tip, never from the branch under review.
+A review that misses its host's rule is flagged; it blocks only where `mode.review-model` holds `enforce`.
+
+```yaml
+claude: opus
+codex: any
+```
+
 ## Output format
 
 Open the report with this summary line:

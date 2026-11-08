@@ -1,0 +1,283 @@
+{
+  "family": [
+    [
+      "claude-opus-5-5",
+      "opus"
+    ],
+    [
+      "claude-sonnet-4-5",
+      "sonnet"
+    ],
+    [
+      "Claude-Haiku-4-5",
+      "haiku"
+    ],
+    [
+      "fable",
+      "fable"
+    ],
+    [
+      "claude-opus-4-6[1m]",
+      "opus"
+    ],
+    [
+      "gpt-5.1-codex",
+      null
+    ],
+    [
+      "",
+      null
+    ],
+    [
+      null,
+      null
+    ]
+  ],
+  "parse": [
+    [
+      "# Review\n\n## Review model\n\n```yaml\nclaude: opus\ncodex: any\n```\n\n## Nits\n",
+      {
+        "claude": "opus",
+        "codex": "any"
+      }
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\nclaude: opus  # the family\n```\n\n## Nits\n",
+      {
+        "claude": "opus"
+      }
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\nClaude: \"sonnet\"\ncodex: 'gpt-5.1-codex'\n```\n\n## Nits\n",
+      {
+        "claude": "sonnet",
+        "codex": "gpt-5.1-codex"
+      }
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\ngemini: pro\nclaude: opus\n```\n\n## Nits\n",
+      {
+        "claude": "opus"
+      }
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\ncodex: any\n```\n\n## Nits\n",
+      {
+        "codex": "any"
+      }
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\nnothing: here\n```\n\n## Nits\n",
+      null
+    ],
+    [
+      "# Review\n\n## Review model\n\nNo block.\n\n## Nits\n\n```yaml\nclaude: haiku\n```\n",
+      null
+    ],
+    [
+      "# Review\n\n## Review model\n\n```yaml\nclaude: opus\n",
+      null
+    ],
+    [
+      "# Review\n\n## Nits\n",
+      null
+    ],
+    [
+      "",
+      null
+    ],
+    [
+      null,
+      null
+    ]
+  ],
+  "model_ok": [
+    [
+      "claude",
+      "claude-opus-5-5",
+      {
+        "claude": "opus"
+      },
+      true
+    ],
+    [
+      "claude",
+      "claude-sonnet-4-5",
+      {
+        "claude": "opus"
+      },
+      false
+    ],
+    [
+      "claude",
+      null,
+      {
+        "claude": "opus"
+      },
+      false
+    ],
+    [
+      "claude",
+      "none",
+      {
+        "claude": "opus"
+      },
+      false
+    ],
+    [
+      "claude",
+      "opus",
+      {
+        "claude": "claude-opus-5-5"
+      },
+      true
+    ],
+    [
+      "claude",
+      "gpt-5",
+      {
+        "claude": "opus"
+      },
+      false
+    ],
+    [
+      "claude",
+      "gpt-5",
+      {
+        "claude": "any"
+      },
+      true
+    ],
+    [
+      "claude",
+      "claude-opus-5-5",
+      {
+        "codex": "any"
+      },
+      null
+    ],
+    [
+      "codex",
+      "gpt-5.1-codex",
+      {
+        "claude": "opus",
+        "codex": "any"
+      },
+      true
+    ],
+    [
+      "codex",
+      "gpt-5.1-codex",
+      {
+        "codex": "gpt-5.1-codex"
+      },
+      true
+    ],
+    [
+      "codex",
+      "gpt-5.1-codex",
+      {
+        "codex": "gpt-4.1"
+      },
+      false
+    ],
+    [
+      "codex",
+      "GPT-5.1-codex",
+      {
+        "codex": "gpt-5.1-codex"
+      },
+      false
+    ],
+    [
+      "codex",
+      "gpt-5.1-codex",
+      {
+        "claude": "opus"
+      },
+      null
+    ],
+    [
+      "codex",
+      null,
+      {
+        "codex": "any"
+      },
+      false
+    ],
+    [
+      "gemini",
+      "x",
+      {
+        "claude": "opus"
+      },
+      null
+    ]
+  ],
+  "mode": [
+    [
+      null,
+      "warn"
+    ],
+    [
+      "enforce\n",
+      "enforce"
+    ],
+    [
+      "warn\n",
+      "warn"
+    ],
+    [
+      "Enforce\n",
+      "warn"
+    ],
+    [
+      "enforce\nwarn\n",
+      "enforce"
+    ],
+    [
+      "",
+      "warn"
+    ]
+  ],
+  "marker": [
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=opus host=claude -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "low",
+        "opus",
+        "claude"
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=medium -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "medium",
+        null,
+        null
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=gpt-5.1-codex host=codex -->",
+      [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "pass",
+        "low",
+        "gpt-5.1-codex",
+        "codex"
+      ]
+    ],
+    [
+      "<!-- pro-ship:pr-check head=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa result=pass tier=low model=opus -->",
+      null
+    ],
+    [
+      "no marker",
+      null
+    ]
+  ]
+}

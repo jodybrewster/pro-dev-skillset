@@ -181,6 +181,18 @@ A Codex finding never blocks the merge and never makes `result` `incomplete`.
 
 ### Dispatch
 
+First ask which model the reviews must run on:
+
+```bash
+python3 "$CHECK" review-model --host <claude or codex>
+```
+
+It prints `{host, required, source}` from the `## Review model` section of `REVIEW.md` on the default branch tip, never the working tree.
+A branch cannot lower its own rule.
+The host is `claude` under Claude Code and `codex` under Codex.
+Under Claude Code, name `required` as the model of the code and security reviewers at dispatch (for example `opus`), never a cheaper model to save time.
+Under Codex the host picks the model; `required` is `any` or one exact id. `null` means no rule.
+
 Dispatch both reviewers in one turn so they run in parallel.
 Choose from the agents the host offers:
 
@@ -243,8 +255,14 @@ When either report file is missing or empty the step refuses with an error: the 
 The `codex` record holds `agent` (`codex:code-reviewer` or null), `status`, `reason`, `blocking` (always 0), `important`, `agreed`, `disputed` and `range`.
 A Codex run that never started has `important`, `agreed` and `disputed` at 0.
 
+Host and model: set `host` to `claude` or `codex` as above and `model` to the model id the reviewer ran on.
+For the code reviewer that is the id on its closing `model: <id>  host: <host>` line or else the model you named at dispatch when the line is missing or says `none`; with neither, `model` is null.
+When the two differ, record the line's id and say so in the report.
+For the security reviewer it is the model you dispatched it on; an `inline` review records this session's model.
+Never record the required model in place of the one that ran: `stamp` compares it with `REVIEW.md`'s rule and a mismatch must show.
+
 Build the `--reviewers` JSON with keys `code`, `security` and `verifier`, plus `codex` when the trigger was asked.
-Each of `code` and `security` holds `agent`, `status`, `blocking`, `important` and `range`.
+Each of `code` and `security` holds `agent`, `status`, `blocking`, `important`, `range`, `host` and `model`.
 `docs/pr-check-stamp.md` lists the allowed values.
 
 ### Convergence
@@ -262,6 +280,9 @@ Every round counts, including rounds that only fixed failing checks.
    The stamp records the tier and a `risk` field from that file.
    Leave `--risk` out when the classifier is not installed.
    It refuses on a dirty tree.
+   For each reviewer it records `model_ok`: whether its model meets the host's rule.
+   A miss prints `pr-check: warn, <which> review ran on <model> (<host>), REVIEW.md names <required>`; print that line in the report and offer to run the review again on the model `REVIEW.md` names.
+   It keeps the result in warn and makes it `incomplete` when `mode.review-model` in the guard folder holds `enforce`; a host with no rule prints a `pr-check: note,` line and never changes the result.
 2. Write `.pro-dev/ship/pr-body.md` from [pr-body.md](./pr-body.md).
 3. Print the report in the order things ran, then the result, the stamp path and the draft path:
 
@@ -275,7 +296,7 @@ pr-check on 3f9c2ab (base 81d04e7)
   docs        stale 1
               Should-fix: README.md (the --dry flag the diff added is not in the usage section)
   mutation    killed src/gate.ts
-  code review done   reviewer: 0 blocking, 2 important
+  code review done   reviewer: 0 blocking, 2 important (opus, claude)
   codex       done   codex: 3 important, 1 agreed, 1 disputed
   security    skipped-no-surface
   verifier    done   pass at 3f9c2ab
@@ -297,7 +318,7 @@ gh pr edit <number> --add-label risk:high
 
 Another tier gets no label.
 Say "confirm" for every claim in the draft that was not checked.
-A `not-installed` code reviewer, a verifier that did not pass for this HEAD, a `could-not-run`, a timeout or a surviving mutation makes the result `incomplete`. The report says which.
+A `not-installed` code reviewer, a verifier that did not pass for this HEAD, a `could-not-run`, a timeout, a surviving mutation or, under `mode.review-model` enforce, a reviewer whose model misses `REVIEW.md`'s rule makes the result `incomplete`. The report says which.
 
 ## No script
 

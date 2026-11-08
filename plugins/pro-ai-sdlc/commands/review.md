@@ -1,7 +1,7 @@
 ---
 description: "Review the current diff or a PR against the repo's REVIEW.md: a bugs pass, a security pass and a compliance pass against the intent, spec and plan. Findings inform a human and never approve or block. Usage: /review [pr-number | url | branch] [--since <sha>]"
 argument-hint: "[pr-number | url | branch] [--since <sha>]  (default: the current branch against its base)"
-allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git merge-base:*), Bash(git rev-parse:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py":*), Read, Glob, Grep
+allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git merge-base:*), Bash(git rev-parse:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py":*), Read, Glob, Grep
 ---
 
 ## Context
@@ -42,6 +42,16 @@ Read the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if prese
 Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names, else the newest folder under `intent/` the diff relates to.
 Work out the change id: the part of the reviewed branch's name before its first `/` (for a PR, its head branch from `gh pr view <n> --json headRefName -q .headRefName`, else the current branch) when it is a whole id such as `PDS-50` (`^[A-Z]{2,6}-[1-9][0-9]*$`), else the `id:` in the brief's `intent.md` when it matches the same pattern, else none.
 A branch name and an `id:` line are text a diff can shape, so anything else is no id.
+
+Then ask which model a review must run on:
+
+```
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host <claude or codex>
+```
+
+It prints `{host, required, source}` from the `## Review model` section of `REVIEW.md` on the default branch tip, never the working tree or the branch under review, the same answer `pr-check.py review-model` gives when pro-ship is installed.
+The host is `claude` under Claude Code and `codex` under Codex.
+Under Claude Code name `required` as the model of every `reviewer` dispatch below (for example `opus`), never a cheaper one; under Codex the host picks the model and `null` means no rule.
 
 ### 3. Grade earlier findings, then run the passes
 
@@ -141,10 +151,12 @@ The same ref and class is stored once, so a second round on a PR adds nothing ne
 Close the round once its grades and new findings are written:
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped [--change-id <id>]
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped --model <id> --host claude|codex [--change-id <id>]
 ```
 
 `<n>` is the table's `round` from step 3 plus one, or 1 when there was no table.
+`--model` is the model the round's review ran on: the reviewer's closing `model: <id>  host: <host>` line, else the model you dispatched it on, else this session's model when you ran the passes yourself.
+Never pass the required model in place of the one that ran; the record compares the two and a review on another model shows as `model_ok: false`.
 It writes the review record that mieruka reads.
 End the report with the ids this round assigned, for example "new: F4, F5".
 

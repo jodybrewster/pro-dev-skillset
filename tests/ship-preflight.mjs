@@ -117,6 +117,7 @@ export function runShipPreflightCases() {
   try {
     targetCases();
     coverageCases();
+    reviewModelCases();
     scopeCases();
     recordCases();
     checkCases();
@@ -299,6 +300,96 @@ export function runShipPreflightCases() {
     const half = stubDir({ "pr-list.json": [] });
     const hr = ship(repo, ["coverage", base, m1], { env: { GH_STUB_DIR: half } });
     add("coverage/with no PRs listed every commit is uncovered", "everything uncovered", hr.status === 0 && hr.json.covered.length === 0 && hr.json.uncovered.length > 0, hr.stdout + hr.stderr);
+  }
+
+  // spec-m2 R13, R14, R16 (AC7, AC8): the reviewer's model on the marker and in report.json.
+  function reviewModelCases() {
+    const guard = (mode) => {
+      const d = join(sandbox, `guard${++repoN}`);
+      mkdirSync(d, { recursive: true });
+      if (mode) writeFileSync(join(d, "mode.review-model"), `${mode}\n`);
+      return d;
+    };
+    const WARN = guard(null), ENFORCE = guard("enforce");
+    const repo = mkrepo({ "a.txt": "0\n", "REVIEW.md": "# Review\n\n## Review model\n\n```yaml\nclaude: opus\ncodex: any\n```\n" });
+    const base = head(repo);
+    const prs = [];
+    for (const n of [1, 2, 3]) {
+      git(repo, "checkout", "-q", "-b", `m${n}`, "main");
+      const c = commit(repo, { [`m${n}.txt`]: "x\n" }, `m${n}`);
+      git(repo, "checkout", "-q", "main");
+      git(repo, "merge", "--no-ff", "-q", "-m", `merge m${n}`, `m${n}`);
+      prs.push({ c, m: head(repo) });
+    }
+    const tip = head(repo);
+    const mk = (h, extra) => `<!-- pro-ship:pr-check head=${h} result=pass tier=medium${extra} -->\n`;
+    const own = { author: { login: "me" }, authorAssociation: "NONE", isCrossRepository: false };
+    const dir = stubDir({ "pr-list.json": [
+      { ...own, number: 1, headRefOid: prs[0].c, mergeCommit: { oid: prs[0].m }, body: mk(prs[0].c, " model=opus host=claude") },
+      { ...own, number: 2, headRefOid: prs[1].c, mergeCommit: { oid: prs[1].m }, body: mk(prs[1].c, " model=sonnet host=claude") },
+      { ...own, number: 3, headRefOid: prs[2].c, mergeCommit: { oid: prs[2].m }, body: mk(prs[2].c, "") },
+    ] });
+    const cov = (g) => ship(repo, ["coverage", base, tip], { env: { GH_STUB_DIR: dir, CLAUDE_GUARD_DIR: g } });
+    let r = cov(WARN);
+    const j = r.json || {};
+    add("model/coverage lists the Sonnet PR under model_mismatch and the old marker under model_unrecorded (AC7)", "PR 2 mismatch, PR 3 unrecorded",
+      r.status === 0 && JSON.stringify(j.model_mismatch) === JSON.stringify([{ number: 2, reason: "review ran on sonnet (claude)" }])
+      && JSON.stringify(j.model_unrecorded) === JSON.stringify([3]), r.stdout + r.stderr);
+    add("model/in warn every commit stays covered (AC7, R14)", "all covered", r.status === 0 && j.uncovered?.length === 0 && prs.every((p) => j.covered.includes(p.c) && j.covered.includes(p.m)), r.stdout + r.stderr);
+    add("model/the marker record carries model and host", "opus, claude", (j.prs || []).find((p) => p.number === 1)?.marker?.model === "opus" && j.prs.find((p) => p.number === 1).marker.host === "claude" && j.prs.find((p) => p.number === 3).marker.model === null, JSON.stringify(j.prs));
+    r = cov(ENFORCE);
+    add("model/in enforce the Sonnet PR's commits are uncovered and the others stay covered (AC7)", "PR 2 uncovered",
+      r.status === 0 && r.json.uncovered.includes(prs[1].c) && r.json.uncovered.includes(prs[1].m) && r.json.uncovered.length === 2
+      && [prs[0], prs[2]].every((p) => r.json.covered.includes(p.c)), r.stdout + r.stderr);
+
+    // AC8: ship.py record and the reviewers in report.json.
+    const rollback = { triggers: ["t"], steps: ["roll back"], rto: "5 minutes" };
+    const rec = (h, b, reviewers, g, verdict = "GO") => {
+      const p = join(sandbox, `report-model-${++repoN}.json`);
+      writeFileSync(p, JSON.stringify({ verdict, head: h, base: b, scope: { kind: "tag", range: `${b}..${h}`, prs: [], uncovered: [], last_deploy_source: "tag" },
+        blockers: verdict === "GO" ? [] : [{ text: "x", evidence: "y" }], fixes: [], risks: [], checks: [],
+        legal: { status: "not-installed", verdict: null, base: null, head: null, blocking: 0, required: 0 },
+        targets: [{ id: "web", kind: "tag-release", env: null, url: null, commit: h, rollback }], reviewers, report_md: "# Ship\n" }));
+      return ship(repo, ["record", p], { env: { CLAUDE_GUARD_DIR: g } });
+    };
+    const sonnet = [{ agent: "pro-quality:code-reviewer", status: "done", host: "claude", model: "claude-sonnet-4-5" }];
+    const preflight = () => { try { return JSON.parse(readFileSync(join(repo, ".pro-dev", "ship", "preflight.json"), "utf8")); } catch { return null; } };
+    rmSync(join(repo, ".pro-dev", "ship", "preflight.json"), { force: true });
+    r = rec(tip, base, sonnet, ENFORCE);
+    add("model/record in enforce refuses a GO with a done claude reviewer on Sonnet (AC8)", "exit 1, no record",
+      r.status === 1 && /refusing to record GO: review ran on sonnet \(claude\), REVIEW.md names opus/.test(r.stderr) && preflight() === null, r.stdout + r.stderr);
+    r = rec(tip, base, sonnet, ENFORCE, "NO-GO");
+    add("model/record in enforce still records a NO-GO", "exit 0", r.status === 0 && /review ran on sonnet \(claude\)/.test(preflight()?.summary || ""), r.stdout + r.stderr);
+    r = rec(tip, base, sonnet, WARN);
+    const m = preflight();
+    add("model/record in warn records the GO with the note in its summary (AC8)", "pass, note", r.status === 0 && m?.status === "pass" && /^GO: .*, review ran on sonnet \(claude\)$/.test(m.summary)
+      && JSON.parse(m.detail_json).reviewers?.[0]?.model === "claude-sonnet-4-5", r.stdout + r.stderr + JSON.stringify(m));
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "claude", model: "claude-opus-5-5" }, { agent: "x", status: "done", host: "codex", model: "gpt-5.1-codex" }], ENFORCE);
+    add("model/record in enforce takes an Opus reviewer and a codex reviewer under codex: any", "exit 0, no note", r.status === 0 && !/review ran on/.test(preflight()?.summary || ""), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "claude" }], ENFORCE);
+    add("model/record in enforce refuses a done reviewer with no model", "exit 1", r.status === 1 && /review ran on none \(claude\)/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "not installed" }], ENFORCE);
+    add("model/a reviewer that did not run is not judged", "exit 0", r.status === 0, r.stdout + r.stderr);
+    r = rec(tip, base, "nope", WARN);
+    add("model/reviewers that are not a list are refused", "exit 1", r.status === 1 && /reviewers must be a list/.test(r.stderr), r.stdout + r.stderr);
+    // PR 197 review: host and inline are judged as the stamp judges them.
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "Claude", model: "claude-opus-5-5" }], WARN);
+    add("model/a host spelled Claude is refused", "exit 1, names the hosts", r.status === 1 && /host must be one of claude, codex/.test(r.stderr) && !/Traceback/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: ["claude"], model: "claude-opus-5-5" }], WARN);
+    add("model/a host that is not a string is refused with a reason", "exit 1, no traceback", r.status === 1 && /host must be one of/.test(r.stderr) && !/Traceback/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "done", host: "claude", model: "opus --> x" }], WARN);
+    add("model/a model id the stamp would refuse is refused", "exit 1", r.status === 1 && /model must be a model id/.test(r.stderr), r.stdout + r.stderr);
+    r = rec(tip, base, [{ agent: "pro-quality:code-reviewer", status: "inline", host: "claude", model: "claude-sonnet-4-5" }], ENFORCE);
+    add("model/an inline Sonnet reviewer under enforce refuses the GO", "exit 1", r.status === 1 && /review ran on sonnet \(claude\)/.test(r.stderr), r.stdout + r.stderr);
+    const lone = mkrepo({ "a.txt": "0\n", "REVIEW.md": "# Review\n\n## Review model\n\n```yaml\nclaude: opus\n```\n" });
+    const lb = head(lone), lh = commit(lone, { "a.txt": "1\n" });
+    const pl = join(sandbox, `report-model-${++repoN}.json`);
+    writeFileSync(pl, JSON.stringify({ verdict: "GO", head: lh, base: lb, scope: { kind: "tag", range: `${lb}..${lh}`, prs: [], uncovered: [], last_deploy_source: "tag" },
+      blockers: [], fixes: [], risks: [], checks: [], legal: { status: "not-installed", verdict: null, base: null, head: null, blocking: 0, required: 0 },
+      targets: [{ id: "web", kind: "tag-release", env: null, url: null, commit: lh, rollback }], reviewers: [{ agent: "x", status: "done", host: "codex", model: "gpt-5.1-codex" }], report_md: "# Ship\n" }));
+    r = ship(lone, ["record", pl], { env: { CLAUDE_GUARD_DIR: ENFORCE } });
+    add("model/a host with no rule records the GO in enforce with a note, never a mismatch", "exit 0, note",
+      r.status === 0 && JSON.stringify(r.json?.notes) === JSON.stringify(["review ran on gpt-5.1-codex (codex), REVIEW.md names no model for codex"]), r.stdout + r.stderr);
   }
 
   function scopeCases() {

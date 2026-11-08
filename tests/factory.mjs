@@ -128,6 +128,7 @@ function repoWithOrigin(sandbox, name, intents, extra = {}) {
 function makeStub(sandbox, name, origin) {
   const dir = join(sandbox, `${name}-stub`);
   mkdirSync(dir);
+  mkdirSync(join(dir, "guard"));
   write(join(dir, "docker"), DOCKER_STUB);
   write(join(dir, "gh"), GH_STUB);
   chmodSync(join(dir, "docker"), 0o755);
@@ -138,13 +139,14 @@ function makeStub(sandbox, name, origin) {
   return {
     dir,
     env: { ...GENV, STUB: dir, FACTORY_DOCKER: join(dir, "docker"), FACTORY_GH: join(dir, "gh"), FACTORY_CHECKS_WAIT: "0", FACTORY_CHECKS_POLL: "0",
-      FACTORY_GH_TOKEN: "scoped-token-abc", CLAUDE_CODE_PLUGIN_CACHE_DIR: cache, ANTHROPIC_API_KEY: "k" },
+      FACTORY_GH_TOKEN: "scoped-token-abc", CLAUDE_CODE_PLUGIN_CACHE_DIR: cache, ANTHROPIC_API_KEY: "k", CLAUDE_GUARD_DIR: join(dir, "guard") },
     read: (f) => (existsSync(join(dir, f)) ? readFileSync(join(dir, f), "utf8") : ""),
     put: (f, t) => write(join(dir, f), t),
   };
 }
 
 // A PR: commits on top of `parent` pushed to refs/pull/<n>/head, and the JSON the gh stub serves.
+// A build PR's body ends with the pr-check marker /execute appends (spec-m2 R17) unless opts.body says otherwise.
 function makePr(sandbox, fx, stub, n, commits, parent = "origin/main", opts = {}) {
   const phase = opts.phase ?? (commits.some((c) => Object.keys(c.files).some((p) => p.startsWith("src/") || p.startsWith("tests/") || p.endsWith(".json") || p.endsWith(".js") || p.endsWith(".toml") || p.endsWith(".ini") || p.endsWith(".cfg"))) ? "build" : "brief");
   const clone = join(sandbox, `prclone-${fx.repo.split("/").pop()}-${n}`);
@@ -162,7 +164,8 @@ function makePr(sandbox, fx, stub, n, commits, parent = "origin/main", opts = {}
   git(clone, "push", "-q", "--force", "origin", `HEAD:refs/pull/${n}/head`);
   const slug = FOLDER.replace(/^\d{4}-\d{2}-\d{2}-/, "");
   stub.put(`pr-${n}.json`, JSON.stringify({ state: "OPEN", baseRefName: "main", headRefOid: sha, isCrossRepository: false,
-    headRefName: opts.branch ?? (phase === "brief" ? `${slug}-brief` : slug), isDraft: opts.draft ?? false, author: { login: opts.author ?? "factory-bot" } }));
+    headRefName: opts.branch ?? (phase === "brief" ? `${slug}-brief` : slug), isDraft: opts.draft ?? false, author: { login: opts.author ?? "factory-bot" },
+    body: opts.body ?? (phase === "build" ? `Build.\n\n<!-- pro-ship:pr-check head=${sha} result=pass tier=low model=opus host=claude -->\n` : "Brief.\n") }));
   return sha;
 }
 
@@ -371,6 +374,22 @@ export function runFactoryCases() {
       check("v34 a build commit without the trailer", "level 2", [{ files: buildFiles(), msg: "build: greeting", raw: true }], { level: 2, re: /without a Factory-Run: build/ });
       check("v35 skipped and neutral check runs pass", "pass", good, "pass", stub.env, (k) => stub.put(`checks-${k}.json`, '[{"name":"a","status":"COMPLETED","conclusion":"SKIPPED"},{"name":"b","status":"COMPLETED","conclusion":"NEUTRAL"}]'));
       check("v36 a failing commit status", "level 2", good, { level: 2, re: /checks failed: ci\/x/ }, stub.env, (k) => stub.put(`checks-${k}.json`, '[{"context":"ci/x","state":"FAILURE"}]'));
+      // spec-m2 R18 (AC9): the pr-check marker in the build PR's body and the reviewer's model.
+      const withBody = (body) => (k) => { const d = JSON.parse(stub.read(`pr-${k}.json`)); d.body = typeof body === "function" ? body(d.headRefOid) : body; stub.put(`pr-${k}.json`, JSON.stringify(d)); };
+      const mk = (extra) => (h) => `Build.\n\n<!-- pro-ship:pr-check head=${h} result=pass tier=low${extra} -->\n`;
+      check("v37 no pr-check marker in the body with pr-check.py found", "level 2", good, { level: 2, re: /no pr-check marker/ }, stub.env, withBody("Build.\n"));
+      check("v37b two markers in the body", "level 2", good, { level: 2, re: /more than one pr-check marker/ }, stub.env, withBody((h) => mk(" model=opus host=claude")(h) + mk(" model=opus host=claude")(h)));
+      const noPc = { ...stub.env, FACTORY_PR_CHECK: join(sandbox, "no-pr-check.py") };
+      let jn = check("v38 pr-check.py not found and no marker passes with the note", "pass", good, "pass", noPc, withBody("Build.\n"));
+      add("v38b the note says pr-check is not installed", "note", JSON.stringify(jn?.notes) === JSON.stringify(["pr-check not installed, reviewer model not checked"]), JSON.stringify(jn));
+      jn = check("v39 a Sonnet marker in warn passes with the mismatch note", "pass", good, "pass", stub.env, withBody(mk(" model=sonnet host=claude")));
+      add("v39b the note names the family and the rule", "note", (jn?.notes ?? []).includes("the review ran on sonnet, REVIEW.md names opus"), JSON.stringify(jn));
+      stub.put("guard/mode.review-model", "enforce\n");
+      check("v40 a Sonnet marker in enforce raises to level 2", "level 2", good, { level: 2, re: /the review ran on sonnet, REVIEW\.md names opus/ }, stub.env, withBody(mk(" model=sonnet host=claude")));
+      check("v40b an Opus marker in enforce passes", "pass", good, "pass", stub.env);
+      jn = check("v40c an old marker with no model passes with a note", "pass", good, "pass", stub.env, withBody(mk("")));
+      add("v40d the note says the marker records no model", "note", (jn?.notes ?? []).includes("the pr-check marker records no reviewer model"), JSON.stringify(jn));
+      stub.put("guard/mode.review-model", "warn\n");
       // surface-unavailable: a classifier copy with no pro-security beside it and an empty plugin cache
       const lone = join(sandbox, "lone", "pro-ship", "scripts");
       mkdirSync(lone, { recursive: true });
@@ -443,6 +462,26 @@ export function runFactoryCases() {
       review.stub.put("verify.rc", "0");
       o = verifyBuild(review, "none");
       add("c6 pull_request_review and event fields are not a pull_request trigger", "container", o.r.status === 0 && review.stub.read("docker.log").includes("FACTORY_HEAD="), brief(o.r));
+    }
+
+    // ── reviewmodel.py marker: /execute stage 8 finds pro-ship's pr-check.py and prints the marker (spec-m2 R17) ──
+    {
+      const RMP = join(ROOT, "plugins", "pro-ai-sdlc", "scripts", "reviewmodel.py");
+      const repo = join(sandbox, "rmmarker");
+      mkdirSync(repo);
+      git(repo, "init", "-q", "-b", "main");
+      write(join(repo, "a.txt"), "1\n");
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "init");
+      const sha = git(repo, "rev-parse", "HEAD").stdout.trim();
+      const stamp = JSON.parse(readFileSync(join(ROOT, "tests", "fixtures", "pr-check-stamp", "valid-pass.json"), "utf8").split("HEAD").join(sha));
+      write(join(repo, ".pro-dev", "ship", "pr-check.json"), JSON.stringify(stamp));
+      const env = { ...GENV, CLAUDE_CODE_PLUGIN_CACHE_DIR: join(sandbox, "rm-cache") };
+      const runRm = (e) => spawnSync("python3", ["-I", RMP, "marker"], { cwd: repo, encoding: "utf8", env: e });
+      let r = runRm(env);
+      add("k1 reviewmodel.py marker runs pro-ship's pr-check.py marker from pro-ai-sdlc", "the marker line",
+        r.status === 0 && r.stdout === `<!-- pro-ship:pr-check head=${sha} result=pass tier=unclassified model=opus host=claude -->\n`, `${r.status} ${r.stdout} ${r.stderr}`);
+      r = runRm({ ...env, FACTORY_PR_CHECK: join(sandbox, "none.py") });
+      add("k2 with pro-ship not found it prints not-installed and exits 3", "not-installed, 3", r.status === 3 && r.stdout.trim() === "not-installed", `${r.status} ${r.stdout} ${r.stderr}`);
     }
 
     // ── session.sh: the mode file and the PR found by branch name ──

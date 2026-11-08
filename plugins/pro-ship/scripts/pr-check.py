@@ -29,7 +29,13 @@ restores it before it returns):
                                    whose intent.md has an id: line; no gate reads it.
   marker                           print the one-line PR body marker from the stamp, for
                                    /ship to find later: <!-- pro-ship:pr-check head=<sha>
-                                   result=<result> tier=<tier> -->. Exit 1 when there is no stamp.
+                                   result=<result> tier=<tier> model=<model> host=<host> -->.
+                                   Exit 1 when there is no stamp.
+  review-model [--host claude|codex]
+                                   print {host, required, source}: the model rule the `## Review
+                                   model` section of REVIEW.md names for the host, read from the
+                                   default branch tip and never the working tree. source is
+                                   <ref>:REVIEW.md or default (claude: opus, no other host).
 
 Python 3 standard library only. No network calls. It runs the commands the repo names in its
 own CLAUDE.md, AGENTS.md, package.json or Makefile, which is the same trust as running the
@@ -850,6 +856,100 @@ def run_mutation(root: str, base: str | None, tier: str, disc: dict, timeout: in
     return mutation_result("survived" if status == "pass" else "killed", None, path)
 
 
+# --- review model: begin (spec-m2 R2, R3, R8, R10) ---------------------------------------------
+# One copy each in pro-ship's pr-check.py and ship.py and in pro-ai-sdlc's reviewmodel.py, because
+# plugins do not import each other (ADR-0003). The review-model check in tests/check.mjs holds the
+# copies byte for byte to one block and runs each on tests/fixtures/review-model/cases.json.
+REVIEW_HOSTS = ("claude", "codex")
+FAMILIES = ("opus", "sonnet", "haiku", "fable")
+MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99}$")
+DEFAULT_RULES = {"claude": "opus"}
+TIP_REFS = ("origin/HEAD", "origin/main", "main", "origin/master", "master")
+# The PR body marker `pr-check.py marker` prints (docs/pr-check-stamp.md). model= and host= are
+# optional: a marker written before spec-m2 has neither (R14).
+MARKER = re.compile(
+    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
+    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
+
+
+def family(model):
+    """The Claude family a model id names: the first of opus, sonnet, haiku and fable it contains."""
+    if not isinstance(model, str):
+        return None
+    low = model.lower()
+    return next((f for f in FAMILIES if f in low), None)
+
+
+def parse_review_model(text):
+    """{host: rule} from the fenced yaml block under `## Review model`; None when there is none to read."""
+    if not isinstance(text, str):
+        return None
+    lines = text.splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^##\s+review model\s*$", ln.strip(), re.I)), None)
+    if start is None:
+        return None
+    rules, inside = {}, False
+    for ln in lines[start + 1:]:
+        s = ln.strip()
+        if not inside:
+            if s.startswith("#") and not s.startswith("```"):
+                return None
+            inside = bool(re.match(r"^```\s*ya?ml\s*$", s, re.I))
+            continue
+        if s.startswith("```"):
+            return rules or None
+        s = s.split("#", 1)[0].strip()
+        m = re.match(r"^([A-Za-z]+)\s*:\s*[\"']?([^\"'\s]+)[\"']?$", s)
+        if m and m.group(1).lower() in REVIEW_HOSTS and MODEL_ID.match(m.group(2)):
+            rules[m.group(1).lower()] = m.group(2)
+    return None
+
+
+def review_rules(root, refs=TIP_REFS):
+    """(rules, source): `## Review model` of REVIEW.md on the default branch tip, never the working tree
+    or the branch under review. No tip, no file or no readable section gives the default rules."""
+    for ref in refs:
+        try:
+            r = subprocess.run(["git", "rev-parse", "--verify", "-q", ref + "^{commit}"], cwd=root,
+                               capture_output=True, text=True, timeout=30)
+            if r.returncode != 0:
+                continue
+            r = subprocess.run(["git", "show", ref + ":REVIEW.md"], cwd=root, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            break
+        rules = parse_review_model(r.stdout) if r.returncode == 0 else None
+        if rules is not None:
+            return rules, ref + ":REVIEW.md"
+        break
+    return dict(DEFAULT_RULES), "default"
+
+
+def model_ok(host, model, rules):
+    """True when the model meets the host's rule, False when it misses it or is missing, None when the
+    host has no rule. A claude rule compares families; a codex rule is `any` or an exact id."""
+    rule = rules.get(host) if isinstance(rules, dict) else None
+    if rule is None:
+        return None
+    if not isinstance(model, str) or not model or model == "none":
+        return False
+    if rule.lower() == "any":
+        return True
+    if host == "claude":
+        return family(model) is not None and family(model) == (family(rule) or rule.lower())
+    return model == rule
+
+
+def model_mode():
+    """warn or enforce, from `mode.review-model` in the guard folder alone; warn by default (ADR-0016)."""
+    d = os.environ.get("CLAUDE_GUARD_DIR") or os.path.join(os.path.expanduser("~"), ".claude", "hooks")
+    try:
+        with open(os.path.join(d, "mode.review-model"), encoding="utf-8") as fh:
+            return "enforce" if fh.readline().strip() == "enforce" else "warn"
+    except OSError:
+        return "warn"
+# --- review model: end -------------------------------------------------------------------------
+
+
 # ---------------------------------------------------------------------------
 # stamp (R11 to R15): the one writer of .pro-dev/ship/pr-check.json. The contract is
 # docs/pr-check-stamp.md; pr-gate.py and pro-security's push gate read the file.
@@ -864,7 +964,10 @@ def count(v, name: str) -> int:
     return v
 
 
-def reviewer_record(raw, which: str) -> dict:
+def reviewer_record(raw, which: str, rules: dict | None = None) -> dict:
+    """reviewers.code or reviewers.security. `host` and `model` come from the caller's dispatch and the
+    agent's closing `model:` line; `model_ok` says whether a done or inline review met REVIEW.md's rule
+    for its host (null for a reviewer that did not run or a host with no rule)."""
     if raw is None:
         raw = {}
     if not isinstance(raw, dict):
@@ -877,8 +980,42 @@ def reviewer_record(raw, which: str) -> dict:
     agent, rng = raw.get("agent"), raw.get("range")
     if agent is not None and not isinstance(agent, str) or rng is not None and not isinstance(rng, str):
         raise Refuse(f"pr-check: reviewers.{which} agent and range must be strings or null")
+    host, model = raw.get("host", "claude"), raw.get("model")
+    if host not in REVIEW_HOSTS:
+        raise Refuse(f"pr-check: reviewers.{which}.host must be one of {', '.join(REVIEW_HOSTS)}")
+    if model is not None and not (isinstance(model, str) and MODEL_ID.match(model)):
+        raise Refuse(f"pr-check: reviewers.{which}.model must be a model id (letters, digits and ._:/@[]-) or null")
+    ok = model_ok(host, model, rules if rules is not None else DEFAULT_RULES) if status in ("done", "inline") else None
     return {"agent": agent, "status": status, "blocking": count(raw.get("blocking", 0), "blocking"),
-            "important": count(raw.get("important", 0), "important"), "range": rng}
+            "important": count(raw.get("important", 0), "important"), "range": rng,
+            "host": host, "model": model, "model_ok": ok}
+
+
+def model_lines(reviewers: dict, rules: dict) -> list[str]:
+    """The warn and note lines of R9 and R10, one per code or security reviewer they apply to. R10 prints
+    the same warn line in enforce; only the result differs."""
+    out = []
+    for which in ("code", "security"):
+        r = reviewers[which]
+        if r["status"] not in ("done", "inline"):
+            continue
+        if r["model_ok"] is False:
+            out.append(f"pr-check: warn, {which} review ran on {r['model'] or 'none'} ({r['host']}), REVIEW.md names {rules.get(r['host'])}")
+        elif r["model_ok"] is None:
+            out.append(f"pr-check: note, {which} review ran on {r['model'] or 'none'} ({r['host']}), REVIEW.md names no model for {r['host']}")
+    return out
+
+
+def log_review_model(root: str, action: str, detail: str) -> None:
+    """One warn.log line per mismatch, the evidence docs/enforce-mode.md reads for mode.review-model."""
+    d = os.environ.get("CLAUDE_GUARD_DIR") or os.path.join(os.path.expanduser("~"), ".claude", "hooks")
+    try:
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "warn.log"), "a", encoding="utf-8") as fh:
+            fh.write("\t".join([datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z"), "review-model", action,
+                                 detail.replace("\t", " ").replace("\n", " ")[:300], root]) + "\n")
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -1177,15 +1314,19 @@ def codex_record(raw) -> dict:
 
 
 def compute_result(checks: list, floor: str, mutation: dict, reviewers: dict, missing: list | None = None,
-                   verifier_counted: bool = False, verifier_needed: bool = True) -> str:
+                   verifier_counted: bool = False, verifier_needed: bool = True, model_enforce: bool = False) -> str:
     """The result rule of docs/pr-check-stamp.md; the first match wins. verifier_counted is
-    verifier_counts() for reviewers.verifier (R12); verifier_needed is False for an intent-only range."""
+    verifier_counts() for reviewers.verifier (R12); verifier_needed is False for an intent-only range.
+    model_enforce is true when mode.review-model is enforce: a reviewer with model_ok false is then
+    incomplete; in warn the result is computed as if the model matched (spec-m2 R10)."""
     v = reviewers.get("verifier") or NO_VERIFIER
     if (any(c.get("status") == "fail" for c in checks) or floor == "findings"
             or any(reviewers[k]["blocking"] > 0 for k in ("code", "security"))
             or (verifier_counted and v.get("verdict") == "fail")):
         return "fail"
     if missing:
+        return "incomplete"
+    if model_enforce and any(reviewers[k].get("model_ok") is False for k in ("code", "security")):
         return "incomplete"
     mutation_ok = mutation.get("status") in ("killed", "skipped") or (
         mutation.get("status") == "survived" and mutation.get("accepted") is True)
@@ -1248,7 +1389,9 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         raise Refuse(f"pr-check: --reviewers is not valid JSON ({e})")
     if not isinstance(revs, dict):
         raise Refuse("pr-check: --reviewers must be a JSON object with code and security")
-    reviewers = {k: reviewer_record(revs.get(k), k) for k in ("code", "security")}
+    rules, _source = review_rules(root)
+    mode = model_mode()
+    reviewers = {k: reviewer_record(revs.get(k), k, rules) for k in ("code", "security")}
     reviewers["verifier"] = verifier_record(revs.get("verifier"), root)
     if "codex" in revs:
         reviewers["codex"] = codex_record(revs["codex"])
@@ -1267,6 +1410,10 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         missing.append("floor")
     if not isinstance(run.get("mutation"), dict):
         missing.append("mutation")
+    for line in model_lines(reviewers, rules):
+        print(line, file=sys.stderr)
+        if ", REVIEW.md names no model" not in line:
+            log_review_model(root, "deny" if mode == "enforce" else "warn", line)
     if missing:
         print(f"pr-check: incomplete, no record for: {', '.join(missing)}. Run those steps on this HEAD.", file=sys.stderr)
     floor = run.get("floor") if isinstance(run.get("floor"), str) else "could-not-run"
@@ -1286,7 +1433,7 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
         "mutation": mutation,
         "reviewers": reviewers,
         "result": compute_result(checks, floor, mutation, reviewers, missing, verifier_counts(root, reviewers["verifier"], head),
-                                 not intent_only(root, base, head)),
+                                 not intent_only(root, base, head), mode == "enforce"),
         "sources": run.get("sources") if isinstance(run.get("sources"), dict) else {"floor-guard": "not-installed"},
     }
     if risk is not None:
@@ -1315,7 +1462,30 @@ def cmd_marker(root: str) -> str:
     if not (isinstance(head, str) and re.fullmatch(r"[0-9a-f]{40}", head)
             and result in ("pass", "fail", "incomplete") and re.fullmatch(r"[a-z]+", str(tier))):
         raise Refuse("pr-check: the stamp holds values the marker cannot carry. Run the stamp step again.")
-    return f"<!-- pro-ship:pr-check head={head} result={result} tier={tier} -->"
+    # spec-m2 R11: the code reviewer's model, as its family for claude and its id for codex. A stamp
+    # written before the field existed has no host and reads as claude with no model.
+    revs = stamp.get("reviewers") if isinstance(stamp.get("reviewers"), dict) else {}
+    code = revs.get("code") if isinstance(revs.get("code"), dict) else {}
+    host = code.get("host") or "claude"
+    model = code.get("model")
+    if not isinstance(model, str) or not model:
+        shown = "none"
+    elif host == "claude":
+        shown = family(model) or model
+    else:
+        shown = model
+    if host not in REVIEW_HOSTS or not MODEL_ID.match(shown):
+        raise Refuse("pr-check: the stamp holds values the marker cannot carry. Run the stamp step again.")
+    return f"<!-- pro-ship:pr-check head={head} result={result} tier={tier} model={shown} host={host} -->"
+
+
+def cmd_review_model(root: str, args: list[str]) -> dict:
+    """spec-m2 R4: the rule REVIEW.md names for a host, read from the default branch tip."""
+    host = flag(args, "--host") or "claude"
+    if host not in REVIEW_HOSTS:
+        raise Refuse(f"pr-check: --host must be one of {', '.join(REVIEW_HOSTS)}")
+    rules, source = review_rules(root)
+    return {"host": host, "required": rules.get(host), "source": source}
 
 
 # ---------------------------------------------------------------------------
@@ -1344,6 +1514,9 @@ def main(argv: list[str]) -> int:
             return 0
         if cmd == "marker":
             print(cmd_marker(repo_root()))
+            return 0
+        if cmd == "review-model":
+            emit(cmd_review_model(repo_root(), rest))
             return 0
         if cmd == "find":
             # --enabled: only an install record no settings file disables counts (enabled_install).

@@ -98,25 +98,26 @@ claude plugin validate plugins/pro-quality --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of 9804f2e2e62d
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: 9804f2e2e62d on `PDS-52/build-m2`, rebased onto origin/main at 0f0dab5 after #193 and #196, with the PR 197 review fixes.
+- Checks run: `node tests/check.mjs` 51 checks, 0 failures, 13 warnings (all existing: Codex counterparts of pro-research agents, routing cases for subagents, one pro-egm eval prompt, the router and the deployed skill); `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `node tests/ship-check.mjs` 282/282; `node tests/ship-preflight.mjs` 108/108; `node tests/ship-hooks.mjs` 356/356; `node tests/factory.mjs` 190/190; `node tests/lessons.mjs` 114/114; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round among the records, each holding change_id TST-1; `python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude` printed `{"host": "claude", "required": "opus", "source": "default"}` (the tip has no section until this merges); `claude plugin validate . --strict` and each of pro-ship, pro-ai-sdlc and pro-quality: Validation passed.
+- Definition of done: met except AC10's full /execute run, left for the board rerun.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- AC10:
-- AC11:
-- AC12:
+- Doubt: none
+- AC1: ship-check rm1 and rm1b: a Sonnet code review in warn gives `model_ok: false`, status `done`, the warn line, a `review-model` line in `warn.log` and `pass`.
+- AC2: rm2 gives `incomplete` under `mode.review-model` enforce; rm2b shows the global `mode` file leaves it in warn; rm3 gives `pass` on `claude-opus-5-5` in both modes.
+- AC3: rm4 and rm4b: no model gives `model_ok: false` with the warn line in warn and `incomplete` in enforce.
+- AC4: rm5 covers `codex: any`, the exact id and a different id (true, true, false); rm6 gives `model_ok: null`, the note and `pass` in warn and in enforce with no codex entry.
+- AC5: rm9 prints `opus` with source `main:REVIEW.md` while the feature branch's `REVIEW.md` names sonnet; rm9c shows a working-tree edit changes nothing.
+- AC6: rm10 prints `model=opus host=claude`, rm10b `model=none`, rm10c `model=gpt-5.1-codex host=codex`.
+- AC7: ship-preflight model cases list PR 2 under `model_mismatch` with `review ran on sonnet (claude)` and PR 3 under `model_unrecorded`; every commit is covered in warn and PR 2's two commits are uncovered in enforce.
+- AC8: record refuses the Sonnet GO in enforce with no record written and records it in warn with `, review ran on sonnet (claude)` in the summary.
+- AC9: factory v37 raises to level 2 with `no pr-check marker`; v38 passes with only the note `pr-check not installed, reviewer model not checked`; v39 notes the Sonnet marker in warn and v40 raises it to level 2 in enforce.
+- AC10: `sdlc-contract` asserts that stage 8 runs `reviewmodel.py marker` and appends its line; factory k1 and k2 show `reviewmodel.py marker` prints pro-ship's marker and `not-installed` with exit 3 without it.
+  Hand run of stage 8 in a scratch repo with this branch's pro-ship: the run steps and `stamp` with an Opus code reviewer gave `result: pass`, then `reviewmodel.py marker >> body.md` left `<!-- pro-ship:pr-check head=faa0ee68bbfafbec7c5ba15593ecbf0d6566d897 result=pass tier=unclassified model=opus host=claude -->` as the body's last line; no PR was opened from the scratch repo.
+- AC11: lessons round cases write `model: claude-opus-5-5`, `host: claude` and `model_ok: true`; `tests/mieruka-sync.mjs` loads the round written with `--model` and `--host`.
+- AC12: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass as above.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -126,4 +127,31 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- Step 2: `stamp` reads a reviewer with no `host` as `claude` and refuses any host but `claude` and `codex`: an unknown host cannot skip the rule.
+  A `model` must be a model id of at most 100 letters, digits and `._:/@[]-` characters; the stamp refuses anything else because the marker carries it.
+- Step 2: `model_ok` is null for a reviewer that did not run (`skipped-no-surface`, `not-installed`, `could-not-run`); R8 judges only `done` and `inline`.
+- Step 2: each warn or enforce line also lands in `warn.log` under the gate name `review-model`, which is the evidence the `docs/enforce-mode.md` row reads; a note line for a host with no rule does not.
+- Step 2: the marker of a `claude` model whose id names no family carries the id itself: `/ship` and verify then read it as a mismatch rather than a family.
+- Step 2: the result rule in `docs/pr-check-stamp.md` is renumbered; the model rule is rule 2, after a missing run record and before `pass`.
+- Steps 2 and 7: three new stamp fixtures, `review-model-sonnet-warn.json`, `review-model-none-enforce.json` and `review-model-codex-host.json`, with their `expect.json` rows; `valid-pass.json` and `valid-pass-codex.json` gain `host`, `model` and `model_ok`.
+- Steps 6, 7 and 9: pro-ai-sdlc's copy of the reader is its own module, `scripts/reviewmodel.py`, which `factory.py` and `lessons.py` import, instead of a copy inside `factory.py`.
+  The `review-model` check holds the block in `pr-check.py`, `ship.py` and `reviewmodel.py` byte for byte and runs each copy on `tests/fixtures/review-model/cases.json`.
+- Step 8 (R5): `/review` and the doubt step ask `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host <host>` instead of `pr-check.py review-model` with pro-ship installed and `git show origin/HEAD:REVIEW.md` without it.
+  It prints the same JSON from the same tip with the checked block, needs no pro-ship and leaves no yaml for the session to parse.
+  There is no "pro-ship not installed" path left to report.
+- Step 9: the review-round record also carries `model_ok`, judged by `reviewmodel.py` against the tip, beside R12's `model` and `host`; `--host` defaults to `claude` and a missing `--model` records null and `model_ok` false.
+- Step 6: two markers in the body raise with `more than one pr-check marker`; a marker written before this change passes with the note `the pr-check marker records no reviewer model`.
+  `verify` gains a `notes` list in its JSON, printed as `note:` lines; `run` prints each as a `factory: note,` line on stderr.
+  The tests serve every build PR a body that ends with an Opus marker as `/execute` now writes one; they point `CLAUDE_GUARD_DIR` at the stub folder.
+- Step 4 (R16): `reviewers` in `report.json` is a list of `{agent, status, host, model}`; a reviewer with no host reads as `claude` and a `done` reviewer with no model is a mismatch, as in the stamp.
+  A NO-GO is recorded in enforce too, with the note in its summary.
+  After the PR review `record` judges a reviewer as the stamp does: `done` and `inline` are judged, a host other than `claude` or `codex` or a model id the stamp would refuse is refused and a host with no rule is a note in its output, never a mismatch.
+- Step 5, after the PR review: stage 8 runs `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" marker`, which finds pro-ship's `pr-check.py` as `factory.py` does (repo layout or plugin cache) and prints its marker, because a `$CHECK` from the pr-check skill does not carry across shell calls; `allowed-tools` names that one command.
+- Step 7, after the PR review: the marker regex `MARKER` moved inside the shared block: the `review-model` check holds it byte for byte and runs each copy on marker cases.
+- Step 8: a reviewer's closing line names the model it ran on and wins over the dispatch model when the two differ, since the host ran it; the skills say to report the difference.
+
+- After the PR review and the rebase onto main (#193 and #196 took pro-ai-sdlc 0.20.0, pro-ship 0.19.0 and `metadata.version` 1.99.0) the bumps are pro-ship 0.20.0, pro-ai-sdlc 0.21.0, pro-quality 0.22.0 and `metadata.version` 1.100.0; earlier commit messages still name the versions of their day.
+
 ## Noticed but not touched
+
+- `pro-security:security-architect` has no closing `model:` line (R6 names the two code reviewers); pr-check and `/ship` record its dispatch model.

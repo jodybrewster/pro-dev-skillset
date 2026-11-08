@@ -2,7 +2,7 @@
 description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /execute <path to plan.md>"
 argument-hint: "<path to plan.md>"
 model: opus
-allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/visual.py" record:*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
+allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/visual.py" record:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py":*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
 ---
 
 ## Context
@@ -221,6 +221,10 @@ Push with `git push -u origin <branch>`.
 Open the pull request with `gh pr create` against `<default_branch>`, its title starting `fix:` when the intent's `kind` is `bug` and `feat:` otherwise, because `ship.py version` reads that word, adding `--draft` when any doubted step ends with open findings (three rounds, or two rounds with none actionable).
 Its body links the intent folder, lists each acceptance criterion with its proof and names any departures.
 The body ends with "Things I didn't touch" (the `## Noticed but not touched` lines and neighboring work left out on purpose) and "Potential concerns" (consented stop-list steps, open doubt findings, what the verifier could not check and risks seen), each "None" when empty.
+When pro-ship is installed and pr-check wrote a stamp, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" marker` (it finds pro-ship's `pr-check.py` in the repo layout or the plugin cache) and append the one line `pr-check.py marker` prints as the last line of the body.
+It prints `not-installed` and exits 3 without pro-ship; then the body has no marker.
+That line carries the head, the result and the reviewer's model and host; `/ship` and `factory.py verify` read it.
+Never edit or retype it.
 If `gh` fails, give the compare URL for the branch instead.
 
 ### 9. Report

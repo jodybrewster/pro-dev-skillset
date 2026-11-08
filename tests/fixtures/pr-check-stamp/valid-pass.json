@@ -51,14 +51,20 @@
       "status": "done",
       "blocking": 0,
       "important": 0,
-      "range": "2222222222222222222222222222222222222222..HEAD"
+      "range": "2222222222222222222222222222222222222222..HEAD",
+      "host": "claude",
+      "model": "claude-opus-5-5",
+      "model_ok": true
     },
     "security": {
       "agent": "pro-security:security-architect",
       "status": "done",
       "blocking": 0,
       "important": 1,
-      "range": "2222222222222222222222222222222222222222..HEAD"
+      "range": "2222222222222222222222222222222222222222..HEAD",
+      "host": "claude",
+      "model": "claude-opus-5-5",
+      "model_ok": true
     },
     "verifier": {
       "agent": "pro-ai-sdlc:verifier",

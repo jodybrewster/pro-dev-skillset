@@ -14,7 +14,10 @@ repo that holds the current directory):
   coverage BASE HEAD               map each commit in BASE..HEAD (BASE may be the empty tree, for
                                    a first release of the whole history) to a merged PR and say
                                    whether a passing pr-check marker covers it:
-                                   {prs, uncovered, covered}. Uses gh. A marker counts only
+                                   {prs, uncovered, covered, model_mismatch, model_unrecorded}.
+                                   model_mismatch lists a PR whose marker's model misses
+                                   REVIEW.md's rule on the default branch tip; under
+                                   mode.review-model enforce its commits are uncovered. Uses gh. A marker counts only
                                    on a PR from this repo whose author is the current gh
                                    user or an OWNER, MEMBER or COLLABORATOR and only when
                                    the body holds exactly one. Anything it cannot prove
@@ -104,8 +107,6 @@ PULLS_LOOKUP_CAP = 60
 KINDS = ("deploy-on-merge", "tag-release", "manual-deploy", "desktop", "publish")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-MARKER = re.compile(
-    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)\s*-->")
 SEMVER_TAG = re.compile(r"(?:^|[^0-9A-Za-z.])v?\d+\.\d+\.\d+")
 # The whole name of a release tag. git accepts names that hold a command substitution, so a tag
 # reaches a command, a gh path or a record only after a full match of this.
@@ -714,6 +715,100 @@ def cmd_scope(root: str, args: list[str]) -> dict:
             "range": f"{base}..{head}" if base else None, "last_deploy_source": source, "targets": tg}
 
 
+# --- review model: begin (spec-m2 R2, R3, R8, R10) ---------------------------------------------
+# One copy each in pro-ship's pr-check.py and ship.py and in pro-ai-sdlc's reviewmodel.py, because
+# plugins do not import each other (ADR-0003). The review-model check in tests/check.mjs holds the
+# copies byte for byte to one block and runs each on tests/fixtures/review-model/cases.json.
+REVIEW_HOSTS = ("claude", "codex")
+FAMILIES = ("opus", "sonnet", "haiku", "fable")
+MODEL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99}$")
+DEFAULT_RULES = {"claude": "opus"}
+TIP_REFS = ("origin/HEAD", "origin/main", "main", "origin/master", "master")
+# The PR body marker `pr-check.py marker` prints (docs/pr-check-stamp.md). model= and host= are
+# optional: a marker written before spec-m2 has neither (R14).
+MARKER = re.compile(
+    r"<!--\s*pro-ship:pr-check\s+head=([0-9a-f]{40})\s+result=([a-z]+)\s+tier=([a-z]+)"
+    r"(?:\s+model=([A-Za-z0-9][A-Za-z0-9._:/@\[\]-]{0,99})\s+host=([a-z]+))?\s*-->")
+
+
+def family(model):
+    """The Claude family a model id names: the first of opus, sonnet, haiku and fable it contains."""
+    if not isinstance(model, str):
+        return None
+    low = model.lower()
+    return next((f for f in FAMILIES if f in low), None)
+
+
+def parse_review_model(text):
+    """{host: rule} from the fenced yaml block under `## Review model`; None when there is none to read."""
+    if not isinstance(text, str):
+        return None
+    lines = text.splitlines()
+    start = next((i for i, ln in enumerate(lines) if re.match(r"^##\s+review model\s*$", ln.strip(), re.I)), None)
+    if start is None:
+        return None
+    rules, inside = {}, False
+    for ln in lines[start + 1:]:
+        s = ln.strip()
+        if not inside:
+            if s.startswith("#") and not s.startswith("```"):
+                return None
+            inside = bool(re.match(r"^```\s*ya?ml\s*$", s, re.I))
+            continue
+        if s.startswith("```"):
+            return rules or None
+        s = s.split("#", 1)[0].strip()
+        m = re.match(r"^([A-Za-z]+)\s*:\s*[\"']?([^\"'\s]+)[\"']?$", s)
+        if m and m.group(1).lower() in REVIEW_HOSTS and MODEL_ID.match(m.group(2)):
+            rules[m.group(1).lower()] = m.group(2)
+    return None
+
+
+def review_rules(root, refs=TIP_REFS):
+    """(rules, source): `## Review model` of REVIEW.md on the default branch tip, never the working tree
+    or the branch under review. No tip, no file or no readable section gives the default rules."""
+    for ref in refs:
+        try:
+            r = subprocess.run(["git", "rev-parse", "--verify", "-q", ref + "^{commit}"], cwd=root,
+                               capture_output=True, text=True, timeout=30)
+            if r.returncode != 0:
+                continue
+            r = subprocess.run(["git", "show", ref + ":REVIEW.md"], cwd=root, capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.SubprocessError):
+            break
+        rules = parse_review_model(r.stdout) if r.returncode == 0 else None
+        if rules is not None:
+            return rules, ref + ":REVIEW.md"
+        break
+    return dict(DEFAULT_RULES), "default"
+
+
+def model_ok(host, model, rules):
+    """True when the model meets the host's rule, False when it misses it or is missing, None when the
+    host has no rule. A claude rule compares families; a codex rule is `any` or an exact id."""
+    rule = rules.get(host) if isinstance(rules, dict) else None
+    if rule is None:
+        return None
+    if not isinstance(model, str) or not model or model == "none":
+        return False
+    if rule.lower() == "any":
+        return True
+    if host == "claude":
+        return family(model) is not None and family(model) == (family(rule) or rule.lower())
+    return model == rule
+
+
+def model_mode():
+    """warn or enforce, from `mode.review-model` in the guard folder alone; warn by default (ADR-0016)."""
+    d = os.environ.get("CLAUDE_GUARD_DIR") or os.path.join(os.path.expanduser("~"), ".claude", "hooks")
+    try:
+        with open(os.path.join(d, "mode.review-model"), encoding="utf-8") as fh:
+            return "enforce" if fh.readline().strip() == "enforce" else "warn"
+    except OSError:
+        return "warn"
+# --- review model: end -------------------------------------------------------------------------
+
+
 # ---------------------------------------------------------------------------
 # coverage (R7, R8)
 # ---------------------------------------------------------------------------
@@ -723,8 +818,18 @@ def parse_marker(body) -> dict | None:
     found = MARKER.findall(body if isinstance(body, str) else "")
     if len(found) != 1:
         return None
-    h, result, tier = found[0]
-    return {"head": h, "result": result, "tier": tier}
+    h, result, tier, model, host = found[0]
+    return {"head": h, "result": result, "tier": tier, "model": model or None, "host": host or None}
+
+
+def marker_mismatch(m: dict | None, rules: dict) -> str | None:
+    """`review ran on <model> (<host>)` when a marker's model misses its host's rule (R13); None when it
+    meets it, has no rule or carries no model (an old marker, R14)."""
+    if not m or not m.get("model"):
+        return None
+    if model_ok(m.get("host"), m["model"], rules) is False:
+        return f"review ran on {m['model']} ({m['host']})"
+    return None
 
 
 def current_user(root: str) -> str | None:
@@ -830,6 +935,8 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
         errors.append(f"ship: coverage: looked up {PULLS_LOOKUP_CAP} of {len(unmapped)} unmapped commits; the rest stay uncovered")
 
     perm_cache: dict[str, bool] = {}
+    rules, _source = review_rules(root)
+    enforce = model_mode() == "enforce"
 
     def trusted(p: dict) -> bool:
         # Only a PR with a marker needs its author checked, so most PRs cost no lookup.
@@ -840,6 +947,8 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
         m = parse_marker(p["body"]) if trusted(p) else None
         tip = p["head"]
         if not (m and m["result"] == "pass" and isinstance(tip, str) and SHA.match(tip)):
+            return False
+        if enforce and marker_mismatch(m, rules):
             return False
         if m["head"] != tip and not is_ancestor(root, m["head"], tip):
             return False
@@ -858,7 +967,14 @@ def cmd_coverage(root: str, args: list[str]) -> dict:
                         "marker": parse_marker(prs[n]["body"]),
                         "covered": all(member_covered(n, c) for c in prs[n]["members"])})
     out = {"prs": out_prs, "uncovered": [c for c in commits if c not in covered_set],
-           "covered": [c for c in commits if c in covered_set]}
+           "covered": [c for c in commits if c in covered_set], "model_mismatch": [], "model_unrecorded": []}
+    for pr in out_prs:
+        m = pr["marker"] if pr["trusted"] else None
+        why = marker_mismatch(m, rules)
+        if why:
+            out["model_mismatch"].append({"number": pr["number"], "reason": why})
+        elif m and not m.get("model"):
+            out["model_unrecorded"].append(pr["number"])
     if errors:
         out["errors"] = errors
     return out
@@ -919,6 +1035,37 @@ def validate_report(report, head: str) -> None:
                 raise Refuse(f"ship: refusing to record GO: target {tid} has no rollback steps (a missing rollback is a Blocker).")
 
 
+def reviewer_mismatches(report: dict, rules: dict) -> tuple[list[tuple[str, str]], list[str]]:
+    """R16, judged as pr-check.py stamp judges a reviewer: ([(`review ran on <model> (<host>)`, the rule)],
+    [notes]). A done or inline reviewer whose model misses its host's rule is a mismatch; a host with no
+    rule is a note and never a mismatch. A missing host reads as claude; any other host or a model id
+    the stamp would refuse is refused here too."""
+    out, notes = [], []
+    revs = report.get("reviewers")
+    if revs is None:
+        return out, notes
+    if not isinstance(revs, list):
+        raise Refuse("ship: reviewers must be a list")
+    for r in revs:
+        if not isinstance(r, dict):
+            raise Refuse("ship: each reviewer must be an object")
+        host = r.get("host", "claude")
+        if not isinstance(host, str) or host not in REVIEW_HOSTS:
+            raise Refuse(f"ship: reviewers host must be one of {', '.join(REVIEW_HOSTS)}")
+        model = r.get("model")
+        if model is not None and not (isinstance(model, str) and MODEL_ID.match(model)):
+            raise Refuse("ship: reviewers model must be a model id (letters, digits and ._:/@[]-) or null")
+        if r.get("status") not in ("done", "inline"):
+            continue
+        ok = model_ok(host, model, rules)
+        if ok is None:
+            notes.append(f"review ran on {model or 'none'} ({host}), REVIEW.md names no model for {host}")
+        elif ok is False:
+            shown = (family(model) or model) if model and host == "claude" else (model or "none")
+            out.append((f"review ran on {shown} ({host})", str(rules.get(host))))
+    return out, notes
+
+
 def mieruka_copy(root: str, key: str, text: str) -> tuple[str | None, str]:
     """(path written, why not). Only when .mieruka/ exists and git ignores the manifest's own path.
 
@@ -950,6 +1097,12 @@ def cmd_record(root: str, args: list[str]) -> dict:
     except ValueError as e:
         raise Refuse(f"ship: {args[0]} is not valid JSON ({e})")
     validate_report(report, head)
+    rules, _source = review_rules(root)
+    found, notes = reviewer_mismatches(report, rules)
+    wrong = sorted(set(found))
+    if wrong and report["verdict"] == "GO" and model_mode() == "enforce":
+        raise Refuse("ship: refusing to record GO: " + "; ".join(f"{w}, REVIEW.md names {req}" for w, req in wrong)
+                     + ". Run that review again on the model REVIEW.md names or record NO-GO.")
     files = dirty_tracked(root)
     if files:
         shown = ", ".join(files[:5]) + (" and more" if len(files) > 5 else "")
@@ -968,6 +1121,8 @@ def cmd_record(root: str, args: list[str]) -> dict:
                f"{plural(len(detail['targets']), 'target')}")
     if accepted:
         summary += f", {plural(len(accepted), 'accepted risk')}"
+    if wrong:
+        summary += ", " + ", ".join(w for w, _req in wrong)
     key = head[:12]
     record = {
         "schema": 1,
@@ -994,7 +1149,10 @@ def cmd_record(root: str, args: list[str]) -> dict:
         written.append(copy)
     else:
         skipped.append(why)
-    return {"status": status, "evidence_key": record["evidence_key"], "written": written, "skipped": skipped}
+    out = {"status": status, "evidence_key": record["evidence_key"], "written": written, "skipped": skipped}
+    if notes:
+        out["notes"] = notes
+    return out
 
 
 # ---------------------------------------------------------------------------

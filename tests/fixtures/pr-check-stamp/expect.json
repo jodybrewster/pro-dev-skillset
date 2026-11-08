@@ -76,6 +76,27 @@
     },
     "push_gate": "fall-through"
   },
+  "review-model-sonnet-warn.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "accept"
+  },
+  "review-model-none-enforce.json": {
+    "pr_gate": {
+      "valid": false,
+      "cause": "not-passing"
+    },
+    "push_gate": "fall-through"
+  },
+  "review-model-codex-host.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "accept"
+  },
   "valid-pass-change-id.json": {
     "pr_gate": {
       "valid": true,
