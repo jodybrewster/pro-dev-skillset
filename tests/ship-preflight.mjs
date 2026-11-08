@@ -346,7 +346,7 @@ export function runShipPreflightCases() {
       && [prs[0], prs[2]].every((p) => r.json.covered.includes(p.c)), r.stdout + r.stderr);
 
     // AC8: ship.py record and the reviewers in report.json.
-    const rollback = { triggers: ["t"], steps: ["roll back"], rto: "5 minutes" };
+    const rollback = { triggers: ["t"], steps: ["`vercel rollback`"], rto: "5 minutes" };
     const rec = (h, b, reviewers, g, verdict = "GO") => {
       const p = join(sandbox, `report-model-${++repoN}.json`);
       writeFileSync(p, JSON.stringify({ verdict, head: h, base: b, scope: { kind: "tag", range: `${b}..${h}`, prs: [], uncovered: [], last_deploy_source: "tag" },

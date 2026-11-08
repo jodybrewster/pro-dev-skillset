@@ -125,6 +125,7 @@ An empty section tells the reviewer the diff follows the plan.
 - A fenced `sh` block cannot sit inside the Ship block's own yaml fence so AC8's fence form is proven through `runnable()` called directly and through `record` accepting a GO with a `sh` fence, while `ready` covers the argv list, the code span and the `manual:` lines in a real Ship block.
 - `tests/e2e-sdlc.mjs` and `demo/factory/new-demo.sh` write Ship blocks with prose rollback steps that `ready` now rejects so a `/ship` turn there would stop at readiness; both now hold a `git revert` command and a `manual:` line.
 - The plan bumps pro-ship and `metadata.version` in each commit that changes plugin content; the build bumped once in its first plugin commit and later commits carry that version, so the squashed PR holds one bump of each, which is what the version-bump law checks against main.
+- The model cases #197 added to `tests/ship-preflight.mjs` record a GO with the prose rollback step `roll back`, which `record` now refuses; their fixture holds `` `vercel rollback` `` instead.
 - A `- manual: text` line in the Ship block parses as a one-key map in the small yaml reader so `runnable()` reads that map as a `manual:` step instead of rejecting it; this repo's block quotes its `manual:` lines.
 
 ## Noticed but not touched
