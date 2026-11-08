@@ -571,6 +571,10 @@ export function runShipPreflightCases() {
       ["refuses a GO with a prose rollback step", ["Revert the release commits on main"], false, /prose/],
       ["refuses a GO whose command step still holds a placeholder", ["`git checkout <previous version>`"], false, /placeholder/],
       ["refuses a GO whose fenced step still holds a placeholder", ["```sh\ngit revert <first release commit>\n```"], false, /placeholder/],
+      ["refuses a GO whose command still holds <sha>", ["`git revert --no-edit <sha>`"], false, /placeholder/],
+      ["refuses a GO whose command still holds <plugin>", ["`git push origin <plugin>--v1.2.3`"], false, /placeholder/],
+      ["accepts a filled command with '<title>' in it", ["`gh release edit v1.2.3 --notes '<title>'`"], true],
+      ["accepts a filled command with a redirection", ["`sort < in.txt > out.txt`"], true],
       ["accepts a placeholder in a manual: line beside a command", ["`git push origin main`", "manual: pin <previous version> until the fix lands"], true],
       ["accepts a sh fenced block and an argv list", ["```sh\ngit revert --no-edit abc123\ngit push origin main\n```", ["vercel", "rollback"]], true],
       ["refuses a GO whose only rollback steps are manual:", ["manual: tell the channel"], false, /manual/],
@@ -705,6 +709,10 @@ export function runShipPreflightCases() {
     repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\""], ["check the health page"]) });
     r = ship(repo, ["ready"]);
     add("ready/a prose verify step fails (R18)", "exit 9, field verify", r.status === 9 && r.json.problems[0].field === "verify" && r.json.problems[0].text === "check the health page", r.stdout + r.stderr);
+    repo = mkrepo({ "CLAUDE.md": "# x\n\n## Ship\n\n```yaml\ntargets:\n  - id: web\n    kind: tag-release\n    verify:\n      - \"manual: open the dashboard\"\n```\n" });
+    r = ship(repo, ["ready"]);
+    add("ready/a manual: verify step on a target with no runnable rollback step fails (R17)", "exit 9, field verify, index 0",
+      r.status === 9 && r.json.problems.some((p) => p.field === "verify" && p.index === 0), r.stdout + r.stderr);
     repo = mkrepo({ "CLAUDE.md": block(["\"`git push origin main`\""], ["\"`curl -fsS https://example.com/health`\"", "\"manual: open the dashboard\""]) });
     r = ship(repo, ["ready"]);
     add("ready/a verify list of a code span and a manual: line passes (R18)", "exit 0", r.status === 0 && r.json.ready === true, r.stdout + r.stderr);
@@ -851,6 +859,11 @@ export function runShipPreflightCases() {
     d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", REQ + JSON.stringify({ head: t.h, items: [ITEM], pr: 42, repo: "o/r", scope: "pr" }), T1), cc(12, "maint", "confirmed", T2)] });
     r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
     add("confirm/a pr-scope request read in tag scope does not count", "confirmed false, another scope", r.status === 0 && r.json?.confirmed === false && /another scope/.test(r.json.why), r.stdout + r.stderr);
+    t = recRepo();
+    d = stubDir({ ...perms, [`commit-${t.h}.json`]: [cc(11, "maint", tagReq(t.h), T1)], [`commit-${t.h}-2.json`]: [cc(12, "maint", "confirmed", T2)] });
+    r = cship(t.repo, ["confirm", "read", "--head", t.h], d);
+    add("confirm/read pages through the commit comments", "the reply on page two counts, read with --paginate",
+      r.status === 0 && r.json?.confirmed === true && readFileSync(join(d, "calls.log"), "utf8").includes("--paginate"), r.stdout + r.stderr);
   }
 }
 

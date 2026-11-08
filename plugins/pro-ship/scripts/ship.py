@@ -1037,7 +1037,11 @@ def write_atomic(path: str, text: str) -> None:
 READY_EXIT = 9
 CODE_SPAN = re.compile(r"`([^`\n]+)`")
 SHELL_FENCE = re.compile(r"```(?:sh|bash|shell)[ \t]*\n(.*)\n```", re.S)
-PLACEHOLDER = re.compile(r"<[A-Za-z][^<>\n]*>")
+# A placeholder the templates leave for the release to fill: words with a space, such as
+# <previous version> or <first release commit>, or one of the single words they use. A filled
+# command may still hold <title> or a redirection, which pass.
+PLACEHOLDER_WORDS = ("plugin", "sha", "tag", "commit", "version", "name", "id", "url")
+PLACEHOLDER = re.compile(r"<(?:[A-Za-z][^<>\n]* [^<>\n]*[^<>\s]|" + "|".join(PLACEHOLDER_WORDS) + r")>")
 
 
 def runnable(step) -> str:
@@ -1097,8 +1101,14 @@ def cmd_ready(root: str, args: list[str]) -> tuple[dict, int]:
     for t in found:
         rb = t.get("rollback")
         tid = clean(t.get("id"), 80)
-        problems += step_problems(tid, "rollback.steps", as_steps(rb.get("steps") if isinstance(rb, dict) else None), True)
-        problems += step_problems(tid, "verify", as_steps(t.get("verify")), False)
+        steps = as_steps(rb.get("steps") if isinstance(rb, dict) else None)
+        verify = as_steps(t.get("verify"))
+        problems += step_problems(tid, "rollback.steps", steps, True)
+        problems += step_problems(tid, "verify", verify, False)
+        if not any(runnable(s) == "command" for s in steps):  # R17: a manual: step needs a runnable rollback beside it
+            problems += [{"target": tid, "field": "verify", "index": i,
+                          "text": clean("a manual: step needs a runnable rollback step on this target", 80)}
+                         for i, s in enumerate(verify) if runnable(s) == "manual"]
     if problems:
         return {"ready": False, "problems": problems}, READY_EXIT
     return {"ready": True, "targets": len(found)}, 0
@@ -1382,11 +1392,28 @@ def pr_view(root: str, pr: int, merge: bool = False) -> dict:
     return {"head": head if isinstance(head, str) else None, "merge": mc.get("oid"), "comments": out}
 
 
+def json_pages(text: str) -> list:
+    """The items of every JSON array gh --paginate printed, page after page with nothing between."""
+    out, i, dec = [], 0, json.JSONDecoder()
+    while True:
+        while i < len(text) and text[i].isspace():
+            i += 1
+        if i >= len(text):
+            return out
+        try:
+            page, i = dec.raw_decode(text, i)
+        except ValueError:
+            raise Refuse("ship: gh printed comments that are not JSON")
+        if not isinstance(page, list):
+            raise Refuse("ship: gh printed a comment page that is not a list")
+        out.extend(page)
+
+
 def commit_comments(root: str, sha: str) -> list[dict]:
-    data = gh_json(root, ["api", f"repos/{{owner}}/{{repo}}/commits/{sha}/comments?per_page=100"],
-                   f"reading the comments on {sha[:8]}")
+    data = json_pages(gh_run(root, ["api", f"repos/{{owner}}/{{repo}}/commits/{sha}/comments?per_page=100", "--paginate"],
+                             f"reading the comments on {sha[:8]}"))
     out = []
-    for c in data if isinstance(data, list) else []:
+    for c in data:
         if not isinstance(c, dict):
             continue
         u = c.get("user") if isinstance(c.get("user"), dict) else {}

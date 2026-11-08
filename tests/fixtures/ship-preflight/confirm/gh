@@ -4,7 +4,8 @@
 #   repo.txt            owner/name for `gh repo view` (default o/r)
 #   pr-list.json        the answer to `gh pr list` (default [])
 #   pr-<n>.json         the answer to `gh pr view <n>`
-#   commit-<sha>.json   the comments on a commit (default [])
+#   commit-<sha>.json   the comments on a commit (default []); with --paginate,
+#                       commit-<sha>-2.json follows it back to back, as gh prints pages
 #   perm-<login>.txt    a login's permission (default read)
 # `gh pr comment <n>` keeps stdin in posted-pr-<n>.txt; a commit comment post keeps it in
 # posted-commit-<sha>.txt. Any other call exits 2 so nothing reaches the network.
@@ -22,7 +23,8 @@ case "$1 $2" in
     s="${2#repos/\{owner\}/\{repo\}/commits/}"; s="${s%%/*}"
     case "$*" in
       *body=@-*) cat > "$d/posted-commit-$s.txt"; printf '{"id":901,"html_url":"https://github.com/o/r/commit/%s#commitcomment-901"}\n' "$s" ;;
-      *) if [ -f "$d/commit-$s.json" ]; then cat "$d/commit-$s.json"; else echo "[]"; fi ;;
+      *) if [ -f "$d/commit-$s.json" ]; then cat "$d/commit-$s.json"; else echo "[]"; fi
+         case "$*" in *--paginate*) if [ -f "$d/commit-$s-2.json" ]; then cat "$d/commit-$s-2.json"; fi ;; esac ;;
     esac ;;
   *) echo "gh stub: no canned answer for: $*" >&2; exit 2 ;;
 esac
