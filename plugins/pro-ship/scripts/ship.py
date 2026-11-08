@@ -1037,11 +1037,13 @@ def write_atomic(path: str, text: str) -> None:
 READY_EXIT = 9
 CODE_SPAN = re.compile(r"`([^`\n]+)`")
 SHELL_FENCE = re.compile(r"```(?:sh|bash|shell)[ \t]*\n(.*)\n```", re.S)
-# A placeholder the templates leave for the release to fill: words with a space, such as
-# <previous version> or <first release commit>, or one of the single words they use. A filled
-# command may still hold <title> or a redirection, which pass.
-PLACEHOLDER_WORDS = ("plugin", "sha", "tag", "commit", "version", "name", "id", "url")
-PLACEHOLDER = re.compile(r"<(?:[A-Za-z][^<>\n]* [^<>\n]*[^<>\s]|" + "|".join(PLACEHOLDER_WORDS) + r")>")
+# A placeholder the templates leave for the release to fill: bracketed text holding a space, a
+# hyphen or an underscore (<previous version>, <release-sha>, <previous_tag>) or, in any case, one of
+# the single words they use. Another plain word such as <title> passes, as does a redirection, which
+# has no closing bracket right after a word.
+PLACEHOLDER_WORDS = ("plugin", "sha", "tag", "commit", "version", "name", "id", "url", "base", "head", "n",
+                     "env", "ref", "branch", "path")
+PLACEHOLDER = re.compile(r"<(?:[A-Za-z][^<>\n]*[ _-][^<>\n]*[^<>\s]|(?i:" + "|".join(PLACEHOLDER_WORDS) + r"))>")
 
 
 def runnable(step) -> str:

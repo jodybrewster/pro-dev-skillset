@@ -137,7 +137,7 @@ Anything else is prose and is rejected.
 On a rejected step `ready` exits 9 and prints `{"ready": false, "problems": [{target, field, index, text}]}`, with each text cut to 80 characters and a null index for a target whose rollback is only `manual:` lines.
 It reads files only and writes nothing so every earlier record stays byte for byte; the skill stops with `ship stopped before review: fix the steps above, nothing was written`.
 `ready` accepts a `<placeholder>` inside a command, because the report fills it from the release; `record` refuses a GO whose command still holds one and `manual:` lines may keep one.
-A placeholder is angle brackets around words with a space, such as `<previous version>` or `<first release commit>`, or around one of `plugin`, `sha`, `tag`, `commit`, `version`, `name`, `id` or `url`; a filled command may still hold `'<title>'` or a redirection.
+A placeholder is bracketed text holding a space, a hyphen or an underscore, such as `<previous version>`, `<release-sha>` or `<previous_tag>`, or one of `plugin`, `sha`, `tag`, `commit`, `version`, `name`, `id`, `url`, `base`, `head`, `n`, `env`, `ref`, `branch` and `path` in any case; another plain word such as `'<title>'` and a redirection such as `sort < in.txt > out.txt` pass.
 
 ## The confirmation
 
