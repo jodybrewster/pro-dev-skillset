@@ -97,7 +97,9 @@ claude -p "/pro-ai-sdlc:auto ${phase} ${dir}" \
 # <slug> for the build. There is no fallback to a newer PR; the host checks the same name again.
 cid=$(awk 'NR == 1 { sub(/\r$/, ""); if ($0 != "---") exit; next }
   { sub(/\r$/, "") } $0 == "---" { exit }
-  /^id:/ { sub(/^id:[ \t]*/, ""); sub(/[ \t]+$/, ""); print; exit }' "$dir/intent.md" 2>/dev/null || true)
+  /^id:/ { sub(/^id:[ \t]*/, ""); sub(/[ \t]+#.*$/, ""); sub(/[ \t]+$/, "");
+    q = substr($0, 1, 1); if ((q == "\"" || q == "\047") && substr($0, length($0), 1) == q) $0 = substr($0, 2, length($0) - 2)
+    print; exit }' "$dir/intent.md" 2>/dev/null || true)
 case "$cid" in
   [ABCDEFGHIJKLMNOPQRSTUVWXYZ]*-[123456789]*)
     case "${cid%%-*}" in ?|???????*|*[!ABCDEFGHIJKLMNOPQRSTUVWXYZ]*) cid="" ;; esac

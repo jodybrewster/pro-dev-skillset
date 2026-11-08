@@ -490,6 +490,8 @@ export function runFactoryCases() {
         [FOLDER]: { "intent.md": intentText() },
         "TST-4-demo": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-4\nsource:") },
         "2026-01-03-dated": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-3\nsource:") },
+        "TST-5-quoted": { "intent.md": intentText().replace("---\nsource:", "---\nid: \"TST-5\"\nsource:") },
+        "TST-6-noted": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-6  # allocated by ids.py\nsource:") },
       });
       const lastHead = () => { const p = join(stubDir, "heads.log"); return existsSync(p) ? readFileSync(p, "utf8").trim().split("\n").pop() : ""; };
       const bin = join(sandbox, "sh-bin");
@@ -529,6 +531,13 @@ export function runFactoryCases() {
       write(join(stubDir, "head-TST-4_brief"), "9\n");
       r = runDir("idb", "intent/TST-4-demo");
       add("s10 AC4 session.sh passes --head TST-4/brief for an intent with id TST-4", "pr 9", r.status === 0 && /^factory: pr 9$/m.test(r.stdout) && lastHead() === "TST-4/brief", `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
+      // Review of PR 200: the id line may be quoted or carry a trailing comment; session.sh reads the same id the other readers do.
+      write(join(stubDir, "head-TST-5_brief"), "10\n");
+      r = runDir("idq", "intent/TST-5-quoted");
+      add("s13 session.sh reads a quoted id line and passes --head TST-5/brief", "TST-5/brief", lastHead() === "TST-5/brief" && /^factory: pr 10$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
+      write(join(stubDir, "head-TST-6_brief"), "11\n");
+      r = runDir("idn", "intent/TST-6-noted");
+      add("s14 session.sh drops a trailing comment on the id line and passes --head TST-6/brief", "TST-6/brief", lastHead() === "TST-6/brief" && /^factory: pr 11$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
       r = runDir("idd", "intent/2026-01-03-dated");
       add("s11 a date folder with a backfilled id is looked up on its id branch", "TST-3/brief", lastHead() === "TST-3/brief", `${r.status} ${r.stderr} ${lastHead()}`);
       {

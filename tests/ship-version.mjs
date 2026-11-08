@@ -476,6 +476,10 @@ exec "${realGit}" "$@"
     add("commit/AC1 an id before a bang is breaking", "2.0.0", r.json?.next === "2.0.0" && r.json.counts.breaking === 1 && r.json.next_if_not_breaking === null, show(r));
     r = one("PDS-51: fix: bug");
     add("commit/an id before fix is a patch", "1.0.1", r.json?.next === "1.0.1" && r.json.counts.fix === 1, show(r));
+    r = one("PDS-51 feat: add x");
+    add("commit/review of PR 200: the space form a squash merge takes from a PR title is a feature", "1.1.0", r.json?.next === "1.1.0" && r.json.counts.feature === 1, show(r));
+    r = one("SHA-256 checksums for assets");
+    add("commit/a technical word before plain text is not an id and stays unknown", "asks", r.json?.counts.unknown === 1, show(r));
     r = one("PDS-51: tidy");
     add("commit/AC1 an id before no prefix is unknown", "asks", r.json?.counts.unknown === 1 && r.json.next === "2.0.0" && r.json.unclassified[0] === "PDS-51: tidy", show(r));
     r = one("PDS-51: PDS-52: feat: x");

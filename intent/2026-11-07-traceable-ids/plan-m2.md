@@ -117,7 +117,14 @@ An empty section tells the reviewer the diff follows the plan.
 - The `docs/enforce-mode.md` counts command lists `change-id` beside the other gates.
 - A plugin eval case, `plugins/pro-ai-sdlc/evals/hook-change-id/` tagged `hook:change-id`, because the `component-coverage` check fails a new hook with no case; it was scaffolded and the hook run on it by hand, the paid eval was not run.
 
+- Review of PR 200: `session.sh` strips one pair of quotes and a trailing `# comment` from the `id:` line, as `ids.frontmatter` does; a quoted id then finds `<id>/brief` (cases s13, s14).
+- Review of PR 200: `ship.py commit_kind` also reads past the space form a squash merge takes from a PR title (`PDS-51 feat: x`) when a Conventional Commit word follows; `SHA-256 checksums` stays unknown.
+- Review of PR 200: the commit hook steps back when a `git switch` or branch `git checkout` runs earlier in the same command, or when the message is a shell expansion, since neither can be judged before the command runs (cases ci18 to ci21).
+- Review of PR 200: the `change-id` row in `docs/enforce-mode.md` names pro-ai-sdlc 0.22.0 as the release it counts from.
+
 ## Noticed but not touched
+
+- `execute-gate.py` gives each module its own branch (`<id>/build-<module>`) but `/execute` still uses one worktree path per slug; a second module cannot be built while the first module's worktree exists; the gate refused this before too. A per-module worktree path is a later change.
 
 - `/incident` still names its branch `incident/<slug>`: spec-m2 sets only its subject, so `/spec` run on that branch commits there and says the branch does not start with `<id>/`.
 - R1's one-line note when `/spec` commits on a branch that does not start with `<id>/` is command prose and has no automated case.

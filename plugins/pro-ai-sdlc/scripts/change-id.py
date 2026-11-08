@@ -152,6 +152,19 @@ def subject(msg):
     return ""
 
 
+SHELL_VALUE = re.compile(r"^\$(?:\{?[A-Za-z_]|\((?!\s*cat\s*<<))")
+
+
+def moves_branch(toks):
+    """True for a `git switch` or `git checkout` segment that can change the current branch."""
+    words = [t for t in toks if not t.startswith("-")]
+    if len(words) < 3 or words[0] != "git":
+        return False
+    if words[1] == "switch":
+        return True
+    return words[1] == "checkout" and "--" not in toks and not any("." in w or "/" in w and os.path.exists(w) for w in words[2:])
+
+
 def branch(where):
     try:
         r = subprocess.run(["git", "-C", where, "branch", "--show-current"],
@@ -179,12 +192,18 @@ def main() -> None:
         if toks[0] == "cd" and len(toks) == 2 and toks[1] != "-":
             cwd = os.path.join(cwd, os.path.expanduser(toks[1]))
             continue
+        if moves_branch(toks):
+            # the command changes branch before any later commit, so the branch read now is not the one
+            # the commit lands on; the hook steps back rather than judge against the wrong name
+            sys.exit(0)
         found = git_commit(toks, cwd)
         if not found:
             continue
         where, args = found
         msg = message(args)
-        if msg is None:
+        if msg is None or SHELL_VALUE.match(msg.strip()):
+            # a message that is a shell variable or a command substitution other than a heredoc
+            # (`-m "$MSG"`, `-m "$(printf ...)"`) is not known here; fail open
             continue
         b = branch(where)
         m = BRANCH_ID.match(b)

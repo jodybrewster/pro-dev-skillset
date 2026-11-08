@@ -246,6 +246,15 @@ export function runSdlcHookCases() {
     add("ci4 a quoted heredoc message that starts with the id allows", "allow", r, silent(r));
     r = ci(idRepo, 'git commit -m "$(cat <<EOF\n\nno id here\n\nTST-4: later line\nEOF\n)"', ENF);
     add("ci5 an unquoted heredoc is read from its first non-empty line", "deny", r, denied(r));
+    // Review of PR 200: the hook steps back when the command moves branch first or the message is a shell expansion.
+    r = ci(idRepo, 'git switch -c feature/x && git commit -m "wip"', ENF);
+    add("ci18 a git switch earlier in the command allows, since the commit lands on another branch", "allow", r, silent(r));
+    r = ci(idRepo, 'git checkout feature/x && git commit -m "wip"', ENF);
+    add("ci19 a git checkout of a branch earlier in the command allows", "allow", r, silent(r));
+    r = ci(idRepo, 'git commit -m "$MSG"', ENF);
+    add("ci20 a message that is a shell variable allows, since its value is not known here", "allow", r, silent(r));
+    r = ci(idRepo, 'git checkout -- src/a.py && git commit -m "no id"', ENF);
+    add("ci21 a git checkout of a path is not a branch move and the commit is still judged", "deny", r, denied(r));
     for (const [id, cmd] of [["ci6", "git commit"], ["ci7", "git commit -F msg.txt"], ["ci8", "git commit --amend --no-edit"], ["ci9", "git commit -C HEAD"], ["ci10", "git commit -F - <<'EOF'\nno id\nEOF"]]) {
       r = ci(idRepo, cmd, ENF);
       add(`${id} ${cmd.split("\n")[0]} has no message to read and allows silently`, "allow", r, silent(r));
