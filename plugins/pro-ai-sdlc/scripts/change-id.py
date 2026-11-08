@@ -157,12 +157,26 @@ SHELL_VALUE = re.compile(r"^\$(?:\{?[A-Za-z_]|\((?!\s*cat\s*<<))")
 
 def moves_branch(toks):
     """True for a `git switch` or `git checkout` segment that can change the current branch."""
-    words = [t for t in toks if not t.startswith("-")]
-    if len(words) < 3 or words[0] != "git":
+    if not toks or os.path.basename(toks[0]) != "git":
         return False
-    if words[1] == "switch":
+    k = 1
+    while k < len(toks) and toks[k].startswith("-"):
+        # git's own options before the subcommand; -C and -c take a value
+        k += 2 if toks[k] in ("-C", "-c", "--git-dir", "--work-tree") else 1
+    if k >= len(toks) or toks[k] not in ("switch", "checkout"):
+        return False
+    rest = toks[k + 1:]
+    if "--" in rest:
+        return False  # a path checkout, never a branch move
+    if any(o in rest for o in ("-b", "-B", "-c", "-C", "--orphan", "--detach", "-")):
         return True
-    return words[1] == "checkout" and "--" not in toks and not any("." in w or "/" in w and os.path.exists(w) for w in words[2:])
+    words = [t for t in rest if not t.startswith("-")]
+    if not words:
+        return False
+    if toks[k] == "switch":
+        return True
+    # checkout of a name that is not a file on disk is a branch move
+    return not any(os.path.exists(w) for w in words)
 
 
 def branch(where):

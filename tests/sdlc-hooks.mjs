@@ -255,6 +255,14 @@ export function runSdlcHookCases() {
     add("ci20 a message that is a shell variable allows, since its value is not known here", "allow", r, silent(r));
     r = ci(idRepo, 'git checkout -- src/a.py && git commit -m "no id"', ENF);
     add("ci21 a git checkout of a path is not a branch move and the commit is still judged", "deny", r, denied(r));
+    r = ci(idRepo, 'git checkout -b TST-9/fix-1.2 && git commit -m "TST-9: x"', ENF);
+    add("ci22 a checkout -b of a dotted branch name is a move and the commit is not judged here", "allow", r, silent(r));
+    r = ci(idRepo, 'git switch - && git commit -m "chore: x"', ENF);
+    add("ci23 git switch - is a move", "allow", r, silent(r));
+    r = ci(idRepo, 'git -C . switch -c TST-9/build && git -C . commit -m "TST-9: x"', ENF);
+    add("ci24 git -C dir switch is a move", "allow", r, silent(r));
+    r = ci(idRepo, '/usr/bin/git switch feature/x && git commit -m "x"', ENF);
+    add("ci25 a full path to git is still git", "allow", r, silent(r));
     for (const [id, cmd] of [["ci6", "git commit"], ["ci7", "git commit -F msg.txt"], ["ci8", "git commit --amend --no-edit"], ["ci9", "git commit -C HEAD"], ["ci10", "git commit -F - <<'EOF'\nno id\nEOF"]]) {
       r = ci(idRepo, cmd, ENF);
       add(`${id} ${cmd.split("\n")[0]} has no message to read and allows silently`, "allow", r, silent(r));
