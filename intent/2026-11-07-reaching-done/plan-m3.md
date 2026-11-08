@@ -128,5 +128,5 @@ An empty section tells the reviewer the diff follows the plan.
 
 ## Noticed but not touched
 
-- Open PR #196 also bumps pro-ship (0.20.0) and both #196 and #193 claim `metadata.version` 1.98.0, so whichever merges second rebases and takes the next free minor.
+- #193 and #196 merged during this build and took `metadata.version` 1.98.0 and 1.99.0 and pro-ship 0.19.0, so this build takes pro-ship 0.20.0 and `metadata.version` 1.100.0.
 - `tests/mieruka-sync.mjs` and the `SHIP_BLOCK` constants in `tests/ship-deploy.mjs` still hold prose rollback steps; they feed `deployed` only, which `ready` does not read.
