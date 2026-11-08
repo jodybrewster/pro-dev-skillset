@@ -129,5 +129,5 @@ An empty section tells the reviewer the diff follows the plan.
 
 ## Noticed but not touched
 
-- #193 and #196 merged during this build and took `metadata.version` 1.98.0 and 1.99.0 and pro-ship 0.19.0, so this build takes pro-ship 0.20.0 and `metadata.version` 1.100.0.
+- #193, #196 and #197 merged during this build and took `metadata.version` 1.98.0 to 1.100.0 and pro-ship 0.19.0 and 0.20.0, so this build takes pro-ship 0.21.0 and `metadata.version` 1.101.0.
 - `tests/mieruka-sync.mjs` and the `SHIP_BLOCK` constants in `tests/ship-deploy.mjs` still hold prose rollback steps; they feed `deployed` only, which `ready` does not read.
