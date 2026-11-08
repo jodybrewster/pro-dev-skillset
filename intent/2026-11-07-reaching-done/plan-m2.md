@@ -149,6 +149,8 @@ An empty section tells the reviewer the diff follows the plan.
 - Step 7, after the PR review: the marker regex `MARKER` moved inside the shared block: the `review-model` check holds it byte for byte and runs each copy on marker cases.
 - Step 8: a reviewer's closing line names the model it ran on and wins over the dispatch model when the two differ, since the host ran it; the skills say to report the difference.
 
+- After the PR review and the rebase onto main (#193 and #196 took pro-ai-sdlc 0.20.0, pro-ship 0.19.0 and `metadata.version` 1.99.0) the bumps are pro-ship 0.20.0, pro-ai-sdlc 0.21.0, pro-quality 0.22.0 and `metadata.version` 1.100.0; earlier commit messages still name the versions of their day.
+
 ## Noticed but not touched
 
 - `pro-security:security-architect` has no closing `model:` line (R6 names the two code reviewers); pr-check and `/ship` record its dispatch model.
