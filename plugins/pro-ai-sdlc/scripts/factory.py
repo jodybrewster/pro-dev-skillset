@@ -586,6 +586,9 @@ def write_record(root, folder, state, reason="", **fields):
         "artifact_key": folder, "status": status, "summary": summary, "detail_json": json.dumps(d),
         "produced_by": f"pro-ai-sdlc:factory@{evidence.plugin_version()}",
     }
+    change_id = evidence.change_id_of(root, os.path.join("intent", folder))
+    if change_id:
+        record["change_id"] = change_id
     evidence.write_record(root, "factory", record)
     return d
 

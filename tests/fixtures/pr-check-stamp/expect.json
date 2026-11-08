@@ -75,5 +75,12 @@
       "cause": "not-passing"
     },
     "push_gate": "fall-through"
+  },
+  "valid-pass-change-id.json": {
+    "pr_gate": {
+      "valid": true,
+      "cause": null
+    },
+    "push_gate": "accept"
   }
 }

@@ -103,6 +103,33 @@ export function runIncidentCases() {
       prep.status === 0 && prep.json?.evidence_key === "incident-tst-1-demo" && existsSync(join(repo, ".pro-dev", "incidents", "incident-tst-1-demo")), prep.stdout + prep.stderr);
   }
 
+  // change_id from the id: of the intent.md beside incident.md (traceable-ids spec-m3 R2, R8, R14, AC5)
+  {
+    const intentMd = (id) => `---\n${id === null ? "" : `id: ${id}\n`}status: proposed\n---\n\n# Intent: checkout\n`;
+    for (const [label, id, want] of [["TST-1", "TST-1", "TST-1"], ["lower-1", "lower-1", null], ["no id", null, null], ["no intent.md", undefined, null]]) {
+      const repo = mkrepo(doc());
+      if (id !== undefined) writeFileSync(join(repo, dir, "intent.md"), intentMd(id));
+      const r = run(repo, "record", dir);
+      let m = null;
+      try { m = manifest(repo); } catch { /* reported below */ }
+      const ok = r.status === 0 && m && m.evidence_key === `incident-${FOLDER}` && JSON.parse(m.detail_json).id === FOLDER
+        && (want === null ? !("change_id" in m) : m.change_id === want);
+      add(`record/change_id with ${label}`, want ?? "absent", ok, r.stdout + r.stderr + JSON.stringify(m));
+    }
+  }
+
+  // evidence.write_record drops a change_id that fails the pattern, a second guard behind each writer (spec-m3 R2)
+  {
+    const repo = mkrepo(doc());
+    const code = "import sys, json; sys.path.insert(0, sys.argv[1]); import evidence\n"
+      + "for k, c in (('x-bad', 'TST-1; rm'), ('x-good', 'TST-1')):\n"
+      + "    evidence.write_record(sys.argv[2], 'incidents', {'schema': 1, 'evidence_key': k, 'kind': 'doc', 'artifact_kind': 'x', 'artifact_key': 'x', 'status': 'info', 'summary': 's', 'detail_json': '{}', 'produced_by': 't', 'change_id': c})";
+    const r = spawnSync("python3", ["-I", "-c", code, dirname(SCRIPT), repo], { cwd: repo, encoding: "utf8", env });
+    const read = (k) => { try { return JSON.parse(readFileSync(join(repo, ".pro-dev", "incidents", `${k}.json`), "utf8")); } catch { return null; } };
+    add("evidence/write_record drops a change_id that fails the pattern and keeps a valid one", "absent, then TST-1",
+      r.status === 0 && read("x-bad") && !("change_id" in read("x-bad")) && read("x-good")?.change_id === "TST-1", r.stdout + r.stderr);
+  }
+
   // record refusals
   for (const [name, fm] of [["state", { state: "closed" }], ["severity", { severity: "sev3" }], ["id", { id: "other" }], ["commit", { commit: "abc" }]]) {
     const repo = mkrepo(doc(fm));

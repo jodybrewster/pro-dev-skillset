@@ -1032,6 +1032,13 @@ def check(root: str, sha: str) -> dict:
 
 SAFE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 OUTCOMES = ("succeeded", "failed", "rolled-back")
+# A change id (docs/loop-records.md, ADR-0026): the same pattern as pr-check.py and pro-ai-sdlc's
+# ids.py; plugins cannot import each other (ADR-0003), so change them together. A deployed commit
+# names its change when its subject starts with `<id>: `, or with `<id> ` when the id's prefix is the
+# shortcode in intent/project.json at that commit (a squash merge takes the PR title, `PDS-50 ...`), so
+# `UTF-8 decoding fix` or `SHA-256 ...` is never read as an id.
+CHANGE_ID_SUBJECT = re.compile(r"^(([A-Z]{2,6})-[1-9][0-9]*)(:? )")
+SHORTCODE = re.compile(r"[A-Z]{2,6}")
 CHECK_STATUSES = ("pass", "finding", "confirm")
 DEPLOY_FLAGS = ("--target", "--env", "--url", "--commit", "--outcome", "--deployed-at", "--checks", "--from-tag")
 LIBRARY_KINDS = ("tag-release", "publish", "desktop")
@@ -1166,6 +1173,30 @@ def deploy_env(given: str | None, target: dict, from_github: bool) -> tuple[str 
     return ("production", "default") if from_github else (None, "")
 
 
+def deployed_change_id(root: str, commit: str) -> str | None:
+    """The change id the deployed commit's subject starts with, or None (a release commit names none)."""
+    try:
+        r = sh(["git", "log", "-1", "--format=%s", commit], root)
+    except (OSError, subprocess.SubprocessError, ValueError):  # a subject git cannot decode names no change
+        return None
+    m = CHANGE_ID_SUBJECT.match(r.stdout) if r.returncode == 0 else None
+    if not m:
+        return None
+    if m.group(3) == ": ":
+        return m.group(1)
+    return m.group(1) if m.group(2) == shortcode_at(root, commit) else None
+
+
+def shortcode_at(root: str, commit: str) -> str | None:
+    """The shortcode in intent/project.json at <commit>, or None. Read here because plugins do not import each other."""
+    try:
+        r = sh(["git", "show", f"{commit}:intent/project.json"], root)
+        code = json.loads(r.stdout).get("shortcode") if r.returncode == 0 else None
+    except (OSError, subprocess.SubprocessError, ValueError, AttributeError):
+        return None
+    return code if isinstance(code, str) and SHORTCODE.fullmatch(code) else None
+
+
 def cmd_deployed(root: str, args: list[str]) -> dict:
     refuse_headless("deployed")
     rest = [a for a in args if a != "--from-github"]
@@ -1265,6 +1296,9 @@ def cmd_deployed(root: str, args: list[str]) -> dict:
         "artifact_key": tid, "status": status, "summary": summary, "detail_json": json.dumps(detail),
         "produced_by": f"pro-ship:deployed@{plugin_version()}",
     }
+    cid = deployed_change_id(root, commit)
+    if cid:
+        record["change_id"] = cid
     text = json.dumps(record, indent=2) + "\n"
     ship_dir(root)
     local = os.path.join(root, ".pro-dev", "ship", "deploys", key + ".json")

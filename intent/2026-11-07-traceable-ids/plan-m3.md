@@ -85,14 +85,29 @@ claude plugin validate . --strict          # Validation passed
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of e659f06c09e7
 
-- Build commit:
+- Build commit: e659f06c09e7 on `PDS-50/build-m3`, rebased onto origin/main 775cb72 (after PR 195, PR 192 and PR 193); pro-ai-sdlc 0.20.0, pro-ship 0.19.0, marketplace 1.99.0, one minor above main for each.
 - Checks run:
-- Definition of done: (pro-ai-sdlc references/definition-of-done.md; a repo's CONSTRAINTS.md or REVIEW.md wins where it says more)
+  - `node tests/check.mjs`: 50 checks, 0 failures, 13 warnings (stamp-contract and change-ids pass).
+  - `node tests/eval.mjs --dry`: 99 cases reference real skills, 107 skills in catalog + 7 distractors; live routing skipped (no key).
+  - `node tests/route-lexical.mjs --min-rank1 70`: rank-1 80/98 (81.6%), top-k 93/98 (94.9%), notOneOf failures 3.
+  - `node --test tests/unit/*.test.mjs`: 200 tests, 200 pass, 0 fail.
+  - `node tests/factory.mjs`: 178/178; `node tests/incident.mjs`: 46/46; `node tests/visual.mjs`: 36/36; `node tests/lessons.mjs`: 108/108.
+  - `node tests/ship-check.mjs`: 255/255; `node tests/ship-deploy.mjs`: 152/152.
+  - `MIERUKA_ROOT=<mieruka checkout at d17b5ca> node tests/mieruka-sync.mjs`: passed, the preflight plus deploy, incident, review-lesson, review-round, ui-step and factory-run loaded, each record holding change_id TST-1.
+  - `claude plugin validate . --strict`: Validation passed; each of the 21 plugin folders passed strict.
+- Definition of done: met (the verifier ran: every test green and each changed writer checked by hand; its verdict was incomplete only because it was told to skip check.mjs and the sync check, both run here).
 - Visual: none
-- Doubt:
-- AC1 to AC8:
+- Doubt: none
+- AC1: a branch `TST-2/build` stamps `TST-2`, `feature/x` touching only `intent/TST-3-demo/` stamps `TST-3`, `feature/x` with no intent leaves it out (ship-check `stamp/c1` to `c7`).
+- AC2: `valid-pass-change-id.json` gets the verdict of `valid-pass.json` from both gates (stamp-contract pass).
+- AC3: `factory.py record` with `id: TST-1` writes `"change_id": "TST-1"` and the key `factory-2026-01-02-greeting` (factory `c1` to `c4`, `r1` asserts it absent with no id).
+- AC4: subject `TST-1: feat: x` writes `TST-1`; `release v1.2.0` writes none; `PDS-50 title` writes `PDS-50` only when the shortcode is PDS; `UTF-8 decoding fix`, `SHA-256 checksums` and `ABC-1 title` write none (ship-deploy `change_id` cases).
+- AC5: incident and visual write `change_id` from the intent; `id: lower-1` and no intent.md write none.
+- AC6: `lessons.py add --change-id TST-1` stores it, `'x; rm'` exits 1 with no row, `mark` copies it into `seen`; `raise` and `round` take it onto the findings table row and the review-round record and refuse a bad one.
+- AC7: the mieruka sync check passed with every record holding `change_id`.
+- AC8: check.mjs and strict validation pass on this one PR.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -102,4 +117,16 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- One pull request instead of two (A and B): the build was asked for a single PR, so pro-ai-sdlc and pro-ship each bump in both manifests and the marketplace entry in the same commit and `metadata.version` moves once.
+- `evidence.py` imports `ID_RE` and `id_of` from `ids.py`, which m1 put beside it, instead of defining a second pattern and frontmatter reader in the same plugin; `valid_change_id`, `default_tip` and `change_id_of` are new there.
+- `evidence.write_record` also drops a `change_id` that fails the pattern, a second guard behind each writer (R2).
+- `ship.py deployed` reads the id when the subject starts with `<id>: ` and also with `<id> ` when the prefix is the shortcode in `intent/project.json` at the deployed commit, because a squash merge takes its subject from the PR title, which starts `PDS-50 `; `UTF-8 decoding fix`, `SHA-256 checksums` and `ABC-1 title` under shortcode PDS give none and AC4's two cases hold.
+- R11 restated: `/review` opens with the summary line as ADR-0011 requires, then the grade line ADR-0027 added, then `change: <id>`, not on the first line; this resolves R11 against ADR-0011. The id comes from the reviewed PR's head branch, else the current branch, else the brief's `id:`.
+- R12 through the review round: reaching-done m1 (PR 192) landed the findings table and the review-round record while this branch was open, so `lessons.py raise` and `lessons.py round` take `--change-id` too and `/review` passes it to both. `docs/loop-records.md` traces a finding to the round that closed it by its table row's `graded_at` and the review-round record at that head, which carries the same `change_id`; it points to ADR-0027. `tests/lessons.mjs` covers both and `tests/mieruka-sync.mjs` asserts the review-round record holds the id.
+- Every new git read (`pr-check.py change_id`, the default-tip read in `evidence.change_id_of`, `ship.py deployed_change_id`) treats output it cannot decode as no id, so a stamp or record is still written; `tests/ship-check.mjs`, `tests/visual.mjs` and `tests/ship-deploy.mjs` each have a case with byte 0xff. `pr-check.py intent_id` copies `ids.frontmatter`'s rule (the last `id:` wins, an unclosed frontmatter has none) because pro-ship cannot import pro-ai-sdlc.
+- `tests/ship-deploy.mjs` and `tests/ship-check.mjs` add a refused case each beyond AC1 and AC4 (a lowercase prefix, an `id:` with a `;`, two intent folders); `tests/mieruka-sync.mjs` also asserts the lesson's `seen` entries carry the id, since the lesson spans changes and has no top-level `change_id`.
+
 ## Noticed but not touched
+
+- `evidence.default_tip` is a copy of `factory.default_tip`; factory could call the shared one.
+- `ids.py`'s own `ID_RE` uses `match` with `$`, which accepts a trailing newline; every writer here uses `fullmatch`.

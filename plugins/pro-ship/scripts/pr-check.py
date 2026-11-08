@@ -24,6 +24,9 @@ restores it before it returns):
                                    reviewer records. The contract is docs/pr-check-stamp.md.
                                    --risk reads the classifier JSON: it sets `tier` and the
                                    `risk` field; an unreadable file gives tier high, never low.
+                                   It adds `change_id` when the branch name starts with <id>/
+                                   or the base..head diff touches exactly one intent folder
+                                   whose intent.md has an id: line; no gate reads it.
   marker                           print the one-line PR body marker from the stamp, for
                                    /ship to find later: <!-- pro-ship:pr-check head=<sha>
                                    result=<result> tier=<tier> -->. Exit 1 when there is no stamp.
@@ -60,6 +63,9 @@ REDACT = [
     re.compile(r"\bxapp-[A-Za-z0-9\-]+"),
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
 ]
+# A change id (docs/loop-records.md, ADR-0026). The same pattern as pro-ai-sdlc's ids.py and
+# ship.py; plugins cannot import each other (ADR-0003), so change them together.
+ID_RE = re.compile(r"[A-Z]{2,6}-[1-9][0-9]*")
 # Same patterns as plugins/pro-quality/scripts/floor-guard.py (TEST_DIRS, TEST_NAMES). Plugins
 # cannot import each other (ADR-0003), so keep the two in step by hand.
 TEST_DIRS = {"tests", "test", "__tests__"}
@@ -945,6 +951,54 @@ def intent_only(root: str, base: str | None, head: str) -> bool:
     return True
 
 
+def intent_id(text: str) -> str | None:
+    """The id: value in an intent.md's frontmatter, or None. The rule of pro-ai-sdlc's ids.frontmatter,
+    copied because plugins cannot import each other (ADR-0003): the last id: line wins and an
+    unclosed frontmatter has none."""
+    lines = (text or "").replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        return None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            found = None
+            for ln in lines[1:i]:
+                m = re.match(r"^id:\s*(.*?)\s*$", ln)
+                if m:
+                    v = re.sub(r"\s+#.*$", "", m.group(1))
+                    found = v[1:-1] if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'" else v
+            return found or None
+    return None
+
+
+def change_id(root: str, base: str, head: str) -> str | None:
+    """The branch prefix before the first / when it is a whole id, else the id: of the only intent
+    folder base..head touches. Both are text a diff or a branch name can shape, so only a full
+    match of ID_RE is returned. Output git cannot decode (a ValueError, UnicodeError among them)
+    leaves the field out and never stops the stamp."""
+    try:
+        branch = sh(["git", "branch", "--show-current"], root).stdout.strip()
+    except (OSError, subprocess.SubprocessError, ValueError):
+        branch = ""
+    first, sep, _ = branch.partition("/")
+    if sep and ID_RE.fullmatch(first):
+        return first
+    try:
+        r = sh(["git", "diff", "--name-only", "--no-renames", "-z", base, head], root)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    if r.returncode != 0:
+        return None
+    folders = {p.split("/")[1] for p in r.stdout.split("\0") if p.startswith("intent/") and p.count("/") >= 2}
+    if len(folders) != 1:
+        return None
+    try:
+        shown = sh(["git", "show", f"{head}:intent/{folders.pop()}/intent.md"], root)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    cid = intent_id(shown.stdout) if shown.returncode == 0 else None
+    return cid if cid and ID_RE.fullmatch(cid) else None
+
+
 def verifier_counts(root: str, v: dict, head: str) -> bool:
     """R11: the result counts for HEAD when it ran on HEAD, or on an ancestor with only top-level
     intent/ paths changed since (the deleted side of a rename included, so --no-renames). A symlink,
@@ -1237,6 +1291,9 @@ def cmd_stamp(root: str, args: list[str]) -> dict:
     }
     if risk is not None:
         stamp["risk"] = risk
+    cid = change_id(root, base, head)
+    if cid:
+        stamp["change_id"] = cid
     path = os.path.join(ship_dir(root), "pr-check.json")
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:

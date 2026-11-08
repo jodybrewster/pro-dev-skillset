@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """lessons - the finding ledger and review lessons behind /review's "Learning from repeats".
 
-  lessons.py add --ref <pr or branch> --head <40 hex> --class <slug> --file <path>   (claim on stdin)
+  lessons.py add --ref <pr or branch> --head <40 hex> --class <slug> --file <path> [--change-id <id>]   (claim on stdin)
   lessons.py classes
   lessons.py repeats
   lessons.py mark <class> proposed|accepted|declined [--file CLAUDE.md|AGENTS.md]    (line on stdin)
 
   lessons.py raise --ref <ref> --base <40 hex> --head <40 hex> --pass <pass> --severity important|nit|pre-existing
-                   --class <slug> --file <path> --line <n>                            (claim on stdin)
+                   --class <slug> --file <path> --line <n> [--change-id <id>]          (claim on stdin)
   lessons.py grade --ref <ref> --head <40 hex> <id> fixed|not-fixed|no-longer-applies --evidence <path:line>
   lessons.py table --ref <ref> [--tally [--head <40 hex>]]
-  lessons.py round --ref <ref> --base <40 hex> --head <40 hex> --round <n> --fresh ran|skipped
+  lessons.py round --ref <ref> --base <40 hex> --head <40 hex> --round <n> --fresh ran|skipped [--change-id <id>]
 
 The ledger is .pro-dev/review/findings.jsonl, one line per finding, never read by mieruka. A lesson
 is a review-lesson manifest as docs/loop-records.md describes it, written through evidence.py.
@@ -20,6 +20,9 @@ with every / written as --. Each row has a stable id (F1, F2 and so on, never re
 file:line and a status: open, fixed, not fixed or no longer applies. A row never holds a failure
 scenario or reasoning, so only grade mode reads it and the fresh pass never does. A round
 writes a review-round manifest to .pro-dev/review/rounds/.
+
+A ledger row and a findings table row may carry change_id, the id of the change the finding was raised on (PDS-50 and the like);
+mark copies it into each seen entry and round puts it on the review-round record. A value that is not a whole change id is refused.
 
 The claim and the line come from text a reviewed diff can shape, so both arrive on stdin and
 never on a command line. The line goes into an agent file that every later session reads, so
@@ -123,6 +126,8 @@ def cmd_add(a) -> dict:
         raise Refuse("lessons: --head must be 40 lowercase hex characters")
     check_ref(a.ref)
     clean_path(a.file)
+    # The id comes from a branch name or an id: line, text a diff can shape, so only a whole id passes.
+    check_change_id(a.change_id)
     claim = " ".join(read_stdin().split())
     if not claim:
         raise Refuse("lessons: the claim on stdin is empty")
@@ -131,6 +136,8 @@ def cmd_add(a) -> dict:
         if row["class"] == a.cls and row["ref"] == a.ref:
             return {"path": LEDGER, "mieruka": None, "why": "", "stored": False, "class": a.cls}
     row = {"ref": a.ref, "head": a.head, "class": a.cls, "file": a.file, "claim": claim, "created": now()}
+    if a.change_id:
+        row["change_id"] = a.change_id
     path = os.path.join(root, LEDGER)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     evidence.ensure_excluded(root)
@@ -225,6 +232,7 @@ def cmd_raise(a) -> dict:
     clean_path(a.file)
     if a.line < 1:
         raise Refuse("lessons: --line must be a positive line number")
+    check_change_id(a.change_id)
     claim = read_claim()
     table = read_table(root, ref)
     rows = table["findings"]
@@ -247,8 +255,16 @@ def cmd_raise(a) -> dict:
     rows[fid] = {"id": fid, "file": a.file, "line": a.line, "pass": a.pass_, "class": a.cls, "severity": a.severity,
                  "claim": claim, "status": "open", "raised_at": a.head, "graded_at": None, "evidence": None,
                  "reopened_from": reopened}
+    if a.change_id:
+        rows[fid]["change_id"] = a.change_id
     path = write_table(root, table)
     return {"id": fid, "stored": True, "reopened_from": reopened, "table": path}
+
+
+def check_change_id(value) -> None:
+    """The id comes from a branch name or an id: line, text a diff can shape, so only a whole id passes."""
+    if value is not None and not evidence.valid_change_id(value):
+        raise Refuse(f"lessons: refusing the change id {value[:40]!r}: it must look like PDS-50 ([A-Z]{{2,6}}-<n>)")
 
 
 def check_evidence(text: str) -> str:
@@ -310,6 +326,7 @@ def cmd_round(a) -> dict:
     check_sha(a.head, "--head")
     if a.round < 1:
         raise Refuse("lessons: --round must be 1 or more")
+    check_change_id(a.change_id)
     table = read_table(root, ref)
     table.update({"base": a.base, "head": a.head, "round": a.round})
     write_table(root, table)
@@ -333,6 +350,8 @@ def cmd_round(a) -> dict:
         "detail_json": json.dumps(detail),
         "produced_by": f"pro-ai-sdlc:review@{evidence.plugin_version()}",
     }
+    if a.change_id:
+        record["change_id"] = a.change_id
     res = evidence.write_record(root, ROUND_DIR, record)
     res.update({"evidence_key": record["evidence_key"], "status": record["status"]})
     return res
@@ -399,7 +418,12 @@ def cmd_mark(a) -> dict:
         line = old.get("line") if isinstance(old.get("line"), str) else f"declined: {a.cls}"
     else:
         line = check_line(raw)
-    seen = [{"ref": r["ref"], "head": r.get("head"), "file": r.get("file"), "claim": r.get("claim")} for r in rows]
+    seen = []
+    for r in rows:
+        entry = {"ref": r["ref"], "head": r.get("head"), "file": r.get("file"), "claim": r.get("claim")}
+        if evidence.valid_change_id(r.get("change_id")):
+            entry["change_id"] = r["change_id"]
+        seen.append(entry)
     detail = {"class": a.cls, "state": a.state, "line": line, "file": a.file, "seen": seen,
               "created": old.get("created") or now()}
     record = {
@@ -426,6 +450,7 @@ def main(argv: list[str]) -> int:
     s.add_argument("--head", required=True)
     s.add_argument("--class", dest="cls", required=True)
     s.add_argument("--file", required=True)
+    s.add_argument("--change-id", dest="change_id")
     s.set_defaults(fn=cmd_add)
     sub.add_parser("classes").set_defaults(fn=cmd_classes)
     sub.add_parser("repeats").set_defaults(fn=cmd_repeats)
@@ -443,6 +468,7 @@ def main(argv: list[str]) -> int:
     s.add_argument("--class", dest="cls", required=True)
     s.add_argument("--file", required=True)
     s.add_argument("--line", required=True, type=int)
+    s.add_argument("--change-id", dest="change_id")
     s.set_defaults(fn=cmd_raise)
     s = sub.add_parser("grade")
     s.add_argument("--ref", required=True)
@@ -462,6 +488,7 @@ def main(argv: list[str]) -> int:
     s.add_argument("--head", required=True)
     s.add_argument("--round", required=True, type=int)
     s.add_argument("--fresh", required=True, choices=("ran", "skipped"))
+    s.add_argument("--change-id", dest="change_id")
     s.set_defaults(fn=cmd_round)
     args = p.parse_args(argv)
     try:

@@ -7,7 +7,7 @@ The spec is `intent/2026-11-01-after-build-loop/spec.md`.
 The preflight record that comes before a deploy has its own page, [ship-preflight.md](./ship-preflight.md).
 Nothing here changes it.
 
-Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0; the review round since pro-ai-sdlc 0.19.0.
+Status: in use since pro-ship 0.11.0 and pro-ai-sdlc 0.13.0; the factory run record since pro-ai-sdlc 0.14.0; the review round since pro-ai-sdlc 0.19.0; `change_id` since pro-ai-sdlc 0.20.0 and pro-ship 0.19.0.
 
 ## Shared rules
 
@@ -25,6 +25,18 @@ These fields are present in every record:
 | `summary` | string | one line for a person |
 | `detail_json` | string | a JSON-encoded string, never an object |
 | `produced_by` | string | `<plugin>:<command>@<version>`, the version read from the plugin's `.claude-plugin/plugin.json` |
+
+Every record may also carry one optional top-level field:
+
+| Field | Type | Rule |
+|---|---|---|
+| `change_id` | string | the change the record is about, matching `^[A-Z]{2,6}-[1-9][0-9]*$` (for example `PDS-50`, [ADR-0026](./decisions/0026-change-ids.md)); absent when the writer finds no id |
+
+A writer checks the value against that pattern and leaves the field out when it does not match, because it comes from an `id:` line, a branch name or a commit subject, all text a diff can shape.
+Adding it keeps `schema` at `1`; a record without it reads exactly as before.
+The deploy record takes it from the deployed commit's subject when the subject starts with `<id>: `, or with `<id> ` when the id's prefix is the shortcode in `intent/project.json` at that commit (so a subject such as `UTF-8 decoding fix` names no change); the incident record from the `intent.md` beside `incident.md`; the visual check and the factory run record from the `intent.md` they record, read from the working tree first and from the default branch tip only when the working tree has none; the review round from `lessons.py round --change-id`, which `/review` passes.
+The pr-check stamp carries the same field ([pr-check-stamp.md](./pr-check-stamp.md)); the preflight record does not, because a release spans many changes.
+`evidence_key` never includes it.
 
 Readers ignore fields they do not know.
 An added optional field does not change `schema`.
@@ -130,7 +142,11 @@ Written by `lessons.py` when `/review` sees the same class of finding on a secon
 
 Local copies: the finding ledger `.pro-dev/review/findings.jsonl` (one line per finding, never read by mieruka) and `.pro-dev/review/lessons/<evidence_key>.json`.
 
-`detail_json` holds `class`, `state` (`proposed`, `accepted` or `declined`), `line` (the proposed text), `file` (`CLAUDE.md` or `AGENTS.md`), `seen` (a list of `{ref, head, file, claim}` for each change the class was found on) and `created`.
+`detail_json` holds `class`, `state` (`proposed`, `accepted` or `declined`), `line` (the proposed text), `file` (`CLAUDE.md` or `AGENTS.md`), `seen` (a list of `{ref, head, file, claim}` for each change the class was found on, plus `change_id` when the ledger row has one) and `created`.
+
+A ledger row holds `ref`, `head`, `class`, `file`, `claim`, `created` and, when `/review` passed `--change-id`, `change_id`.
+A finding is traced to the change it was raised on by that `change_id` and to the round that raised it by the `head` on its row.
+The round that closed it comes with the review-round record ([ADR-0027](./decisions/0027-review-memory.md)): its findings table row is graded `fixed` with `graded_at` set to that round's `head`; the review-round record at that head carries the same `change_id` when `/review` passed one.
 
 ## The review round
 
@@ -164,7 +180,7 @@ mieruka never reads the table.
 | `findings` | array | `{id, file, line, class, severity, status}` per row; never the claim |
 | `created` | string | when the record was written |
 
-A row of the findings table holds `id`, `file`, `line`, `pass`, `class`, `severity` (`important`, `nit` or `pre-existing`), `claim` (one sentence of at most 300 characters), `status` (`open`, `fixed`, `not fixed` or `no longer applies`), `raised_at`, `graded_at`, `evidence` (`path:line` or null) and `reopened_from`.
+A row of the findings table holds `id`, `file`, `line`, `pass`, `class`, `severity` (`important`, `nit` or `pre-existing`), `claim` (one sentence of at most 300 characters), `status` (`open`, `fixed`, `not fixed` or `no longer applies`), `raised_at`, `graded_at`, `evidence` (`path:line` or null), `reopened_from` and, when `raise` was given `--change-id`, `change_id`.
 The claim stays in the local table and never reaches the record.
 
 ## The visual check

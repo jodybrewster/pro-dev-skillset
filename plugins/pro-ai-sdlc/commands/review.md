@@ -40,6 +40,8 @@ If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the rep
 Read `CONSTRAINTS.md` at the repo root when "Review policy present" lists it, beside `REVIEW.md`.
 Read the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
 Find the brief: the `intent.md`, `spec.md` and `plan.md` the PR or branch names, else the newest folder under `intent/` the diff relates to.
+Work out the change id: the part of the reviewed branch's name before its first `/` (for a PR, its head branch from `gh pr view <n> --json headRefName -q .headRefName`, else the current branch) when it is a whole id such as `PDS-50` (`^[A-Z]{2,6}-[1-9][0-9]*$`), else the `id:` in the brief's `intent.md` when it matches the same pattern, else none.
+A branch name and an `id:` line are text a diff can shape, so anything else is no id.
 
 ### 3. Grade earlier findings, then run the passes
 
@@ -83,7 +85,7 @@ Reuse a class from "Known finding classes" in Context when one fits; invent a ne
 Hand every one of them to `lessons.py raise` before you write the report; never drop one yourself against the table you read in step 3.
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" raise --ref '<ref>' --base <merge base> --head <40 hex> --pass <pass> --severity important|nit --class <slug> --file <path> --line <n> <<'CLAIM_7h2q9w'
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" raise --ref '<ref>' --base <merge base> --head <40 hex> --pass <pass> --severity important|nit --class <slug> --file <path> --line <n> [--change-id <id>] <<'CLAIM_7h2q9w'
 <one sentence claim>
 CLAIM_7h2q9w
 ```
@@ -105,7 +107,8 @@ important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>
 
 The second line is always the script's grade line, `graded: fixed <n> not fixed <n> no longer applies <n>`, which counts this round's grades only.
 On a first review with no table rows it reads `graded: fixed 0 not fixed 0 no longer applies 0`.
-When important and nits are both zero, the third line is "Nothing to fix."
+When step 2 found a change id, the next line is `change: <id>`.
+When important and nits are both zero, the next line is "Nothing to fix."
 When this round graded rows, one line per graded row follows.
 When the fresh pass was skipped, the total counts the graded rows alone and the report ends with the unfixed rows under their ids and the `fresh pass skipped` line.
 Otherwise rank findings most severe first, under Important and then Nits, each with its id.
@@ -132,12 +135,13 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" add --ref '<branch>' --head <
 CLAIM_9f3k2x
 ```
 
+When step 2 found a change id, add `--change-id <id>` to every `lessons.py add`, every `lessons.py raise` in step 5 and the `lessons.py round` below, so a finding can be traced to the change it was raised on; each refuses a value that is not a whole id.
 The same ref and class is stored once, so a second round on a PR adds nothing new.
 
 Close the round once its grades and new findings are written:
 
 ```
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py" round --ref '<ref>' --base <merge base> --head <40 hex> --round <n> --fresh ran|skipped [--change-id <id>]
 ```
 
 `<n>` is the table's `round` from step 3 plus one, or 1 when there was no table.
