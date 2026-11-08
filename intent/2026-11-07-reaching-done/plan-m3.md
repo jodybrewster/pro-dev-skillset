@@ -93,9 +93,9 @@ claude plugin validate plugins/pro-ship --strict
 
 ## Done
 
-Done as of 1cd1d79ebe27
+Done as of a92b443adc8a
 
-- Build commit: 1cd1d79ebe27 on `PDS-52/build-m3`, based on origin/main at 3af9bdd.
+- Build commit: a92b443adc8a on `PDS-52/build-m3`, rebased onto origin/main at 775cb72 (after #193 took `metadata.version` 1.98.0, this takes 1.99.0; pro-ship stays 0.19.0).
 - Checks run: `node tests/ship-preflight.mjs` 136/136; `node tests/ship-deploy.mjs` 151/151; `node tests/ship-hooks.mjs` 364/364; `node tests/ship-check.mjs` 245/245; the first three also pass under Python 3.9.6; `node tests/check.mjs` 50 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%), 3 notOneOf warnings; `node --test tests/unit/*.test.mjs` 200 pass, 0 fail; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with the confirmed preflight record loaded; `python3 plugins/pro-ship/scripts/ship.py ready` exit 0 in 0.09 s; `claude plugin validate . --strict` and every plugin strict print Validation passed.
 - Definition of done: met for the scripted parts; no `/ship` or `/pro-ship:deployed` hand run posted a real comment on GitHub.
 - Visual: none
