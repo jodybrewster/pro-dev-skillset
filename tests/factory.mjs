@@ -158,11 +158,11 @@ function makePr(sandbox, fx, stub, n, commits, parent = "origin/main", opts = {}
       else write(join(clone, p), t);
     }
     git(clone, "add", "-A");
-    git(clone, "commit", "-q", "-m", (c.msg ?? "change") + (c.raw ? "" : `\n\nFactory-Run: ${phase} ${FOLDER}`));
+    git(clone, "commit", "-q", "-m", (c.msg ?? "change") + (c.raw ? "" : `\n\nFactory-Run: ${phase} ${opts.folder ?? FOLDER}`));
   }
   const sha = git(clone, "rev-parse", "HEAD").stdout.trim();
   git(clone, "push", "-q", "--force", "origin", `HEAD:refs/pull/${n}/head`);
-  const slug = FOLDER.replace(/^\d{4}-\d{2}-\d{2}-/, "");
+  const slug = (opts.folder ?? FOLDER).replace(/^(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[0-9]+)-/, "");
   stub.put(`pr-${n}.json`, JSON.stringify({ state: "OPEN", baseRefName: "main", headRefOid: sha, isCrossRepository: false,
     headRefName: opts.branch ?? (phase === "brief" ? `${slug}-brief` : slug), isDraft: opts.draft ?? false, author: { login: opts.author ?? "factory-bot" },
     body: opts.body ?? (phase === "build" ? `Build.\n\n<!-- pro-ship:pr-check head=${sha} result=pass tier=low model=opus host=claude -->\n` : "Brief.\n") }));
@@ -486,11 +486,18 @@ export function runFactoryCases() {
 
     // ── session.sh: the mode file and the PR found by branch name ──
     {
-      const fx = repoWithOrigin(sandbox, "sh", { [FOLDER]: { "intent.md": intentText() } });
+      const fx = repoWithOrigin(sandbox, "sh", {
+        [FOLDER]: { "intent.md": intentText() },
+        "TST-4-demo": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-4\nsource:") },
+        "2026-01-03-dated": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-3\nsource:") },
+        "TST-5-quoted": { "intent.md": intentText().replace("---\nsource:", "---\nid: \"TST-5\"\nsource:") },
+        "TST-6-noted": { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-6  # allocated by ids.py\nsource:") },
+      });
+      const lastHead = () => { const p = join(stubDir, "heads.log"); return existsSync(p) ? readFileSync(p, "utf8").trim().split("\n").pop() : ""; };
       const bin = join(sandbox, "sh-bin");
       mkdirSync(bin);
       write(join(bin, "claude"), "#!/bin/sh\nexit 0\n");
-      write(join(bin, "gh"), '#!/bin/sh\nh=""\nwhile [ $# -gt 0 ]; do [ "$1" = --head ] && h=$2; shift; done\n[ -f "$STUB/head-$h" ] && cat "$STUB/head-$h"\nexit 0\n');
+      write(join(bin, "gh"), '#!/bin/sh\nh=""\nwhile [ $# -gt 0 ]; do [ "$1" = --head ] && h=$2; shift; done\necho "$h" >> "$STUB/heads.log"\nf=$(echo "$h" | tr / _)\n[ -f "$STUB/head-$f" ] && cat "$STUB/head-$f"\nexit 0\n');
       chmodSync(join(bin, "claude"), 0o755);
       chmodSync(join(bin, "gh"), 0o755);
       const stubDir = join(sandbox, "sh-stub");
@@ -506,6 +513,7 @@ export function runFactoryCases() {
       };
       let r = runSh("brief");
       add("s1 session.sh finds the brief PR by its branch name", "pr 7", r.status === 0 && /^factory: pr 7$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr}`);
+      add("s1b AC4 an intent with no id passes --head greeting-brief to gh", "greeting-brief", lastHead() === "greeting-brief", lastHead());
       add("s2 session.sh writes enforce into the container's own hooks mode file", "enforce", existsSync(join(r.home, ".claude", "hooks", "mode")) && readFileSync(join(r.home, ".claude", "hooks", "mode"), "utf8").trim() === "enforce", r.stderr);
       r = runSh("build");
       add("s3 the build phase looks for the slug branch and never falls back to another PR", "no pr", r.status === 1 && !/factory: pr/.test(r.stdout) && /branch greeting/.test(r.stderr), `${r.status} ${r.stdout} ${r.stderr}`);
@@ -519,6 +527,26 @@ export function runFactoryCases() {
       write(join(stubDir, "head-demo-brief"), "8\n");
       r = runDir("id", "intent/TST-1-demo");
       add("s4 session.sh accepts intent/TST-1-demo and looks for the brief PR on demo-brief", "pr 8", r.status === 0 && /^factory: pr 8$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr}`);
+      // traceable-ids m2 R6, AC4: an intent with an id: line is looked up on <id>/brief and <id>/build.
+      write(join(stubDir, "head-TST-4_brief"), "9\n");
+      r = runDir("idb", "intent/TST-4-demo");
+      add("s10 AC4 session.sh passes --head TST-4/brief for an intent with id TST-4", "pr 9", r.status === 0 && /^factory: pr 9$/m.test(r.stdout) && lastHead() === "TST-4/brief", `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
+      // Review of PR 200: the id line may be quoted or carry a trailing comment; session.sh reads the same id the other readers do.
+      write(join(stubDir, "head-TST-5_brief"), "10\n");
+      r = runDir("idq", "intent/TST-5-quoted");
+      add("s13 session.sh reads a quoted id line and passes --head TST-5/brief", "TST-5/brief", lastHead() === "TST-5/brief" && /^factory: pr 10$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
+      write(join(stubDir, "head-TST-6_brief"), "11\n");
+      r = runDir("idn", "intent/TST-6-noted");
+      add("s14 session.sh drops a trailing comment on the id line and passes --head TST-6/brief", "TST-6/brief", lastHead() === "TST-6/brief" && /^factory: pr 11$/m.test(r.stdout), `${r.status} ${r.stdout} ${r.stderr} ${lastHead()}`);
+      r = runDir("idd", "intent/2026-01-03-dated");
+      add("s11 a date folder with a backfilled id is looked up on its id branch", "TST-3/brief", lastHead() === "TST-3/brief", `${r.status} ${r.stderr} ${lastHead()}`);
+      {
+        const home = join(sandbox, "sh-home-idbuild");
+        mkdirSync(home, { recursive: true });
+        const env = { PATH: `${bin}:${process.env.PATH}`, HOME: home, STUB: stubDir, FACTORY_WORK: join(sandbox, "sh-work-idbuild"), GH_TOKEN: "t" };
+        r = spawnSync("sh", [SESSION, fx.origin, "main", "build", "intent/TST-4-demo"], { encoding: "utf8", env });
+        add("s12 the build phase of an intent with an id looks for <id>/build", "TST-4/build", r.status === 1 && lastHead() === "TST-4/build" && /branch TST-4\/build/.test(r.stderr), `${r.status} ${r.stderr} ${lastHead()}`);
+      }
       for (const [i, bad] of [["5", "intent/TST-1-Demo"], ["6", "intent/tst-1-demo-X"], ["7", "intent/TST-01-demo"], ["8", "intent/TOOLONG-1-demo"], ["9", "intent/2026-01-02-Greeting"]]) {
         r = runDir(`bad${i}`, bad);
         add(`s${i} session.sh refuses ${bad}`, "exit 64", r.status === 64 && /refusing intent dir/.test(r.stderr), `${r.status} ${r.stdout} ${r.stderr}`);
@@ -553,6 +581,19 @@ export function runFactoryCases() {
       const order = repoWithOrigin(sandbox, "idorder", { "TST-10-b": { "intent.md": intentText() }, "TST-9-a": { "intent.md": intentText() } });
       r = py(["next", "--repo", order.repo], order.repo, makeStub(sandbox, "idorder", order.origin).env);
       add("i9 next takes TST-9-a before TST-10-b: id folders sort by number, not as text", "intent/TST-9-a", r.status === 0 && r.stdout.trim() === "intent/TST-9-a", brief(r));
+      // A repo holding both forms (traceable-ids m1 review): every date folder comes before any id folder.
+      const mixed = repoWithOrigin(sandbox, "idmixed", {
+        "TST-2-b": { "intent.md": intentText() },
+        "2026-01-09-dated": { "intent.md": intentText() },
+        "TST-1-a": { "intent.md": intentText() },
+      });
+      const mixedEnv = makeStub(sandbox, "idmixed", mixed.origin).env;
+      r = py(["next", "--repo", mixed.repo], mixed.repo, mixedEnv);
+      add("i10 next picks the date folder before the id folders in a mixed repo", "intent/2026-01-09-dated", r.status === 0 && r.stdout.trim() === "intent/2026-01-09-dated", brief(r));
+      mkdirSync(join(mixed.repo, ".pro-dev", "factory"), { recursive: true });
+      writeFileSync(join(mixed.repo, ".pro-dev", "factory", "factory-2026-01-09-dated.json"), JSON.stringify({ detail_json: "{}" }));
+      r = py(["next", "--repo", mixed.repo], mixed.repo, mixedEnv);
+      add("i11 then the lowest id folder", "intent/TST-1-a", r.status === 0 && r.stdout.trim() === "intent/TST-1-a", brief(r));
       const slug = spawnSync("python3", ["-I", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import factory; print(' '.join(factory.slug_of(f) for f in sys.argv[2:]))",
         dirname(FACTORY), "TST-1-demo", "PDS-51-fix-greeting", "2026-01-02-greeting", "AB-123-x"], { encoding: "utf8", env: stub.env });
       add("i8 slug_of strips a date or an id prefix", "demo fix-greeting greeting x", slug.stdout.trim() === "demo fix-greeting greeting x", slug.stdout + slug.stderr);
@@ -582,6 +623,30 @@ export function runFactoryCases() {
       r = py(["record", DIR, "--repo", fx.repo, "--state", "build"], fx.repo, stub.env);
       rec = record(fx);
       add("c4 the working tree wins over the default tip", "TST-5", r.status === 0 && rec?.change_id === "TST-5", brief(r) + JSON.stringify(rec));
+    }
+
+    // ── binding for an intent with an id (traceable-ids m2 R7, AC4) ──
+    {
+      const IDF = "TST-4-demo";
+      const fx = repoWithOrigin(sandbox, "idbind", { [IDF]: { "intent.md": intentText().replace("---\nsource:", "---\nid: TST-4\nsource:") } });
+      const stub = makeStub(sandbox, "idbind", fx.origin);
+      const files = { [`intent/${IDF}/spec.md`]: SPEC(), [`intent/${IDF}/plan.md`]: PLAN() };
+      makePr(sandbox, fx, stub, 1, [{ files }], "origin/main", { folder: IDF, phase: "brief", branch: "TST-4/brief" });
+      let r = py(["verify", "brief", `intent/${IDF}`, "--pr", "1", "--repo", fx.repo, "--json"], fx.repo, stub.env);
+      add("bi1 AC4 a brief PR on TST-4/brief binds to an intent with id TST-4", "pass", r.status === 0 && jsonOf(r)?.result === "pass", brief(r));
+      makePr(sandbox, fx, stub, 2, [{ files }], "origin/main", { folder: IDF, phase: "brief", branch: "demo-brief" });
+      r = py(["verify", "brief", `intent/${IDF}`, "--pr", "2", "--repo", fx.repo, "--json"], fx.repo, stub.env);
+      add("bi2 the old <slug>-brief name is refused once the intent has an id", "level 3", r.status === 3 && /head branch is 'demo-brief', not 'TST-4\/brief'/.test((jsonOf(r)?.reasons ?? []).join(";")), brief(r));
+      const head = makePr(sandbox, fx, stub, 3, [{ files: buildFiles() }], "origin/main", { folder: IDF, phase: "build", branch: "TST-4/build" });
+      git(fx.repo, "fetch", "-q", "origin", "refs/pull/3/head");
+      const base = git(fx.repo, "rev-parse", "origin/main").stdout.trim();
+      const bind = (branch) => spawnSync("python3", ["-I", "-c",
+        "import sys, json; sys.path.insert(0, sys.argv[1]); import factory; print(json.dumps(factory.binding_reasons(sys.argv[2], 'build', sys.argv[3], {'headRefName': sys.argv[4], 'author': {'login': 'factory-bot'}}, sys.argv[5], sys.argv[6], 't')))",
+        dirname(FACTORY), fx.repo, IDF, branch, base, head], { encoding: "utf8", env: stub.env, cwd: fx.repo });
+      r = bind("TST-4/build");
+      add("bi3 AC4 a build PR on TST-4/build binds to an intent with id TST-4", "[]", r.stdout.trim() === "[]", r.stdout + r.stderr);
+      r = bind("demo");
+      add("bi4 the bare slug is refused for the build of an intent with an id", "level 3", /\[3, "the PR head branch is 'demo', not 'TST-4\/build'"\]/.test(r.stdout), r.stdout + r.stderr);
     }
 
     // ── run, end to end ──

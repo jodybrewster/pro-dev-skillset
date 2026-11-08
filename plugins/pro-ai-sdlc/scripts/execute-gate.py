@@ -5,8 +5,11 @@
 
 Passes when the plan is tracked by git with no uncommitted changes, reads
 "Status: approved", its Done section has no build commit yet and no branch
-named after the intent's slug exists locally or on origin.
-Pass: exit 0 and one JSON line with slug, branch, intent_dir and default_branch.
+for the build exists locally or on origin.
+The branch is <id>/build for plan.md and <id>/build-<module> for plan-<module>.md when the
+intent's frontmatter holds an id: line (ADR-0026) and the slug when it does not.
+Pass: exit 0 and one JSON line with slug, branch, change_id (null with no id), intent_dir
+and default_branch.
 Stop: exit 1 and a one-line reason on stderr.
 """
 import json
@@ -33,6 +36,27 @@ def default_branch(top):
         if git(top, "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{name}").returncode == 0:
             return name
     return "main"
+
+
+ID_RE = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*$")
+
+
+def change_id(intent_md):
+    """The id: value in the intent's frontmatter, or None when it is missing or malformed."""
+    try:
+        with open(intent_md, encoding="utf-8") as fh:
+            lines = fh.read().replace("\r\n", "\n").split("\n")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    for ln in lines[1:]:
+        if ln.strip() == "---":
+            return None
+        m = re.match(r"^id:\s*['\"]?([^'\"\s#]*)['\"]?\s*(?:#.*)?$", ln)
+        if m:
+            return m.group(1) if ID_RE.match(m.group(1)) else None
+    return None
 
 
 def main():
@@ -73,17 +97,21 @@ def main():
     slug = re.sub(r"^(?:\d{4}-\d{2}-\d{2}|[A-Z]{2,6}-[0-9]+)-", "", os.path.basename(intent_dir), count=1)
     if not slug:
         stop(f"cannot name a branch from {intent_dir or 'the repo root'}")
-    if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{slug}").returncode == 0:
-        stop(f"branch {slug} already exists locally")
+    cid = change_id(os.path.join(top, intent_dir, "intent.md"))
+    module = re.match(r"^plan-(.+)\.md$", os.path.basename(rel))
+    branch = slug if not cid else f"{cid}/build-{module.group(1)}" if module else f"{cid}/build"
+    if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0:
+        stop(f"branch {branch} already exists locally")
     if git(top, "remote", "get-url", "origin").returncode != 0:
         stop("no origin remote; /execute pushes the branch and opens a pull request there")
-    remote = git(top, "ls-remote", "--exit-code", "--heads", "origin", slug)
+    remote = git(top, "ls-remote", "--exit-code", "--heads", "origin", f"refs/heads/{branch}")
     if remote.returncode == 0:
-        stop(f"branch {slug} already exists on origin")
+        stop(f"branch {branch} already exists on origin")
     if remote.returncode != 2:
         stop("could not reach origin to check the branch name")
 
-    print(json.dumps({"slug": slug, "branch": slug, "intent_dir": intent_dir, "default_branch": default_branch(top)}))
+    print(json.dumps({"slug": slug, "branch": branch, "change_id": cid, "intent_dir": intent_dir,
+                      "default_branch": default_branch(top)}))
 
 
 if __name__ == "__main__":

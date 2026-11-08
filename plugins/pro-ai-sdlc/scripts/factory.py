@@ -1185,11 +1185,23 @@ def missing_trailers(root, base, head, phase, folder):
     return [c.split("\n", 1)[0][:12] for c in out.split("\0") if c.strip() and not want.search(c.split("\n", 1)[1] if "\n" in c else "")]
 
 
+CHANGE_ID_RE = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*$")
+
+
+def head_branch(root, ref, phase, folder):
+    """The branch /auto names for this phase: <id>/brief or <id>/build when the intent at <ref> has an
+    id: line (ADR-0026), else <slug>-brief or <slug>. factory/session.sh looks the PR up by the same name."""
+    cid = frontmatter(show(root, ref, f"intent/{folder}/intent.md") or "")[0].get("id", "")
+    if CHANGE_ID_RE.match(cid):
+        return f"{cid}/{phase}"
+    slug = slug_of(folder)
+    return f"{slug}-brief" if phase == "brief" else slug
+
+
 def binding_reasons(root, phase, folder, view, base, head, token):
     """[(level, reason)] when the PR is not the one this run's session was told to open."""
     reasons = []
-    slug = slug_of(folder)
-    want = f"{slug}-brief" if phase == "brief" else slug
+    want = head_branch(root, base, phase, folder)
     if view.get("headRefName") != want:
         reasons.append((3, f"the PR head branch is {view.get('headRefName')!r}, not {want!r}"))
     # /execute opens the build PR as a draft when a step ends doubted; the host marks it ready after its checks.

@@ -2313,9 +2313,15 @@ def intent_facts(root: str, folder: str, tip: str = "HEAD") -> dict:
     return {"kind": kind, "if_not": "feature" if base == "unknown" else base, "subject": title or folder}
 
 
+CHANGE_ID_PREFIX = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*(?:: |\s+(?=[a-z]+(?:\([^)]*\))?!?:))")
+
+
 def commit_kind(subject: str, body: str) -> tuple[str, str]:
     """(kind, kind when not breaking) from a Conventional Commit subject. Only feat, fix, a bang and a
-    BREAKING CHANGE footer say anything; any other subject is unknown, so the person is asked."""
+    BREAKING CHANGE footer say anything; any other subject is unknown, so the person is asked.
+    One leading change id (`PDS-51: feat: x`, ADR-0026) is read past first; the space form a squash
+    merge takes from a PR title (`PDS-51 feat: x`) counts only when a Conventional Commit word follows it."""
+    subject = CHANGE_ID_PREFIX.sub("", subject, count=1)
     m = re.match(r"^([a-z]+)(\([^)]*\))?(!)?:", subject)
     if re.search(r"(?m)^BREAKING[ -]CHANGE:", body) or (m and m.group(3)):
         return "breaking", "fix"

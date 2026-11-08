@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Behaviour test for the pro-ai-sdlc hooks: protect-tests, plan-sync and
-// production-gate. Drives each script the way Claude Code does (one process per
+// Behaviour test for the pro-ai-sdlc hooks: protect-tests, plan-sync,
+// production-gate and change-id. Drives each script the way Claude Code does (one process per
 // case, the JSON payload on stdin) against a disposable sandbox, with
 // CLAUDE_GUARD_DIR pointing at a throwaway mode directory so the real
 // ~/.claude/hooks log and mode files are never touched.
@@ -216,6 +216,85 @@ export function runSdlcHookCases() {
     commit(stale, "plan: unknown sha");
     r = run("plan-sync.py", stop(stale), { mode: "enforce", modes: { "stale-done": "enforce" } });
     add("sd9 a Done sha the repo does not have passes", "allow", r, r.status === 0 && !r.stdout);
+
+    // change-id (traceable-ids m2, R11 to R14): a commit subject on an id branch starts with the id.
+    const branchRepo = (name, branch) => {
+      const dir = join(sandbox, name);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "a.txt"), "1\n");
+      git(dir, "init", "-q", "-b", "main");
+      git(dir, "add", "-A");
+      git(dir, "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "init");
+      if (branch !== "main") git(dir, "checkout", "-q", "-b", branch);
+      return dir;
+    };
+    const idRepo = branchRepo("ids", "TST-4/build");
+    const featRepo = branchRepo("feat", "feature/x");
+    const ci = (cwd, cmd, opts) => run("change-id.py", bash(cwd, cmd), opts);
+    const ENF = { modes: { "change-id": "enforce" } };
+    const silent = (r) => r.status === 0 && !r.stdout && !r.log;
+    const denied = (r) => r.json?.hookSpecificOutput?.permissionDecision === "deny"
+      && r.json.hookSpecificOutput.permissionDecisionReason.includes('commit subject must start with "TST-4: " on branch TST-4/build');
+    const ciWarned = (r) => warned(r) && !r.json?.hookSpecificOutput?.permissionDecision && /\tchange-id\twould-deny\t/.test(r.log);
+    r = ci(idRepo, 'git commit -m "no id"');
+    add("ci1 warn mode (no mode.change-id) logs change-id and allows a subject with no id", "warn", r, ciWarned(r) && r.json.systemMessage.includes("TST-4: "));
+    r = ci(idRepo, 'git commit -m "no id"', ENF);
+    add("ci2 mode.change-id enforce denies with the reason", "deny", r, denied(r));
+    r = ci(idRepo, 'git commit -m "TST-4: ok"', ENF);
+    add("ci3 a subject that starts with the id allows silently", "allow", r, silent(r));
+    r = ci(idRepo, "git add -A && git commit -m \"$(cat <<'EOF'\nTST-4: ok\n\nA body line.\nEOF\n)\"", ENF);
+    add("ci4 a quoted heredoc message that starts with the id allows", "allow", r, silent(r));
+    r = ci(idRepo, 'git commit -m "$(cat <<EOF\n\nno id here\n\nTST-4: later line\nEOF\n)"', ENF);
+    add("ci5 an unquoted heredoc is read from its first non-empty line", "deny", r, denied(r));
+    // Review of PR 200: the hook steps back when the command moves branch first or the message is a shell expansion.
+    r = ci(idRepo, 'git switch -c feature/x && git commit -m "wip"', ENF);
+    add("ci18 a git switch earlier in the command allows, since the commit lands on another branch", "allow", r, silent(r));
+    r = ci(idRepo, 'git checkout feature/x && git commit -m "wip"', ENF);
+    add("ci19 a git checkout of a branch earlier in the command allows", "allow", r, silent(r));
+    r = ci(idRepo, 'git commit -m "$MSG"', ENF);
+    add("ci20 a message that is a shell variable allows, since its value is not known here", "allow", r, silent(r));
+    r = ci(idRepo, 'git checkout -- src/a.py && git commit -m "no id"', ENF);
+    add("ci21 a git checkout of a path is not a branch move and the commit is still judged", "deny", r, denied(r));
+    r = ci(idRepo, 'git checkout -b TST-9/fix-1.2 && git commit -m "TST-9: x"', ENF);
+    add("ci22 a checkout -b of a dotted branch name is a move and the commit is not judged here", "allow", r, silent(r));
+    r = ci(idRepo, 'git switch - && git commit -m "chore: x"', ENF);
+    add("ci23 git switch - is a move", "allow", r, silent(r));
+    r = ci(idRepo, 'git -C . switch -c TST-9/build && git -C . commit -m "TST-9: x"', ENF);
+    add("ci24 git -C dir switch is a move", "allow", r, silent(r));
+    r = ci(idRepo, '/usr/bin/git switch feature/x && git commit -m "x"', ENF);
+    add("ci25 a full path to git is still git", "allow", r, silent(r));
+    for (const [id, cmd] of [["ci6", "git commit"], ["ci7", "git commit -F msg.txt"], ["ci8", "git commit --amend --no-edit"], ["ci9", "git commit -C HEAD"], ["ci10", "git commit -F - <<'EOF'\nno id\nEOF"]]) {
+      r = ci(idRepo, cmd, ENF);
+      add(`${id} ${cmd.split("\n")[0]} has no message to read and allows silently`, "allow", r, silent(r));
+    }
+    r = ci(repo, 'git commit -m "no id"', { ...ENF, mode: "enforce" });
+    add("ci11 on main nothing is logged", "allow", r, silent(r));
+    r = ci(featRepo, 'git commit -m "no id"', ENF);
+    add("ci12 on feature/x nothing is logged", "allow", r, silent(r));
+    r = run("change-id.py", null, { raw: "{", ...ENF });
+    add("ci13 a payload of { exits 0 and logs could-not-parse", "allow", r, r.status === 0 && !r.stdout && /\tchange-id\tcould-not-parse\t/.test(r.log));
+    r = run("change-id.py", null, { raw: "", ...ENF });
+    add("ci14 an empty payload exits 0", "allow", r, r.status === 0 && !r.stdout);
+    r = ci(idRepo, 'git commit -m "no id"', { mode: "enforce" });
+    add("ci15 a global mode file of enforce with no mode.change-id only warns", "warn", r, ciWarned(r));
+    r = ci(idRepo, 'git commit -m "no id"', { env: { CLAUDE_GUARD_MODE: "enforce" } });
+    add("ci16 CLAUDE_GUARD_MODE=enforce with no mode.change-id only warns", "warn", r, ciWarned(r));
+    r = ci(idRepo, 'git commit -m "no id"', { mode: "enforce", modes: { "change-id": "warn" }, env: { CLAUDE_GUARD_MODE: "enforce" } });
+    add("ci17 mode.change-id holding warn stays in warn under every other enforce", "warn", r, ciWarned(r));
+    r = ci(free, `git -C ${idRepo} commit -m "no id"`, ENF);
+    add("ci18 git -C reads the branch of the directory it names", "deny", r, denied(r));
+    r = ci(free, `cd ${idRepo} && git commit -m "no id"`, ENF);
+    add("ci19 a cd earlier in the command moves where the branch is read", "deny", r, denied(r));
+    r = ci(idRepo, 'git commit -am "no id"', ENF);
+    add("ci20 -am reads the message after the cluster", "deny", r, denied(r));
+    r = ci(idRepo, 'git commit --message="TST-4: ok" -m "second paragraph"', ENF);
+    add("ci21 --message= is read and the first message is the subject", "allow", r, silent(r));
+    r = ci(idRepo, 'git commit -m "TST-5: other"', ENF);
+    add("ci22 another change's id is not this branch's id", "deny", r, denied(r));
+    r = ci(idRepo, 'echo "git commit -m no id"', ENF);
+    add("ci23 git commit inside quoted text is not a commit", "allow", r, silent(r));
+    r = ci(idRepo, "ls -la", ENF);
+    add("ci24 an ordinary command allows silently", "allow", r, silent(r));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

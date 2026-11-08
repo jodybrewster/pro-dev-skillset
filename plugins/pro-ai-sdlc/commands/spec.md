@@ -1,7 +1,7 @@
 ---
 description: "Write spec.md beside an intent, check it against the repo's design, review and security policies and commit it. Usage: /spec [path to intent.md]"
 argument-hint: "[path to intent.md]  (default: the newest intent without a spec.md)"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Glob, Grep, Write, Edit
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Glob, Grep, Write, Edit
 ---
 
 ## Context
@@ -109,7 +109,11 @@ The level is only ever raised; never edit it down by hand.
 
 - `git add <intent dir>/spec.md` (or `capability-map.md` and each `spec-<module-id>.md`).
   When step 5 wrote an ADR, add that file and the index too so they land in the same commit.
-- `git commit -m "spec: <slug>"`, where the slug is the intent directory name without its date or id prefix.
+- `git commit -m "<id>: spec: <slug>"` when the intent's frontmatter has an `id:` and `git commit -m "spec: <slug>"` when it has none, where the slug is the intent directory name without its date or id prefix.
+
+The branch, when the intent has an `id:` (ADR-0026): on the default branch (`main` or `master`), run `git switch -c <id>/spec` before the commit; on any other branch, commit there and, when the branch does not start with `<id>/`, say so in one line.
+A spec and plan written together share `<id>/spec`.
+With no `id:`, commit on the current branch as before.
 
 Never stage other files, never pass `--no-verify` and do not push.
 Check `git status` that nothing else got staged.

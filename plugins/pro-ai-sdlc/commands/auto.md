@@ -41,17 +41,19 @@ Never open, print or quote an env file or a token.
    The Risks section carries `Stop-list categories: none`.
    Each step in Order of work holds the tests and the code they prove, because `/execute` freezes a test once its step is committed and the runner stops a build that changes one afterwards; a test seen failing and then passing in one step can still be corrected before that.
 5. If any concern applies, or any stop-list category (auth, migrations, payments, deploys, secrets, environment variables) or a new dependency would be touched, print `factory: stopped level 2 (<reason>)` and stop without a branch, commit or PR.
-6. Otherwise create the branch `<slug>-brief` (the folder name without its date or id prefix) off the default branch and stage only the two files by path.
-   Commit with the message `brief: <slug>`.
+6. Otherwise create the branch `<id>/brief` when `intent.md` has an `id:` line (ADR-0026), or `<slug>-brief` (the folder name without its date or id prefix) when it has none, off the default branch and stage only the two files by path.
+   Commit with the message `<id>: brief: <slug>`, or `brief: <slug>` with no id.
+   `factory/session.sh` and the host look the pull request up by that branch name, so use no other.
    The container's commit hook writes the `Factory-Run:` trailer, so do not write one.
-7. Push the branch, open a pull request against the default branch with `gh pr create` and print `factory: pr <n>`.
+7. Push the branch, open a pull request against the default branch with `gh pr create`, its title starting `<id>: ` when the intent has an id; then print `factory: pr <n>`.
 
 ## build
 
 1. Run the execute command for the merged plan through the Skill tool, as a person would type `/pro-ai-sdlc:execute <dir>/plan.md`.
+   It builds on `<id>/build` when the intent has an id and on `<slug>` when it has none, with `<id>: ` on each subject and on the title.
    The container's commit hook writes the `Factory-Run:` trailer on every commit, so do not write one.
    If it stops, print `factory: stopped level 2 (<its stop reason>)` and stop.
 2. Run `/pro-ai-sdlc:review` on the pull request it opened, the same way.
-3. Fix each Important finding once, test-first, commit and push.
+3. Fix each Important finding once, test-first, commit (the subject starting `<id>: ` when the intent has an id) and push.
    Findings still open after that stay in the PR body; do not loop.
 4. Print `factory: pr <n>` for the build pull request and stop.
