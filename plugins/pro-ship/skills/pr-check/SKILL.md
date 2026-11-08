@@ -256,7 +256,7 @@ The `codex` record holds `agent` (`codex:code-reviewer` or null), `status`, `rea
 A Codex run that never started has `important`, `agreed` and `disputed` at 0.
 
 Host and model: set `host` to `claude` or `codex` as above and `model` to the model id the reviewer ran on.
-For the code reviewer that is the id on its closing `model: <id>  host: <host>` line or else the model you dispatched it on when the line is missing or says `unknown`.
+For the code reviewer that is the id on its closing `model: <id>  host: <host>` line or else the model you named at dispatch when the line is missing or says `none`; with neither, `model` is null.
 When the two differ, record the line's id and say so in the report.
 For the security reviewer it is the model you dispatched it on; an `inline` review records this session's model.
 Never record the required model in place of the one that ran: `stamp` compares it with `REVIEW.md`'s rule and a mismatch must show.

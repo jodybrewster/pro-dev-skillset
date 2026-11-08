@@ -102,7 +102,7 @@ Done as of 9804f2e2e62d
 
 - Build commit: 9804f2e2e62d on `PDS-52/build-m2`, rebased onto origin/main at 0f0dab5 after #193 and #196, with the PR 197 review fixes.
 - Checks run: `node tests/check.mjs` 51 checks, 0 failures, 13 warnings (all existing: Codex counterparts of pro-research agents, routing cases for subagents, one pro-egm eval prompt, the router and the deployed skill); `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `node tests/ship-check.mjs` 282/282; `node tests/ship-preflight.mjs` 108/108; `node tests/ship-hooks.mjs` 356/356; `node tests/factory.mjs` 190/190; `node tests/lessons.mjs` 114/114; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round among the records, each holding change_id TST-1; `python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude` printed `{"host": "claude", "required": "opus", "source": "default"}` (the tip has no section until this merges); `claude plugin validate . --strict` and each of pro-ship, pro-ai-sdlc and pro-quality: Validation passed.
-- Definition of done: met.
+- Definition of done: met except AC10's full /execute run, left for the board rerun.
 - Visual: none
 - Doubt: none
 - AC1: ship-check rm1 and rm1b: a Sonnet code review in warn gives `model_ok: false`, status `done`, the warn line, a `review-model` line in `warn.log` and `pass`.

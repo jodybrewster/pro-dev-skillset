@@ -53,8 +53,8 @@ Never fork the session to be the reviewer.
 Name the model and effort at dispatch: the model `REVIEW.md` names for this host at high effort.
 Under Claude Code ask it with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py" --host claude`, which reads the `## Review model` section from the default branch tip and never from the working tree; with no section it answers `opus` for `claude`.
 Under Codex run `python3 <plugin root>/scripts/reviewmodel.py --host codex`, where the plugin root is the parent of the `skills/` folder that holds this skill.
-The Codex host picks the model: name the answer in the `Doubt:` line rather than at dispatch.
-Name the model you dispatched the reviewer on in the `Doubt:` line.
+The Codex host picks the model, which cannot be named at dispatch.
+In the `Doubt:` line name the model the reviewer ran on, never the rule `REVIEW.md` names.
 Under Codex, start a fresh agent run with the same text.
 
 ### Codex offer

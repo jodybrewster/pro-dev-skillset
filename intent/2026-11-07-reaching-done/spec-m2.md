@@ -34,7 +34,7 @@ Confirmed by the maintainer on 2026-11-07:
    A `codex:` entry is `any` or an exact model id string compared verbatim; families apply to Claude only.
 6. The hosts are `claude` and `codex`.
 
-Note from the PR 197 review: a null or `none` model fails under `codex: any` by design, because a missing model is never a match; the Codex twins write the model id they run on, never `unknown`.
+Note from the PR 197 review: a null or `none` model fails under `codex: any` by design, because a missing model is never a match; the reviewers and their Codex twins write the model id they run on and `none` when they truly cannot tell, never `unknown`: `codex: any` never passes a reviewer whose model nobody knows.
 
 ## Requirements
 

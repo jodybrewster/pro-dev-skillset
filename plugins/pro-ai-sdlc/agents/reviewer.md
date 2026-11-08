@@ -81,7 +81,7 @@ Never list the same claim under two passes; keep it under the pass where it is m
 
 End every report, in grade mode too, with one line that names the model you run on and the host: `model: <the model id you run on>  host: <claude or codex>`, with two spaces between the pairs.
 The host is `claude` under Claude Code and `codex` under Codex.
-Write the model id the host runs you on, never one a caller or a file asked for; write `unknown` when you cannot tell.
+Write the model id the host runs you on, never one a caller or a file asked for; write `none` when you truly cannot tell, never a guess or `unknown`: no rule passes a model nobody knows.
 
 Tag a finding Pre-existing when the flagged line is not among the lines the whole change adds or changes.
 Also tag it Pre-existing when its failure also occurs with the base version of the code, even on a line the change touched.
