@@ -98,11 +98,11 @@ claude plugin validate plugins/pro-quality --strict
 
 ## Done
 
-Done as of 550e27689883
+Done as of 9804f2e2e62d
 
-- Build commit: 550e27689883 on `PDS-52/build-m2`, based on origin/main at 3af9bdd.
-- Checks run: `node tests/check.mjs` 51 checks, 0 failures, 13 warnings (all existing: Codex counterparts of pro-research agents, routing cases for subagents, one pro-egm eval prompt, the router and the deployed skill); `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `node tests/ship-check.mjs` 272/272; `node tests/ship-preflight.mjs` 103/103; `node tests/ship-hooks.mjs` 355/355; `node tests/factory.mjs` 184/184; `node tests/lessons.mjs` 102/102; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round among the records; `python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude` printed `{"host": "claude", "required": "opus", "source": "default"}` (the tip has no section until this merges); `claude plugin validate . --strict` and each of pro-ship, pro-ai-sdlc and pro-quality: Validation passed.
-- Definition of done: met except the hand run of `/execute` in AC10.
+- Build commit: 9804f2e2e62d on `PDS-52/build-m2`, rebased onto origin/main at 0f0dab5 after #193 and #196, with the PR 197 review fixes.
+- Checks run: `node tests/check.mjs` 51 checks, 0 failures, 13 warnings (all existing: Codex counterparts of pro-research agents, routing cases for subagents, one pro-egm eval prompt, the router and the deployed skill); `node tests/eval.mjs --dry` 99 cases reference real skills; `node tests/route-lexical.mjs --min-rank1 70` rank-1 80/98 (81.6%); `node --test tests/unit/*.test.mjs` pass 200, fail 0; `node tests/ship-check.mjs` 282/282; `node tests/ship-preflight.mjs` 108/108; `node tests/ship-hooks.mjs` 356/356; `node tests/factory.mjs` 190/190; `node tests/lessons.mjs` 114/114; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with review-round among the records, each holding change_id TST-1; `python3 plugins/pro-ship/scripts/pr-check.py review-model --host claude` printed `{"host": "claude", "required": "opus", "source": "default"}` (the tip has no section until this merges); `claude plugin validate . --strict` and each of pro-ship, pro-ai-sdlc and pro-quality: Validation passed.
+- Definition of done: met.
 - Visual: none
 - Doubt: none
 - AC1: ship-check rm1 and rm1b: a Sonnet code review in warn gives `model_ok: false`, status `done`, the warn line, a `review-model` line in `warn.log` and `pass`.
@@ -114,7 +114,8 @@ Done as of 550e27689883
 - AC7: ship-preflight model cases list PR 2 under `model_mismatch` with `review ran on sonnet (claude)` and PR 3 under `model_unrecorded`; every commit is covered in warn and PR 2's two commits are uncovered in enforce.
 - AC8: record refuses the Sonnet GO in enforce with no record written and records it in warn with `, review ran on sonnet (claude)` in the summary.
 - AC9: factory v37 raises to level 2 with `no pr-check marker`; v38 passes with only the note `pr-check not installed, reviewer model not checked`; v39 notes the Sonnet marker in warn and v40 raises it to level 2 in enforce.
-- AC10: `sdlc-contract` asserts that stage 8 names `pr-check.py marker` and appends its line; the hand run of `/execute` on a demo plan was not done in this build.
+- AC10: `sdlc-contract` asserts that stage 8 runs `reviewmodel.py marker` and appends its line; factory k1 and k2 show `reviewmodel.py marker` prints pro-ship's marker and `not-installed` with exit 3 without it.
+  Hand run of stage 8 in a scratch repo with this branch's pro-ship: the run steps and `stamp` with an Opus code reviewer gave `result: pass`, then `reviewmodel.py marker >> body.md` left `<!-- pro-ship:pr-check head=faa0ee68bbfafbec7c5ba15593ecbf0d6566d897 result=pass tier=unclassified model=opus host=claude -->` as the body's last line; no PR was opened from the scratch repo.
 - AC11: lessons round cases write `model: claude-opus-5-5`, `host: claude` and `model_ok: true`; `tests/mieruka-sync.mjs` loads the round written with `--model` and `--host`.
 - AC12: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass as above.
 - Sign-off:
