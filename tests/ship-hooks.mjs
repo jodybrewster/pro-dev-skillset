@@ -520,6 +520,26 @@ export function runShipHookCases() {
         r = mrun(pin(ch), { cwd: cr, env: cenv("warn"), extraEnv: { GH_STUB_COMMENTS: comments(ch), GH_STUB_COMMENTS_SLEEP: "15" } });
         add("mg411 a comments read that hangs answers inside the deadline and logs could-not-run", "under 20 s, missing (comments could not be read)", r,
           r.ms < 20_000 && allowsMsg(r) && r.text.includes("confirmation: missing (comments could not be read)") && /could-not-run\tconfirmation/.test(r.log));
+        // A malformed id in the record never turns the tier gate off: the merge still asks or denies by tier.
+        writeRec(cr, ch, { checks: [], confirmation: conf(ch, { request_id: [1] }) });
+        r = mrun(pin(ch), { cwd: cr, env: cenv("enforce"), extraEnv: { GH_STUB_COMMENTS: comments(ch) } });
+        add("mg412 a request_id that is a list still asks at medium, with the confirmation unreadable", "ask + missing (confirmation unreadable", r,
+          asks(r) && /medium/.test(r.text) && r.text.includes("confirmation: missing (confirmation unreadable"));
+        writeRec(cr, ch, { checks: [], confirmation: conf(ch, { reply_id: { x: 1 } }) });
+        r = mrun(MERGE, { cwd: cr, env: cenv("enforce"), extraEnv: { GH_STUB_COMMENTS: comments(ch) } });
+        add("mg413 a reply_id that is an object still denies the unpinned merge", "deny + missing (confirmation unreadable", r,
+          denies(r) && r.text.includes("confirmation: missing (confirmation unreadable"));
+        writeRec(cr, ch, { checks: [], confirmation: conf(ch) });
+        const odd = join(sandbox, `comments${++n}.json`);
+        writeFileSync(odd, JSON.stringify({ comments: [{ id: [1], author: { login: "maint" }, body: "confirmed", createdAt: "2026-11-07T11:00:00Z", includesCreatedEdit: false }] }));
+        r = mrun(pin(ch), { cwd: cr, env: cenv("enforce"), extraEnv: { GH_STUB_COMMENTS: odd } });
+        add("mg415 an error inside the re-check still asks by tier and names the error", "ask + confirmation unreadable: TypeError", r,
+          asks(r) && /medium/.test(r.text) && r.text.includes("confirmation: missing (confirmation unreadable: TypeError)"));
+        // A comments read that failed asks for the read again, not for a new request.
+        writeRec(cr, ch, { checks: [], confirmation: conf(ch) });
+        r = mrun(pin(ch), { cwd: cr, env: cenv("warn", "enforce") });
+        add("mg414 an enforce deny after a failed comments read says to run the merge again, not to post a request", "deny, no confirm request", r,
+          denies(r) && r.text.includes("could not be read") && /run the merge again/.test(r.text) && !r.text.includes("confirm request"));
       }
 
       // ---- step 10: medium and high with a matching pin -------------------------------

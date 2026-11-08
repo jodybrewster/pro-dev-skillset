@@ -567,7 +567,19 @@ def request_binds(body, head: str, pr: int) -> bool:
 
 
 def confirmation_check(directory: str | None, pr: int, head: str, repo: str | None, cwd: str) -> dict | None:
-    """None when the record asks for no confirmation, else {line, missing, items}. One gh read, no write."""
+    """None when the record asks for no confirmation, else {line, missing, cause, items}. One gh read, no write.
+
+    Wrapped like preflight_line: any error in the record becomes a missing confirmation, never an
+    exception that would end the gate with no answer."""
+    try:
+        return read_confirmation(directory, pr, head, repo, cwd)
+    except Exception as e:
+        cause = f"confirmation unreadable: {type(e).__name__}"
+        log(HOOK, "could-not-run", f"confirmation: {cause}", cwd)
+        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": []}
+
+
+def read_confirmation(directory: str | None, pr: int, head: str, repo: str | None, cwd: str) -> dict | None:
     try:
         root = repo_root(directory)
     except CouldNotRun:
@@ -577,8 +589,8 @@ def confirmation_check(directory: str | None, pr: int, head: str, repo: str | No
         return None
     conf = need["conf"]
 
-    def missing(cause: str) -> dict:
-        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": need["items"]}
+    def missing(cause: str, retry: bool = False) -> dict:
+        return {"line": f"confirmation: missing ({cause})", "missing": True, "cause": cause, "items": need["items"], "retry": retry}
     if conf is None:
         return missing("no confirmation recorded")
     if conf.get("head") != head:
@@ -588,6 +600,8 @@ def confirmation_check(directory: str | None, pr: int, head: str, repo: str | No
     by = conf.get("by")
     if not isinstance(by, str) or not LOGIN.fullmatch(by):
         return missing("the recorded login cannot be read")
+    if not all(isinstance(conf.get(k), (str, int)) and not isinstance(conf.get(k), bool) for k in ("request_id", "reply_id")):
+        return missing("confirmation unreadable: the recorded request or reply id is not a string or a number")
     try:
         r = subprocess.run(["gh", "pr", "view", str(pr), "--json", "comments"] + (["-R", repo] if repo else []),
                            capture_output=True, text=True, timeout=5, errors="replace", cwd=root,
@@ -598,7 +612,7 @@ def confirmation_check(directory: str | None, pr: int, head: str, repo: str | No
     comments = data.get("comments") if isinstance(data, dict) else None
     if not isinstance(comments, list):
         log(HOOK, "could-not-run", f"confirmation: the comments of PR {pr} could not be read", cwd)
-        return missing("comments could not be read")
+        return missing("comments could not be read", retry=True)
     by_id = {c.get("id"): c for c in comments if isinstance(c, dict) and c.get("id") is not None}
     req = by_id.get(conf.get("request_id"))
     if req is None or not request_binds(req.get("body"), head, pr):
@@ -768,10 +782,14 @@ def decide(hit: dict, enforcing: bool, permission_mode: str, cwd: str, session_i
         return rank, text
     if not first_confirmation_deny(session_id, root, res["head"], cwd):
         return rank, text
+    log(HOOK, "deny", f"confirmation missing PR {res['pr']} {res['head'][:8]}", cwd)
+    if cf.get("retry"):
+        return 3, (f"[{HOOK}] PR {res['pr']} has a recorded confirmation for {res['head'][:8]} but its comments could not be read, "
+                   "so it could not be checked. Check that gh can reach GitHub here and run the merge again; "
+                   f"the identical command passes if you run it again. {text}")
     items = json.dumps(cf["items"] or ["<check name>"])
     command = (f"python3 {shlex.quote(os.path.join(HERE, 'ship.py'))} confirm request --head {res['head']} "
                f"--pr {res['pr']} --items {shlex.quote(items)}")
-    log(HOOK, "deny", f"confirmation missing PR {res['pr']} {res['head'][:8]}", cwd)
     return 3, (f"[{HOOK}] PR {res['pr']} has checks left at confirm and no confirmation bound to {res['head'][:8]} "
                f"({cf['cause']}). Ask the person whether to post a request; on a yes run "
                f"{command}, then wait for a person with write access to reply confirmed and run confirm read. "
