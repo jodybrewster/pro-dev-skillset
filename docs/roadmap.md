@@ -2,7 +2,7 @@
 
 What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
 Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
-Last updated 2026-11-07: the specialist-agents intent is done, closing items 15 and 18; the next run still drives mieruka's board in a browser, after mieruka's trace reader.
+Last updated 2026-11-07: the High tier from the super-board and agent-skills comparison is built (guard-hardening PDS-51, reaching-done PDS-52, traceable-ids PDS-50 m1 m3 m4); all work now runs through mieruka and the loop.
 
 A fresh session starts here: read "Now", then the intent folder it names.
 An intent named in a table row or a "Now" item carries its change id before its link, for example `PDS-30 [sdlc-loop-upgrades](../intent/2026-10-30-sdlc-loop-upgrades/intent.md)`; the folder keeps its name and the `change-ids` check in `tests/check.mjs` fails a table row that links an intent without its id ([ADR-0026](./decisions/0026-change-ids.md)).
@@ -11,6 +11,21 @@ It revisits the older [AGENT-SKILLS-INTEGRATION](./plans/AGENT-SKILLS-INTEGRATIO
 Nothing below the "Now" section is decided until it moves into an intent or a spec.
 
 ## Now
+
+### State on 2026-11-07, evening
+
+Every change in this repo and in mieruka goes through mieruka's board and the loop from here on; the rule is in `CLAUDE.md` under "Dogfood it".
+Built and merged today, each through intent, spec, plan, an Opus build, a fresh-context review of up to three rounds and green CI:
+
+- PDS-49 [p2-batch](../intent/2026-11-07-p2-batch/intent.md) m1: items 46, 47, 48, 49 (#173, #174, #175).
+- PDS-51 [guard-hardening](../intent/2026-11-07-guard-hardening/intent.md), complete: items 32, 40 (#190), 33 (#193), 34 and 43 (#194); every new guard in warn under its own mode key, rows in [enforce-mode.md](./enforce-mode.md).
+- PDS-52 [reaching-done](../intent/2026-11-07-reaching-done/intent.md), complete: items 35 and 39 (#192), 36 (#197), 37 and 38 (#198); ADR-0027 proposed.
+- PDS-50 [traceable-ids](../intent/2026-11-07-traceable-ids/intent.md): m1 ids, backfill and the check (#191), m4 docs and ADRs (#195), m3 `change_id` on every record (#196); m2 (the id in branches, commits and PR titles, a warn-mode commit hook) is the one module still open; ADR-0026 proposed.
+- Intents written and merged: PDS-48 [review-routes-back](../intent/2026-11-07-review-routes-back/intent.md), [traceable-ids](../intent/2026-11-07-traceable-ids/intent.md); mieruka has the matching [change-ids](https://github.com/jodybrewster/mieruka/pull/221) intent and the [dogfooding rule plus a day-to-day guide](https://github.com/jodybrewster/mieruka/pull/230), both for the owner to merge.
+
+Waiting on the maintainer: the Done sign-offs for PDS-51 and PDS-52 (they move ADR-0027 to accepted), the paid runs the build PRs name (`node tests/behavioral.mjs requesting-code-review --baseline`, `node tests/run-evals.mjs pro-ship`, `node tests/run-evals.mjs pro-ai-sdlc`, `node tests/run-evals.mjs pro-quality`, a few dollars each) plus the open items under [Waiting on the maintainer](#waiting-on-the-maintainer) below.
+
+Next, in order: traceable-ids m2; review-routes-back through spec and plan; then the Medium tier (p2-batch m2 to m6, items 41 and 42, the four additions 55 to 58); then the board rerun with ids on every card.
 
 ### Next session: rerun the SDLC by driving mieruka's board
 
@@ -209,19 +224,17 @@ Within a tier, items are in the order to build them.
 
 ## The ranked list
 
-Items 32 to 54 were added on 2026-11-07 from a comparison with [super-board](https://github.com/EricTechPro/super-board) (local clone `../super-board`, commit `d0b7d5a`, release 3.3.0) and with agent-skills from `eb07f19` to `301b02b` (release 0.6.15 and later merges).
+Items 32 to 59 were added on 2026-11-07 from a comparison with [super-board](https://github.com/EricTechPro/super-board) (local clone `../super-board`, commit `d0b7d5a`, release 3.3.0) and with agent-skills from `eb07f19` to `301b02b` (release 0.6.15 and later merges).
 Their detail is under [Items 32 to 54](#items-32-to-54).
 
 ### Need
 
 The tiers rank where an item fires; this rates how much this repo needs each open item now, given the retest of 2026-11-04 and the enforce decision due 2026-11-13.
 
-- High: 32, 33, 40, 35, 36, 37, 38 and 39.
-  The first three are open safety holes, each one file.
-  The rest are the retest findings that kept a card from Done or let a weaker review through, so they come before the board rerun.
-- Medium: 34, 43, 41, 42, 47, 46, 45, 22, 48 and 49.
+- High: 32, 33, 40, 35, 36, 37, 38 and 39, all built on 2026-11-07; what remains High is traceable-ids m2 and the review-routes-back intent.
+- Medium: 41, 42, 45, 22, 55 and 56; 34, 43, 46, 47, 48 and 49 are built.
   These close the remaining guard gaps, make review and test-gap quality less dependent on the model and make factory runs recoverable and honest about Done.
-- Low: 44, 50, 51, 52, 53, 54, 16, 17, 19, 20, 21, 23, 28, 30 and 31.
+- Low: 44, 50, 51, 52, 53, 54, 57, 58, 16, 17, 19, 20, 21, 23, 28, 30 and 31.
   Polish, or work that pays off only past one person, with several intents running at once or once CI holds the gate.
 
 ### P0: every edit and every PR
@@ -266,6 +279,8 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [ ] 20. Installed skills declare runnable checks (M, pro-core, stack plugins)
 - [ ] 21. The scaling block and `repo-hygiene` (M, pro-ship)
 - [ ] 22. Reviewer evals from past bugs (M, this repo)
+- [ ] 55. `/spec lint`: a check that each acceptance criterion is testable, before a card runs (S, pro-ai-sdlc)
+- [ ] 56. A bridge readiness check in `/pro-dev`: the upstream a bridge routes to is installed before a skill calls it, per registry row (S-M, pro-core)
 - [ ] 44. Worktree cleanup that finds merged branches four ways, keeps unmerged work and writes a recovery file before it deletes (M, pro-ai-sdlc)
 - [ ] 45. Verified role identity: check the `gh api user` login against the role map before acting (M, pro-ai-sdlc)
 - [x] 46. Done means on the base: `factory.py record --state merged` checks the SHA is on the fetched base; plan-sync writes `Done as of <sha>` (S, pro-ai-sdlc): built in [#173](https://github.com/jodybrewster/pro-dev-skillset/pull/173)
@@ -282,6 +297,8 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 27. An accessibility checklist sidecar (S, pro-design): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
 - [ ] 28. Two `/fix` tweaks (S, pro-core or user scope)
 - [x] 29. Optional capability map in `/spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [ ] 57. A head-pinned PR body block rewrite: rewrite one marker block of a PR body and refuse when the head moved; `pr-check` and `/ship` then stop overwriting each other's sections (S, pro-ship)
+- [ ] 58. The `m11` SIGINT case in `tests/ship-check.mjs` waits a fixed two seconds for a pid file and can crash `check.mjs` on a loaded machine; poll for the file instead (XS, this repo)
 - [ ] 50. The reviewer writes two to four hypotheses from the criteria and the raw diff before it reads the builder's claims (S, pro-ai-sdlc, pro-quality)
 - [ ] 51. TDD: crash and rollback tests go through the real boundary; the red run must fail for the right reason (S, pro-execution)
 - [ ] 52. QA evidence rules: `not captured` plus a reason instead of a blank; no rounding a failing contrast ratio up (S, pro-testing, pro-design)
@@ -292,6 +309,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [ ] 31. Release, flags, staged rollout, rollback, merge queue, two-person approval, skeptic pass
 - [ ] 53. A duplicate and overlap check before a factory run, once several intents run at once (S-M, pro-ai-sdlc)
 - [ ] 54. Finding collection from Sentry and PostHog with one verifier per candidate (L, its own intent)
+- [ ] 59. A `backup` and atomic `write` helper for anything that edits `AGENTS.md` or `REVIEW.md` in a target repo (S, pro-core)
 
 ## How the items group into intents
 
