@@ -33,3 +33,4 @@ A new load-bearing decision gets the next number in the same PR as the change.
 | [0025](./0025-release-versions.md) | A release version is proposed from intent kinds, tag, manifest and changelog agree, and post-deploy checks follow the target kind (proposed) | 2026-11-03 |
 | [0026](./0026-change-ids.md) | Every change carries `<shortcode>-<n>`, allocated from git at intent time, kept in frontmatter, never reused and named on branches, commits, PR titles, records and docs (proposed) | 2026-11-07 |
 | [0027](./0027-review-memory.md) | A review keeps a findings table per ref, grades every earlier finding at the new head before a blind fresh pass and reads merge-base to head; amends ADR-0011 and ADR-0012 (proposed) | 2026-11-07 |
+| [0028](./0028-session-grading-tier.md) | Session grading is the fifth eval tier and the primary signal for skill quality, on demand behind a cost gate, with written cases as the fallback (proposed) | 2026-11-08 |
