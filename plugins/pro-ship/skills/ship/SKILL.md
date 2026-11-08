@@ -44,6 +44,18 @@ Every subcommand prints JSON and is run from the repo root.
    A release tag's whole name is `v1.2.3`, `1.2.3`, `name--v1.2.3` or `name@1.2.3`; a Ship block `tag_pattern` glob narrows which of those count.
 3. Say which range each target ships and, when `base_tag` is set, name that tag as where the range starts.
 
+## Readiness
+
+Before any reviewer runs, check that every rollback and verify step can be run.
+
+1. `python3 "$SHIP" ready` reads the rollback steps and the `verify` list of every target.
+   It reads files only and writes nothing.
+2. Exit 0: go on.
+3. Exit 9: it printed `{"ready": false, "problems": [{target, field, index, text}]}`.
+   List each problem as `<target> <field> step <index + 1>: <text>` (a null index means the target has only `manual:` rollback steps), then say `ship stopped before review: fix the steps above, nothing was written` and stop.
+   The records of earlier runs stay as they were.
+   rollbacks.md says how a step is written: a command in backticks, a `sh` fence or an argv list, with `manual:` lines for a person beside at least one command.
+
 ## Version
 
 Run this for a `tag-release`, `publish` or `desktop` target; a service with no version skips it.
@@ -279,10 +291,16 @@ After a fix, commit and rerun from the top: the record is bound to a commit.
    It refuses a GO with a Blocker, a GO with no target, a target without rollback steps, a done legal review whose `head` is not HEAD and a dirty tree.
    A `done` or `inline` reviewer whose model misses its host's rule adds `review ran on <model> (<host>)` to the summary in warn; under `mode.review-model` enforce the GO is refused until that review runs again on the model `REVIEW.md` names.
    It also refuses a reviewer whose `host` is not `claude` or `codex` and a `model` that is not a model id (letters, digits and `._:/@[]-`), as `pr-check.py stamp` does.
+   It also refuses a GO whose rollback step is prose, whose command still holds a `<placeholder>` or whose only steps are `manual:` lines: fill each command from this release.
 4. Print the verdict, the paths it wrote and, when one was written, the mieruka copy.
    Print each line of its `notes` output, such as a review on a host `REVIEW.md` names no model for.
    Say "run /pro-ship:ship again after any new commit".
    After a GO, add one line: once the deploy has happened, run `/pro-ship:deployed` to record it and walk the post-deploy checks.
+5. When any check is `confirm`, offer once to post a confirmation request and wait for the answer.
+   Name where it goes (the PR when one exists for HEAD, else a comment on the commit) and the items.
+   Only on a yes run `python3 "$SHIP" confirm request --head <head> --items '<JSON list of the confirm items>' [--pr <n>]` and print the URL it returns.
+   Never post the `confirmed` reply yourself, never ask an agent to and never count a label or a reaction: only a later reply of `confirmed` from a person with write access clears the checks it lists.
+   When the person says they replied, `python3 "$SHIP" confirm read --head <head> [--pr <n>]` checks the reply; when it counts it moves the listed checks to `pass` in the record and otherwise it prints `why`.
 
 ## Common rationalizations
 

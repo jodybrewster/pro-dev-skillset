@@ -8,7 +8,7 @@
 //
 // Also exported as runShipDeployCases() for tests/check.mjs.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, chmodSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync, existsSync, chmodSync, copyFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -118,6 +118,7 @@ export function runShipDeployCases() {
     libraryCases();
     fromTagCases();
     checksCases();
+    confirmCases();
     cleanRunCases();
     protectionCases();
   } finally {
@@ -405,6 +406,83 @@ export function runShipDeployCases() {
   }
 
   // R15 and the first blocking item.
+  // reaching-done m3, R10, R11, AC4 and AC5: a deploy check left at confirm is cleared by a valid
+  // confirmation read through --confirm-pr or --confirm-commit, with the fake gh of
+  // tests/fixtures/ship-preflight/confirm/gh first on PATH.
+  function confirmCases() {
+    const bin = join(sandbox, "confirm-bin");
+    mkdirSync(bin, { recursive: true });
+    copyFileSync(join(ROOT, "tests", "fixtures", "ship-preflight", "confirm", "gh"), join(bin, "gh"));
+    chmodSync(join(bin, "gh"), 0o755);
+    const cship = (repo, args, dir) => ship(repo, args, { env: { PATH: `${bin}:${process.env.PATH}`, GH_STUB_DIR: dir } });
+    const REQ = "pro-ship-confirm-request: ";
+    const T1 = "2026-11-07T10:00:00Z", T2 = "2026-11-07T11:00:00Z";
+    const stub = (files) => {
+      const d = join(sandbox, `cstub${++n}`);
+      mkdirSync(d, { recursive: true });
+      for (const [f, c] of Object.entries({ "perm-maint.txt": "write\n", ...files })) writeFileSync(join(d, f), typeof c === "string" ? c : JSON.stringify(c));
+      return d;
+    };
+    const checksFile = (repo, list) => { const f = join(repo, ".pro-dev-checks.json"); writeFileSync(f, JSON.stringify(list)); return f; };
+    const cm = (id, login, body, at) => ({ id: `IC_${id}`, author: { login }, body, createdAt: at, includesCreatedEdit: false, url: `https://github.com/o/r/pull/42#issuecomment-${id}` });
+    const prReq = (h, items) => REQ + JSON.stringify({ head: h, items, pr: 42, repo: "o/r", scope: "pr" });
+    const prView = (h, merge, items) => ({ number: 42, headRefOid: h, url: "https://github.com/o/r/pull/42", mergeCommit: { oid: merge },
+      comments: [cm(1, "maint", prReq(h, items), T1), cm(2, "maint", "confirmed", T2)] });
+    const ITEMS = ["rollback dry run"];
+    const mk = () => {
+      const repo = mkrepo({ "CLAUDE.md": LIB_BLOCK() });
+      const h1 = head(repo);
+      writeFileSync(join(repo, "x.txt"), "merge\n");
+      git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "merge commit");
+      return { repo, h1, h2: head(repo) };
+    };
+    const base = (commit, f) => ["deployed", "--target", "library", "--deployed-at", "2026-11-07T12:00:00Z", "--commit", commit, "--checks", f];
+
+    // AC4: the PR's head is the deployed commit.
+    let t = mk();
+    let f = checksFile(t.repo, [{ item: "rollback dry run", status: "confirm", evidence: "check the previous tag" }, { item: "documented use runs", status: "pass", evidence: "ran" }]);
+    let r = cship(t.repo, [...base(t.h1, f), "--confirm-pr", "42"], stub({ "pr-42.json": prView(t.h1, "9".repeat(40), ITEMS) }));
+    let dd = r.json?.path ? detail(t.repo, r) : {};
+    add("deployed/--confirm-pr clears a confirm check for the PR head and the record reaches pass", "status pass, evidence names the reply, confirmation in detail",
+      r.status === 0 && r.json.status === "pass" && dd.checks?.[0]?.status === "pass" && dd.checks[0].evidence === "confirmed by maint in https://github.com/o/r/pull/42#issuecomment-2"
+        && dd.confirmation?.scope === "pr" && dd.confirmation.pr === 42 && dd.confirmation.head === t.h1 && dd.checks[1].evidence === "ran", r.stdout + r.stderr);
+    // AC4: a squash merge, where the deployed commit is the PR's merge commit.
+    t = mk();
+    f = checksFile(t.repo, [{ item: "rollback dry run", status: "confirm", evidence: "x" }]);
+    r = cship(t.repo, [...base(t.h2, f), "--confirm-pr", "42"], stub({ "pr-42.json": prView(t.h1, t.h2, ITEMS) }));
+    add("deployed/--confirm-pr clears it when the deployed commit is the PR's merge commit", "status pass", r.status === 0 && r.json.status === "pass", r.stdout + r.stderr);
+    r = cship(t.repo, [...base(t.h2, f), "--confirm-pr", "42"], stub({ "pr-42.json": prView(t.h1, "9".repeat(40), ITEMS) }));
+    add("deployed/--confirm-pr for a PR that neither has nor merged as the deployed commit leaves the check", "status partial, confirmation false with a why",
+      r.status === 0 && r.json.status === "partial" && r.json.confirmation?.confirmed === false && /deployed commit/.test(r.json.confirmation.why), r.stdout + r.stderr);
+    // R5: with neither flag, a merged PR whose merge commit is the deployed commit is found.
+    r = cship(t.repo, base(t.h2, f), stub({ "pr-list.json": [{ number: 42, headRefOid: t.h1, mergeCommit: { oid: t.h2 } }], "pr-42.json": prView(t.h1, t.h2, ITEMS) }));
+    add("deployed/with no flag finds the merged PR of the deployed commit", "status pass", r.status === 0 && r.json.status === "pass", r.stdout + r.stderr);
+    r = cship(t.repo, base(t.h2, f), stub({ "pr-list.json": [] }));
+    add("deployed/with no flag and no PR falls back to the commit comments, which hold nothing here", "status partial", r.status === 0 && r.json.status === "partial" && r.json.confirmation?.confirmed === false, r.stdout + r.stderr);
+    // A confirm check the confirmation does not list stays at confirm.
+    f = checksFile(t.repo, [{ item: "rollback dry run", status: "confirm", evidence: "x" }, { item: "documented use runs", status: "confirm", evidence: "y" }]);
+    r = cship(t.repo, [...base(t.h2, f), "--confirm-pr", "42"], stub({ "pr-42.json": prView(t.h1, t.h2, ITEMS) }));
+    dd = r.json?.path ? detail(t.repo, r) : {};
+    add("deployed/a confirm check the confirmation does not list stays at confirm", "status partial, one check cleared",
+      r.status === 0 && r.json.status === "partial" && dd.checks?.[0]?.status === "pass" && dd.checks[1].status === "confirm", r.stdout + r.stderr);
+    r = cship(t.repo, [...base(t.h2, f), "--confirm-pr", "42", "--confirm-commit", t.h2], stub({}));
+    add("deployed/--confirm-pr and --confirm-commit together are refused", "exit 1", r.status === 1 && /confirm/.test(r.stderr), r.stdout + r.stderr);
+
+    // AC5: a tag release with no PR for the tagged sha, confirmed on the commit.
+    t = mk();
+    git(t.repo, "tag", "-a", "v1.2.0", "-m", "v1.2.0");
+    const LIB = ["rollback dry run", "tests on a clean checkout of the tag"];
+    const cc = (id, body, at) => ({ id, user: { login: "maint" }, body, created_at: at, updated_at: at, html_url: `https://github.com/o/r/commit/${t.h2}#commitcomment-${id}` });
+    f = checksFile(t.repo, LIB.map((item) => ({ item, status: "confirm", evidence: "for a person" })));
+    const tagStub = () => stub({ [`commit-${t.h2}.json`]: [cc(11, REQ + JSON.stringify({ head: t.h2, items: LIB, pr: null, repo: "o/r", scope: "tag" }), T1), cc(12, "Confirmed", T2)] });
+    r = cship(t.repo, ["deployed", "--from-tag", "v1.2.0", "--target", "library", "--checks", f, "--confirm-commit", t.h2], tagStub());
+    dd = r.json?.path ? detail(t.repo, r) : {};
+    add("deployed/--from-tag with --confirm-commit clears both library checks and writes pass (AC5)", "status pass, scope tag",
+      r.status === 0 && r.json.status === "pass" && dd.checks?.every((c) => c.status === "pass") && dd.confirmation?.scope === "tag" && dd.confirmation.head === t.h2, r.stdout + r.stderr);
+    r = cship(t.repo, ["deployed", "--from-tag", "v1.2.0", "--target", "library", "--checks", f, "--confirm-commit", t.h1], stub({}));
+    add("deployed/--confirm-commit on a commit that is not the deployed one clears nothing", "status partial", r.status === 0 && r.json.status === "partial" && r.json.confirmation?.confirmed === false, r.stdout + r.stderr);
+  }
+
   function checksCases() {
     let repo = mkrepo({ "CLAUDE.md": LIB_BLOCK('    documented_use: "node -e \\"console.log(1)\\""\n') });
     let r = ship(repo, ["checks", "--target", "library"]);

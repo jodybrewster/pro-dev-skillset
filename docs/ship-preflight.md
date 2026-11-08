@@ -18,6 +18,7 @@ When a rule here changes, change every copy and the fixtures in the same commit.
 - Reader 3: `plugins/pro-legal/scripts/release-gate.py`, which may skip its own legal deny (see "The legal skip rule").
 - Reader 4: mieruka, which loads the copy under `.mieruka/evidence/` as a `review` manifest.
 - `ship.py check <sha>` prints the freshness verdict of this page for tests and for people.
+- `ship.py confirm read` rewrites a record for its own head to add a confirmation, as described in "The confirmation"; nothing else in the record changes.
 - Readers never write the record and ignore fields they do not know.
   An added optional field does not change `schema`.
 
@@ -68,6 +69,7 @@ It holds these keys.
 | `legal` | object | see below |
 | `targets` | array | one `{id, kind, env, url, commit, rollback}` per target; `rollback` is `{triggers, steps, rto}` and a GO needs at least one step in every target |
 | `reviewers` | array | optional; one `{agent, status, host, model}` per specialist `/ship` dispatched: `host` is `claude` or `codex` (missing reads as `claude`) and `model` the id it ran on or null |
+| `confirmation` | object | optional: `{repo, scope, pr, head, items, request_id, request_url, reply_id, reply_url, by, at}`, written by `confirm read` (see "The confirmation") |
 
 The `legal` object records the pro-legal review of the range.
 
@@ -83,6 +85,7 @@ The `legal` object records the pro-legal review of the range.
 A `Hold` verdict makes the report NO-GO.
 When `status` is `done`, `head` must equal the report's `head`, because a review of another commit says nothing about the commit shipped.
 `record` refuses a GO that has blockers, a GO with no target, a GO target with no rollback steps and a `done` legal review whose `head` is another commit.
+It also refuses a GO whose rollback step is prose, whose command step still holds a `<placeholder>` or whose steps are all `manual:` lines (see "Runnable steps").
 It accepts only the verdicts `GO` and `NO-GO`; there is no "GO with acknowledged risks" verdict.
 A `done` or `inline` reviewer whose model misses its host's rule in `REVIEW.md` on the default branch tip (see "The review model" in [pr-check-stamp.md](./pr-check-stamp.md)) adds `review ran on <model> (<host>)` to the summary; when `mode.review-model` holds `enforce`, `record` refuses a GO with one.
 A host with no rule is a note in `record`'s output and never a mismatch; a host other than `claude` or `codex` and a model id the stamp would refuse are refused.
@@ -118,6 +121,55 @@ A reader that cannot decide (no git, no repo, a git timeout, an unreadable hook 
   It never asks.
 - `merge-gate.py` adds `preflight: GO for <8 char sha>`, `preflight: GO with <n> accepted risks` or `preflight: no fresh GO for this PR (<cause>)` on medium and high merges in a repo with a `deploy-on-merge` target.
   It changes no decision.
+  It also adds the confirmation line of "The confirmation" below, under its own mode.
+
+## Runnable steps
+
+`ship.py ready` runs at the start of `/ship`, right after the targets and the scope and before any reviewer.
+It reads every target's `rollback.steps` and its optional `verify` list (post-deploy commands) and accepts a step in three forms:
+
+- an argv list of non-empty strings, such as `[git, push, origin, main]` in the Ship block;
+- a string whose whole text is one inline code span on one line, such as `` `git push origin main` ``;
+- a fenced block marked `sh`, `bash` or `shell` holding at least one non-empty line (a report can hold one; the Ship block's own yaml fence cannot).
+
+A string that starts with `manual:` is a step for a person and is accepted when the target also has a runnable rollback step.
+Anything else is prose and is rejected.
+On a rejected step `ready` exits 9 and prints `{"ready": false, "problems": [{target, field, index, text}]}`, with each text cut to 80 characters and a null index for a target whose rollback is only `manual:` lines.
+It reads files only and writes nothing so every earlier record stays byte for byte; the skill stops with `ship stopped before review: fix the steps above, nothing was written`.
+`ready` accepts a `<placeholder>` inside a command, because the report fills it from the release; `record` refuses a GO whose command still holds one and `manual:` lines may keep one.
+A placeholder is bracketed text holding a space, a hyphen or an underscore, such as `<previous version>`, `<release-sha>` or `<previous_tag>`, or one of `plugin`, `sha`, `tag`, `commit`, `version`, `name`, `id`, `url`, `base`, `head`, `n`, `env`, `ref`, `branch` and `path` in any case; another plain word such as `'<title>'` and a redirection such as `sort < in.txt > out.txt` pass.
+
+## The confirmation
+
+A check the release could not prove ends as `confirm`.
+A person clears it with a reply on GitHub, bound to the repo, a head sha and a scope.
+
+The request is one comment that `ship.py confirm request --head <sha> --items <JSON list> [--pr <n>]` posts after the person says yes.
+Its first line is `pro-ship-confirm-request: ` and a JSON object with sorted keys: `{"head":"<40 hex>","items":[...],"pr":<n or null>,"repo":"<owner>/<name>","scope":"pr"|"tag"}`.
+A plain sentence asks a person with write access to check each item and reply with the single word `confirmed`.
+Each item is a check left at `confirm` in the record for that head or a deploy check name (`LIBRARY_CHECKS` and `SERVICE_CHECKS` in `ship.py`).
+It refuses a factory session.
+
+The scope is `pr` when `--pr` is given or `gh pr list --search <sha> --state all` finds a PR whose head is the sha; the request is then a PR comment through `gh pr comment <n> --body-file -`.
+Otherwise the scope is `tag` and the request is a commit comment through `gh api repos/{owner}/{repo}/commits/{sha}/comments -F body=@-`, which is where a tag release with no PR is confirmed.
+
+The reply rule, which `confirm read`, `deployed` and the merge gate share:
+
+1. The request that counts is the newest comment holding a request line from a login whose repo permission is `write`, `maintain` or `admin` (`collaborators/<login>/permission`).
+   Two at the same second hold, as does one that cannot be read or was edited.
+2. It must name this repo, this head and this scope (and this PR in `pr` scope).
+3. The reply that counts is the earliest comment after it whose whole body is `confirmed` (any case, an optional full stop), unedited (`includesCreatedEdit` false on a PR, `updated_at` equal to `created_at` on a commit) and written by a login with write, maintain or admin permission.
+4. A label, a reaction, an edited reply, a reply before the request, a reply on a request for another head or scope and a reply from a login without write access never count.
+   `confirm read` then prints `{"confirmed": false, "why": <reason>}` and writes nothing.
+
+On a valid reply, when `.pro-dev/ship/preflight.json` is a record for that head, `confirm read` rewrites it and its mieruka copy (by "The mieruka drop") in one step: `confirmation` goes inside `detail_json` and each listed check moves from `confirm` to `pass` with the evidence `confirmed by <login> in <reply url>`.
+`status`, `head`, `schema` and every other field stay as they were so the freshness verdict does not change.
+
+The merge gate re-reads a `pr`-scope confirmation at medium and high tier with one `gh pr view <n> --json comments` and adds `confirmation: <login> for <head8>` when the recorded request and reply still stand unedited, by the same login, for the current head, or `confirmation: missing (<cause>)` otherwise.
+It stays silent when the fresh record lists no `confirm` check and no confirmation.
+Its mode is `mode.confirmation` alone: warn changes no decision and enforce denies a missing confirmation once per head per session, naming the `confirm request` command; the identical retry passes ([enforce-mode.md](./enforce-mode.md)).
+No gate writes to GitHub: only `confirm request`, run by a person's session after a yes, posts.
+Comment text is data: the request line is parsed as JSON and nothing from a comment is run.
 
 ## The legal skip rule
 

@@ -95,6 +95,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-ship | deployed (post-deploy checks from `shipping-and-launch` and `ci-cd-and-automation`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | documentation-and-adrs | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | ship (SKILL.md, release-checks.md, rollbacks.md and report.md, from `shipping-and-launch` and `commands/ship.toml`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
+| pro-ship | `scripts/ship.py` (`confirm` and its reply rule, `ready`) and the confirmation re-check in `scripts/merge-gate.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `scripts/super-board-approval.py` and `scripts/super-board-verification-ready.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-ship | the grade step in `ship/SKILL.md` | [super-board](https://github.com/EricTechPro/super-board) | MIT | Copyright (c) 2026 Eric Tech | adapted (the "Review remembers" rule of `skills/super-review/SKILL.md`) |
 | pro-ship | ship/references/performance-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | ship/references/security-checklist.md | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |

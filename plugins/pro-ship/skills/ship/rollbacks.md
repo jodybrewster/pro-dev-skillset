@@ -17,6 +17,20 @@ The triggers below apply to every deploy target unless the entry says otherwise:
 
 `/ship` writes these steps and never runs them.
 
+## How a step is written
+
+Every step is either a command or a step for a person so the readiness check at the start of `/ship` (`ship.py ready`) can read it:
+
+- A command: one line in backticks (`` `vercel rollback` ``), a fenced block marked `sh`, `bash` or `shell` or an argv list in the Ship block (`[git, push, origin, main]`).
+- A step for a person: a line that starts with `manual:`, such as `manual: notify the team in the release channel`.
+
+Prose such as "roll back the deploy" is rejected: it only fails when the rollback is needed.
+A target needs at least one command; `manual:` lines sit beside it.
+A command may hold a `<placeholder>` such as `<previous deployment url>` in the Ship block and in this file, because the report fills it from the release; `ship.py record` refuses a GO whose command still holds one.
+`manual:` lines may keep a placeholder, since a person reads them.
+A target in the Ship block may also list `verify`, the post-deploy commands, held to the same rule.
+In the entries below, text after a command is a note for the report: the step itself is the command in backticks alone.
+
 ## Template
 
 ```markdown
@@ -28,11 +42,10 @@ The triggers below apply to every deploy target unless the entry says otherwise:
 - User reports of [specific issue]
 
 ### Rollback steps
-1. Disable the feature flag (if applicable)
-   OR
-1. Deploy the previous version: [the host's command below]
-2. Verify the rollback: health check, error monitoring
-3. Communicate: notify the team of the rollback
+1. `<the host's command below, or the flag service's command that turns the flag off>`
+2. `<the health check command, such as curl -fsS https://example.com/health>`
+3. manual: check error monitoring for the rollback
+4. manual: notify the team of the rollback
 
 ### Database considerations
 - Migration [X] has a rollback: [verified command or runbook link]
@@ -50,9 +63,10 @@ The triggers below apply to every deploy target unless the entry says otherwise:
 
 - Trigger: the common triggers, or a failed production deployment.
 - Steps:
-  1. `vercel rollback` (or promote the previous production deployment in the dashboard, or `vercel promote <previous deployment url>`).
-  2. Verify the production URL and the health check.
-  3. `git revert <merge commit>` on the default branch so the next merge does not redeploy the bad commit.
+  1. `vercel rollback`
+  2. `vercel promote <previous deployment url>` when `vercel rollback` picks the wrong deployment.
+  3. `curl -fsS <production url>/<health path>`
+  4. `git revert --no-edit <merge commit>` on a branch off the default branch, merged through a PR so the next merge does not redeploy the bad commit.
 - Recovery time: under 2 minutes for the promote, under 10 minutes with the revert and its deploy.
 - Note: environment variables changed in the range are not rolled back by promoting an old deployment. Name them.
 
@@ -62,18 +76,18 @@ For a workflow that deploys on push to the default branch with a host not listed
 
 - Trigger: the common triggers.
 - Steps:
-  1. `git revert -m 1 <merge commit>` (or `git revert <commit>` for a squash) on the default branch and push through a PR.
-  2. Wait for the workflow to deploy the revert and check its run.
-  3. If the host keeps releases, redeploy the previous release from the host's console while the revert is in flight.
+  1. `git revert --no-edit -m 1 <merge commit>` (or `git revert --no-edit <commit>` for a squash) on a branch off the default branch, pushed through a PR.
+  2. `gh run watch <run id of the revert's deploy>`
+  3. manual: if the host keeps releases, redeploy the previous release from the host's console while the revert is in flight.
 - Recovery time: the workflow's run time plus review time, typically 5 to 20 minutes.
 
 ### Netlify
 
 - Trigger: the common triggers.
 - Steps:
-  1. In Deploys, publish the previous production deploy (or `netlify api restoreSiteDeploy --data '{"site_id":"<id>","deploy_id":"<previous>"}'`).
-  2. Verify the site URL.
-  3. Revert the commit on the default branch so auto-publishing does not redeploy it.
+  1. `netlify api restoreSiteDeploy --data '{"site_id":"<site id>","deploy_id":"<previous deploy id>"}'`
+  2. `curl -fsS <site url>`
+  3. `git revert --no-edit <commit>` on a branch off the default branch, merged through a PR so auto-publishing does not redeploy it.
 - Recovery time: under 2 minutes.
 
 ## Manual deploy
@@ -82,9 +96,10 @@ For a workflow that deploys on push to the default branch with a host not listed
 
 - Trigger: the common triggers.
 - Steps:
-  1. `fly releases` to find the previous good version.
-  2. `fly deploy --image <previous image reference from fly releases --image>`.
-  3. Verify `fly status` and the health check.
+  1. `fly releases --image` to find the previous good image.
+  2. `fly deploy --image <previous image reference>`
+  3. `fly status`
+  4. `curl -fsS <app url>/<health path>`
 - Recovery time: 2 to 5 minutes.
 - Note: `fly secrets` changes are not rolled back by redeploying an image.
 
@@ -93,8 +108,8 @@ For a workflow that deploys on push to the default branch with a host not listed
 - Trigger: the common triggers.
 - Steps:
   1. `wrangler deployments list` to find the previous deployment.
-  2. `wrangler rollback <previous deployment id>`.
-  3. Verify the Worker's URL and the health check.
+  2. `wrangler rollback <previous deployment id>`
+  3. `curl -fsS <worker url>/<health path>`
 - Recovery time: under 2 minutes.
 - Note: Durable Object migrations and D1 changes are not undone by a rollback. Name them.
 
@@ -106,9 +121,9 @@ For a repo whose release is a tag (a plugin marketplace, a library installed fro
 
 - Trigger: a consumer reports a broken install or behavior on the new tag, or a check fails after the tag is cut.
 - Steps:
-  1. Tell consumers to pin the previous tag (`git checkout <previous tag>` or the install command with that ref).
-  2. Land a revert of the bad commits on the default branch through a PR.
-  3. Cut a new patch tag from the fixed default branch. Do not move or delete the published tag: caches and clones hold it.
+  1. `git revert --no-edit <first release commit>^..<last release commit>` on a branch off the default branch, merged through a PR.
+  2. manual: tell consumers to pin the previous tag (`git checkout <previous tag>` or the install command with that ref).
+  3. manual: a fixed release goes through `/ship` with its own bump and tag. Do not move or delete the published tag: caches and clones hold it. A rollback never tags.
 - Recovery time: minutes for a consumer to pin, a PR cycle for the fix.
 
 ## Desktop
@@ -117,9 +132,9 @@ For a repo whose release is a tag (a plugin marketplace, a library installed fro
 
 - Trigger: crash reports, a failing launch or an auto-update that breaks users.
 - Steps:
-  1. Stop the rollout: mark the release a draft or pre-release, or remove it from the update feed.
-  2. Point the update feed back at the previous release, or publish a higher patch version built from the previous good commit (auto-updaters do not move backwards).
-  3. Verify an installed previous version updates to the fixed build.
+  1. `gh release edit <tag> --prerelease` to stop the rollout, or remove the release from the update feed.
+  2. manual: point the update feed back at the previous release, or publish a higher patch version built from the previous good commit through `/ship` (auto-updaters do not move backwards).
+  3. manual: check that an installed previous version updates to the fixed build.
 - Recovery time: hours, bounded by the update check interval of installed clients.
 
 ### Without an installer
@@ -128,9 +143,9 @@ For a build users download by hand.
 
 - Trigger: a broken download or a reported crash on the new build.
 - Steps:
-  1. Move the release assets for the bad version out of the Latest slot (mark the release a pre-release or delete the asset).
-  2. Re-upload the previous build as Latest, or cut a patch release from the previous good commit.
-  3. Update the download link or page if it names the version.
+  1. `gh release edit <tag> --prerelease` to move the bad version out of the Latest slot.
+  2. `gh release edit <previous tag> --latest`
+  3. manual: update the download link or page if it names the version.
 - Recovery time: minutes to hide the bad build. Users who already downloaded it keep it.
 
 ## Publish
@@ -139,10 +154,10 @@ For a build users download by hand.
 
 - Trigger: a broken or insecure published version.
 - Steps:
-  1. `npm deprecate <name>@<version> "<reason, use <good version>>"`.
-  2. Move the `latest` tag: `npm dist-tag add <name>@<good version> latest`.
-  3. Publish a fixed patch version. `npm unpublish` only works inside the registry's window and breaks dependents, so use it only for leaked secrets.
-  4. If a secret shipped, rotate it first.
+  1. manual: if a secret shipped, rotate it first.
+  2. `npm dist-tag add <name>@<good version> latest`
+  3. `npm deprecate <name>@<version> "<reason>, use <good version>"`
+  4. manual: publish a fixed patch version through `/ship`. `npm unpublish` only works inside the registry's window and breaks dependents so use it only for leaked secrets.
 - Recovery time: under 5 minutes for the dist-tag move. Installs that already resolved the bad version keep it.
 - Other registries (PyPI, crates.io, RubyGems): yank the version (`twine` has no yank, use the PyPI console or `cargo yank`, `gem yank`) and publish a fixed version.
 
@@ -158,7 +173,9 @@ A migration the range adds needs its own line in the plan:
 ## Feature flag
 
 - Trigger: the common triggers on the flagged path.
-- Steps: turn the flag off in the flag service, then verify the error rate returns to baseline.
+- Steps:
+  1. `<the flag service's command that turns the flag off>`
+  2. manual: check that the error rate returns to baseline.
 - Recovery time: under 1 minute.
 
 Adapted from agent-skills (skills/shipping-and-launch/SKILL.md, the Rollback Strategy section), MIT, Copyright (c) 2025 Addy Osmani.

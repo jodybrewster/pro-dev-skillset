@@ -93,25 +93,25 @@ claude plugin validate plugins/pro-ship --strict
 
 ## Done
 
-Filled in when the build is finished, before sign-off.
+Done as of bdad18ac5ae2
 
-- Build commit:
-- Checks run:
-- Definition of done:
+- Build commit: bdad18ac5ae2 on `PDS-52/build-m3`, rebased onto origin/main at 1dd26b2 after #193, #196 and #197 merged; pro-ship 0.21.0 and `metadata.version` 1.101.0. The conflicts with #196 and #197 in `ship.py`, `ship/SKILL.md`, `docs/ship-preflight.md`, `docs/roadmap.md` and `tests/mieruka-sync.mjs` keep both sides.
+- Checks run: `node tests/ship-preflight.mjs` 164/164; `node tests/ship-deploy.mjs` 161/161; `node tests/ship-hooks.mjs` 373/373; `node tests/ship-check.mjs` 282/282; the first three also pass under Python 3.9.6; `node tests/check.mjs` 51 checks, 0 failures, 13 warnings; `node tests/eval.mjs --dry` 99 cases reference real skills; `node --test tests/unit/*.test.mjs` 200 pass, 0 fail; `MIERUKA_ROOT=<mieruka checkout> node tests/mieruka-sync.mjs` passed with the confirmed preflight record loaded and every record holding change_id TST-1; `python3 plugins/pro-ship/scripts/ship.py ready` exit 0; `claude plugin validate . --strict` and the loop over every plugin print Validation passed.
+- Definition of done: met for the scripted parts; no `/ship` or `/pro-ship:deployed` hand run posted a real comment on GitHub.
 - Visual: none
-- Doubt:
-- AC1:
-- AC2:
-- AC3:
-- AC4:
-- AC5:
-- AC6:
-- AC7:
-- AC8:
-- AC9:
-- AC10:
-- AC11:
-- AC12:
+- Doubt: none; the one GitHub write is a comment the person approves and can delete.
+- AC1: `confirm/request posts one PR comment...` parses the request line to the head, the items, PR 42, repo o/r and scope pr with sorted keys; a factory session, an unknown item, a check not at confirm and an empty list are each refused with nothing posted.
+- AC2: `confirm/read` clears the check for the earliest later unedited `confirmed` from a write login (an earlier read-only reply is skipped) and refuses a label alone, an edited reply, an earlier reply, a request for another head, a read-only replier and a read-only requester, six distinct whys.
+- AC3: after a valid read `ship.py check` reports the record fresh with status pass, the mieruka copy has the same bytes and `tests/mieruka-sync.mjs` loads the record with `confirmation.by` and the check at pass.
+- AC4: `deployed --confirm-pr 42` with `rollback dry run` at confirm writes status pass for the PR head and for the PR's merge commit; a PR that has neither stays partial with a why.
+- AC5: with no PR for the head `confirm request` posts through `gh api repos/{owner}/{repo}/commits/<sha>/comments -F body=@-` in scope tag; `deployed --from-tag v1.2.0 --target library --confirm-commit <sha>` with both library checks at confirm writes pass.
+- AC6: mg400 to mg416: warn adds the line and allows; `mode.confirmation` enforce denies once with the `confirm request` command and the identical retry passes; the global mode file does not reach it; no confirm check adds nothing; a hanging comments read answers inside the deadline and logs could-not-run; a malformed id or an error inside the re-check still asks or denies by tier; a deny after a failed read asks for the merge again.
+- AC7: `ready` on `Revert the release commits on main` exits 9 naming target, field and index; `preflight.json` and `report.json` keep their sha256.
+- AC8: an argv list, a code span and `manual:` lines pass; a manual-only target fails; the `sh` fence is pinned through `runnable()` and `record` (see Departures).
+- AC9: a `verify` step `check the health page` fails and a `curl -fsS` code span passes.
+- AC10: `record` refuses `<previous version>`, `<release-sha>`, `<deployment-url>`, `<previous_tag>`, `<SHA>`, `<sha>`, `<plugin>` and `<env>` in a command step, accepts `'<title>'` and `sort < in.txt > out.txt` and accepts a placeholder in a `manual:` line beside a command.
+- AC11: `ship.py ready` passes on this repo; the steps hold `` `git push origin main` ``, two `manual:` lines and no `git tag`.
+- AC12: `node tests/check.mjs`, `node tests/eval.mjs --dry` and `claude plugin validate . --strict` pass.
 - Sign-off:
 
 The sign-off moves `status` in the intent and the spec to `accepted`.
@@ -121,4 +121,14 @@ The sign-off moves `status` in the intent and the spec to `accepted`.
 Added in the same commit as the change that departs.
 An empty section tells the reviewer the diff follows the plan.
 
+- The branch is `PDS-52/build-m3`, not `build/reaching-done-m3`, to carry the change id the other PDS-52 builds use.
+- A fenced `sh` block cannot sit inside the Ship block's own yaml fence so AC8's fence form is proven through `runnable()` called directly and through `record` accepting a GO with a `sh` fence, while `ready` covers the argv list, the code span and the `manual:` lines in a real Ship block.
+- `tests/e2e-sdlc.mjs` and `demo/factory/new-demo.sh` write Ship blocks with prose rollback steps that `ready` now rejects so a `/ship` turn there would stop at readiness; both now hold a `git revert` command and a `manual:` line.
+- The plan bumps pro-ship and `metadata.version` in each commit that changes plugin content; the build bumped once in its first plugin commit and later commits carry that version, so the squashed PR holds one bump of each, which is what the version-bump law checks against main.
+- The model cases #197 added to `tests/ship-preflight.mjs` record a GO with the prose rollback step `roll back`, which `record` now refuses; their fixture holds `` `vercel rollback` `` instead.
+- A `- manual: text` line in the Ship block parses as a one-key map in the small yaml reader so `runnable()` reads that map as a `manual:` step instead of rejecting it; this repo's block quotes its `manual:` lines.
+
 ## Noticed but not touched
+
+- #193, #196 and #197 merged during this build and took `metadata.version` 1.98.0 to 1.100.0 and pro-ship 0.19.0 and 0.20.0, so this build takes pro-ship 0.21.0 and `metadata.version` 1.101.0.
+- `tests/mieruka-sync.mjs` and the `SHIP_BLOCK` constants in `tests/ship-deploy.mjs` still hold prose rollback steps; they feed `deployed` only, which `ready` does not read.

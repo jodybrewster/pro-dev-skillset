@@ -52,10 +52,20 @@ Run every command from the repo root.
    python3 "$SHIP" deployed --target <id> --deployed-at <iso> [--env <env>] [--url <url>] [--commit <sha>] [--outcome succeeded|failed|rolled-back] --checks .pro-dev/ship/deploy-checks.json
    ```
 
+   Each form also takes `--confirm-pr <n>` or `--confirm-commit <sha>` (step 6).
+
    `--from-tag` and `--from-github` fill the facts themselves, so leave out `--url`, `--commit`, `--outcome` and `--deployed-at`.
    `--from-tag` with no `--checks` records `partial`, because a tag proves nothing ran.
 5. Print the status, the evidence key, the path it wrote and, when one was written, the mieruka copy.
    When the status is `fail` or a check is a `finding`, point at the rollback triggers and steps in the record and leave the decision to the person.
+6. When a check is still `confirm`, offer once to post a confirmation request and wait for the answer.
+   It goes on the PR when the deploy came from one and otherwise on the deployed commit, such as the tagged sha of a tag release.
+   Only on a yes run `python3 "$SHIP" confirm request --head <the PR head or the deployed commit> --items '<JSON list of the confirm items>' [--pr <n>]` and print the URL it returns.
+   The items are the check names, such as `rollback dry run` or `tests on a clean checkout of the tag`.
+   Never post the `confirmed` reply yourself, never ask an agent to and never count a label or a reaction.
+   When the person says a person with write access replied `confirmed`, run step 4 again with `--confirm-pr <n>` for a PR or `--confirm-commit <sha>` for a commit.
+   A check whose name the confirmation lists becomes `pass` when the confirmed head is the deployed commit or, for a PR, its merge commit is; with neither flag the script looks for the merged PR of the deployed commit, then the commit's own comments.
+   The output's `confirmation.why` says why a reply did not count.
 
 The script refuses an unknown target, a URL that is not http or https, an environment with anything but `a-z`, `0-9` and `-` and a health, error rate, latency or log check on a tag-release, publish or desktop target.
 Read its message, fix the input and run it again.
