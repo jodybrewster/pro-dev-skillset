@@ -78,6 +78,12 @@ Skills actually named solution architect or senior architect are many, near-dupl
 No widely adopted bundle runs requirements, options, decision records, diagrams, a framework review and cost as one pipeline.
 The gaps the survey names match the engagement: non-functional requirement elicitation, option and trade-off matrices that carry cost, deliverables an executive can read, decision records and diagrams kept current across runs, plus evals that show the skill beats the baseline.
 
+Google's Elephant-Goldfish Model, which this marketplace already bridges through `pro-egm`, is the closest published method to what was missing.
+It has no interview skill of its own, but its brainstorm skill opens with one: open-ended questions over several turns until the problem and its boundaries are clear, a two or three sentence working hypothesis read back to the person and a gate the person must pass before any review or drafting starts.
+It keeps the session that designs apart from the reviewers that judge, refuses to call a same-context review a review and has the designer triage each finding as fix, contest with evidence, escalate to the person or decline.
+Its interview is with the engineer about a software design.
+It does not cover business discovery, a sponsor's goals, non-functional elicitation as a topic of its own, options research or an executive recommendation.
+
 None of this is specific to that engagement.
 It is the gap between writing architecture documents and doing an architect's job.
 It will repeat on the next engagement unless the method lives in a skill.
@@ -92,6 +98,8 @@ No code is written until discovery, the options and the recommendation direction
 Discovery is a structured interview with the person, one topic at a time, that the agent prepares for by reading everything supplied first so it only asks what the material does not answer.
 It covers the business side (goals, sponsor, who is harmed today, money, deadlines, what success means), the functional side (actors, journeys, systems, data, integrations) and the non-functional side (volume, latency, availability, security, privacy and compliance, operability, team and budget).
 A question the person cannot or will not answer becomes a stated assumption, so a short time box never blocks the work.
+The interview ends with a short working hypothesis read back to the person and a single gate: go on to options or keep clarifying.
+The agent stress-tests what it hears and does not flatter it.
 
 The agent then researches the options in depth before recommending: patch what exists, buy a commercial product or managed service, adopt an open source project or build.
 The research names real candidates with current sources, compares them on fit, cost, risk, lock-in, maturity, licence and the effort to run them.
@@ -142,6 +150,7 @@ It ends with the one diagram, one worked example and the decisions needed from t
 The skill is a thin orchestrator.
 It owns the order of work, the discovery interview, the options evaluation, the recommendation and the checks.
 For patterns, decision records, C4 diagrams, a cloud framework review and cost estimates it calls an installed companion skill when one is present and falls back to its own short procedure when none is.
+The fresh-context design challenge runs through the EGM bridge when EGM is installed, with reviewers chosen for an architecture document, and the agent triages each finding as fix, contest with evidence, escalate or decline before editing anything.
 Decision records and the diagram model live in the repository being worked on and are updated when the design changes, so a later session starts from them.
 
 ## Affected users and systems
@@ -150,6 +159,7 @@ Decision records and the diagram model live in the repository being worked on an
 - `security-architect`, `security-audit`, `requesting-code-review`, `verification-before-completion`, `systematic-debugging`, `subagent-driven-development` and `documentation-and-adrs`: referenced by the new skill at the step each already covers. None is edited.
 - `tests/cases/`: routing cases for the new skill, plus cases that keep "challenge my design for security" on `security-architect`.
 - Codex: the skill loads there under the Codex parity law.
+- `pro-egm`: its bridge and `/pro-egm:goldfish` run the design challenge; a starter reviewer set for architecture documents may be added there, which would bump that plugin.
 - `/research` and the research skills: called for the options evaluation. None is edited.
 - Any user of the marketplace who does design, diagnosis or migration planning.
 
@@ -164,6 +174,10 @@ Decision records and the diagram model live in the repository being worked on an
 - A companion is a supply-chain decision: each one is read before it is listed, pinned to a commit and checked against the registry's audit results. One popular architecture skill fails one of three auditors there.
 - Cloud and vendor content stays in the vendor's own skill. The orchestrator is cloud-neutral and calls the vendor skill for the framework review, pricing and icon diagrams.
 - The interview is with the person directing the work, not with their client. Reading and reporting come first, questions come one at a time and the person can end the interview at any point; what is left becomes stated assumptions.
+- Interview questions are open-ended plain text, one per turn, with no pre-written multiple-choice answers. Multiple choice is for gates and decisions only.
+- A review run in the authoring context is reported as not independent, and the skill says so in its output as `security-architect` does.
+- Drafts and reports go to files, not into chat.
+- EGM is reached through `pro-egm` and `/pro-egm:goldfish`, never through the Skill tool, because its skills disable model invocation. Any EGM wording adapted into the skill carries its Apache 2.0 notice and a row in `docs/licenses.md`.
 - Code before discovery and options is a rule violation the skill names, with one exception: a read-only script that measures the existing system.
 - It prefers a proven library for a solved problem, even in a prototype. Zero dependencies is a weak reason.
 - Regulatory content stays out of the skill body. A compliance lens is a pointer to `security-architect` and to counsel.
@@ -199,12 +213,15 @@ Decision records and the diagram model live in the repository being worked on an
 - Whether the theme and design spec live inside this skill as sidecar files or in a companion document-writer skill that this one calls. Two skills may mean two intents.
 - How deep the options research goes by default and what it may spend, since deep research costs tokens and time. The person sets the cap.
 - Whether one skill covers both the full engagement and a single request such as "document the current system", or whether modes with sidecar files serve better, as `security-architect` does with challenge and diff.
-- Whether the fresh-context design challenge is a general architecture challenge the new skill owns or stays the security one with a wider brief.
+- Whether the design challenge is always the EGM review when EGM is installed, with the security architect as a second pass, and what the fallback is when it is not.
+- Which reviewers an architecture document needs beyond EGM's own: candidates are an operator, a finance reader, a compliance reader and the sponsor's point of view.
+- Whether the skill body can hold the method under the size EGM's own notes warn about (about 5,000 tokens kept after compaction), or needs sidecars from the start.
 - The engagement's reviewers have not given their feedback yet. The skill should be revised once they have. That revision is its own change.
 
 ## Evidence
 
 All from a private repository and not copied here: the verdict of the person who directed the work, given on 2026-11-18, the engagement's AI log with its 15 numbered mistakes and how each was caught, the agentic reviews file of 2026-11-09 (4 code defects, 10 security findings, 2 blocking and 17 required design changes), 13 exported session transcripts from both agents, the deck design spec and the project document-writer skill written during the engagement and a memory note of 2026-11-11 on library choice in prototypes.
+The EGM summary is a second research note of November 2026 supplied by the maintainer; its account of the brainstorm interview and the review stages is to be checked against the installed `egm@egm` plugin at `/spec`.
 The ecosystem survey is a research note of November 2026 supplied by the maintainer.
 Its install and star counts come from registry snapshots that disagree with each other and none was re-checked here, so no figure from it is quoted above; `/spec` verifies any that the design relies on.
 Counts quoted above come from the engagement's files: 4 hours 40 minutes to the first slice, about 92,000 words of HTML, a 36,000-word design document and five coverage questions in the main session.
