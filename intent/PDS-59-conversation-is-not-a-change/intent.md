@@ -36,7 +36,9 @@ The agent file states the start condition: a topic raised in conversation is not
 An agent that hears a new idea brainstorms it first.
 It sketches a shape, asks one open question at a time and treats feedback and pasted research as input to the discussion.
 It writes no intent, spec, file, branch, commit or pull request until the shape is agreed and the person says to make the change.
-The intent rule begins at that point.
+When the conversation settles on a change, the agent recommends running `/intent` with a one or two sentence statement of the idea and stops there.
+It does not write the intent file by hand or start the command unasked.
+The intent rule begins when the person runs the command.
 
 A person reading the agent file can see that order in the section on how work flows, next to the rule that every change goes through the loop.
 
@@ -50,6 +52,7 @@ A person reading the agent file can see that order in the section on how work fl
 
 - The rule is about when the loop starts. It does not loosen the loop once a change is decided.
 - It names no person and quotes nobody.
+- The recommendation names the command and a suggested argument the person can paste, so the brainstorm carries into the interview that `/intent` runs.
 - It does not turn every request into a brainstorm: a bug report or a change the person has already described and asked for goes to `/intent` as today.
 - The duplicated "Dogfood it" section in `CLAUDE.md` is removed in the same edit, since the new rule sits beside it.
 
@@ -65,6 +68,7 @@ A person reading the agent file can see that order in the section on how work fl
 - `grep -c "Dogfood it" CLAUDE.md` prints 1.
 - `node tests/check.mjs` and `claude plugin validate . --strict` pass.
 - A session told "I need a better X" in this repo replies with a sketch and a question and creates no file or branch.
+- When that conversation reaches an agreed shape, the session's reply recommends `/intent` with a suggested argument. No file under `intent/` exists until the person runs it.
 
 ## Open questions
 
