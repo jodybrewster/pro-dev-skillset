@@ -41,11 +41,14 @@ It does not write the intent file by hand or start the command unasked.
 The intent rule begins when the person runs the command.
 
 A person reading the agent file can see that order in the section on how work flows, next to the rule that every change goes through the loop.
+`intent/README.md` opens with the same rule, so it is read where intents are explained.
+`pro-ai-sdlc` carries the rule as well, so it holds in any repo that installs the plugin and has no copy of this agent file.
 
 ## Affected users and systems
 
 - `CLAUDE.md` at the repo root, which `AGENTS.md` links to, so Claude Code and Codex both read it.
-- `intent/README.md`, if the same sentence belongs at the top of the intent rules.
+- `intent/README.md`: the same rule at the top of the intent rules.
+- `pro-ai-sdlc`: the rule ships with the plugin, with a version bump in both manifests and the marketplace entry.
 - Agents working in this repo and in mieruka's chat, which start intents on a person's behalf.
 
 ## Constraints
@@ -58,7 +61,7 @@ A person reading the agent file can see that order in the section on how work fl
 
 ## Out of scope
 
-- Changing the `/intent` command, which already interviews before it writes. Whether it should refuse to write when no brainstorm has happened is a later question.
+- Making `/intent` refuse to run. The person running the command is the signal that a change is decided, so the command keeps working as it does today.
 - A hook that blocks an intent file from being written. This is a judgement an agent makes, not a pattern a script can match.
 - The solution architect skill itself, which is PDS-58.
 
@@ -66,15 +69,17 @@ A person reading the agent file can see that order in the section on how work fl
 
 - `CLAUDE.md` carries the rule in the section on how work flows, in two to four lines.
 - `grep -c "Dogfood it" CLAUDE.md` prints 1.
-- `node tests/check.mjs` and `claude plugin validate . --strict` pass.
+- `intent/README.md` states the rule before it describes the folder layout.
+- A repo with `pro-ai-sdlc` installed and no agent file of its own shows the same behaviour: a sketch and a question first, then a recommendation to run `/intent`.
+- `node tests/check.mjs` and `claude plugin validate . --strict` pass, with `pro-ai-sdlc` bumped.
 - A session told "I need a better X" in this repo replies with a sketch and a question and creates no file or branch.
 - When that conversation reaches an agreed shape, the session's reply recommends `/intent` with a suggested argument. No file under `intent/` exists until the person runs it.
 
 ## Open questions
 
-- Whether the same sentence goes into `intent/README.md` or the agent file alone is enough.
-- Whether `/pro-ai-sdlc:intent` should carry the rule too, so it holds in repos that install the plugin and do not copy this agent file. That would be a plugin change with a version bump.
-- Whether PDS-58 is closed and reopened after its brainstorm or kept as a draft.
+- Where in `pro-ai-sdlc` the rule lives so that an agent reads it before anyone runs a command: the `/intent` command text only loads when it is run, so the candidates are the agent-file template the plugin installs, a skill description or a session-start hook. `/spec` decides.
+
+Decided on 2026-11-18: the rule goes into `intent/README.md` and into `pro-ai-sdlc`. PDS-58 stays open as a draft that is rewritten after its brainstorm and design.
 
 ## Evidence
 
