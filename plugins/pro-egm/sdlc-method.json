@@ -3,6 +3,11 @@
   "requires": "egm@egm",
   "handoffs": [
     {
+      "stage": "intent",
+      "when": "The topic is not yet a clear change: grow shared context with an EGM brainstorm (discovery interview, options research, goldfish swarm) and come back with concepts_brief.md; runs several subagents on the session model",
+      "offer": "/pro-egm:brainstorm <topic>"
+    },
+    {
       "stage": "spec",
       "when": "Goldfish review of the drafted spec before it is committed; runs several subagents on the session model",
       "offer": "/pro-egm:goldfish {target} --stage spec"

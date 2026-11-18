@@ -2,7 +2,7 @@
 
 How a pull request in this repo is reviewed, by a person or by an agent (`/code-review`, a reviewer subagent).
 This repo ships skills, hooks, commands and agents into every repo that installs the marketplace, so a defect here reaches all of them on the next update.
-Read the change's brief first: the `intent.md`, `spec.md` and `plan.md` under [`intent/`](./intent/) that the PR names.
+Read the change's brief first: the `intent.md`, `spec.md` and `plan.md` under `intent/` that the PR names.
 Then make three passes over the diff, in this order, and report only what this page asks for.
 
 ## Pass 1: bugs

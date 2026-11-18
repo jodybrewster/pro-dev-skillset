@@ -12,39 +12,24 @@ It has no UI, no server and no database.
 It ships workflow intelligence to Claude Code sessions.
 The longer version, the Mieruka bridge and the two use cases it is testing are in [docs/overview.md](./docs/overview.md).
 
-Work enters through an intent: `intent/<id>-<slug>/` (or `intent/<date>-<slug>/` for changes from before `intent/project.json`) holds `intent.md`, `spec.md` and `plan.md` ([intent/README.md](./intent/README.md)).
-Every change has an id such as `PDS-50`, from the shortcode in `intent/project.json`, in the `id:` line of its intent; an older date folder keeps its name and carries the id there.
-Roadmap rows and ADR Source lines name the id beside the folder link ([ADR-0026](./docs/decisions/0026-change-ids.md)).
-Nothing is pushed straight to `main`: every change, intents and specs included, is its own pull request that the agent merges once its checks pass, with no approval needed.
-Intents and specs are written in the main checkout on a short branch, never in a worktree; a worktree starts at the plan stage.
-Nothing in this repo or on its PRs names the maintainer or records who said what in chat: intents, specs, plans, ADRs, docs, code comments, the roadmap, commit messages and PR bodies state the problem and the decision directly, with no quotes and no "(<name>, <date>)" attributions.
+This repo is experimental.
+A change needs a branch, green checks and one pull request.
+It needs no intent, spec or plan; the `intent/` folder was removed on 2026-11-18 and its history stays in git.
+Agents decide routine choices themselves, name them in the PR and keep going without stopping for approval.
+Nothing is pushed straight to `main`: the agent opens the pull request and merges it once its checks pass, with no approval needed.
+Build in a worktree on one branch so parallel sessions do not land commits on each other's branches.
+Nothing in this repo or on its PRs names the maintainer or records who said what in chat: ADRs, docs, code comments, the roadmap, commit messages and PR bodies state the problem and the decision directly, with no quotes and no "(<name>, <date>)" attributions.
 Where a role is needed, write "the maintainer".
 Existing quotes are removed when a file is next edited.
 A PR is reviewed against [REVIEW.md](./REVIEW.md) and released per [RELEASING.md](./RELEASING.md).
 
-## How work flows here
+## The loop this repo ships
 
 The AI-native SDLC playbook is the guide and `pro-ai-sdlc` is where it is encoded, so the whole loop works from Claude Code alone in any repo with the plugin installed (it is opt-in and not part of `pro-dev-starter`).
 Mieruka runs the same loop too.
 Its board and chat start the plugin's commands and its autorun works accepted intents by itself, reading the plugin's templates and rules.
-
-### Dogfood it: every change goes through mieruka and the loop
-
-Since 2026-11-07 this repo and mieruka are built through mieruka's board and the `pro-ai-sdlc` loop, nothing else.
-No Orca worktrees, no bare Claude Code terminals running changes on the side, no second session in the same checkout.
-A change starts as a card (an intent), moves through spec, plan, build, review, ship and Done on the board, and its status is read from the board, not from a terminal.
-The reason: on 2026-11-07 three sessions in one checkout landed spec commits on each other's branches and nobody could say where any change stood.
-When work shows up outside the board, say so and route it back through `/intent`.
-Where the loop or mieruka cannot yet do a step, that gap is itself the next card.
-
-### Dogfood it: every change goes through mieruka and the loop
-
-Since 2026-11-07 this repo and mieruka are built through mieruka's board and the `pro-ai-sdlc` loop, nothing else.
-No Orca worktrees, no bare Claude Code terminals running changes on the side, no second session in the same checkout.
-A change starts as a card (an intent), moves through spec, plan, build, review, ship and Done on the board, and its status is read from the board, not from a terminal.
-The reason: on 2026-11-07 three sessions in one checkout landed spec commits on each other's branches and nobody could say where any change stood.
-When work shows up outside the board, say so and route it back through `/intent`.
-Where the loop or mieruka cannot yet do a step, that gap is itself the next card.
+This repo ships the loop but does not run its own changes through it.
+The loop commands (`/intent`, `/spec`, `/plan`, `/execute`) are used here only when the maintainer asks or when the loop itself is being tested.
 
 ## Model split
 

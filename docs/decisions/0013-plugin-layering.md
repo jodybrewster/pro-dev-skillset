@@ -70,7 +70,7 @@ The web layer assumes JS/TS and React today; its description says so, and it spl
 ## Consequences
 
 Consolidation moves install ids, and an install id is a plugin's name, so every move is a migration for every install and a shim or a `/pro-dev update` step.
-It therefore lands in one release together with the parked [rename intent](../../intent/2026-10-28-rename-pro-dev/intent.md), whose naming becomes `pro-core`, `pro-dev-*` and `pro-gtm-*`, a domain prefix per plugin.
+It therefore lands in one release together with the parked rename intent, whose naming becomes `pro-core`, `pro-dev-*` and `pro-gtm-*`, a domain prefix per plugin.
 The rows in the engine registry move with their skills, which is a `pro-core` bump under ADR-0006.
 
 The review stack ([#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84), [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85)) is planned against today's names; it places the PR gate and risk tiers in the dev domain, not in `pro-ship`, and the fold of `pro-quality` waits until `pr-gate` has replaced `pr-quality-gate.py`.

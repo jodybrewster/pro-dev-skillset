@@ -1,27 +1,33 @@
 # Roadmap
 
-What is being built in this marketplace now, what comes next in ranked order and which intents are parked.
-Update it whenever an intent starts, moves a stage, parks or ships, in the same commit as that change where possible.
+What is being built in this marketplace now and what comes next in ranked order.
+Since 2026-11-18 this repo is experimental: a change is a branch, green checks and one PR, with no intent, spec or plan. The `intent/` folder is gone (its history stays in git).
+Intent names below are history; update this file in the PR that ships or parks an item.
 Last updated 2026-11-07: the High tier from the super-board and agent-skills comparison is built (guard-hardening PDS-51, reaching-done PDS-52, traceable-ids PDS-50 m1 m3 m4); all work now runs through mieruka and the loop.
 
-A fresh session starts here: read "Now", then the intent folder it names.
-An intent named in a table row or a "Now" item carries its change id before its link, for example `PDS-30 [sdlc-loop-upgrades](../intent/2026-10-30-sdlc-loop-upgrades/intent.md)`; the folder keeps its name and the `change-ids` check in `tests/check.mjs` fails a table row that links an intent without its id ([ADR-0026](./decisions/0026-change-ids.md)).
-The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md) of 2026-10-28, plus the [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md).
+A fresh session starts here: read "Now".
+An intent named in a table row or a "Now" item carries its change id before its link, for example `PDS-30 sdlc-loop-upgrades`; the folder keeps its name and the `change-ids` check in `tests/check.mjs` fails a table row that links an intent without its id ([ADR-0026](./decisions/0026-change-ids.md)).
+The ranked list came from comparing this marketplace with [agent-skills](https://github.com/addyosmani/agent-skills) (local clone `../agent-skills`, commit `eb07f19`, release 0.6.14) and from the pro-ship brainstorm of 2026-10-28, plus the specialist agents intent.
 It revisits the older [AGENT-SKILLS-INTEGRATION](./plans/AGENT-SKILLS-INTEGRATION.md) plan, which skipped most of agent-skills before the pro-ship work existed.
 Nothing below the "Now" section is decided until it moves into an intent or a spec.
 
 ## Now
 
+### State on 2026-11-18
+
+The intent loop is no longer used for this repo's own changes; `CLAUDE.md` says how a change lands now.
+The pro-egm full bridge (every EGM skill reachable from Claude Code, a discovery primer, options research and brief-stage goldfish) is built as one PR.
+
 ### State on 2026-11-07, evening
 
-Every change in this repo and in mieruka goes through mieruka's board and the loop from here on; the rule is in `CLAUDE.md` under "Dogfood it".
+This rule was replaced on 2026-11-18: every change in this repo and in mieruka went through mieruka's board and the loop.
 Built and merged today, each through intent, spec, plan, an Opus build, a fresh-context review of up to three rounds and green CI:
 
-- PDS-49 [p2-batch](../intent/2026-11-07-p2-batch/intent.md) m1: items 46, 47, 48, 49 (#173, #174, #175).
-- PDS-51 [guard-hardening](../intent/2026-11-07-guard-hardening/intent.md), complete: items 32, 40 (#190), 33 (#193), 34 and 43 (#194); every new guard in warn under its own mode key, rows in [enforce-mode.md](./enforce-mode.md).
-- PDS-52 [reaching-done](../intent/2026-11-07-reaching-done/intent.md), complete: items 35 and 39 (#192), 36 (#197), 37 and 38 (#198); ADR-0027 proposed.
-- PDS-50 [traceable-ids](../intent/2026-11-07-traceable-ids/intent.md): m1 ids, backfill and the check (#191), m4 docs and ADRs (#195), m3 `change_id` on every record (#196); m2 (the id in branches, commits and PR titles, a warn-mode commit hook) is the one module still open; ADR-0026 proposed.
-- Intents written and merged: PDS-48 [review-routes-back](../intent/2026-11-07-review-routes-back/intent.md), [traceable-ids](../intent/2026-11-07-traceable-ids/intent.md); mieruka has the matching [change-ids](https://github.com/jodybrewster/mieruka/pull/221) intent and the [dogfooding rule plus a day-to-day guide](https://github.com/jodybrewster/mieruka/pull/230), both for the owner to merge.
+- PDS-49 p2-batch m1: items 46, 47, 48, 49 (#173, #174, #175).
+- PDS-51 guard-hardening, complete: items 32, 40 (#190), 33 (#193), 34 and 43 (#194); every new guard in warn under its own mode key, rows in [enforce-mode.md](./enforce-mode.md).
+- PDS-52 reaching-done, complete: items 35 and 39 (#192), 36 (#197), 37 and 38 (#198); ADR-0027 proposed.
+- PDS-50 traceable-ids: m1 ids, backfill and the check (#191), m4 docs and ADRs (#195), m3 `change_id` on every record (#196); m2 (the id in branches, commits and PR titles, a warn-mode commit hook) is the one module still open; ADR-0026 proposed.
+- Intents written and merged: PDS-48 review-routes-back, traceable-ids; mieruka has the matching [change-ids](https://github.com/jodybrewster/mieruka/pull/221) intent and the [dogfooding rule plus a day-to-day guide](https://github.com/jodybrewster/mieruka/pull/230), both for the owner to merge.
 
 Waiting on the maintainer: the Done sign-offs for PDS-51 and PDS-52 (they move ADR-0027 to accepted), the paid runs the build PRs name (`node tests/behavioral.mjs requesting-code-review --baseline`, `node tests/run-evals.mjs pro-ship`, `node tests/run-evals.mjs pro-ai-sdlc`, `node tests/run-evals.mjs pro-quality`, a few dollars each) plus the open items under [Waiting on the maintainer](#waiting-on-the-maintainer) below.
 
@@ -34,17 +40,17 @@ In order, each through the loop:
 
 1. The maintainer accepts or corrects the four intents, then answers their open questions: whether `pro-pdd`, `pro-spdd` and `pro-speckit` are being retired, plus the version a rollback release takes.
 2. mieruka's trace reader, which the owner merges: its `session-trace-every-path` intent reads change cards and session logs written outside mieruka and defines the log format. Its spec is a draft with no plan yet.
-3. PDS-45 [sdlc-happy-path-run](../intent/2026-11-04-sdlc-happy-path-run/intent.md): the happy path to Done with a screenshot per stage and role changes, driven through the board in a browser. Claude in Chrome drives the first run and a Playwright script follows from what worked. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`, both built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198).
-4. PDS-44 [factory-session-capture](../intent/2026-11-04-factory-session-capture/intent.md), reduced to level 1 container runs: each one writes mieruka's log format, tied to its card.
+3. PDS-45 sdlc-happy-path-run: the happy path to Done with a screenshot per stage and role changes, driven through the board in a browser. Claude in Chrome drives the first run and a Playwright script follows from what worked. It fixes the demo fixture's prose rollback steps and adds a way to clear a check left at `confirm`, both built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198).
+4. PDS-44 factory-session-capture, reduced to level 1 container runs: each one writes mieruka's log format, tied to its card.
 5. mieruka's `trace-evidence-screenshots` intent, which the owner merges: screenshots shown as images in the trace panel.
-6. PDS-46 [rollback-path](../intent/2026-11-04-rollback-path/intent.md): a rollback route through the loop and an automated scenario, after the happy path works.
-7. PDS-47 [sdlc-git-commands](../intent/2026-11-04-sdlc-git-commands/intent.md): slash commands recommend each git step and the person decides. It changes ADR-0025's rule on who runs the tag, so settle it before that ADR's sign-off.
+6. PDS-46 rollback-path: a rollback route through the loop and an automated scenario, after the happy path works.
+7. PDS-47 sdlc-git-commands: slash commands recommend each git step and the person decides. It changes ADR-0025's rule on who runs the tag, so settle it before that ADR's sign-off.
 8. Run the live e2e (`node tests/e2e-sdlc.mjs --scenario 1,2,3 --allow-broad-token`, about $18 to $30) once the maintainer says yes. It has not run since release-versioning.
 9. The maintainer signs off the software factory and release-versioning; ADR-0024 and ADR-0025 move to accepted.
 
 ### Done: the retest of 2026-11-04
 
-PDS-42 [release-versioning](../intent/2026-11-03-release-versioning/intent.md) and PDS-43 [factory-demo-kit](../intent/2026-11-03-factory-demo-kit/intent.md) are built.
+PDS-42 release-versioning and PDS-43 factory-demo-kit are built.
 A fresh demo ran two level 1 intents unattended, one level 3 intent through every role and a v1.1.0 release that `/pro-ship:ship` versioned and `/pro-ship:deployed` recorded.
 The tests and the documented use passed on a clean checkout of the tag.
 No card reached Done, because the rollback check never passed and the deploy record stayed `partial`.
@@ -68,7 +74,7 @@ Findings not yet in an intent:
 
 ### Built, waiting on sign-off: the software factory
 
-PDS-41 [intent/2026-11-03-software-factory](../intent/2026-11-03-software-factory/intent.md): escalation levels set by `factory.py level` and only raised, a `## Roles` block in `REVIEW.md` plus a runner that takes a level 1 intent to a merged pull request in a container while the host decides every merge ([ADR-0024](./decisions/0024-escalation-levels.md) proposed).
+PDS-41 intent/2026-11-03-software-factory: escalation levels set by `factory.py level` and only raised, a `## Roles` block in `REVIEW.md` plus a runner that takes a level 1 intent to a merged pull request in a container while the host decides every merge ([ADR-0024](./decisions/0024-escalation-levels.md) proposed).
 Built in #135 to #139; guide in [factory.md](./factory.md), demo in [factory-demo.md](./factory-demo.md).
 Proved live on https://github.com/jodybrewster/factory-demo: two level 1 intents merged with nobody present, one stopped at level 2 for the engineer.
 Waiting on the maintainer: the sign-off, merging mieruka #202 and #203 and the live e2e run (`node tests/e2e-sdlc.mjs`, about $18 to $30).
@@ -76,7 +82,7 @@ Follow-ups: a failed build on a merged brief has no retry path, because `run --n
 
 ### Done: the loop after the build
 
-PDS-40 [intent/2026-11-01-after-build-loop](../intent/2026-11-01-after-build-loop/intent.md): a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) accepted).
+PDS-40 intent/2026-11-01-after-build-loop: a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) accepted).
 Built in #128 and signed off on 2026-11-01; the hand runs of AC9 wait for the first real use.
 mieruka's readers are merged in its own repo: the Ship page shows the preflight and deploys, and the board runs past build through Validate, Review, Ship, Done and Maintain; `tests/mieruka-sync.mjs` passes against its main.
 Next after it, each its own intent with a security challenge first: `claude -p` in CI, tiered deploy autonomy, a rollback command and a control-band watcher.
@@ -84,11 +90,11 @@ The reviewer checklist items left out of it (change sizing, dependency disciplin
 
 ### Done: neutral repo
 
-PDS-39 [intent/2026-11-01-neutral-repo](../intent/2026-11-01-neutral-repo/intent.md) shipped on 2026-11-01: no maintainer name or chat quotes in tracked files and the upstream named agent-skills outside its license lines, held by the `names` check in `tests/check.mjs`.
+PDS-39 intent/2026-11-01-neutral-repo shipped on 2026-11-01: no maintainer name or chat quotes in tracked files and the upstream named agent-skills outside its license lines, held by the `names` check in `tests/check.mjs`.
 
 ### Done: item 15, `/ship` preflight
 
-`/pro-ship:ship` shipped on 2026-11-01 (PDS-38 [intent](../intent/2026-10-31-ship-preflight/intent.md), [spec](../intent/2026-10-31-ship-preflight/spec.md), [plan](../intent/2026-10-31-ship-preflight/plan.md), [ADR-0022](./decisions/0022-ship-preflight-record.md) accepted).
+`/pro-ship:ship` shipped on 2026-11-01 (PDS-38 intent, spec, plan, [ADR-0022](./decisions/0022-ship-preflight-record.md) accepted).
 It reads how a project ships, reviews only the commits no trusted pr-check marker covers, runs agent-skills' full pre-launch checklist with the test-engineer and web-performance-auditor agents and the legal review and writes a GO or NO-GO record the merge gate, the new `ship-gate` and pro-legal's gate read.
 `ship-gate` starts in warn and its evidence period starts with this release.
 The mieruka run (AC13) passed on 2026-11-01. Left for mieruka itself: a Ship block (so `apps/web` is not read as an npm publish) and showing the record on its Ship page.
@@ -114,12 +120,12 @@ Hand checks that need a person or a model run are listed in each plan's Done sec
 
 | Intent | Ranked items | Plugins | Risk | Intent PR | Build PR |
 |---|---|---|---|---|---|
-| PDS-30 [sdlc-loop-upgrades](../intent/2026-10-30-sdlc-loop-upgrades/intent.md) | 7, 8, 9, 10 with 24, 25, 29 | pro-ai-sdlc | medium | [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90) | [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98) |
-| PDS-31 [untrusted-input-safety](../intent/2026-10-30-untrusted-input-safety/intent.md) | 11 with 26, 27 | pro-testing, pro-execution, pro-design | low | [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91) | [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97) |
-| PDS-29 [p0-hardening](../intent/2026-10-30-p0-hardening/intent.md) | follow-ups from P0 | pro-ship, pro-core | medium | [#92](https://github.com/jodybrewster/pro-dev-skillset/pull/92) | [#101](https://github.com/jodybrewster/pro-dev-skillset/pull/101) |
-| PDS-33 [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/intent.md) | 12 | pro-ai-sdlc | medium | [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93) | [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102) |
-| PDS-34 [codex-second-reviewer](../intent/2026-10-30-codex-second-reviewer/intent.md) | 13 | pro-quality, pro-ship, pro-core | medium | [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94) | [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99) |
-| PDS-32 [required-documents](../intent/2026-10-30-required-documents/intent.md) | 14 | pro-core, pro-ai-sdlc, pro-ship | medium | [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95) | [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103) |
+| PDS-30 sdlc-loop-upgrades | 7, 8, 9, 10 with 24, 25, 29 | pro-ai-sdlc | medium | [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90) | [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98) |
+| PDS-31 untrusted-input-safety | 11 with 26, 27 | pro-testing, pro-execution, pro-design | low | [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91) | [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97) |
+| PDS-29 p0-hardening | follow-ups from P0 | pro-ship, pro-core | medium | [#92](https://github.com/jodybrewster/pro-dev-skillset/pull/92) | [#101](https://github.com/jodybrewster/pro-dev-skillset/pull/101) |
+| PDS-33 doubt-driven-execute | 12 | pro-ai-sdlc | medium | [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93) | [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102) |
+| PDS-34 codex-second-reviewer | 13 | pro-quality, pro-ship, pro-core | medium | [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94) | [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99) |
+| PDS-32 required-documents | 14 | pro-core, pro-ai-sdlc, pro-ship | medium | [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95) | [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103) |
 
 Merged in the order #97, #98, #99, #101, #102 and #103; doubt-driven-execute reuses the Codex runner from codex-second-reviewer through a byte-identical copy.
 The warn-mode evidence week for the gates is in [docs/enforce-mode.md](./enforce-mode.md).
@@ -127,20 +133,20 @@ The warn-mode evidence week for the gates is in [docs/enforce-mode.md](./enforce
 ### pro-electron (built 2026-10-30)
 
 A new opt-in stack plugin for Electron apps, from an Electron skills survey of 2026-10-30.
-Folder: PDS-37 [intent/2026-10-30-pro-electron/](../intent/2026-10-30-pro-electron/intent.md); spec and plan approved on 2026-10-30.
+Folder: PDS-37 intent/2026-10-30-pro-electron/; spec and plan approved on 2026-10-30.
 Ships `electron-skills-bridge` (jwynia `electron-best-practices`, laststance `electron-release`, manual Playwright MCP over CDP), `electron-upgrade` and `electron-security-audit`.
 Live evals passed on 2026-10-30 (docs/evals.md).
 
 ### constraint-floor (ranked item 1)
 
-Folder: PDS-24 [intent/2026-10-29-constraint-floor/](../intent/2026-10-29-constraint-floor/).
+Folder: PDS-24 intent/2026-10-29-constraint-floor/.
 
 - Intent: written and committed (`8b78aa3`), status draft.
-- Spec: [spec.md](../intent/2026-10-29-constraint-floor/spec.md) with 18 functional and 4 non-functional requirements and 9 acceptance criteria, committed with ADR-0010 (`b23f41c`).
+- Spec: spec.md with 18 functional and 4 non-functional requirements and 9 acceptance criteria, committed with ADR-0010 (`b23f41c`).
 - ADR: [ADR-0010](./decisions/0010-constraint-floor.md), status proposed; it moves to accepted at the plan's Done sign-off.
   There is no expectation that the floor will be removed, so it records a revisit trigger instead: findings that mostly get waved through with `floor-allow:` mean a rule is too broad.
 - Flagged concerns 1-4 resolved on 2026-10-29 with the recommendations: copy the mode lookup into pro-quality; accept pro-quality's mixed hook behavior for now; enforce mode denies every retry; the verifier reading `CONSTRAINTS.md` is a follow-up change.
-- Plan: [plan.md](../intent/2026-10-29-constraint-floor/plan.md), 18 steps in four parallel tracks plus a serial tail; approved on 2026-10-30.
+- Plan: plan.md, 18 steps in four parallel tracks plus a serial tail; approved on 2026-10-30.
   Three spec changes found while planning were approved on 2026-10-29: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
 - Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
 - Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
@@ -153,14 +159,14 @@ Decisions already made for constraint-floor (2026-10-29): the hook is Python, no
 The brainstorm's "Intent A" was split into four intents on 2026-10-29, drafted from the brainstorm and this roadmap with no interview.
 All four intents and specs are committed as drafts.
 Each spec says `ADR needed: yes` with the ADR not yet written; each lists its flagged concerns with a recommendation and its open questions.
-They replace the dropped PDS-19 [pro-ship-scope intent](../intent/2026-10-28-pro-ship-scope/intent.md); `code-reviewer` moved out of the parked specialist-agents intent.
+They replace the dropped PDS-19 pro-ship-scope intent; `code-reviewer` moved out of the parked specialist-agents intent.
 
 | Intent | Ranked items | Plugins | Builds on | Spec size |
 |---|---|---|---|---|
-| PDS-27 [review-policy](../intent/2026-10-29-review-policy/spec.md) | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
-| PDS-25 [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md) | 3 | pro-quality | review-policy | shipped in #87 |
-| PDS-26 [pr-gate](../intent/2026-10-29-pr-gate/spec.md) | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | shipped in #89 |
-| PDS-28 [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md) | 4 | pro-ship | pr-gate | shipped in #88 |
+| PDS-27 review-policy | 5, 6 | pro-ai-sdlc | none | shipped in #82 |
+| PDS-25 code-reviewer | 3 | pro-quality | review-policy | shipped in #87 |
+| PDS-26 pr-gate | 2 | pro-ship, pro-quality, pro-security | code-reviewer, constraint-floor | shipped in #89 |
+| PDS-28 risk-tiers | 4 | pro-ship | pr-gate | shipped in #88 |
 
 
 Facts the drafts found that change earlier notes:
@@ -188,24 +194,24 @@ Decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, suba
 
 | Intent | Status | Why parked | Comes back when |
 |---|---|---|---|
-| PDS-17 [2026-10-28-rename-pro-dev](../intent/2026-10-28-rename-pro-dev/intent.md) | draft | The intent itself says "not for today". | The maintainer decides to rename the plugins. |
-| PDS-16 [2026-10-28-taste-skill-v2](../intent/2026-10-28-taste-skill-v2/intent.md) | draft | Not on the ranked list; nobody has started it. | pro-design is next touched, or the bridge's smoke test fails. |
+| PDS-17 2026-10-28-rename-pro-dev | draft | The intent itself says "not for today". | The maintainer decides to rename the plugins. |
+| PDS-16 2026-10-28-taste-skill-v2 | draft | Not on the ranked list; nobody has started it. | pro-design is next touched, or the bridge's smoke test fails. |
 
 ## Dropped intents
 
-- [2026-10-28-pro-ship-scope](../intent/2026-10-28-pro-ship-scope/intent.md), 2026-10-29: its PR gate part became the four P0 review-stack intents; the brainstorm's Intents B and C get new intents when ranked items 15, 16, 21, 14 and 17 come up.
+- 2026-10-28-pro-ship-scope, 2026-10-29: its PR gate part became the four P0 review-stack intents; the brainstorm's Intents B and C get new intents when ranked items 15, 16, 21, 14 and 17 come up.
 
 ## Housekeeping
 
 Marked `done` on 2026-10-31 after checking each against its merged PR: constraint-floor (#81), review-policy (#82), code-reviewer (#87), risk-tiers (#88), pr-gate (#89), untrusted-input-safety (#97), sdlc-loop-upgrades (#98), codex-second-reviewer (#99), p0-hardening (#101), doubt-driven-execute (#102), required-documents (#103) and pro-electron (#105).
 
-Marked `done` on 2026-10-29 after checking git history: [execute-command](../intent/2026-10-28-execute-command/intent.md) (#63), [plugin-installers](../intent/2026-10-28-plugin-installers/intent.md) (#70) and [pro-speckit](../intent/2026-10-28-pro-speckit/intent.md) (#71).
+Marked `done` on 2026-10-29 after checking git history: execute-command (#63), plugin-installers (#70) and pro-speckit (#71).
 Still `proposed` because part of each did not ship:
 
-- [pro-dev-setup](../intent/2026-10-28-pro-dev-setup/intent.md): #65 left its item 5 undone (pro-quality's `/review`, `/api-docs` and `/lead-research` still exist).
-- [design-vercel-bridges](../intent/2026-10-28-design-vercel-bridges/intent.md): #68 shipped everything except Hallmark, which was held.
-- [spec-methods](../intent/2026-10-28-spec-methods/intent.md): #66 shipped the EGM hand-off, but #73 made pro-pdd the default against the intent's "pro-ai-sdlc stays the default", and the `/intent` offer was not built.
-- [pro-dev-simplify](../intent/2026-10-27-pro-dev-simplify/intent.md): item G has no intent; C and D are partial.
+- pro-dev-setup: #65 left its item 5 undone (pro-quality's `/review`, `/api-docs` and `/lead-research` still exist).
+- design-vercel-bridges: #68 shipped everything except Hallmark, which was held.
+- spec-methods: #66 shipped the EGM hand-off, but #73 made pro-pdd the default against the intent's "pro-ai-sdlc stays the default", and the `/intent` offer was not built.
+- pro-dev-simplify: item G has no intent; C and D are partial.
 
 Each needs the maintainer's call: finish the remainder, or mark it `done` with the remainder dropped.
 
@@ -239,15 +245,15 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 
 ### P0: every edit and every PR
 
-- [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md), see [Now](#now)
-- [x] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): shipped in #89 from the plan of [pr-gate](../intent/2026-10-29-pr-gate/spec.md), see [Now](#now)
-- [x] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): shipped in #87 as [code-reviewer](../intent/2026-10-29-code-reviewer/spec.md), see [Now](#now)
-- [x] 4. Risk classifier and approval tiers (M, pro-ship): shipped in #88 as [risk-tiers](../intent/2026-10-29-risk-tiers/spec.md), see [Now](#now)
-- [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
-- [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as [review-policy](../intent/2026-10-29-review-policy/spec.md), see [Now](#now)
-- [x] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md), in warn under `mode.protected-push`
-- [x] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core): shipped in [#193](https://github.com/jodybrewster/pro-dev-skillset/pull/193) as [guard-hardening m2](../intent/2026-11-07-guard-hardening/plan-m2.md), in warn under `mode.secret-read`
-- [x] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as [guard-hardening m3](../intent/2026-11-07-guard-hardening/plan-m3.md), in warn under `mode.key-literal`
+- [x] 1. Floor guard and `CONSTRAINTS.md` (M, pro-quality): shipped in #81 as intent/2026-10-29-constraint-floor, see [Now](#now)
+- [x] 2. The PR gate: `pr-check` and a stamp hook on `gh pr create` (L, pro-ship, pro-quality, pro-security): shipped in #89 from the plan of pr-gate, see [Now](#now)
+- [x] 3. A detailed `code-reviewer` agent with fresh context (M, pro-quality): shipped in #87 as code-reviewer, see [Now](#now)
+- [x] 4. Risk classifier and approval tiers (M, pro-ship): shipped in #88 as risk-tiers, see [Now](#now)
+- [x] 5. REVIEW.md template upgrade (S, pro-ai-sdlc): shipped in #82 as review-policy, see [Now](#now)
+- [x] 6. Review convergence rules (S, pro-ai-sdlc, pro-ship): shipped in #82 as review-policy, see [Now](#now)
+- [x] 32. Close the push-guard gaps: `git push origin --delete main`, `refs/heads/main`, a bare `git push` while on main and a base branch other than main or master all pass `git-safe.py` today (S, pro-core): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as guard-hardening m1, in warn under `mode.protected-push`
+- [x] 33. A secret-read guard on `Read`, `Grep` and `Bash` for dotenv, key and credential files, plus a helper that says whether a key is set and never prints it (S, pro-core): shipped in [#193](https://github.com/jodybrewster/pro-dev-skillset/pull/193) as guard-hardening m2, in warn under `mode.secret-read`
+- [x] 34. A key-literal guard: block writing a live-looking API key, flag one already on disk, report the line and never the value (S, pro-security): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as guard-hardening m3, in warn under `mode.key-literal`
 
 ### P1: every feature through the loop plus safety
 
@@ -256,25 +262,25 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [x] 9. Plan template additions and a definition of done (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 10. A test-design lens for the verifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 11. Untrusted-input rules for browser and error output (S, pro-testing, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
-- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as [doubt-driven-execute](../intent/2026-10-30-doubt-driven-execute/spec.md), intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
+- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as doubt-driven-execute, intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
 - [x] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94), built in [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99)
 - [x] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95), built in [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103)
 - [x] 35. Reviewer memory: grade each earlier finding fixed, not fixed or no longer applies at the new head before the fresh pass, then review merge-base to head instead of the first and last uncovered commit (M, pro-ai-sdlc, pro-ship) ([#192](https://github.com/jodybrewster/pro-dev-skillset/pull/192))
-- [x] 36. The reviewer's model goes into the review record and the pr-check stamp; `/ship` and `factory verify` refuse a review that did not run on Opus (S-M, pro-ship, pro-ai-sdlc): shipped in [#197](https://github.com/jodybrewster/pro-dev-skillset/pull/197) as [reaching-done m2](../intent/2026-11-07-reaching-done/plan-m2.md), in warn under `mode.review-model`
-- [x] 37. A human confirmation bound to the PR head, which clears a check left at `confirm` (M, pro-ship): built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198) as [reaching-done m3](../intent/2026-11-07-reaching-done/plan-m3.md), in warn under `mode.confirmation`
-- [x] 38. A readiness check in the `/ship` preflight that rejects a rollback or verify step that is not a runnable command (S, pro-ship): built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198) as [reaching-done m3](../intent/2026-11-07-reaching-done/plan-m3.md)
+- [x] 36. The reviewer's model goes into the review record and the pr-check stamp; `/ship` and `factory verify` refuse a review that did not run on Opus (S-M, pro-ship, pro-ai-sdlc): shipped in [#197](https://github.com/jodybrewster/pro-dev-skillset/pull/197) as reaching-done m2, in warn under `mode.review-model`
+- [x] 37. A human confirmation bound to the PR head, which clears a check left at `confirm` (M, pro-ship): built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198) as reaching-done m3, in warn under `mode.confirmation`
+- [x] 38. A readiness check in the `/ship` preflight that rejects a rollback or verify step that is not a runnable command (S, pro-ship): built in [#198](https://github.com/jodybrewster/pro-dev-skillset/pull/198) as reaching-done m3
 - [x] 39. Validate each finding against the callers, guards and tests that reach the changed code; keep contradicting evidence in the doubt step's review unit (S, pro-quality, pro-ai-sdlc) ([#192](https://github.com/jodybrewster/pro-dev-skillset/pull/192))
-- [x] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as [guard-hardening m1](../intent/2026-11-07-guard-hardening/plan-m1.md)
+- [x] 40. The staged-secret check in `/ship`'s security checklist prints matching lines, so a secret lands in the log; list file names only (S, pro-ship): shipped in [#190](https://github.com/jodybrewster/pro-dev-skillset/pull/190) as guard-hardening m1
 - [ ] 41. A test-gap ledger in `test-engineer`: each acceptance criterion mapped to an assertion or `none`, exact edge-case values and a step that tests the tests (M, pro-quality)
 - [ ] 42. A retry path for a factory run that errored before opening a PR, with an attempt cap per intent that escalates to level 3 (M, pro-ai-sdlc)
-- [x] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as [guard-hardening m3](../intent/2026-11-07-guard-hardening/plan-m3.md), in warn under `mode.delete-outside`
+- [x] 43. A delete-outside-project guard for `rm`, `find -delete` and `git clean`, with temp folders exempt (M, pro-core): shipped in [#194](https://github.com/jodybrewster/pro-dev-skillset/pull/194) as guard-hardening m3, in warn under `mode.delete-outside`
 
 ### P2: situational, or past one person
 
-- [x] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124) as [2026-10-31-ship-preflight](../intent/2026-10-31-ship-preflight/spec.md), see [Now](#now)
+- [x] 15. `/ship` preflight with a go/no-go verdict (M, pro-ship): built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124) as 2026-10-31-ship-preflight, see [Now](#now)
 - [ ] 16. `pipeline`: the gate as required CI checks (L, pro-ship)
 - [ ] 17. Architecture review with twelve-factor (L, pro-quality)
-- [x] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality): `test-engineer` and `web-performance-auditor` built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124); `security-architect` in diff mode is the finder; [specialist-agents](../intent/2026-10-28-specialist-agents/intent.md) is done
+- [x] 18. Specialist agents: security finder and web-performance auditor (M, pro-security, pro-quality): `test-engineer` and `web-performance-auditor` built in [#124](https://github.com/jodybrewster/pro-dev-skillset/pull/124); `security-architect` in diff mode is the finder; specialist-agents is done
 - [ ] 19. Source-driven development and a docs cache (M, pro-execution)
 - [ ] 20. Installed skills declare runnable checks (M, pro-core, stack plugins)
 - [ ] 21. The scaling block and `repo-hygiene` (M, pro-ship)
@@ -313,7 +319,7 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 
 ## How the items group into intents
 
-- Constraints: 1, now its own intent at [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md).
+- Constraints: 1, now its own intent at intent/2026-10-29-constraint-floor.
 - Intent A, the PR gate (already planned in the pro-ship brainstorm): 2, 3, 4, 5, 6, then 13.
 - The pro-ai-sdlc loop batch: 7, 8, 9, 10, with 24, 25 and 29 riding along. One PR, one version bump.
 - Safety batch: 11 with 26 and 27.
@@ -343,18 +349,18 @@ This is the agent-skills part of the list on its own, as it was first written on
    Re-sync `interview-me` and `idea-refine`, the Deprecated ADR status, the debugging addendum and the browser security boundaries.
 
 Items 2 and 3 are all pro-ai-sdlc edits and could ship together as one PR with one version bump.
-The constraints work and the floor-guard hook (item 1, now [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md)) are still the bigger gap, since nothing on our side covers them.
+The constraints work and the floor-guard hook (item 1, now intent/2026-10-29-constraint-floor) are still the bigger gap, since nothing on our side covers them.
 The suggested order was constraints first, then the pro-ai-sdlc batch, with the `/ship` findings going into the pro-ship intent now.
 The checklist above keeps that order but puts the PR gate (items 2-6) ahead of the pro-ai-sdlc batch, because it fires on every PR.
 
 ## Detail
 
 Paths without a prefix are in agent-skills.
-"Pro-ship features" means the numbered list under "Features at a glance" in the [pro-ship brainstorm](../intent/2026-10-28-pro-ship-scope/brainstorm.md).
+"Pro-ship features" means the numbered list under "Features at a glance" in the pro-ship brainstorm.
 
 ### 1. Floor guard and `CONSTRAINTS.md`
 
-Moved to [intent/2026-10-29-constraint-floor](../intent/2026-10-29-constraint-floor/intent.md) on 2026-10-29.
+Moved to intent/2026-10-29-constraint-floor on 2026-10-29.
 
 ### 2. The PR gate
 
@@ -377,7 +383,7 @@ Add from agent-skills:
 - Optional: change-size bands of 100, 300 and 1000 lines; "a refactor and a feature are two PRs".
 Keep ours: the failure-scenario rule (theirs lacks it) and our simpler severities.
 Why it is P0: our current reviewer checks bugs, security and compliance only, so readability, architecture and test-quality problems pass.
-Source: pro-ship features 3 and 4; [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md); `agents/code-reviewer.md`.
+Source: pro-ship features 3 and 4; specialist agents intent; `agents/code-reviewer.md`.
 
 ### 4. Risk classifier and approval tiers
 
@@ -487,7 +493,7 @@ Source: pro-ship feature 17.
 
 What: a first-pass `security-reviewer` that hunts for findings (our `security-auditor` only judges one), a `web-performance-auditor` with `/webperf` and possibly a `test-engineer`.
 Done: `test-engineer` and `web-performance-auditor` shipped in pro-quality with the `/ship` preflight (#124); `security-architect` in diff mode already hunts for findings, so no new security agent was added; `/webperf` was left out because `/ship` dispatches the auditor. Reasons are in the intent's Done section.
-Source: [specialist agents intent](../intent/2026-10-28-specialist-agents/intent.md); `agents/security-auditor.md`, `agents/web-performance-auditor.md`, `agents/test-engineer.md`.
+Source: specialist agents intent; `agents/security-auditor.md`, `agents/web-performance-auditor.md`, `agents/test-engineer.md`.
 
 ### 19. Source-driven development and a docs cache
 

@@ -87,7 +87,7 @@ The state files keep the last 200 diffs per session, so the sum is a floor for a
 ## Decision record template
 
 Copy it to the intent folder of the review and fill one per gate.
-The first record is [intent/2026-10-30-p0-hardening/enforce-decision.md](../intent/2026-10-30-p0-hardening/enforce-decision.md).
+The first record is intent/2026-10-30-p0-hardening/enforce-decision.md.
 
 ```markdown
 # Enforce decision: <gate>
