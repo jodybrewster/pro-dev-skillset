@@ -150,7 +150,8 @@ It ends with the one diagram, one worked example and the decisions needed from t
 The skill is a thin orchestrator.
 It owns the order of work, the discovery interview, the options evaluation, the recommendation and the checks.
 For patterns, decision records, C4 diagrams, a cloud framework review and cost estimates it calls an installed companion skill when one is present and falls back to its own short procedure when none is.
-The fresh-context design challenge runs through the EGM bridge when EGM is installed, with reviewers chosen for an architecture document, and the agent triages each finding as fix, contest with evidence, escalate or decline before editing anything.
+The fresh-context design challenge runs through the EGM bridge when EGM is installed, with reviewers chosen for an architecture document.
+The agent triages each finding as fix, contest with evidence, escalate or decline before editing anything.
 Decision records and the diagram model live in the repository being worked on and are updated when the design changes, so a later session starts from them.
 
 ## Affected users and systems
@@ -175,7 +176,7 @@ Decision records and the diagram model live in the repository being worked on an
 - Cloud and vendor content stays in the vendor's own skill. The orchestrator is cloud-neutral and calls the vendor skill for the framework review, pricing and icon diagrams.
 - The interview is with the person directing the work, not with their client. Reading and reporting come first, questions come one at a time and the person can end the interview at any point; what is left becomes stated assumptions.
 - Interview questions are open-ended plain text, one per turn, with no pre-written multiple-choice answers. Multiple choice is for gates and decisions only.
-- A review run in the authoring context is reported as not independent, and the skill says so in its output as `security-architect` does.
+- A review run in the authoring context is reported as not independent in the skill's output, as `security-architect` does.
 - Drafts and reports go to files, not into chat.
 - EGM is reached through `pro-egm` and `/pro-egm:goldfish`, never through the Skill tool, because its skills disable model invocation. Any EGM wording adapted into the skill carries its Apache 2.0 notice and a row in `docs/licenses.md`.
 - Code before discovery and options is a rule violation the skill names, with one exception: a read-only script that measures the existing system.
@@ -213,7 +214,7 @@ Decision records and the diagram model live in the repository being worked on an
 - Whether the theme and design spec live inside this skill as sidecar files or in a companion document-writer skill that this one calls. Two skills may mean two intents.
 - How deep the options research goes by default and what it may spend, since deep research costs tokens and time. The person sets the cap.
 - Whether one skill covers both the full engagement and a single request such as "document the current system", or whether modes with sidecar files serve better, as `security-architect` does with challenge and diff.
-- Whether the design challenge is always the EGM review when EGM is installed, with the security architect as a second pass, and what the fallback is when it is not.
+- Whether the design challenge is always the EGM review when EGM is installed, with the security architect as a second pass. The fallback when it is not installed is also open.
 - Which reviewers an architecture document needs beyond EGM's own: candidates are an operator, a finance reader, a compliance reader and the sponsor's point of view.
 - Whether the skill body can hold the method under the size EGM's own notes warn about (about 5,000 tokens kept after compaction), or needs sidecars from the start.
 - The engagement's reviewers have not given their feedback yet. The skill should be revised once they have. That revision is its own change.
