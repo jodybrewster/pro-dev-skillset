@@ -205,7 +205,7 @@ It is on demand only: run it for a change to the factory, the levels, the roles 
 
 ## Measured changes
 
-### 2026-10-30: pro-electron ([intent](../intent/2026-10-30-pro-electron/))
+### 2026-10-30: pro-electron (intent)
 
 `node tests/run-evals.mjs pro-electron --runs 3` and `node tests/behavioral.mjs <skill> --baseline --model sonnet`, Sonnet, Claude Code 2.1.314, macOS, $1.77 for the plugin evals.
 
@@ -217,7 +217,7 @@ It is on demand only: run it for a change to the factory, the levels, the roles 
 
 The upgrade and audit reply graders pass without the plugin too, so their plugin cases show firing rather than a delta; the behavioral cases carry the difference.
 
-### 2026-10-29: four discipline skills ([intent](../intent/2026-10-29-skill-firing/))
+### 2026-10-29: four discipline skills (intent)
 
 Sonnet pinned, Claude Code 2.1.312, 3 runs per case and arm.
 "Before" is the old description on the sharpened case; "after" is the shipped description.
@@ -246,7 +246,7 @@ What the runs taught:
 - A case that asks for real work needs the tools for it: the TDD case passes only with Write, Edit and Bash allowed (`--allow-tools Bash Write Edit`).
   The verification case also needs `--scaffold`.
 
-### 2026-10-29: first baseline for pro-ai-sdlc and pro-egm ([intent](../intent/2026-10-29-sdlc-egm-evals/))
+### 2026-10-29: first baseline for pro-ai-sdlc and pro-egm (intent)
 
 `node tests/run-evals.mjs pro-ai-sdlc pro-egm --runs 3`, Sonnet, Claude Code 2.1.312, macOS, $6.22.
 "With" and "without" count runs where every scored grader passed; a hook or agent case has no meaningful without arm, since nothing else blocks the push or dispatches the agent.

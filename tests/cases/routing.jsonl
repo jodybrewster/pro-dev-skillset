@@ -97,3 +97,5 @@
 {"prompt": "We just picked Postgres over Mongo for the new service. Write that decision up so nobody re-argues it, and tell me which of our docs this branch made stale.", "expect": "documentation-and-adrs", "notOneOf": ["pr-check"], "note": "pro-ship ADR and per-change doc judgment"}
 {"prompt": "ship it, are we good to release?", "expect": "ship", "notOneOf": ["pr-check"], "note": "pro-ship go/no-go before a release"}
 {"prompt": "We just deployed to production. Record the deploy and walk me through the post-deploy checks.", "expect": "deployed", "notOneOf": ["ship"], "note": "pro-ship deploy record and post-deploy checks"}
+{"prompt": "Run an Elephant-Goldfish brainstorm on this idea before I write an intent, with options research and a concepts brief.", "expect": "egm-bridge", "note": "EGM brainstorm in front of /intent through pro-egm"}
+{"prompt": "Run an EGM drift report on our design docs against the code.", "expect": "egm-bridge", "note": "EGM drift report through pro-egm; plain doc drift stays with documentation-engineer"}

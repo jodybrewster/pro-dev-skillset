@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Resolve the inputs for an Elephant-Goldfish review of a spec or plan.
+"""Resolve the inputs for an Elephant-Goldfish review of a spec, plan or concepts brief.
 
-    goldfish.py resolve --stage spec|plan --target PATH [--repo ROOT] [--accept --token HEX]
+    goldfish.py resolve --stage spec|plan|brief --target PATH [--repo ROOT] [--accept --token HEX]
+    goldfish.py context --target PATH [--repo ROOT]
+    goldfish.py egm [--repo ROOT]
     goldfish.py init [--repo ROOT]
 
+`egm` prints the installed engine: egmLoop (egm-review-loop's SKILL.md, kept for older
+callers), egmRoot and skills, a map from each EGM skill name to its SKILL.md or null.
+`context` prints the validated reading list for a design doc review: the root docs and
+the optional `review.context` list in .egm/goldfish.json.
 `resolve` prints JSON: target, semanticTarget, reviewers, standards, context and
 newOrChanged. It reads the repo's `.egm/goldfish.json` when present and the plugin's
 own defaults otherwise. Every path it prints must be a regular file inside the repo
@@ -33,14 +39,14 @@ PLUGIN = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 STARTERS = os.path.join(PLUGIN, "goldfish")
 CAP = 64 * 1024
 SEEN = "egm-seen.json"
-STAGES = ("spec", "plan")
+STAGES = ("spec", "plan", "brief")
 ROOT_DOCS = ("REVIEW.md", "CLAUDE.md", "AGENTS.md")
 CONFIG_REL = ".egm/goldfish.json"
 FIELD_CAP = 120
 # EGM's own shortnames. Anything else must be a path under .egm/.
 REVIEWER_NAMES = frozenset({
     "zoom_out", "design_critic", "structural", "style", "comprehension",
-    "implementation_readiness", "codebase_details",
+    "implementation_readiness", "codebase_details", "inventive_catalyst",
 })
 STANDARD_NAMES = frozenset({
     "zoom-out-standard", "feature-spec-standard", "implementation-readiness-standard",
@@ -173,7 +179,14 @@ def default_stage(stage: str) -> dict:
     def s(name: str) -> str:
         return os.path.join(STARTERS, name)
 
-    if stage == "spec":
+    if stage == "brief":
+        reviewers = [s("architect.md"), s("security.md"), s("sponsor.md")]
+        standards = {
+            s("architect.md"): s("architect-standard.md"),
+            s("security.md"): s("security-standard.md"),
+            s("sponsor.md"): s("sponsor-standard.md"),
+        }
+    elif stage == "spec":
         reviewers = ["zoom_out", "design_critic", s("policy.md"), s("scope.md")]
         standards = {
             "zoom_out": "zoom-out-standard",
@@ -346,6 +359,35 @@ def to_repo_rel(repo: str, target: str) -> str:
     return os.path.relpath(real, repo)
 
 
+def reading_list(repo: str, names: list[str]) -> list[str]:
+    """The given repo-relative files that exist, then the root docs, each validated."""
+    reading: list[str] = []
+    for name in names + list(ROOT_DOCS):
+        if not os.path.lexists(os.path.join(repo, name)):
+            continue
+        if name in ROOT_DOCS:
+            reading.append(check_root_doc(repo, name))
+        else:
+            reading.append(check_rel(repo, name, "reading list"))
+    return list(dict.fromkeys(reading))
+
+
+def cmd_context(args: argparse.Namespace) -> int:
+    """Reading list for a design doc review (egm-review): root docs plus review.context."""
+    repo = repo_root(args.repo)
+    target = check_rel(repo, to_repo_rel(repo, args.target), "target")
+    extra: list[str] = []
+    cfg = load_config(repo)
+    if cfg is not None and cfg.get("review") is not None:
+        sec = cfg["review"]
+        if not isinstance(sec, dict) or not isinstance(sec.get("context", []), list):
+            raise Refuse(".egm/goldfish.json review: must be an object with a context list")
+        extra = [check_rel(repo, c, ".egm/goldfish.json review.context") for c in sec.get("context", [])]
+    context = [c for c in dict.fromkeys(reading_list(repo, []) + extra) if c != target]
+    print(json.dumps({"target": target, "context": context}, indent=2))
+    return 0
+
+
 def cmd_resolve(args: argparse.Namespace) -> int:
     repo = repo_root(args.repo)
     target = check_rel(repo, to_repo_rel(repo, args.target), "target")
@@ -357,24 +399,15 @@ def cmd_resolve(args: argparse.Namespace) -> int:
             if os.path.isabs(path):
                 check_starter(path, "default")
 
-    reading: list[str] = []
     tdir = os.path.dirname(target)
 
     def sibling(name: str) -> str:
         return f"{tdir}/{name}" if tdir else name
 
-    names = [sibling("intent.md")]
+    names = [] if args.stage == "brief" else [sibling("intent.md")]
     if args.stage == "plan":
         names.append(sibling("spec.md"))
-    names.extend(ROOT_DOCS)
-    for name in names:
-        if not os.path.lexists(os.path.join(repo, name)):
-            continue
-        if name in ROOT_DOCS:
-            reading.append(check_root_doc(repo, name))
-        else:
-            reading.append(check_rel(repo, name, "reading list"))
-    context = list(dict.fromkeys(reading + sect["context"]))
+    context = list(dict.fromkeys(reading_list(repo, names) + sect["context"]))
 
     custom = {
         p for p in sect["reviewers"] + list(sect["standards"].values())
@@ -418,6 +451,10 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 # EGM's own guide says a caller reads the SKILL.md and follows it; this finds it.
 EGM_ID = "egm@egm"
 EGM_LOOP = os.path.join("skills", "egm-review-loop", "SKILL.md")
+EGM_SKILLS = (
+    "egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report",
+    "egm-lite", "egm-resolve", "egm-review", "egm-review-loop",
+)
 
 
 def covers(entry: dict, repo: str) -> bool:
@@ -430,8 +467,20 @@ def covers(entry: dict, repo: str) -> bool:
     return real == repo or real.startswith(repo + os.sep)
 
 
-def egm_loop(repo: str) -> str | None:
-    """Path of egm-review-loop's SKILL.md in an enabled egm@egm install covering repo."""
+def skill_file(base: str, name: str) -> str | None:
+    """SKILL.md of one EGM skill under base, or None when missing, a symlink or outside base."""
+    path = os.path.join(base, "skills", name, "SKILL.md")
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return None
+    if stat.S_ISREG(st.st_mode) and os.path.realpath(path) == path and path.startswith(base + os.sep):
+        return path
+    return None
+
+
+def egm_install(repo: str) -> str | None:
+    """Root of an enabled egm@egm install covering repo whose review loop is a plain file."""
     try:
         # enabled is reported for the cwd's project, so list from the repo itself
         out = subprocess.run(["claude", "plugin", "list", "--json"], cwd=repo, capture_output=True,
@@ -447,18 +496,15 @@ def egm_loop(repo: str) -> str | None:
         if not covers(entry, repo) or not isinstance(entry.get("installPath"), str):
             continue
         base = os.path.realpath(entry["installPath"])
-        path = os.path.join(base, EGM_LOOP)
-        try:
-            st = os.lstat(path)
-        except OSError:
-            continue
-        if stat.S_ISREG(st.st_mode) and os.path.realpath(path).startswith(base + os.sep):
-            return path
+        if skill_file(base, "egm-review-loop"):
+            return base
     return None
 
 
 def cmd_egm(args: argparse.Namespace) -> int:
-    print(json.dumps({"egmLoop": egm_loop(repo_root(args.repo))}, indent=2))
+    base = egm_install(repo_root(args.repo))
+    skills = {name: (skill_file(base, name) if base else None) for name in EGM_SKILLS}
+    print(json.dumps({"egmLoop": skills["egm-review-loop"], "egmRoot": base, "skills": skills}, indent=2))
     return 0
 
 
@@ -517,6 +563,16 @@ def init_config() -> dict:
             },
             "context": [],
         },
+        "brief": {
+            "reviewers": [r + "architect.md", r + "security.md", r + "sponsor.md"],
+            "standards": {
+                r + "architect.md": s + "architect-standard.md",
+                r + "security.md": s + "security-standard.md",
+                r + "sponsor.md": s + "sponsor-standard.md",
+            },
+            "context": [],
+        },
+        "review": {"context": []},
     }
 
 
@@ -530,6 +586,12 @@ def cmd_init(args: argparse.Namespace) -> int:
         ("reviewers/scope.md", "scope.md"),
         ("standards/policy-standard.md", "policy-standard.md"),
         ("standards/scope-standard.md", "scope-standard.md"),
+        ("reviewers/architect.md", "architect.md"),
+        ("reviewers/security.md", "security.md"),
+        ("reviewers/sponsor.md", "sponsor.md"),
+        ("standards/architect-standard.md", "architect-standard.md"),
+        ("standards/security-standard.md", "security-standard.md"),
+        ("standards/sponsor-standard.md", "sponsor-standard.md"),
     ]
     bad = False
     for dest, src in plan:
@@ -575,9 +637,12 @@ def main(argv: list[str]) -> int:
     i.add_argument("--repo")
     e = sub.add_parser("egm")
     e.add_argument("--repo")
+    c = sub.add_parser("context")
+    c.add_argument("--target", required=True)
+    c.add_argument("--repo")
     try:
         args = ap.parse_args(argv)
-        return {"resolve": cmd_resolve, "init": cmd_init, "egm": cmd_egm}[args.cmd](args)
+        return {"resolve": cmd_resolve, "init": cmd_init, "egm": cmd_egm, "context": cmd_context}[args.cmd](args)
     except Refuse as exc:
         print(f"goldfish: refused: {exc}", file=sys.stderr)
         return 2

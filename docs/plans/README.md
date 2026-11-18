@@ -1,7 +1,7 @@
 # Planning documents
 
 Plans and notes that used to sit at the repo root, moved here with their file names unchanged.
-They are history and reference; new work starts from an intent under [`intent/`](../../intent/).
+They are history and reference; new work starts from an intent under `intent/`.
 
 | Document | What it is | Status |
 |---|---|---|

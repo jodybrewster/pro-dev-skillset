@@ -83,12 +83,36 @@ function fakeClaude(s, installs) {
   return { ...GIT_ENV, PATH: `${bin}:/usr/bin:/bin` };
 }
 
-function fakeEgm(s) {
+const EGM_SKILLS = [
+  "egm-bootstrap", "egm-brainstorm", "egm-draft", "egm-drift-report",
+  "egm-lite", "egm-resolve", "egm-review", "egm-review-loop",
+];
+
+// A fake EGM install with a SKILL.md for each named skill (the review loop by default).
+function fakeEgm(s, names = ["egm-review-loop"]) {
   const base = join(s.root, "egm-cache");
-  mkdirSync(join(base, "skills", "egm-review-loop"), { recursive: true });
-  writeFileSync(join(base, "skills", "egm-review-loop", "SKILL.md"), "# loop\n");
+  for (const n of names) {
+    mkdirSync(join(base, "skills", n), { recursive: true });
+    writeFileSync(join(base, "skills", n, "SKILL.md"), `# ${n}\n`);
+  }
   return base;
 }
+
+const skillPath = (base, n) => join(realpathSync(base), "skills", n, "SKILL.md");
+
+// Check j.skills has exactly the eight names, each the expected path or null.
+function skillsMatch(j, base, nulls = []) {
+  if (!j || !j.skills) return { ok: false, detail: `no skills: ${JSON.stringify(j)}` };
+  if (sorted(Object.keys(j.skills)).join() !== sorted(EGM_SKILLS).join()) return { ok: false, detail: `keys ${Object.keys(j.skills)}` };
+  for (const n of EGM_SKILLS) {
+    const want = nulls.includes(n) ? null : skillPath(base, n);
+    if (j.skills[n] !== want) return { ok: false, detail: `${n}: ${j.skills[n]}, wanted ${want}` };
+  }
+  return { ok: true };
+}
+
+const BRIEF = "intent/2026-01-01-demo/brief.md";
+const contextArgs = (s, target) => ["context", "--target", target, "--repo", s.repo];
 
 const egmEntry = (s, base, extra = {}) => ({ id: "egm@egm", scope: "project", enabled: true, installPath: base, projectPath: s.repo, ...extra });
 
@@ -428,6 +452,199 @@ const CASES = [
       const e = j.newOrChanged[0];
       if (/[\u0000-\u001f\u007f]/.test(e.author + e.path + e.commit)) return { ok: false, detail: `control chars in ${JSON.stringify(e)}` };
       return e.author.length <= 120 && e.path.length <= 120 ? { ok: true } : { ok: false, detail: `author length ${e.author.length}` };
+    },
+  },
+  {
+    id: "egm-all-skills-found",
+    run(s) {
+      const base = fakeEgm(s, EGM_SKILLS);
+      const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, [egmEntry(s, base)]) }).json;
+      if (!j || j.egmRoot !== realpathSync(base)) return { ok: false, detail: `egmRoot ${JSON.stringify(j)}` };
+      if (j.egmLoop !== skillPath(base, "egm-review-loop")) return { ok: false, detail: `egmLoop ${j.egmLoop}` };
+      return skillsMatch(j, base);
+    },
+  },
+  {
+    id: "egm-lite-missing-on-older-install",
+    run(s) {
+      const base = fakeEgm(s, EGM_SKILLS.filter((n) => n !== "egm-lite"));
+      const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, [egmEntry(s, base)]) }).json;
+      if (!j || j.egmRoot !== realpathSync(base)) return { ok: false, detail: `egmRoot ${JSON.stringify(j)}` };
+      return skillsMatch(j, base, ["egm-lite"]);
+    },
+  },
+  {
+    id: "egm-symlinked-skill-is-null-alone",
+    run(s) {
+      const base = fakeEgm(s, EGM_SKILLS);
+      const f = join(base, "skills", "egm-draft", "SKILL.md");
+      rmSync(f);
+      writeFileSync(join(s.root, "outside.md"), "x\n");
+      symlinkSync(join(s.root, "outside.md"), f);
+      const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, [egmEntry(s, base)]) }).json;
+      if (!j || j.egmRoot !== realpathSync(base)) return { ok: false, detail: `egmRoot ${JSON.stringify(j)}` };
+      return skillsMatch(j, base, ["egm-draft"]);
+    },
+  },
+  {
+    id: "egm-no-install-or-disabled-all-null",
+    run(s) {
+      const base = fakeEgm(s, EGM_SKILLS);
+      for (const [label, list] of [["disabled", [egmEntry(s, base, { enabled: false })]], ["not installed", []]]) {
+        const j = s.run(["egm", "--repo", s.repo], { env: fakeClaude(s, list) }).json;
+        if (!j || j.egmRoot !== null || j.egmLoop !== null) return { ok: false, detail: `${label}: ${JSON.stringify(j)}` };
+        const r = skillsMatch(j, base, EGM_SKILLS);
+        if (!r.ok) return { ok: false, detail: `${label}: ${r.detail}` };
+      }
+      return { ok: true };
+    },
+  },
+  {
+    id: "resolve-defaults-brief",
+    run(s) {
+      s.w(BRIEF, "# Brief\n"); s.w("REVIEW.md"); s.w("CLAUDE.md"); s.w("AGENTS.md");
+      const r = s.run(s.resolveArgs("brief", BRIEF));
+      if (r.code !== 0 || !r.json) return { ok: false, detail: `exit ${r.code}: ${r.err}` };
+      const j = r.json;
+      const starter = (n) => join(s.pluginRoot, "goldfish", n);
+      const want = ["architect", "security", "sponsor"].map((n) => starter(`${n}.md`));
+      if (JSON.stringify(j.reviewers) !== JSON.stringify(want)) return { ok: false, detail: `reviewers ${JSON.stringify(j.reviewers)}` };
+      for (const n of ["architect", "security", "sponsor"]) {
+        if (j.standards[starter(`${n}.md`)] !== starter(`${n}-standard.md`)) return { ok: false, detail: `standards ${JSON.stringify(j.standards)}` };
+      }
+      if (Object.keys(j.standards).length !== 3) return { ok: false, detail: `standards ${JSON.stringify(j.standards)}` };
+      if (![...j.reviewers, ...Object.values(j.standards)].every((p) => p.startsWith("/") && existsSync(p))) return { ok: false, detail: "starter paths are not absolute and present" };
+      if (sorted(j.context).join() !== ["AGENTS.md", "CLAUDE.md", "REVIEW.md"].join()) return { ok: false, detail: `context ${JSON.stringify(j.context)} (sibling intent.md must not be listed)` };
+      return j.newOrChanged.length === 0 ? { ok: true } : { ok: false, detail: `newOrChanged ${JSON.stringify(j.newOrChanged)}` };
+    },
+  },
+  {
+    id: "brief-config-section-used-and-tracked",
+    run(s) {
+      s.w(BRIEF, "# Brief\n");
+      s.w(".egm/reviewers/arch.md", "persona\n"); s.w(".egm/standards/arch-std.md", "rubric\n");
+      s.w(".egm/goldfish.json", JSON.stringify({
+        brief: { reviewers: [".egm/reviewers/arch.md"], standards: { ".egm/reviewers/arch.md": ".egm/standards/arch-std.md" }, context: [] },
+      }));
+      const r = s.run(s.resolveArgs("brief", BRIEF));
+      if (r.code !== 0 || !r.json) return { ok: false, detail: `exit ${r.code}: ${r.err}` };
+      const j = r.json;
+      if (JSON.stringify(j.reviewers) !== JSON.stringify([".egm/reviewers/arch.md"])) return { ok: false, detail: `reviewers ${JSON.stringify(j.reviewers)}` };
+      if (j.standards[".egm/reviewers/arch.md"] !== ".egm/standards/arch-std.md") return { ok: false, detail: `standards ${JSON.stringify(j.standards)}` };
+      const paths = sorted(j.newOrChanged.map((e) => e.path)).join();
+      const want = sorted([".egm/goldfish.json", ".egm/reviewers/arch.md", ".egm/standards/arch-std.md"]).join();
+      if (paths !== want) return { ok: false, detail: `newOrChanged ${paths}` };
+      const acc = s.run(s.resolveArgs("brief", BRIEF, ["--accept", "--token", j.acceptToken]));
+      return acc.code === 0 && acc.json.newOrChanged.length === 0 ? { ok: true } : { ok: false, detail: `accept exit ${acc.code} ${acc.err}` };
+    },
+  },
+  {
+    id: "accept-inventive-catalyst-shortname",
+    run(s) {
+      s.w(".egm/goldfish.json", config({ reviewers: ["inventive_catalyst"], standards: {} }));
+      const r = s.run(s.resolveArgs("spec", SPEC));
+      if (r.code !== 0) return { ok: false, detail: `exit ${r.code}: ${r.err}` };
+      return JSON.stringify(r.json.reviewers) === JSON.stringify(["inventive_catalyst"]) ? { ok: true } : { ok: false, detail: `reviewers ${JSON.stringify(r.json.reviewers)}` };
+    },
+  },
+  {
+    id: "init-writes-brief-files-and-sections",
+    run(s) {
+      const r = s.run(["init", "--repo", s.repo]);
+      if (r.code !== 0) return { ok: false, detail: `exit ${r.code}: ${r.err}${r.out}` };
+      for (const n of ["architect", "security", "sponsor"]) {
+        for (const f of [`reviewers/${n}.md`, `standards/${n}-standard.md`]) {
+          const p = join(s.repo, ".egm", f);
+          if (!existsSync(p)) return { ok: false, detail: `${f} missing` };
+          if (readFileSync(p, "utf8") !== readFileSync(join(s.pluginRoot, "goldfish", f.split("/")[1]), "utf8")) return { ok: false, detail: `${f} differs from its starter` };
+        }
+      }
+      const cfg = JSON.parse(readFileSync(join(s.repo, ".egm", "goldfish.json"), "utf8"));
+      const rv = ["architect", "security", "sponsor"].map((n) => `.egm/reviewers/${n}.md`);
+      if (JSON.stringify(cfg.brief && cfg.brief.reviewers) !== JSON.stringify(rv)) return { ok: false, detail: `brief ${JSON.stringify(cfg.brief)}` };
+      for (const n of ["architect", "security", "sponsor"]) {
+        if (cfg.brief.standards[`.egm/reviewers/${n}.md`] !== `.egm/standards/${n}-standard.md`) return { ok: false, detail: `brief standards ${JSON.stringify(cfg.brief.standards)}` };
+      }
+      if (JSON.stringify(cfg.review) !== JSON.stringify({ context: [] })) return { ok: false, detail: `review ${JSON.stringify(cfg.review)}` };
+      s.w(BRIEF, "# Brief\n");
+      const b = s.run(s.resolveArgs("brief", BRIEF));
+      if (b.code !== 0 || JSON.stringify(b.json.reviewers) !== JSON.stringify(rv)) return { ok: false, detail: `resolve brief exit ${b.code} ${b.err}` };
+      const c = s.run(contextArgs(s, SPEC));
+      return c.code === 0 ? { ok: true } : { ok: false, detail: `context does not accept the init output: ${c.err}` };
+    },
+  },
+  {
+    id: "init-twice-overwrites-nothing",
+    run(s) {
+      if (s.run(["init", "--repo", s.repo]).code !== 0) return { ok: false, detail: "first init failed" };
+      const files = ["goldfish.json", "reviewers/policy.md", "reviewers/scope.md", "standards/policy-standard.md", "standards/scope-standard.md",
+        ...["architect", "security", "sponsor"].flatMap((n) => [`reviewers/${n}.md`, `standards/${n}-standard.md`])];
+      for (const f of files) writeFileSync(join(s.repo, ".egm", f), `mine ${f}\n`);
+      const r = s.run(["init", "--repo", s.repo]);
+      if (r.code !== 0) return { ok: false, detail: `second init exit ${r.code}: ${r.err}` };
+      for (const f of files) {
+        if (readFileSync(join(s.repo, ".egm", f), "utf8") !== `mine ${f}\n`) return { ok: false, detail: `${f} was overwritten` };
+      }
+      const lines = r.out.trim().split("\n");
+      if (lines.length !== files.length || !lines.every((l) => has(l, "left alone"))) return { ok: false, detail: `output ${r.out}` };
+      return { ok: true };
+    },
+  },
+  {
+    id: "context-plain",
+    run(s) {
+      s.w("REVIEW.md"); s.w("CLAUDE.md", "rules\n");
+      symlinkSync("CLAUDE.md", join(s.repo, "AGENTS.md"));
+      const r = s.run(contextArgs(s, SPEC));
+      if (r.code !== 0 || !r.json) return { ok: false, detail: `exit ${r.code}: ${r.err}` };
+      if (sorted(Object.keys(r.json)).join() !== "context,target") return { ok: false, detail: `keys ${Object.keys(r.json)}` };
+      if (r.json.target !== SPEC) return { ok: false, detail: `target ${r.json.target}` };
+      if (sorted(r.json.context).join() !== "CLAUDE.md,REVIEW.md") return { ok: false, detail: `context ${JSON.stringify(r.json.context)}` };
+      const self = s.run(contextArgs(s, "REVIEW.md"));
+      return self.code === 0 && JSON.stringify(self.json.context) === JSON.stringify(["CLAUDE.md"])
+        ? { ok: true } : { ok: false, detail: `target REVIEW.md: exit ${self.code} ${self.err} ${JSON.stringify(self.json)}` };
+    },
+  },
+  {
+    id: "context-includes-review-context",
+    run(s) {
+      s.w("CLAUDE.md"); s.w("docs/extra.md");
+      s.w(".egm/goldfish.json", JSON.stringify({ review: { context: ["docs/extra.md", "CLAUDE.md", SPEC, "docs/extra.md"] } }));
+      const r = s.run(contextArgs(s, SPEC));
+      if (r.code !== 0 || !r.json) return { ok: false, detail: `exit ${r.code}: ${r.err}` };
+      return JSON.stringify(sorted(r.json.context)) === JSON.stringify(["CLAUDE.md", "docs/extra.md"])
+        ? { ok: true } : { ok: false, detail: `context ${JSON.stringify(r.json.context)}` };
+    },
+  },
+  {
+    id: "context-refuses-absolute-or-dotdot-entry",
+    run(s) {
+      writeFileSync(join(s.root, "outside.md"), "x\n");
+      const abs = join(s.root, "outside.md");
+      s.w(".egm/goldfish.json", JSON.stringify({ review: { context: [abs] } }));
+      const a = refused(s, contextArgs(s, SPEC), abs);
+      if (!a.ok) return { ok: false, detail: `absolute: ${a.detail}` };
+      s.w(".egm/goldfish.json", JSON.stringify({ review: { context: ["../outside.md"] } }));
+      const d = refused(s, contextArgs(s, SPEC), "../outside.md");
+      return d.ok ? d : { ok: false, detail: `dotdot: ${d.detail}` };
+    },
+  },
+  {
+    id: "context-refuses-target-outside-repo",
+    run(s) {
+      writeFileSync(join(s.root, "outside.md"), "x\n");
+      return refused(s, contextArgs(s, join(s.root, "outside.md")), "outside.md");
+    },
+  },
+  {
+    id: "context-refuses-malformed-review-section",
+    run(s) {
+      for (const review of [[], "docs", { context: "docs/extra.md" }]) {
+        s.w(".egm/goldfish.json", JSON.stringify({ review }));
+        const r = refused(s, contextArgs(s, SPEC), "review");
+        if (!r.ok) return { ok: false, detail: `${JSON.stringify(review)}: ${r.detail}` };
+      }
+      return { ok: true };
     },
   },
   {

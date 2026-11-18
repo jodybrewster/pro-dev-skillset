@@ -96,15 +96,17 @@ t("pro-egm with egm@egm prints spec and plan offers with the target filled", () 
   const p = run("plan", { target: "intent/a/plan.md" });
   must(p.out.includes("-> /pro-egm:goldfish intent/a/plan.md --stage plan"), p.out);
 });
-t("pro-egm prints nothing for intent and review", () => {
+t("pro-egm offers the brainstorm at intent and prints nothing at review", () => {
   setMarket(GOOD); setList([core(), egm(), install("egm@egm")]);
-  for (const s of ["intent", "review"]) must(run(s).out === "", s);
+  const i = run("intent");
+  must(i.out.includes("-> /pro-egm:brainstorm <topic>"), i.out);
+  must(run("review").out === "", "review");
 });
 t("pro-egm without egm@egm prints the needs line", () => {
   setMarket(GOOD); setList([core(), egm()]);
   const r = run("spec");
   must(r.out.trim() === "pro-egm needs egm@egm: run /pro-dev install", r.out);
-  must(run("intent").out === "", "intent should print nothing");
+  must(run("intent").out.trim() === "pro-egm needs egm@egm: run /pro-dev install", "intent should print the needs line");
 });
 t("a disabled egm@egm counts as not installed", () => {
   setMarket(GOOD); setList([core(), egm(), install("egm@egm", { enabled: false })]);

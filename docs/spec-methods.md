@@ -21,18 +21,18 @@ The OpenSpec lane is a candidate for comparison and is not installed by any plug
 
 | | pro-pdd (default) | pro-ai-sdlc | pro-egm | pro-speckit | pro-spdd |
 |---|---|---|---|---|---|
-| What it is | Plain Claude Code with a plan step: talk it through, approve a written plan, build it test first | A fuller loop for changes that need a record: intent, spec, plan, build, review | A review step added to the loop, not a separate loop | GitHub's spec-driven toolkit with its own loop | Structured Prompt-Driven Development with its own loop |
+| What it is | Plain Claude Code with a plan step: talk it through, approve a written plan, build it test first | A fuller loop for changes that need a record: intent, spec, plan, build, review | Google's design-first lifecycle: brainstorm, design doc, staged goldfish review, drift report; its review loop also plugs into pro-ai-sdlc | GitHub's spec-driven toolkit with its own loop | Structured Prompt-Driven Development with its own loop |
 | Upstream | Forked from [obra/superpowers](https://github.com/obra/superpowers) and [agent-skills](https://github.com/addyosmani/agent-skills), MIT | This repo, heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (PDF on that page) | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model), Apache-2.0 | [github/spec-kit](https://github.com/github/spec-kit), MIT | [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd), MIT |
 | How it ships | Built in (forked skills); lavish is a bridge | Built in | Bridge: Google's `egm@egm` plugin, installed as Google ships it | Bridge: spec-kit's `specify` CLI, pinned to a reviewed release | Adapted into this repo |
 | Comes with the starter | Yes | No | No | No | No |
-| Best for | The simplest path: most everyday work, ideas still being explored, quick features | Changes that should be checked against the repo's rules and signed off | A second opinion on a spec or plan from reviewers with no history | Teams already on spec-kit, or a project that wants a constitution and task lists | Client or team-facing work that needs a written story and a structured prompt |
-| Documents it writes | A design doc under `docs/superpowers/specs/` and a plan under `docs/plans/` | `intent/<id>-<slug>/intent.md` (or `intent/<date>-<slug>/` with no shortcode), `spec.md`, `plan.md` | Edits your spec or plan in place; a report in `goldfish_review_report.md` (left untracked) | `.specify/memory/constitution.md` once; `specs/<NNN>-<feature>/spec.md`, `plan.md`, `tasks.md` per feature | `spdd/analysis/`, `spdd/prompt/`, `spdd/review/` |
-| Who drives it | The skills trigger when you describe the work; `/adhd` and `/lavish` run on demand | You run each command; Claude asks before anything it commits | Offered at `/spec` and `/plan`; you accept or contest each finding | You type every `/speckit-*` command; the model cannot start them | You run each `/spdd-*` command |
-| Policy checks | None built in; the brainstorm asks for your approval of the design before any code | `/spec` checks `REVIEW.md`, `CLAUDE.md` and ADRs; a security challenge before risky plans | Your own goldfish can check policy (a starter policy reviewer is included) | spec-kit's constitution | REASONS Canvas safeguards and its code review |
+| Best for | The simplest path: most everyday work, ideas still being explored, quick features | Changes that should be checked against the repo's rules and signed off | Exploring a topic and weighing options before any change exists; a design doc read cold before anyone builds; a second opinion on a spec or plan | Teams already on spec-kit, or a project that wants a constitution and task lists | Client or team-facing work that needs a written story and a structured prompt |
+| Documents it writes | A design doc under `docs/superpowers/specs/` and a plan under `docs/plans/` | `intent/<id>-<slug>/intent.md` (or `intent/<date>-<slug>/` with no shortcode), `spec.md`, `plan.md` | `concepts_brief.md`, a design doc under `docs/designs/` that replaces spec.md and plan.md for that work, README contracts; review and drift reports left untracked | `.specify/memory/constitution.md` once; `specs/<NNN>-<feature>/spec.md`, `plan.md`, `tasks.md` per feature | `spdd/analysis/`, `spdd/prompt/`, `spdd/review/` |
+| Who drives it | The skills trigger when you describe the work; `/adhd` and `/lavish` run on demand | You run each command; Claude asks before anything it commits | You run each `/pro-egm:*` command; `/intent` offers the brainstorm and `/spec` and `/plan` offer the goldfish review; you accept or contest each finding | You type every `/speckit-*` command; the model cannot start them | You run each `/spdd-*` command |
+| Policy checks | None built in; the brainstorm asks for your approval of the design before any code | `/spec` checks `REVIEW.md`, `CLAUDE.md` and ADRs; a security challenge before risky plans | Your own goldfish can check policy (starter policy, scope, architect, security and sponsor reviewers are included) | spec-kit's constitution | REASONS Canvas safeguards and its code review |
 | Builds the code | `subagent-driven-development` and `test-driven-development` (pro-execution) | `/execute`, in its own worktree, then the PR | No | `/speckit-implement` | `/spdd-generate` |
 | Extra install | `lavish-axi` for plan review, through `/pro-pdd:install` | None | `egm@egm` | `uv` and the `specify` CLI | None |
-| Cost | Low; `/adhd` runs several branches in parallel | Low | Several reviewer subagents on the session model, up to five rounds | Low; one CLI install per machine | Low |
-| Codex | Skills load in Codex | Skills load; the slash commands are Claude Code only | EGM ships for Codex; run its review loop by hand | `specify init --integration codex` by hand | Skills load; the slash commands are Claude Code only |
+| Cost | Low; `/adhd` runs several branches in parallel | Low | Several reviewer subagents on the session model per review; the brainstorm's options research adds up to three web research subagents | Low; one CLI install per machine | Low |
+| Codex | Skills load in Codex | Skills load; the slash commands are Claude Code only | EGM ships for Codex: pick its skills in the skill picker and follow the bridge's running rules by hand | `specify init --integration codex` by hand | Skills load; the slash commands are Claude Code only |
 
 ## Which to pick
 
@@ -41,8 +41,8 @@ The OpenSpec lane is a candidate for comparison and is not installed by any plug
 - Move to pro-ai-sdlc when a change should be checked against the repo's rules and signed off.
   Install it with `claude plugin install pro-ai-sdlc@pro-dev-skillset` when a change needs a record.
   It keeps the intent, spec and plan together under `intent/` and gates risky plans with a security challenge.
-- Add pro-egm when a spec or plan has real design choices and you want it read cold before anyone builds it.
-  It does not replace the loop; it sharpens the documents the loop writes.
+- Add pro-egm when a topic needs discovery and options before it is a change, or a design needs to be read cold before anyone builds it.
+  Its brainstorm sits in front of `/intent`; for work that goes through EGM its design doc replaces `spec.md` and `plan.md`. Its review loop can still sharpen the documents pro-ai-sdlc writes.
 - Try pro-speckit when you want spec-kit's constitution, its clarify and analyze steps or its task lists, or when a project already uses spec-kit.
 - Use pro-spdd when the work is for a client or another team and needs a story with acceptance criteria and a prompt that stays in sync with the code.
 
@@ -77,16 +77,34 @@ Each step writes one file in `intent/<id>-<slug>/` (or `intent/<date>-<slug>/` i
 
 `/adr <decision>` records a decision that has no change behind it.
 
-## pro-egm: goldfish review
+## pro-egm: the Elephant-Goldfish lifecycle
 
-Google's Elephant-Goldfish Model reviews a document with fresh reviewers that see only the document and the files it points to.
+Google's Elephant-Goldfish Model splits design work between the elephant (the session that interviews you and designs) and the goldfish (fresh reviewers that see only the document and the files it points to).
+pro-egm has one command per EGM skill and reads each skill from the installed `egm@egm` plugin at run time.
+
+| Step | Command | Leaves |
+|---|---|---|
+| Map an existing codebase | `/pro-egm:bootstrap <dir>` | README contracts beside the code |
+| Explore a topic before it is a change | `/pro-egm:brainstorm <topic>` | `concepts_brief.md` with options, dated sources and an assumptions table |
+| Design doc from the brief | `/pro-egm:draft` | `docs/designs/<feature>.md` |
+| Staged review, stages 5 to 9 | `/pro-egm:review <doc>` | stage reports (untracked) |
+| Work through findings | `/pro-egm:resolve <doc>` | `goldfish_review_report.md` (untracked), approved edits |
+| Review one spec, plan or brief | `/pro-egm:goldfish <file>` | `goldfish_review_report.md` (untracked), approved edits |
+| Designs against the code | `/pro-egm:drift` | `<date>_DRIFT_REPORT.md` (untracked) |
+| A small change | `/pro-egm:lite <task>` | `egm_lite_checklist.md` (untracked), the change |
+
+The brainstorm adds to EGM's own interview: it reads what you supplied and reports before asking, covers business, functional and non-functional topics one open question at a time, turns unanswered questions into assumptions, researches patch, buy, open source and build options with a source and date for every claim and offers a second review by architect, security and compliance and sponsor goldfish.
+It ends by recommending `/pro-egm:draft` for work that goes through EGM or `/intent` for work that stays in the pro-ai-sdlc lane.
+No code is written before the design doc is approved.
+
+To use the review loop inside pro-ai-sdlc:
 
 1. Install `pro-egm@pro-dev-skillset`, then run `/pro-egm:install` (or `/pro-dev install` on a starter site), which installs `egm@egm` after showing what it carries.
 2. `/spec` and `/plan` now offer "run a goldfish review" before they commit.
    On yes, the reviewers check the draft, you accept or contest each finding and the fixes land in the draft.
    Open Blocker and Major findings move into the spec's Flagged concerns or the plan's Risks.
 3. Run `/pro-egm:goldfish <file>` on any spec, plan or design doc outside the loop.
-4. `/pro-egm:goldfish init` copies two starter goldfish into `.egm/`: a policy reviewer and a scope reviewer.
+4. `/pro-egm:goldfish init` copies the starter goldfish into `.egm/`: policy and scope reviewers for specs and plans, architect, security and compliance and sponsor reviewers for a brief.
    Edit them or add your own, then list them per stage in `.egm/goldfish.json`.
    Custom goldfish run read-only.
    A goldfish file that changed since your last run asks for your yes first.

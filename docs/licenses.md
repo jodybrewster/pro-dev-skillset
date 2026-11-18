@@ -109,7 +109,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-testing | qa-suite | [petrkindlmann/qa-skills](https://github.com/petrkindlmann/qa-skills) | MIT | Copyright (c) 2026 Petr Kindlmann | bridged |
 
 The pro-nextjs rows were closed on 2026-10-16.
-The three skills first adapted from vercel-labs/next-skills, a repository with no license file, are gone or rewritten: `next-cache-components` was removed in favor of the bridge, and `next-best-practices` and `next-upgrade` were rewritten from the MIT Next.js docs with no line left verbatim from the old source ([intent](../intent/2026-10-16-next-skills-bridge/intent.md)).
+The three skills first adapted from vercel-labs/next-skills, a repository with no license file, are gone or rewritten: `next-cache-components` was removed in favor of the bridge, and `next-best-practices` and `next-upgrade` were rewritten from the MIT Next.js docs with no line left verbatim from the old source (intent).
 
 ## Original plugins
 

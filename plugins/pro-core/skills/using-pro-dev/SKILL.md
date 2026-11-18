@@ -23,7 +23,7 @@ Task arrives
   │   ├ render plan/output as HTML ──→ lavish → lavish-axi engine (pro-pdd, bridge: /pro-dev install)
   │   ├ plan touches auth/data/input → security-architect, /threat-model (pro-security; hooks require a `## Security challenge` section before approval)
   │   ├ plan touches licensing/personal data/AI/scraping/payments → software-counsel, /legal-review (pro-legal, opt-in; hooks require a `## Legal review` section before approval)
-  │   ├ fresh-context spec/plan review → egm-bridge → egm@egm goldfish reviewers (pro-egm, opt-in, bridge: /pro-dev install)
+  │   ├ fresh-context spec/plan review or EGM brainstorm, design doc, drift report → egm-bridge → egm@egm (pro-egm, opt-in, bridge: /pro-dev install)
   │   ├ GitHub spec-kit flow (/speckit-specify, plan, tasks) → spec-kit-bridge (pro-speckit, opt-in, bridge: /pro-dev install or /pro-speckit:install)
   │   └ client/structured spec ──────→ open-SPDD branch (pro-spdd: story→analysis→reasons-canvas→generate→review/api-test→sync)
   ├ BUILD:

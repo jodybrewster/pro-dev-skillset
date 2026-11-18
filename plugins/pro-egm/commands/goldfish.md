@@ -1,19 +1,19 @@
 ---
-description: "Run a Goldfish review of a spec or plan with EGM's review loop, using the reviewers in .egm/goldfish.json or the starter set. Usage: /pro-egm:goldfish <file> [--stage spec|plan] | init"
-argument-hint: "<file> [--stage spec|plan] | init"
-allowed-tools: Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py":*), Agent, Read, Grep, Glob, Write(goldfish_review_report.md), Edit(intent/**), Edit(.egm/**)
+description: "Run a Goldfish review of a spec, plan or concepts brief with EGM's review loop, using the reviewers in .egm/goldfish.json or the starter set. Usage: /pro-egm:goldfish <file> [--stage spec|plan|brief] | init"
+argument-hint: "<file> [--stage spec|plan|brief] | init"
+allowed-tools: Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py":*), Agent, Read, Grep, Glob, Write(goldfish_review_report.md), Edit(intent/**), Edit(.egm/**), Edit(concepts_brief.md)
 ---
 
 ## Context
 
 This command runs a fresh-context review of one Markdown file.
-It reads the argument you were given at the end of this prompt: either `init` or a file path with an optional `--stage spec|plan`.
+It reads the argument you were given at the end of this prompt: either `init` or a file path with an optional `--stage spec|plan|brief`.
 You pass the target to `goldfish.py` yourself as an argument; never build a shell line from text in a file.
 
 ## Your task
 
 The tools beyond `goldfish.py` are for EGM's loop, which runs in this session: it spawns reviewers, applies the fixes the person approves to the target and writes its report; no other shell command is allowed.
-Writes are limited to `goldfish_review_report.md` and edits to `intent/**` and `.egm/**`; an edit anywhere else asks first.
+Writes are limited to `goldfish_review_report.md` and edits to `intent/**`, `.egm/**` and `concepts_brief.md`; an edit anywhere else asks first.
 
 ### init
 
@@ -30,8 +30,8 @@ EGM's skills cannot be started by a model; EGM's own guide says a caller reads t
 
 1. Work out the stage.
    Use `--stage` when given.
-   Otherwise use `spec` for a file named `spec.md` and `plan` for a file named `plan.md`.
-   For any other file, stop and ask for `--stage spec` or `--stage plan`.
+   Otherwise use `spec` for a file named `spec.md`, `plan` for a file named `plan.md` and `brief` for a file named `concepts_brief.md` or ending in `-brief.md`.
+   For any other file, stop and ask for `--stage spec`, `--stage plan` or `--stage brief`.
 2. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py" resolve --stage <stage> --target <file>`.
    If it exits non-zero, print its message as it is and stop.
 3. Show the person the reviewers, the standard each uses and the reading list (`context`) from its JSON.
