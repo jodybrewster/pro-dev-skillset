@@ -72,6 +72,12 @@ They fall into a small number of kinds:
 
 The fresh-context design challenge then found two blocking gaps and 17 required changes that the authoring sessions had missed, among them: nothing stated who authorizes a result view, a feature flag that failed into the blocking path, inbound feeds trusted unevenly and no recovery path for human decisions after a restore.
 
+A survey of the public skill ecosystem in November 2026 found no community-standard solution architect skill to adopt instead.
+Adoption concentrates in three places: design-before-code workflow skills (obra/superpowers `brainstorming` and `writing-plans`, mattpocock/skills), narrow architecture primitives (wshobson/agents `architecture-patterns`, `architecture-decision-records` and its C4 plugin, the `architecture` and `system-design` skills in Anthropic's engineering plugin) and vendor skills (the `aws-well-architected-review` skill in Agent Toolkit for AWS, `deploy-on-aws` in awslabs/agent-plugins for pricing and diagrams).
+Skills actually named solution architect or senior architect are many, near-duplicate and little used.
+No widely adopted bundle runs requirements, options, decision records, diagrams, a framework review and cost as one pipeline.
+The gaps the survey names match the engagement: non-functional requirement elicitation, option and trade-off matrices that carry cost, deliverables an executive can read, decision records and diagrams kept current across runs, and evals that show the skill beats the baseline.
+
 None of this is specific to that engagement.
 It is the gap between writing architecture documents and doing an architect's job.
 It will repeat on the next engagement unless the method lives in a skill.
@@ -133,6 +139,11 @@ Before the work is called finished the agent has rendered and looked at every di
 It has listed what remains unverified.
 It ends with the one diagram, one worked example and the decisions needed from the sponsor.
 
+The skill is a thin orchestrator.
+It owns the order of work, the discovery interview, the options evaluation, the recommendation and the checks.
+For patterns, decision records, C4 diagrams, a cloud framework review and cost estimates it calls an installed companion skill when one is present and falls back to its own short procedure when none is.
+Decision records and the diagram model live in the repository being worked on and are updated when the design changes, so a later session starts from them.
+
 ## Affected users and systems
 
 - One existing domain plugin gains the skill, its routing cases and a version bump in both manifests and the marketplace entry.
@@ -148,7 +159,10 @@ It ends with the one diagram, one worked example and the decisions needed from t
 - It carries method and checks first. The only presentation assets it ships are the default theme and the design spec outline; no per-deliverable document templates.
 - The default theme is original to this repository and names no client. A client's brand is applied per engagement from that client's material and is never stored in the plugin.
 - Research uses the marketplace's existing research command and skills where installed and cites sources with dates. Product facts, prices and licences are never stated from memory.
-- It hands off to existing skills instead of restating them: security challenge, code review, verification, debugging and ADRs.
+- It hands off to existing skills instead of restating them: security challenge, code review, verification, debugging and ADRs. `brainstorming` and `writing-plans` in `pro-pdd` already carry the design-first gate and are reused, not copied.
+- External skills are optional companions listed in the engine registry, never hard dependencies on another marketplace. The skill works with none of them installed.
+- A companion is a supply-chain decision: each one is read before it is listed, pinned to a commit and checked against the registry's audit results. One popular architecture skill fails one of three auditors there.
+- Cloud and vendor content stays in the vendor's own skill. The orchestrator is cloud-neutral and calls the vendor skill for the framework review, pricing and icon diagrams.
 - The interview is with the person directing the work, not with their client. Reading and reporting come first, questions come one at a time and the person can end the interview at any point; what is left becomes stated assumptions.
 - Code before discovery and options is a rule violation the skill names, with one exception: a read-only script that measures the existing system.
 - It prefers a proven library for a solved problem, even in a prototype. Zero dependencies is a weak reason.
@@ -162,6 +176,8 @@ It ends with the one diagram, one worked example and the decisions needed from t
 - A solution architect subagent or a slash command. The skill comes first; an agent is a later intent if the fresh-context pass needs one of its own.
 - A full design system, slide framework or per-client theme library.
 - Domain packs for identity resolution, health data or any one industry.
+- Reference architectures for agentic AI on AWS or any other cloud. The survey names this as an unfilled gap; it is a separate intent that would sit on top of this skill.
+- Formal document templates for a solution architecture document, high-level design or proposal response.
 - Changes to `security-architect` or to the review skills.
 - Coaching the person on how to direct agents or present to a panel.
 
@@ -177,14 +193,18 @@ It ends with the one diagram, one worked example and the decisions needed from t
 
 - Which plugin holds it. ADR-0013 says the narrowest layer whose every user would want it, which points at the software domain: `pro-execution` or `pro-quality` today. A new `pro-architecture` plugin is not justified by one skill. `/spec` decides.
 - The name: `solution-architect` matches `security-architect` and the words people type. `/spec` confirms it against the routing gate.
+- Which companions make the first list. The survey's candidates are Anthropic's engineering plugin, the wshobson pattern, decision record and C4 pieces, the AWS Well-Architected review and the AWS pricing and diagram plugin. Each needs the read, the pin and a licence row before it is listed.
+- Whether the non-functional interview uses quality attribute scenarios in the ATAM style or a plainer checklist.
+- Whether an A/B eval against the baseline model is a merge requirement for this skill, as the survey suggests, or follows once PDS-57 session grading exists.
 - Whether the theme and design spec live inside this skill as sidecar files or in a companion document-writer skill that this one calls. Two skills may mean two intents.
 - How deep the options research goes by default and what it may spend, since deep research costs tokens and time. The person sets the cap.
 - Whether one skill covers both the full engagement and a single request such as "document the current system", or whether modes with sidecar files serve better, as `security-architect` does with challenge and diff.
 - Whether the fresh-context design challenge is a general architecture challenge the new skill owns or stays the security one with a wider brief.
-- Whether the behavioral case is required before merge or follows once PDS-57 session grading exists.
 - The engagement's reviewers have not given their feedback yet. The skill should be revised once they have. That revision is its own change.
 
 ## Evidence
 
 All from a private repository and not copied here: the verdict of the person who directed the work, given on 2026-11-18, the engagement's AI log with its 15 numbered mistakes and how each was caught, the agentic reviews file of 2026-11-09 (4 code defects, 10 security findings, 2 blocking and 17 required design changes), 13 exported session transcripts from both agents, the deck design spec and the project document-writer skill written during the engagement and a memory note of 2026-11-11 on library choice in prototypes.
-Counts quoted above come from those files: 4 hours 40 minutes to the first slice, about 92,000 words of HTML, a 36,000-word design document and five coverage questions in the main session.
+The ecosystem survey is a research note of November 2026 supplied by the maintainer.
+Its install and star counts come from registry snapshots that disagree with each other and none was re-checked here, so no figure from it is quoted above; `/spec` verifies any that the design relies on.
+Counts quoted above come from the engagement's files: 4 hours 40 minutes to the first slice, about 92,000 words of HTML, a 36,000-word design document and five coverage questions in the main session.
