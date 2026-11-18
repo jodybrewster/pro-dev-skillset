@@ -76,7 +76,7 @@ A survey of the public skill ecosystem in November 2026 found no community-stand
 Adoption concentrates in three places: design-before-code workflow skills (obra/superpowers `brainstorming` and `writing-plans`, mattpocock/skills), narrow architecture primitives (wshobson/agents `architecture-patterns`, `architecture-decision-records` and its C4 plugin, the `architecture` and `system-design` skills in Anthropic's engineering plugin) and vendor skills (the `aws-well-architected-review` skill in Agent Toolkit for AWS, `deploy-on-aws` in awslabs/agent-plugins for pricing and diagrams).
 Skills actually named solution architect or senior architect are many, near-duplicate and little used.
 No widely adopted bundle runs requirements, options, decision records, diagrams, a framework review and cost as one pipeline.
-The gaps the survey names match the engagement: non-functional requirement elicitation, option and trade-off matrices that carry cost, deliverables an executive can read, decision records and diagrams kept current across runs, and evals that show the skill beats the baseline.
+The gaps the survey names match the engagement: non-functional requirement elicitation, option and trade-off matrices that carry cost, deliverables an executive can read, decision records and diagrams kept current across runs, plus evals that show the skill beats the baseline.
 
 None of this is specific to that engagement.
 It is the gap between writing architecture documents and doing an architect's job.
