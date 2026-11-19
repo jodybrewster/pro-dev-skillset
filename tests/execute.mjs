@@ -162,6 +162,14 @@ export function runExecuteCases() {
     git(g, "commit", "-q", "-m", "bad id");
     r = run("execute-gate.py", [join(g, "intent/TST-6-bad/plan.md")], g);
     add("g18 a malformed id: is read as no id", "bad", r, r.status === 0 && r.json?.branch === "bad" && r.json?.change_id === null);
+    write(join(g, "intent/TST-5-two/intent.md"), intentMd("TST-5"));
+    git(g, "add", "-A");
+    git(g, "commit", "-q", "-m", "a second TST-5");
+    r = run("execute-gate.py", [join(g, oneRel)], g);
+    add("g19 an intent whose id another intent also carries stops and names the renumber line", "stop", r,
+      r.status === 1 && /TST-5 is used by/.test(r.stderr) && /ids\.py renumber/.test(r.stderr));
+    r = run("execute-gate.py", [join(g, noRel)], g);
+    add("g20 an intent with no id is not stopped by a shared id elsewhere", "plain", r, r.status === 0 && r.json?.branch === "plain");
 
     // ── copy-env.py ──
     const m = repoWithOrigin(sandbox, "app", {

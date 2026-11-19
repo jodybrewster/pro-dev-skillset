@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Portable pro dev skill stack",
-    "version": "1.104.1"
+    "version": "1.105.0"
   },
   "allowCrossMarketplaceDependenciesOn": [
     "claude-plugins-official"
@@ -24,7 +24,7 @@
       "name": "pro-ai-sdlc",
       "source": "./plugins/pro-ai-sdlc",
       "description": "The AI-native SDLC as one stack-agnostic plugin. Stage commands: /intent (interview an idea or bug into intent/<id>-<slug>/intent.md, or intent/<date>-<slug>/ in a repo with no shortcode), /spec, /plan, /execute (build an approved plan in its own worktree and open the PR, never merge), /adr (record a decision with no change behind it), /review (REVIEW.md's bug, security and compliance passes), /pr-babysit (loop a PR to green, never merge); repo setup for the loop moved to /pro-dev install in pro-core. The templates the commands read ship as files under templates/ (intent, spec, plan, adr, REVIEW) so other tools can read them. Subagents: researcher (haiku), verifier (sonnet), simplifier (sonnet) and reviewer (opus). Four hooks ship in warn mode behind the mode files: protect-tests (no test edits in fix mode), plan-sync (a Stop hook that flags code changed with no plan.md update), production-gate (flags push to main, deploys, publishes and merges) and change-id (flags a commit on a change-id branch whose subject does not start with the id). /execute pauses before steps that touch auth, migrations, payments, deploys or secrets unless the plan's Risks names them; every plan cites references/definition-of-done.md. A doubt-driven-development skill sends a hard-to-undo build step to a fresh-context reviewer before the next step, with an optional Codex second opinion.",
-      "version": "0.22.0",
+      "version": "0.23.0",
       "category": "development",
       "strict": true
     },
@@ -32,7 +32,7 @@
       "name": "pro-ai-sdlc-egm",
       "source": "./plugins/pro-ai-sdlc-egm",
       "description": "Experimental: the AI-native SDLC loop with Google's Elephant-Goldfish Model as the design step, in three commands. /intent records what a person wants (an idea, a bug, a brief or a PRD), with an optional EGM brainstorm first. /design writes one living design file per feature under docs/designs/ through EGM's draft, has the goldfish review it and records approvals by role against the exact version approved. /execute writes the build ticket from the approved design, builds it test-first in its own worktree and opens the pull request, never merging. A started copy of pro-ai-sdlc: /review, /pr-babysit, /adr, /incident, /plan and /auto ship too, with the same hooks, so enable this plugin or pro-ai-sdlc in a repo and never both. Needs pro-egm and egm@egm for the brainstorm, draft and goldfish review.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "category": "development",
       "strict": true
     },
