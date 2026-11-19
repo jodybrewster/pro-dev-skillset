@@ -36,6 +36,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import factory  # noqa: E402
+import ids  # noqa: E402
 
 RECORD = "design-record.json"
 ID_RE = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*$")
@@ -64,8 +65,11 @@ def resolve_intent(root, arg):
     base = os.path.join(root, "intent")
     if ID_RE.match(arg):
         hits = sorted(d for d in (os.listdir(base) if os.path.isdir(base) else []) if d.startswith(arg + "-"))
-        if len(hits) != 1:
-            raise Refuse(f"design: {len(hits)} folders under intent/ start with {arg}-")
+        if len(hits) > 1:
+            raise Refuse(f"design: {len(hits)} folders under intent/ start with {arg}-: " + ", ".join(hits)
+                         + "; name the folder, or give one a new id with ids.py renumber")
+        if not hits:
+            raise Refuse(f"design: no folder under intent/ starts with {arg}-")
         arg = os.path.join(base, hits[0])
     elif os.sep not in arg and "/" not in arg and os.path.isdir(os.path.join(base, arg)):
         arg = os.path.join(base, arg)
@@ -209,6 +213,9 @@ def state(root, arg):
            "design": None, "sha": None, "committed": False, "review": None, "open_findings": None,
            "open_concerns": 0, "required": list(REQUIRED[min(level, 3)]), "approved": [], "missing": [],
            "reasons": []}
+    for shared, folders in ids.duplicates(root) if out["id"] else []:
+        if shared == out["id"]:
+            out["reasons"].append(ids.duplicate_line(shared, folders).replace("ids: ", "", 1))
     raw = fm.get("design", "").strip()
     if not raw:
         out["reasons"].append("the intent names no design file; /design writes one")

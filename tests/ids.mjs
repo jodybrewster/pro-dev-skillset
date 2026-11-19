@@ -267,6 +267,77 @@ export function runIdsCases() {
         r.status === 1 && /2026-01-01-a/.test(r.stderr) && git(fx.repo, "status", "--porcelain").stdout.trim() === "", brief(r));
     }
 
+    // ── claim: the id is taken on origin the moment it is handed out ──
+    {
+      const fx = repoWithOrigin("claim", { "intent/project.json": PROJECT(), "intent/TST-3-a/intent.md": intentText({ id: "TST-3" }) });
+      const remoteRef = (id) => git(fx.repo, "ls-remote", "origin", `refs/change-ids/${id}`).stdout.trim();
+      let r = ids(["claim"], fx.repo);
+      add("claim/the next id is printed and claimed on origin", "TST-4 and a ref on origin",
+        r.status === 0 && r.stdout.trim() === "TST-4" && /TST-4 is claimed on origin/.test(r.stderr) && remoteRef("TST-4") !== "", brief(r));
+      // A second person in another clone has seen no intent file for TST-4, only the claim.
+      const other = join(sandbox, "claim-other");
+      git(sandbox, "clone", "-q", fx.origin, other);
+      r = ids(["claim"], other);
+      add("claim/a second clone that sees only the claim gets the next number", "TST-5", r.status === 0 && r.stdout.trim() === "TST-5", brief(r));
+      r = ids(["next"], fx.repo);
+      add("next/claims on origin count", "TST-6", r.status === 0 && r.stdout.trim() === "TST-6", brief(r));
+      // The race itself: the ref appears between reading the highest id and pushing the claim.
+      const race = spawnSync("python3", ["-I", "-c",
+        "import sys\nsys.path.insert(0, sys.argv[1])\nimport ids\nprint(ids.push_claim(sys.argv[2], 'TST-5'))\nprint(ids.push_claim(sys.argv[2], 'TST-6'))",
+        dirname(IDS), fx.repo], { encoding: "utf8", env: ENV, timeout: 60_000 });
+      add("claim/a push for an id someone else holds is refused, a free one is taken", "(False, 'taken') then (True, '')",
+        race.stdout.trim() === "(False, 'taken')\n(True, '')", race.stdout + race.stderr);
+      const held = remoteRef("TST-5");
+      spawnSync("python3", ["-I", "-c", "import sys\nsys.path.insert(0, sys.argv[1])\nimport ids\nids.push_claim(sys.argv[2], 'TST-5')", dirname(IDS), other], { encoding: "utf8", env: ENV, timeout: 60_000 });
+      add("claim/a refused claim leaves the holder's ref as it was", "same sha", remoteRef("TST-5") === held, `${held} -> ${remoteRef("TST-5")}`);
+      const who = git(fx.repo, "fetch", "-q", "origin", "refs/change-ids/TST-4:refs/tmp/claim");
+      const author = git(fx.repo, "log", "-1", "--format=%an <%ae>", "refs/tmp/claim").stdout.trim();
+      add("claim/the claim carries no person's name", "change-id <change-id@localhost>", who.status === 0 && author === "change-id <change-id@localhost>", author);
+      git(fx.repo, "remote", "set-url", "origin", join(sandbox, "claim-gone.git"));
+      r = ids(["claim"], fx.repo);
+      add("claim/an unreachable origin still prints an id and says it is not claimed", "exit 0, not claimed",
+        r.status === 0 && ID_RE.test(r.stdout.trim()) && /not claimed on origin/.test(r.stderr), brief(r));
+    }
+    // ── history: a deleted intent keeps its number ──
+    {
+      const fx = repoWithOrigin("gone", { "intent/project.json": PROJECT(), "intent/TST-2-a/intent.md": intentText({ id: "TST-2" }), "intent/TST-9-b/intent.md": intentText({ id: "TST-9" }) });
+      git(fx.repo, "rm", "-q", "-r", "intent/TST-9-b");
+      git(fx.repo, "commit", "-q", "-m", "TST-9: done, folder removed");
+      git(fx.repo, "push", "-q", "origin", "main");
+      let r = ids(["next"], fx.repo);
+      add("next/an intent folder deleted after it merged still counts", "TST-10", r.status === 0 && r.stdout.trim() === "TST-10", brief(r));
+      // A date-named folder carried its id in the commit subject only.
+      write(join(fx.repo, "intent", "2026-02-01-c", "intent.md"), intentText({ id: "TST-14" }));
+      git(fx.repo, "add", "-A");
+      git(fx.repo, "commit", "-q", "-m", "TST-14: intent: c");
+      git(fx.repo, "rm", "-q", "-r", "intent/2026-02-01-c");
+      git(fx.repo, "commit", "-q", "-m", "TST-14: removed");
+      r = ids(["next"], fx.repo);
+      add("next/an id that opens the subject of the commit that added a deleted intent counts", "TST-15", r.status === 0 && r.stdout.trim() === "TST-15", brief(r));
+    }
+    // ── check and renumber: two intents that share an id ──
+    {
+      const fx = repoWithOrigin("dup", {
+        "intent/project.json": PROJECT(),
+        "intent/TST-4-due-dates/intent.md": intentText({ id: "TST-4", created: "2026-01-02T10:00:00-0500" }),
+        "intent/TST-4-priority/intent.md": intentText({ id: "TST-4", created: "2026-01-03T10:00:00-0500" }),
+        "intent/TST-4-priority/plan.md": "---\nid: TST-4\n---\n\n# Plan: priority\n",
+      });
+      let r = ids(["check"], fx.repo);
+      add("check/two intents with one id exit 1 and name the later one to renumber", "exit 1 naming TST-4-priority",
+        r.status === 1 && /TST-4 is used by intent\/TST-4-due-dates\/ and intent\/TST-4-priority\//.test(r.stderr) && /renumber intent\/TST-4-priority/.test(r.stderr), brief(r));
+      r = ids(["renumber", "intent/TST-4-priority"], fx.repo);
+      const moved = join(fx.repo, "intent", "TST-5-priority");
+      add("renumber/the folder, the intent and the plan carry the new claimed id", "TST-4 -> TST-5 in the three places",
+        r.status === 0 && /TST-4 -> TST-5/.test(r.stdout) && existsSync(moved) && !existsSync(join(fx.repo, "intent", "TST-4-priority")) &&
+        frontmatterOf(readFileSync(join(moved, "intent.md"), "utf8")).id === "TST-5" && frontmatterOf(readFileSync(join(moved, "plan.md"), "utf8")).id === "TST-5" &&
+        git(fx.repo, "ls-remote", "origin", "refs/change-ids/TST-5").stdout.trim() !== "", brief(r));
+      r = ids(["check"], fx.repo);
+      add("check/after the renumber nothing is shared", "exit 0 and silence", r.status === 0 && r.stderr === "", brief(r));
+      r = ids(["renumber", "intent/nope"], fx.repo);
+      add("renumber/a folder with no intent exits 1", "exit 1", r.status === 1 && /no intent at/.test(r.stderr), brief(r));
+    }
+
     // ── changeIdProblems: the rule checks["change-ids"] runs on this repo ──
     {
       const fixture = (name, files) => {

@@ -34,6 +34,7 @@ The window left is an intent uncommitted in another worktree or committed but un
 Every script that reads a folder name has to accept two forms for as long as date folders exist.
 Evidence keys built from an id-named folder are lowercased to keep the key charset of ADR-0023.
 Changing the shortcode means a new decision and a migration of every id, which the check makes visible.
+[ADR-0030](./0030-claimed-change-ids.md) closes that window with a claim on origin, counts deleted intents and allows a renumber to separate two intents given the same id.
 Reverse it if allocation from git produces duplicates often enough that a counter service is cheaper or if mieruka moves to its own ids.
 
 ## Alternatives considered

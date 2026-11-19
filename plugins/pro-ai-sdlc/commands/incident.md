@@ -1,7 +1,7 @@
 ---
 description: "Turn an incident into an incident record, a new intent and a regression test plan: interview, preserve evidence outside git, scan for credentials and commit incident.md and intent.md together. Usage: /incident <what happened>"
 argument-hint: "<what happened, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config user.name), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write(intent/**), Write(.pro-dev/incidents/**)
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config user.name), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" claim), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write(intent/**), Write(.pro-dev/incidents/**)
 ---
 
 ## Context
@@ -50,7 +50,7 @@ Never invent numbers, users or times.
 ### 2. Keep the raw evidence out of git
 
 Pick a slug of two to five lowercase words joined by hyphens.
-When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next` and set the folder name to `<id>-<slug>`; repeat the line it prints on stderr and stop if it exits 1.
+When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" claim` and set the folder name to `<id>-<slug>`; it claims the id on origin so nobody else is given the same number. Repeat the line it prints on stderr and stop if it exits 1.
 Otherwise set the folder name to `<YYYY-MM-DD>-<slug>` with today's date.
 Pick another slug if `intent/<folder>` exists.
 The evidence key is `incident-<folder>` in lowercase.

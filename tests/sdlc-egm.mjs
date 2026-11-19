@@ -307,6 +307,18 @@ export function runSdlcEgmCases() {
     r = py(base, DESIGN, "pending", "--missing", "plan");
     add("pending-outside-a-repo-is-quiet", "exit 0 and no output", r.status === 0 && r.stdout === "", r.stdout + r.stderr);
 
+    // --- two intents that share an id ----------------------------------------------------------
+    write("intent/TDO-9-sort-again/intent.md", intent({ id: "TDO-9", title: "Sort again", risk: "low", outcome: "Tasks sort twice." }));
+    commit("TDO-9: intent: sort-again");
+    r = d("status", "TDO-9");
+    add("shared-id-by-id-names-both", "exit 2 naming both folders and renumber", r.status === 2 && /TDO-9-sort-again/.test(r.stderr) && /TDO-9-sort-tasks/.test(r.stderr) && /renumber/.test(r.stderr), r.stdout + r.stderr);
+    r = d("status", "intent/TDO-9-sort-tasks");
+    add("shared-id-is-a-reason", "a reason that names the id and the renumber line", r.status === 0 && /TDO-9 is used by/.test(r.stdout) && /renumber/.test(r.stdout), r.stdout + r.stderr);
+    write("intent/TDO-9-sort-tasks/plan.md", plan("TDO-9"));
+    commit("TDO-9: plan: sort-tasks");
+    r = py(repo, GATE, "intent/TDO-9-sort-tasks/plan.md");
+    add("gate-stops-on-a-shared-id", "exit 1: TDO-9 is used by two intents", r.status === 1 && /TDO-9 is used by/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+
     // A context line that changes directory through a command substitution, or loops, fails Claude
     // Code's permission check and the command never starts.
     const commands = join(ROOT, "plugins", "pro-ai-sdlc-egm", "commands");

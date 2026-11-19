@@ -1,7 +1,7 @@
 ---
 description: "Brainstorm an idea or bug until it is concrete, then write and commit intent/<id>-<slug>/intent.md (intent/<date>-<slug>/ in a repo with no shortcode) from the shared intent template. Usage: /intent <idea or bug, in a sentence or two>"
 argument-hint: "<idea or bug, in a sentence or two>"
-allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write
+allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/methods.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" claim), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write
 ---
 
 ## Context
@@ -62,8 +62,9 @@ If the idea is empty, ask for it first.
 Pick a slug of two to five lowercase words joined by hyphens.
 Then name the folder, called `<folder>` below:
 
-- When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next`.
-  It prints the change id (for example `PDS-51`) and one line on stderr saying where the number came from or that it was allocated offline from the last fetch; repeat that line to the person.
+- When `intent/project.json` exists at the repo root, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" claim`.
+  It prints the change id (for example `PDS-51`) and claims it on origin, so two people who start at the same moment never get the same number; the claim pushes no file.
+  It prints one line on stderr saying the id is claimed, or that origin could not be reached and it is not; repeat that line to the person.
   `<folder>` is `<id>-<slug>` and the file gets `id: <id>` as its first frontmatter key.
   If it exits 1, show its message and stop: the shortcode in `intent/project.json` is fixed before any id is allocated.
 - Otherwise `<folder>` is `<YYYY-MM-DD>-<slug>` with today's date and the template's `id:` line is deleted.

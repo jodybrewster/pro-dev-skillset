@@ -98,6 +98,12 @@ def main():
     if not slug:
         stop(f"cannot name a branch from {intent_dir or 'the repo root'}")
     cid = change_id(os.path.join(top, intent_dir, "intent.md"))
+    if cid:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import ids
+        for shared, folders in ids.duplicates(top):
+            if shared == cid:
+                stop(ids.duplicate_line(shared, folders).replace("ids: ", "", 1))
     module = re.match(r"^plan-(.+)\.md$", os.path.basename(rel))
     branch = slug if not cid else f"{cid}/build-{module.group(1)}" if module else f"{cid}/build"
     if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0:

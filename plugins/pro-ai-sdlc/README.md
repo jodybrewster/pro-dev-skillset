@@ -47,10 +47,15 @@ Tools read the id from frontmatter and never from the folder name.
 Every script that reads a folder accepts both forms.
 Without the file the loop works as before with date folders.
 
-- `scripts/ids.py next` fetches origin with a 10 second timeout and prints the highest id on every origin ref, every local branch and the working tree plus one; offline it allocates from the last fetch and says so.
+- `scripts/ids.py claim` prints the next id and claims it on origin by pushing an empty commit to `refs/change-ids/<id>`, which succeeds only when nobody holds that ref ([ADR-0030](../../docs/decisions/0030-claimed-change-ids.md)).
+  Two people who start an intent at the same moment get different numbers; with origin out of reach the id is printed and a line says it is not claimed.
+- `scripts/ids.py next` prints the same number and claims nothing.
+  Both count the ids on every origin ref, every local branch and the working tree, the claims on origin and every intent folder git history ever added, so a deleted intent keeps its number.
+- `scripts/ids.py check` exits 1 when two intents share an id and names the later one; the execute gate stops a build for either.
+- `scripts/ids.py renumber <folder>` claims a new id for that intent, renames its folder and rewrites its `id:` lines; it commits nothing.
 - `scripts/ids.py backfill` prints the ids it would give intents that have none, in `created:` order; `--write` inserts each as the first frontmatter line.
 
-An id is never reused: a dropped intent keeps its folder and its number.
+An id is never reused: a dropped or deleted intent keeps its number.
 
 ## Building a plan
 
