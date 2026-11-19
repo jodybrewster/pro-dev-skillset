@@ -99,7 +99,7 @@ rank-1: 70/88 (79.5%)  top-k: 84/88 (95.5%)  notOneOf failures: 3
 ✔ Validation passed
 ```
 
-Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 20 times.
+Step 2 prints `✔ Validation passed` once and step 3 prints it once per plugin directory, 22 times.
 CI runs these automatically on PR (see `.github/workflows/`).
 The behavioral and plugin evals spend tokens and run on demand; see [docs/evals.md](./docs/evals.md).
 Before opening a PR that adds a skill or changes a skill's description or body, remind the person that running those live evals first is best practice, name the command for the plugin it touches (`node tests/run-evals.mjs <plugin>`, plus `node tests/behavioral.mjs <skill> --baseline` when the skill has a behavioral case) and the rough cost.

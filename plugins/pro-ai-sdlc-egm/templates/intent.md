@@ -1,0 +1,69 @@
+---
+id: <change id, or delete this line when the repo has no intent/project.json>
+source: <idea | ticket <ID> | incident <ID>>
+kind: <bug | idea | change>
+breaking: <true | false>
+status: draft
+risk: <low | medium | high>
+level: <1 | 2 | 3>
+brief: <repo path of the brief this came from, or delete this line>
+design: <repo path of the design file this changes, written by /design, or delete this line>
+created: <ISO 8601 timestamp with offset>
+author: <name>
+---
+
+# Intent: <short title in sentence case>
+
+Author: <name (team)>.
+Source: idea | ticket <ID> | incident <ID>.
+Status: draft | accepted | rejected.
+Created: <YYYY-MM-DD>.
+
+## Problem
+
+The need, told the way the person told it.
+Say who runs into it and how often.
+
+## Proposed outcome
+
+The state of the world once this is solved, described so someone could see it.
+No solution design here.
+
+## Affected users and systems
+
+The people, teams, services, repos and data this reaches.
+
+## Constraints
+
+Rules the work must respect: policy, security, compliance, money, dates, "reuse the existing login", "no new personal data".
+An approach the person already favors or ruled out is noted here as a constraint.
+
+## Out of scope
+
+What this intent leaves alone on purpose.
+
+## Success looks like
+
+The sign, observable or measurable, that tells the person it worked.
+
+## Open questions
+
+What still needs an answer, and who can give it, before or during design.
+
+## Evidence
+
+For a ticket or an incident: the source ID, a link, and any numbers or logs that back the claim.
+Write "None" for an idea.
+
+<!--
+Lifecycle:
+  draft     the person corrects what the interview got wrong
+  accepted  the person accepts it in person; a spec pass can start
+  rejected  dropped; the reason is written into the file
+Breaking: true when a consumer that relied on today's behaviour has to change, whatever the size of the diff.
+  `ship.py version` turns kind and breaking into the next version; a missing value is assumed breaking and the person is asked.
+Level: set by `factory.py level --write` when the intent, spec or plan is written and only ever raised, never lowered.
+  1 lets the software factory run it unattended, 2 and 3 keep a person in the loop.
+Brief and design: an intent with either line is level 2 or higher, so a person reads the design before it is built.
+Location: intent/<ID>-<slug>/intent.md when the repo has intent/project.json, else intent/<YYYY-MM-DD>-<slug>/intent.md, with plan.md and design-record.json beside it.
+-->

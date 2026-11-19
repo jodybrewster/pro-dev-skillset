@@ -1,0 +1,52 @@
+# Attribution notice: templates/REVIEW.md, the loop text in commands/execute.md,
+# commands/plan.md and commands/adr.md, skills/doubt-driven-development/
+# and the Doubt section of commands/execute.md, the additions to
+# agents/verifier.md and agents/simplifier.md (and their Codex twins) and
+# references/definition-of-done.md adapt content from agent-skills
+# (https://github.com/addyosmani/agent-skills), also MIT licensed:
+#   agent-skills: Copyright (c) 2025 Addy Osmani
+# The text was rewritten for this marketplace.
+#
+# templates/PRODUCT.md adapts its section names and its schema comment from
+# pbakaus/impeccable (https://github.com/pbakaus/impeccable), licensed under the
+# Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0):
+#   pbakaus/impeccable: Copyright 2025 Paul Bakaus
+# Only the section names and the schema comment follow the upstream; the rest is original.
+# The full Apache-2.0 text is at the URL above and in plugins/pro-testing/LICENSE.
+#
+# templates/design.md and commands/design.md adapt the section names and the
+# implementation rules of the design document in google/elephant-goldfish-model
+# (https://github.com/google/elephant-goldfish-model, skills/egm-draft/references/design_doc.md),
+# licensed under the Apache License, Version 2.0, with no copyright line in the upstream LICENSE.
+# Only the section names and those rules follow the upstream; the text is original.
+#
+# Grade mode in agents/reviewer.md (and its Codex twin), the grade step of
+# commands/review.md and the Rounds section of templates/REVIEW.md adapt the
+# "Review remembers" rule of skills/super-review/SKILL.md from super-board
+# (https://github.com/EricTechPro/super-board), also MIT licensed:
+#   super-board: Copyright (c) 2026 Eric Tech
+# The text was rewritten for this marketplace.
+
+MIT License
+
+Copyright (c) 2026 the pro-dev-skillset authors
+Copyright (c) 2025 Addy Osmani
+Copyright (c) 2026 Eric Tech
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

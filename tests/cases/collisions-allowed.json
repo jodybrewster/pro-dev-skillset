@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "a": "reviewer",
+    "b": "reviewer",
+    "reason": "pro-ai-sdlc-egm is an experimental copy of pro-ai-sdlc (ADR-0029); a repo enables one of the two, never both"
+  },
+  {
+    "a": "doubt-driven-development",
+    "b": "doubt-driven-development",
+    "reason": "pro-ai-sdlc-egm is an experimental copy of pro-ai-sdlc (ADR-0029); a repo enables one of the two, never both"
+  },
+  {
+    "a": "researcher",
+    "b": "researcher",
+    "reason": "pro-ai-sdlc-egm is an experimental copy of pro-ai-sdlc (ADR-0029); a repo enables one of the two, never both"
+  },
+  {
+    "a": "verifier",
+    "b": "verifier",
+    "reason": "pro-ai-sdlc-egm is an experimental copy of pro-ai-sdlc (ADR-0029); a repo enables one of the two, never both"
+  },
+  {
+    "a": "simplifier",
+    "b": "simplifier",
+    "reason": "pro-ai-sdlc-egm is an experimental copy of pro-ai-sdlc (ADR-0029); a repo enables one of the two, never both"
+  }
+]

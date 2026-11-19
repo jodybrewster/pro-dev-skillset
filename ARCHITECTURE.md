@@ -3,7 +3,7 @@
 ## Overview
 
 This repo is a private Claude Code plugin marketplace with no app, server or database ([CLAUDE.md](./CLAUDE.md)).
-The marketplace file lists 20 plugins and each plugin ships skills, commands, agents and hooks that a user installs into Claude Code or Codex.
+The marketplace file lists 22 plugins and each plugin ships skills, commands, agents and hooks that a user installs into Claude Code or Codex.
 Longer version and the Mieruka bridge: [docs/overview.md](./docs/overview.md).
 
 ## Parts
@@ -12,7 +12,7 @@ Longer version and the Mieruka bridge: [docs/overview.md](./docs/overview.md).
 |------|------|-----|----------|
 | Marketplace | `.claude-plugin/marketplace.json` | Lists every plugin with its source and version | Each `plugins/<name>/` folder |
 | Core | `plugins/pro-core` | Skill finding, memory, `/pro-dev` install and update, the engine registry in `registry/engines.json` | Registry rows owned by other plugins (`registry/engines.json`) |
-| SDLC methods | `plugins/pro-ai-sdlc`, `pro-pdd`, `pro-spdd`, `pro-speckit`, `pro-egm` | One way each of taking a change from idea to merged; pro-ai-sdlc also records incidents, review lessons and visual checks | The incident, review-lesson and visual-check records under `.pro-dev/` (`docs/loop-records.md`) and their copies in mieruka's `.mieruka/evidence/` |
+| SDLC methods | `plugins/pro-ai-sdlc`, `pro-ai-sdlc-egm` (experimental), `pro-pdd`, `pro-spdd`, `pro-speckit`, `pro-egm` | One way each of taking a change from idea to merged; pro-ai-sdlc also records incidents, review lessons and visual checks | The incident, review-lesson and visual-check records under `.pro-dev/` (`docs/loop-records.md`) and their copies in mieruka's `.mieruka/evidence/` |
 | Engineering discipline | `plugins/pro-execution`, `pro-quality`, `pro-testing`, `pro-data` | TDD, debugging, review, test and data-layer skills; pro-quality's `format-on-edit` hook runs the repo's own formatter and linter on each edited file | The repo's installed formatter and linter binaries; the per-repo opt-in for Prettier and ESLint in the hook guard folder |
 | Web and stacks | `plugins/pro-design`, `pro-motion`, `pro-nextjs`, `pro-astro` | Design, motion and framework conventions | nothing (independent) |
 | Gates | `plugins/pro-security`, `pro-legal`, `pro-ship` | Hooks that review or block a plan, push or release; pro-ship's `pr-check` and `/ship` preflight write the records those hooks read and `/pro-ship:deployed` writes the deploy record after a deploy | Claude Code hook events; pro-ai-sdlc's `verifier`, which pr-check dispatches when it is installed; the records under `.pro-dev/ship/` (`docs/pr-check-stamp.md`, `docs/ship-preflight.md`, `docs/loop-records.md`) and copies of the preflight and deploy records in mieruka's `.mieruka/evidence/` |

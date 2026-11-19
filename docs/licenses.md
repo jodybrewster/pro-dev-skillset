@@ -91,6 +91,7 @@ Copyright lines were read from each upstream's LICENSE on GitHub on 2026-10-16.
 | pro-security | security-architect (skill and agent) | [garrytan/gstack](https://github.com/garrytan/gstack) (`cso`) | MIT | Copyright (c) 2026 Garry Tan | adapted (draws on the threat framing; the challenge procedure is original) |
 | pro-security | `scripts/key-literal.py` | [EricTechPro/super-board](https://github.com/EricTechPro/super-board) `hooks/guard-key-literals.py` at d0b7d5a | MIT | Copyright (c) 2026 Eric Tech | adapted |
 | pro-egm | egm-bridge | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) | Apache-2.0 | no copyright line in the upstream LICENSE | bridged |
+| pro-ai-sdlc-egm | `templates/design.md`, `/design` | [google/elephant-goldfish-model](https://github.com/google/elephant-goldfish-model) (`skills/egm-draft/references/design_doc.md`) | Apache-2.0 | no copyright line in the upstream LICENSE | adapted (the section names and the implementation rules; the text is original) |
 | pro-speckit | spec-kit-bridge | [github/spec-kit](https://github.com/github/spec-kit) | MIT | Copyright GitHub, Inc. | bridged (nothing copied) |
 | pro-ship | deployed (post-deploy checks from `shipping-and-launch` and `ci-cd-and-automation`) | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |
 | pro-ship | documentation-and-adrs | [agent-skills](https://github.com/addyosmani/agent-skills) | MIT | Copyright (c) 2025 Addy Osmani | adapted |

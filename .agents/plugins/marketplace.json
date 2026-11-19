@@ -26,6 +26,18 @@
       "category": "Development"
     },
     {
+      "name": "pro-ai-sdlc-egm",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pro-ai-sdlc-egm"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
       "name": "pro-execution",
       "source": {
         "source": "local",

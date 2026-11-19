@@ -108,7 +108,7 @@ A hook is named by its script stem, so `hook:plan-sync` is `scripts/plan-sync.py
 A stays-quiet case prefixes the tag with `quiet:`, for example `quiet:command:spec`.
 A quiet tag proves the component stays out of the way and does not count as coverage.
 
-The `component-coverage` check in `tests/check.mjs` lists every skill, command, agent and hook in pro-ai-sdlc, pro-egm, pro-spdd, pro-speckit and pro-pdd.
+The `component-coverage` check in `tests/check.mjs` lists every skill, command, agent and hook in pro-ai-sdlc, pro-ai-sdlc-egm, pro-egm, pro-spdd, pro-speckit and pro-pdd.
 It fails when a component has no case tagged for it, unless `tests/cases/components-uncovered.json` lists it as `<plugin>/<kind>:<name>` with a reason.
 A listed entry that is now covered or no longer exists also fails, so the list only shrinks.
 

@@ -200,4 +200,6 @@ See `plugins/pro-core/commands/pro-dev.md`.
 
 `tests/methods.mjs` covers `plugins/pro-ai-sdlc/scripts/methods.py` with a fake `claude` first on `PATH`, a temp `HOME` and temp repos: no method installed, pro-egm with and without `egm@egm`, the `{target}` fill, disabled and other-repo installs, a method file from another marketplace, malformed JSON, a missing or failing `claude` and 50 installs under two seconds; `tests/check.mjs` runs it inside the `methods` check.
 
+`tests/sdlc-egm.mjs` covers `plugins/pro-ai-sdlc-egm` in a temp todo-list repo with a bare origin and one intent per level: the level a brief or a design gives an intent, `design.py` (link, review, approve by role, the check, an edit that voids approvals, an open flagged concern, the lead at level 3), the design check in `execute-gate.py` and the runner's open findings check.
+
 `tests/goldfish.mjs` covers `plugins/pro-egm/scripts/goldfish.py` in a temp repo with a fake plugin install path: the defaults for `spec` and `plan`, the reading list, a valid `.egm/goldfish.json`, each refused path form and `init`; `tests/check.mjs` runs it as the `goldfish` check.
