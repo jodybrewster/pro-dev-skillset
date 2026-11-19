@@ -1,0 +1,6 @@
+{
+  "name": "pro-ai-sdlc-egm",
+  "version": "0.1.0",
+  "skills": "./skills/",
+  "description": "Experimental: the AI-native SDLC loop with Google's Elephant-Goldfish Model as the design step, in three commands. /intent records what a person wants (an idea, a bug, a brief or a PRD), with an optional EGM brainstorm first. /design writes one living design file per feature under docs/designs/ through EGM's draft, has the goldfish review it and records approvals by role against the exact version approved. /execute writes the build ticket from the approved design, builds it test-first in its own worktree and opens the pull request, never merging. A started copy of pro-ai-sdlc: /review, /pr-babysit, /adr, /incident, /plan and /auto ship too, with the same hooks, so enable this plugin or pro-ai-sdlc in a repo and never both. Needs pro-egm and egm@egm for the brainstorm, draft and goldfish review."
+}

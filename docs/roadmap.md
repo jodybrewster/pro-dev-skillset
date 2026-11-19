@@ -17,6 +17,9 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 The intent loop is no longer used for this repo's own changes; `CLAUDE.md` says how a change lands now.
 The pro-egm full bridge (every EGM skill reachable from Claude Code, a discovery primer, options research and brief-stage goldfish) is built as one PR.
+`pro-ai-sdlc-egm` is a new experimental plugin: the loop as `/intent`, `/design` and `/execute` with one design file per feature and approvals bound to its version ([ADR-0029](./decisions/0029-design-file-loop-experiment.md)).
+Left for later in that experiment: an inbox of what waits on each role, a quick path on EGM-lite, designer and architect roles, a users and brand reviewer, personas and a Codex reviewer.
+The open findings stop it adds to the factory runner is not in `pro-ai-sdlc` yet.
 
 ### State on 2026-11-07, evening
 

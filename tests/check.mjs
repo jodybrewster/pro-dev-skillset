@@ -20,6 +20,7 @@ import { runSdlcHookCases } from "./sdlc-hooks.mjs";
 import { runExecuteCases } from "./execute.mjs";
 import { runFactoryCases } from "./factory.mjs";
 import { runIdsCases, changeIdProblems } from "./ids.mjs";
+import { runSdlcEgmCases } from "./sdlc-egm.mjs";
 import { runDemoKitCases } from "./demo-kit.mjs";
 import { runQualityHookCases } from "./quality-hooks.mjs";
 import { runShipHookCases } from "./ship-hooks.mjs";
@@ -403,7 +404,7 @@ checks["pro-dev-starter"] = (m) => {
       failures.push(`pro-dev-starter: dependency "${name}" not found in marketplace`);
   }
   // opt-in plugins are intentionally excluded from the default stack
-  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-electron", "pro-ai-sdlc", "pro-spdd", "pro-egm", "pro-speckit", "pro-legal", "pro-starter", "pro-dev-starter"]);
+  const OPT_IN = new Set(["pro-nextjs", "pro-astro", "pro-electron", "pro-ai-sdlc", "pro-ai-sdlc-egm", "pro-spdd", "pro-egm", "pro-speckit", "pro-legal", "pro-starter", "pro-dev-starter"]);
   for (const p of m.plugins) {
     if (OPT_IN.has(p.name)) continue;
     if (!sameMktDeps.has(p.name))
@@ -1292,6 +1293,17 @@ checks["format-hook"] = () => {
   if (skipped) { warnings.push(`format hook cases skipped - ${skipped}`); return { failures, warnings }; }
   if (!results.length) failures.push("tests/format-hook.mjs produced no cases to run");
   for (const r of results) if (!r.ok) failures.push(`format hook ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
+  return { failures, warnings };
+};
+
+// sdlc-egm: pro-ai-sdlc-egm's level rule for briefs and designs, the design file's reviews and approvals,
+// the design check in the build gate and the runner's open findings check (cases in tests/sdlc-egm.mjs, ADR-0029).
+checks["sdlc-egm"] = () => {
+  const failures = [], warnings = [];
+  const { skipped, results } = runSdlcEgmCases();
+  if (skipped) { warnings.push(`sdlc-egm cases skipped - ${skipped}`); return { failures, warnings }; }
+  if (!results.length) failures.push("tests/sdlc-egm.mjs produced no cases to run");
+  for (const r of results) if (!r.ok) failures.push(`sdlc-egm ${r.id}: expected ${r.expect}${r.reason ? ` - ${r.reason}` : ""}`);
   return { failures, warnings };
 };
 

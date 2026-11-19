@@ -158,5 +158,41 @@
   {
     "id": "pro-ai-sdlc/command:auto",
     "reason": "unattended factory phase; covered by tests/factory.mjs and the live e2e, not a routing case"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/skill:doubt-driven-development",
+    "reason": "experimental copy of pro-ai-sdlc; covered there"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:adr",
+    "reason": "experimental copy of pro-ai-sdlc; covered there"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:auto",
+    "reason": "runs only inside the factory container"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:design",
+    "reason": "needs a person at each section and approval; its gates are covered by tests/sdlc-egm.mjs"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:incident",
+    "reason": "experimental copy of pro-ai-sdlc; covered there"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:intent",
+    "reason": "an interview with a person; the quiet case is in the plugin's evals"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:plan",
+    "reason": "its gate is covered by tests/sdlc-egm.mjs; add a case once the shape settles"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/command:pr-babysit",
+    "reason": "needs a live PR"
+  },
+  {
+    "id": "pro-ai-sdlc-egm/agent:simplifier",
+    "reason": "experimental copy of pro-ai-sdlc; covered there"
   }
 ]
