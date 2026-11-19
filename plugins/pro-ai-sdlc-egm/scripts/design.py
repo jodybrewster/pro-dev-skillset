@@ -259,6 +259,26 @@ def cmd_status(args):
     return 0
 
 
+def cmd_pending(args):
+    """Intent folders still missing a design or a plan, newest first. Prints nothing when there are none."""
+    try:
+        root = repo_root(args.repo)
+    except Refuse:
+        return 0
+    base = os.path.join(root, "intent")
+    names = sorted((n for n in os.listdir(base) if os.path.isdir(os.path.join(base, n))), reverse=True) \
+        if os.path.isdir(base) else []
+    for name in names:
+        folder = os.path.join(base, name)
+        intent = os.path.join(folder, "intent.md")
+        if not os.path.isfile(intent) or os.path.exists(os.path.join(folder, "plan.md")):
+            continue
+        if args.missing == "design" and re.search(r"^design:[ \t]*\S", read(intent), re.M):
+            continue
+        print(f"intent/{name}/")
+    return 0
+
+
 def cmd_check(args):
     st = state(repo_root(args.repo), args.intent)
     if st["reasons"]:
@@ -384,6 +404,9 @@ def main(argv):
         s = sub.add_parser(name)
         s.add_argument("intent")
         s.set_defaults(fn=fn)
+    s = sub.add_parser("pending")
+    s.add_argument("--missing", choices=("design", "plan"), required=True)
+    s.set_defaults(fn=cmd_pending)
     s = sub.add_parser("link")
     s.add_argument("intent")
     s.add_argument("path")

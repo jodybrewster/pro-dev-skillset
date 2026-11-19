@@ -13,7 +13,7 @@
 //
 // Exports runSdlcEgmCases() for tests/check.mjs.
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, realpathSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -294,6 +294,30 @@ export function runSdlcEgmCases() {
     add("findings-missing-stops", "level 2: not stated", f.length === 1 && f[0][0] === 2 && /does not state/.test(f[0][1]), JSON.stringify(f));
     f = findings("Open review findings: 0\nOpen review findings: 3\n");
     add("findings-twice-stops", "level 2: stated twice", f.length === 1 && /twice/.test(f[0][1]), JSON.stringify(f));
+
+    // --- the lists the commands show before they start --------------------------------------------
+    write("intent/TDO-9-sort-tasks/intent.md", intent({ id: "TDO-9", title: "Sort tasks", risk: "low", outcome: "Tasks sort by name." }));
+    commit("TDO-9: intent: sort-tasks");
+    r = d("pending", "--missing", "design");
+    let lines = r.stdout.trim().split("\n");
+    add("pending-design-lists-new-intent", "TDO-9 listed, TDO-1 (has a plan) and TDO-3 (has a design) not", r.status === 0 && lines.includes("intent/TDO-9-sort-tasks/") && !lines.some((l) => /TDO-1-|TDO-3-/.test(l)), r.stdout + r.stderr);
+    r = d("pending", "--missing", "plan");
+    lines = r.stdout.trim().split("\n");
+    add("pending-plan-lists-newest-first", "TDO-9 first, TDO-1 not listed", r.status === 0 && lines[0] === "intent/TDO-9-sort-tasks/" && !lines.some((l) => /TDO-1-/.test(l)), r.stdout + r.stderr);
+    r = py(base, DESIGN, "pending", "--missing", "plan");
+    add("pending-outside-a-repo-is-quiet", "exit 0 and no output", r.status === 0 && r.stdout === "", r.stdout + r.stderr);
+
+    // A context line that changes directory through a command substitution, or loops, fails Claude
+    // Code's permission check and the command never starts.
+    const commands = join(ROOT, "plugins", "pro-ai-sdlc-egm", "commands");
+    const bad = [];
+    for (const name of readdirSync(commands)) {
+      for (const line of readFileSync(join(commands, name), "utf8").split("\n")) {
+        const m = line.match(/!`([^`]*)`/);
+        if (m && /^- /.test(line) && (/\bcd "?\$\(/.test(m[1]) || /\bfor \w+ in\b/.test(m[1]))) bad.push(`${name}: ${m[1].slice(0, 60)}`);
+      }
+    }
+    add("context-lines-pass-the-permission-check", "no cd through $(...) and no loop in a context line", bad.length === 0, bad.join("; "));
   } finally {
     rmSync(base, { recursive: true, force: true });
   }

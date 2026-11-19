@@ -11,8 +11,8 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Working tree: !`git status --short --branch`
 - Author: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
-- ADR folders present: !`cd "$(git rev-parse --show-toplevel)" && ls -1d docs/adr docs/decisions doc/adr adr docs/architecture/decisions decisions 2>/dev/null; true`
-- Existing ADRs: !`cd "$(git rev-parse --show-toplevel)" && ls -1 docs/adr docs/decisions doc/adr adr docs/architecture/decisions decisions 2>/dev/null | tail -30`
+- ADR folders present: !`ls -1d docs/adr docs/decisions doc/adr adr docs/architecture/decisions decisions 2>/dev/null; true`
+- Existing ADRs: !`ls -1 docs/adr docs/decisions doc/adr adr docs/architecture/decisions decisions 2>/dev/null | tail -30`
 
 The decision: $ARGUMENTS
 
