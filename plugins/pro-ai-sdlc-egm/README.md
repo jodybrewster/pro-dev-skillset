@@ -56,6 +56,28 @@ Keep this list current, so the experiment can be merged back or dropped as a kno
 - `/review` and the `reviewer` agent compare the diff with the design file.
 - The factory's level 1 brief still writes a short `spec.md` and `plan.md`, as in pro-ai-sdlc.
 
+## Permissions in a longer conversation
+
+A command's own tool permissions last for the turn that starts it.
+`/intent` and `/design` stop to ask a question, so the steps after the answer ask for permission again: the pro-egm step, the plugin's scripts and the commit.
+In Claude Code that is a prompt to answer.
+In a headless run or a chat with no prompt the step is declined, so allow these in the repo's `.claude/settings.json` first:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Skill(pro-egm:brainstorm)",
+      "Skill(pro-egm:draft)",
+      "Skill(pro-egm:review)",
+      "Skill(pro-egm:resolve)"
+    ]
+  }
+}
+```
+
+A headless run also needs `python3`, `git add` and `git commit` allowed.
+
 ## Other commands
 
 | Command | Writes |

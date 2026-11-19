@@ -11,8 +11,8 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Working tree: !`git status --short --branch`
 - You are: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
-- Design files: !`cd "$(git rev-parse --show-toplevel)" && ls -1 docs/designs/*.md 2>/dev/null; true`
-- Intents with no design: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/intent.md" ] && ! grep -q '^design:' "$d/intent.md" && [ ! -f "$d/plan.md" ] && echo "$d"; done; true`
+- Design files in docs/designs: !`ls -1 "$(git rev-parse --show-toplevel)/docs/designs" 2>/dev/null | tail -30`
+- Intents with no design: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/design.py" pending --missing design 2>/dev/null; true`
 
 Requested: $ARGUMENTS
 
@@ -42,7 +42,7 @@ When `status` already shows a `design` with a recorded review, say where the wor
 ### 2. Write the design
 
 Decide which design file this change belongs to.
-When the intent has no `design:` line, look at the files under "Design files" and ask once whether the change belongs to one of them or starts a new feature.
+When the intent has no `design:` line, look at the files under "Design files in docs/designs" and ask once whether the change belongs to one of them or starts a new feature.
 Name a new file after the feature, never the change: `docs/designs/checkout.md`, not `docs/designs/add-saved-cards.md`.
 
 For a new feature:

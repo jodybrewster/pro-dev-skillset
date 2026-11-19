@@ -11,7 +11,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 - Working tree: !`git status --short --branch`
 - You are: !`git config user.name`
 - Now: !`date '+%Y-%m-%dT%H:%M:%S%z'`
-- Intents without a plan: !`cd "$(git rev-parse --show-toplevel)" && for d in $(ls -1d intent/*/ 2>/dev/null | sort -r); do [ -f "$d/intent.md" ] && [ ! -f "$d/plan.md" ] && echo "$d"; done; true`
+- Intents without a plan: !`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/design.py" pending --missing plan 2>/dev/null; true`
 
 Requested intent: $ARGUMENTS
 
