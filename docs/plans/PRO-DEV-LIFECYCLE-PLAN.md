@@ -2,7 +2,7 @@
 
 ## Context
 
-`pro-dev-skillset` has grown to 13 plugins / 20+ skills covering most of the software lifecycle, but it has **no map of itself**. `agent-skills` solves this with a `using-agent-skills` meta-skill: a router diagram (task → phase → skill), a canonical lifecycle sequence, shared operating behaviors, and a quick-reference phase table — plus 7 lifecycle slash commands (`/spec /plan /build /test /review /ship`) and a README organized by phase. We want that same legibility, adapted to pro-dev's reality.
+`pro-dev-skillset` has grown to 13 plugins / 20+ skills covering most of the software lifecycle, but it has **no map of itself**. `agent-skills` solves this with a `using-agent-skills` meta-skill: a router diagram (task → phase → skill), a canonical lifecycle sequence, shared operating behaviors, and a quick-reference phase table — plus 7 lifecycle slash commands (`/pro-ai-sdlc:spec /pro-ai-sdlc:plan /build /test /pro-ai-sdlc:review /ship`) and a README organized by phase. We want that same legibility, adapted to pro-dev's reality.
 
 pro-dev is **not a 1:1 of agent-skills** — it's a superset with branches:
 - **Define** uses `interview-me` + `idea-refine` (forked from agent-skills, **replacing the retired `grill-me`**) plus `brainstorming`.
@@ -25,8 +25,8 @@ Outcome: a `using-pro-dev` meta-skill (the router), the qa-skills-wrapped `pro-t
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` (pro-execution); `api-and-interface-design`, `source-driven-development` (pro-execution, planned Ph6); `context-engineering`, `doubt-driven-development` (pro-core, planned Ph4); `frontend-ui-engineering` + design skills (pro-design, planned Ph7); data skills (pro-data) | multiple | mix of existing + integration-doc phases |
 | **Verify** | `qa-do`/`qa-start` (vendored router), `agent-browser`, `playwright-automation`, `vitest`, + vendored qa-skills (this plan); `systematic-debugging` (pro-execution); `verification-before-completion` (pro-quality) | pro-testing, pro-execution, pro-quality | **qa-skills wrap = built now** |
 | **Review** | `requesting`/`receiving-code-review`; `code-simplification`, `performance-optimization` (planned Ph5); built-in `/code-review`, `/simplify` | pro-quality | mix |
-| **Security** | `security-and-hardening`, `security-auditor`, `cso` | pro-security | shipped: `security-audit`, `security-auditor`, `security-architect`, `/security-audit`, `/threat-model`; `security-and-hardening` still planned |
-| **Legal** | `software-counsel`, `/legal-review` | pro-legal (opt-in) | shipped as opt-in: plan and release review, ExitPlanMode, plan-document and release hooks; not in `pro-starter` |
+| **Security** | `security-and-hardening`, `security-auditor`, `cso` | pro-security | shipped: `security-audit`, `security-auditor`, `security-architect`, `/pro-security:security-audit`, `/pro-security:threat-model`; `security-and-hardening` still planned |
+| **Legal** | `software-counsel`, `/pro-legal:legal-review` | pro-legal (opt-in) | shipped as opt-in: plan and release review, ExitPlanMode, plan-document and release hooks; not in `pro-starter` |
 | **Ship** | `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration` | pro-ship (planned Ph2) | planned |
 | **Research / Data / Design** | lead-research; drizzle/prisma/nextauth; design-token/motion/typography/shadcn/a11y | pro-research, pro-data, pro-design | exist (domain, cross-cutting) |
 
@@ -57,11 +57,11 @@ Updated 2026-06-03. Parts A, B, C shipped. Part D is the remaining in-scope work
 ### ⏭️ Part D — agent-skills structure parity (in scope)
 - [x] **README phase reorganization** — "What's here" now leads with a per-phase lifecycle table (Define→…→Ship + cross-cutting), `using-pro-dev` linked as the entry point; plugin breakdown retained below for packaging/attribution. Also refreshed stale counts (starter 24→33 skills post-Part C) and the `pro-testing` bullet (vendored qa-skills library)
 - [ ] **Skill anatomy consistency** — bring new/edited skills toward the agent-skills anatomy (Overview / When to Use / Process / Rationalizations / Red Flags / Verification) where it fits
-- [x] **Lifecycle slash commands — DEFERRED** by decision (no `/spec /plan /build /test /review /ship`); revisit once owning plugins exist
+- [x] **Lifecycle slash commands — DEFERRED** by decision (no `/pro-ai-sdlc:spec /pro-ai-sdlc:plan /build /test /pro-ai-sdlc:review /ship`); revisit once owning plugins exist
 
 ### 🔜 Separate efforts (out of scope here; the router already points at these as "planned")
-- [x] **pro-security** plugin - shipped `security-audit`, `security-auditor`, `security-architect`, `/security-audit` and `/threat-model`; `security-and-hardening` is still planned
-- [x] **pro-legal** plugin - shipped as opt-in: `software-counsel`, `/legal-review`, planning and release gates; not part of `pro-starter`
+- [x] **pro-security** plugin - shipped `security-audit`, `security-auditor`, `security-architect`, `/pro-security:security-audit` and `/pro-security:threat-model`; `security-and-hardening` is still planned
+- [x] **pro-legal** plugin - shipped as opt-in: `software-counsel`, `/pro-legal:legal-review`, planning and release gates; not part of `pro-starter`
 - [ ] **pro-ship** plugin — `ci-cd-and-automation`, `shipping-and-launch`, `documentation-and-adrs`, `deprecation-and-migration`
 - [ ] **Build-skill folds** referenced by the router but not yet installed: `context-engineering`, `doubt-driven-development` (pro-core); `api-and-interface-design`, `source-driven-development` (pro-execution); `frontend-ui-engineering` (pro-design)
 - [ ] **Review-skill folds**: `code-simplification`, `performance-optimization` (pro-quality) — currently only the `/code-review` + `/simplify` built-ins cover this
@@ -148,7 +148,7 @@ Failure modes: double-triggering and territory theft. Per exposed skill: read it
 
 ## Part D — agent-skills structure parity (replicate the legible shape)
 
-- **Lifecycle slash commands — DEFERRED.** No commands in this effort (not even `/test`). The lifecycle is driven entirely by description-triggered skills + the `using-pro-dev` router. Commands (`/spec /plan /build /test /review /ship`) can be revisited later once the owning plugins (pro-ship, pro-security, the Phase 4–7 folds) exist; until then they'd be stubs pointing at nothing.
+- **Lifecycle slash commands — DEFERRED.** No commands in this effort (not even `/test`). The lifecycle is driven entirely by description-triggered skills + the `using-pro-dev` router. Commands (`/pro-ai-sdlc:spec /pro-ai-sdlc:plan /build /test /pro-ai-sdlc:review /ship`) can be revisited later once the owning plugins (pro-ship, pro-security, the Phase 4–7 folds) exist; until then they'd be stubs pointing at nothing.
 - **README + plan-doc organization by phase** — restructure README's plugin table into the Define→Plan→Spec→Build→Verify→Review→Security→Ship taxonomy with a per-phase skill table (mirrors agent-skills README) and link `using-pro-dev` as the entry point.
 - **Skill anatomy consistency** — new/edited skills follow the agent-skills anatomy (Overview / When to Use / Process / Rationalizations / Red Flags / Verification) where it fits.
 

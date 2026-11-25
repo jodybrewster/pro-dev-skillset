@@ -61,7 +61,7 @@ An empty section tells the reviewer the diff follows the plan.
 ## Noticed but not touched
 
 Problems seen outside a step during the build, one per line: the file, what was seen and why it was left.
-/execute copies them into the PR body.
+/pro-ai-sdlc-egm:execute copies them into the PR body.
 
 <!--
 Write this in plan mode from an approved design, then question it before approval:
@@ -69,7 +69,7 @@ what might break, where the weakest step is, and what was skipped on purpose.
 Revise until someone who missed the conversation could build from this file alone.
 Mock: is optional. Give a repo-relative path or an http(s) URL.
 Tag each UI step in Order of work with (ui: <route>), for example (ui: /settings).
-/execute then captures the route at 1280 and 390 wide once the step's tests pass and compares it with the mock.
+/pro-ai-sdlc-egm:execute then captures the route at 1280 and 390 wide once the step's tests pass and compares it with the mock.
 Delete the line when the plan has no UI.
 Review compares the final diff with this file.
 -->

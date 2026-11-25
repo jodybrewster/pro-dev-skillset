@@ -16,7 +16,7 @@ The topic is the argument at the end of this prompt; if it is empty, ask for it 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/egm-bridge/running-egm.md` and follow it for this whole run: how to find the engine, how to read and follow an EGM skill, how reviewers are spawned, where artifacts go and how the `Author` line is filled.
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py" egm`.
-If its `egmRoot` is null, print "pro-egm needs egm@egm: run /pro-dev install" and stop.
+If its `egmRoot` is null, print "pro-egm needs egm@egm: run /pro-core:pro-dev install" and stop.
 If `skills["egm-brainstorm"]` is null, print the update line from `running-egm.md` and stop.
 Never call an EGM skill through the Skill tool: EGM's skills disable model invocation, so read the `SKILL.md` at `skills["egm-brainstorm"]` and follow it here.
 
@@ -33,7 +33,7 @@ Run EGM's brainstorm with these additions from pro-egm, in this order:
    It runs several subagents; run it only on a yes.
 6. At EGM's Step 4 gate, keep EGM's choices and then recommend the next step:
    - work that goes through EGM: `/pro-egm:draft concepts_brief.md`; EGM's design doc becomes the document for it and no spec.md or plan.md is written
-   - work that stays in the `pro-ai-sdlc` lane: `/intent` with `concepts_brief.md` as its input, one change from the brief's "Changes the work breaks into" at a time
+   - work that stays in the `pro-ai-sdlc` lane: `/pro-ai-sdlc:intent` with `concepts_brief.md` as its input, one change from the brief's "Changes the work breaks into" at a time
    Do not run either yourself.
 
 Name every file written and say which are meant to be committed (`running-egm.md` lists them).

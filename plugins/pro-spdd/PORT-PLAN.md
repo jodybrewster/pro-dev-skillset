@@ -187,7 +187,7 @@ ls .agents/skills/
 
 # 10. claude-code slash command path (smoke test via plugin)
 # In Claude Code session inside mieruka-test:
-# /spdd-install-to cursor
+# /pro-spdd:spdd-install-to cursor
 # expect: writes 9 files to .cursor/commands/
 ```
 

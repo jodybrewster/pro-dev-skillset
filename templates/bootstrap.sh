@@ -15,7 +15,7 @@
 #      to the default stack: pro-core, pro-pdd, pro-execution,
 #      pro-quality, pro-design, pro-motion, pro-testing, pro-data, pro-research
 #      and pro-security)
-#   3. Prints the next step: run /pro-dev install in a Claude Code session,
+#   3. Prints the next step: run /pro-core:pro-dev install in a Claude Code session,
 #      which installs the engines and project-local skills
 #
 # pro-ai-sdlc, pro-nextjs and pro-astro are opt-in: install them by hand.
@@ -66,6 +66,6 @@ fi
 echo "Installing pro-dev-starter@pro-dev-skillset --scope ${SCOPE}..."
 claude plugin install pro-dev-starter@pro-dev-skillset --scope "${SCOPE}"
 
-# 3. Hand over to /pro-dev
+# 3. Hand over to /pro-core:pro-dev
 echo
-echo "Done. Open Claude Code in this project and run /pro-dev install"
+echo "Done. Open Claude Code in this project and run /pro-core:pro-dev install"

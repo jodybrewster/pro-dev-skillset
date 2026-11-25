@@ -1,5 +1,5 @@
 ---
-name: /spdd-generate
+name: /pro-spdd:spdd-generate
 id: spdd-generate
 category: Development
 description: Generate code from a structured SPDD prompt file following the REASONS Canvas methodology
@@ -7,7 +7,7 @@ description: Generate code from a structured SPDD prompt file following the REAS
 
 Generate implementation code from a structured SPDD (Structured Prompt-Driven Development) prompt file, strictly following the Operations sequence and coding norms defined in the prompt.
 
-**Input**: The argument after `/spdd-generate` is the path to the structured prompt file (e.g., `@spdd/prompt/GGQPA-XXX-202602271430-[Feat]-api-create-agent-endpoint.md`).
+**Input**: The argument after `/pro-spdd:spdd-generate` is the path to the structured prompt file (e.g., `@spdd/prompt/GGQPA-XXX-202602271430-[Feat]-api-create-agent-endpoint.md`).
 
 **Steps**
 
@@ -206,7 +206,7 @@ This command is the second phase of the SPDD workflow:
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 2: /spdd-generate                                               │
+│  Phase 2: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Validate → Generate → Verify → Code        │    │
 │  │                                                                 │    │

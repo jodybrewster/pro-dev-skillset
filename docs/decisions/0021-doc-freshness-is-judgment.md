@@ -26,11 +26,11 @@ pro-ai-sdlc already carries that definition of done (ADR-0017).
 The hook and its script are removed.
 `pr-check` gains a step that reads the diff and the docs the repo has and names each doc the diff made untrue or incomplete.
 A doc that describes nothing the diff touched needs no change.
-Each stale doc is Should-fix: the agent fixes it with `/document` or gives a one-line reason on the PR body's Docs line.
+Each stale doc is Should-fix: the agent fixes it with `/pro-quality:document` or gives a one-line reason on the PR body's Docs line.
 It never changes the result and never blocks, like a missing required document (ADR-0020).
 
 ## Consequences
 
 A push no longer stops on docs, so a branch can be pushed with stale docs.
-The check runs when `pr-check` or `/execute` runs, which is before review, where a reason for an unchanged doc can be read.
-The judgment is the model's and is not deterministic; the `/document` subagents still write only from repository evidence.
+The check runs when `pr-check` or `/pro-ai-sdlc:execute` runs, which is before review, where a reason for an unchanged doc can be read.
+The judgment is the model's and is not deterministic; the `/pro-quality:document` subagents still write only from repository evidence.

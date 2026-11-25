@@ -105,8 +105,8 @@ t("pro-egm offers the brainstorm at intent and prints nothing at review", () => 
 t("pro-egm without egm@egm prints the needs line", () => {
   setMarket(GOOD); setList([core(), egm()]);
   const r = run("spec");
-  must(r.out.trim() === "pro-egm needs egm@egm: run /pro-dev install", r.out);
-  must(run("intent").out.trim() === "pro-egm needs egm@egm: run /pro-dev install", "intent should print the needs line");
+  must(r.out.trim() === "pro-egm needs egm@egm: run /pro-core:pro-dev install", r.out);
+  must(run("intent").out.trim() === "pro-egm needs egm@egm: run /pro-core:pro-dev install", "intent should print the needs line");
 });
 t("a disabled egm@egm counts as not installed", () => {
   setMarket(GOOD); setList([core(), egm(), install("egm@egm", { enabled: false })]);
@@ -187,7 +187,7 @@ t("a listing in the wrong shape prints nothing and exits 0", () => {
 t("pro-spdd prints its intent offer", () => {
   setMarket(GOOD); setList([core(), install(`pro-spdd@${MS}`, { method: readText(SPDD_JSON) })]);
   const r = run("intent");
-  must(r.out.startsWith("spdd: ") && r.out.trim().endsWith("-> /spdd-story"), r.out);
+  must(r.out.startsWith("spdd: ") && r.out.trim().endsWith("-> /pro-spdd:spdd-story"), r.out);
   must(run("spec").out === "", "spdd should print nothing at spec");
 });
 t("pro-speckit offers /speckit-specify at intent and nothing at spec, plan or review", () => {

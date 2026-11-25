@@ -1,4 +1,4 @@
-# ADR-0017: Every plan cites one definition of done and /execute pauses before stop-list steps
+# ADR-0017: Every plan cites one definition of done and /pro-ai-sdlc:execute pauses before stop-list steps
 
 Date: 2026-10-30
 
@@ -14,7 +14,7 @@ Source: PDS-30, intent/2026-10-30-sdlc-loop-upgrades/.
 The P0 review stack checks a diff after it is built.
 The stages before review had no standing bar and no pause.
 Each plan's `Done` block decided for itself what finished means beyond its acceptance criteria, so the bar moved from plan to plan.
-`/execute` builds a whole approved plan unattended, so a step that touches auth, a migration, payments, a deploy or secrets was built with the same calm as a rename.
+`/pro-ai-sdlc:execute` builds a whole approved plan unattended, so a step that touches auth, a migration, payments, a deploy or secrets was built with the same calm as a rename.
 pro-ship's risk tiers gate the merge, but by then the risky step is already built and committed.
 pro-ai-sdlc cannot depend on pro-ship (ADR-0013), so the build-time check cannot require pro-ship's classifier.
 
@@ -23,14 +23,14 @@ pro-ai-sdlc cannot depend on pro-ship (ADR-0013), so the build-time check cannot
 pro-ai-sdlc ships one standing definition of done at `plugins/pro-ai-sdlc/references/definition-of-done.md`.
 Every plan's `Done` block cites it in one line and names the items not met.
 A repo's `CONSTRAINTS.md` or `REVIEW.md` takes precedence where it says more.
-`/execute` keeps a stop list of five categories: auth, migrations, payments, deploys and secrets, named by path as in pro-ship's classifier.
+`/pro-ai-sdlc:execute` keeps a stop list of five categories: auth, migrations, payments, deploys and secrets, named by path as in pro-ship's classifier.
 It checks the plan before the build and each step's staged files before the commit.
 A step that fires pauses for an explicit yes from a person.
 A category listed on the `Stop-list categories:` line of the plan's Risks section, with an approver in the plan header, counts as consent and does not pause.
 A mention elsewhere in Risks is not consent.
 The stop list is prose in the command, not a hook.
 It never blocks without saying why.
-When pro-ship's `risk-tiers` skill is installed, `/execute` also runs it at checkpoints and pauses on a signal no consent covers.
+When pro-ship's `risk-tiers` skill is installed, `/pro-ai-sdlc:execute` also runs it at checkpoints and pauses on a signal no consent covers.
 
 ## Consequences
 

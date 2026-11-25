@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Behaviour test for pro-ai-sdlc-egm: the level rule for briefs and designs, design.py (the design
-// file's reviews and approvals), the design check in execute-gate.py and the runner's open findings
-// check. Every case runs in a throwaway todo-list repo with a bare origin under the OS temp dir and
+// file's reviews and approvals), the design check in execute-gate.py, the runner's open findings
+// check and how a command hands a step to pro-egm. Every case runs in a throwaway todo-list repo with a bare origin under the OS temp dir and
 // GIT_CONFIG_GLOBAL=/dev/null, so the real user config never leaks in. No network and no model.
 //
 // The repo holds one intent per level, so the three paths are walked side by side:
@@ -330,6 +330,32 @@ export function runSdlcEgmCases() {
       }
     }
     add("context-lines-pass-the-permission-check", "no cd through $(...) and no loop in a context line", bad.length === 0, bad.join("; "));
+
+    // The Skill tool cannot start a slash command and every EGM skill sets disable-model-invocation,
+    // so a command that hands a step to pro-egm reads pro-egm's own files and follows them instead.
+    const viaSkill = [];
+    for (const name of readdirSync(commands)) {
+      const body = readFileSync(join(commands, name), "utf8");
+      for (const line of body.split("\n")) {
+        if (/Skill tool/.test(line) && /\/pro-egm:/.test(line) && !/[Nn]ever (run|call)/.test(line)) viaSkill.push(`${name}: ${line.trim().slice(0, 70)}`);
+      }
+      if (/allowed-tools:.*(?:^|[\s,])Skill(?:,|\s*$)/m.test(body) && /\/pro-egm:/.test(body)) viaSkill.push(`${name}: allowed-tools still grants Skill`);
+    }
+    add("no-egm-step-through-the-skill-tool", "no command tells the model to run an EGM step through the Skill tool", viaSkill.length === 0, viaSkill.join("; "));
+
+    const designCmd = readFileSync(join(commands, "design.md"), "utf8");
+    add("design-resolves-pro-egm-by-script", "design.md runs scripts/pro-egm.py and lists it in allowed-tools",
+      /\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/pro-egm\.py/.test(designCmd)
+      && /allowed-tools:.*scripts\/pro-egm\.py/m.test(designCmd)
+      && /running-egm\.md/.test(designCmd), designCmd.slice(0, 200));
+    add("design-hands-over-the-review-line", "the unreachable branch gives /pro-egm:review to type",
+      /\/pro-egm:review docs\/designs\//.test(designCmd), "no /pro-egm:review line to type");
+
+    r = py(repo, join(SCRIPTS, "pro-egm.py"));
+    let resolved = {}; try { resolved = JSON.parse(r.stdout); } catch { /* reported below */ }
+    add("pro-egm-resolver-prints-a-status", "exit 0 and a status of ready, absent or unreachable with the four commands",
+      r.status === 0 && ["ready", "absent", "unreachable"].includes(resolved.status)
+      && ["brainstorm", "draft", "resolve", "review"].every((k) => k in (resolved.commands ?? {})), r.stdout + r.stderr);
   } finally {
     rmSync(base, { recursive: true, force: true });
   }

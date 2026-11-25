@@ -1,13 +1,13 @@
 ---
-name: /spdd-analysis
+name: /pro-spdd:spdd-analysis
 id: spdd-analysis
 category: Development
 description: Analyze business requirements against codebase context at a strategic level, producing enriched context (business + domain concepts + strategic direction + risks) for REASONS Canvas generation
 ---
 
-Analyze a business requirement document against the current codebase, producing a **strategic-level** enriched context that combines business information, domain concept identification, high-level approach decisions, and risk analysis — serving as high-quality input for `/spdd-reasons-canvas`. This phase focuses on the "What" and "Why", leaving the "How" to the REASONS Canvas phase.
+Analyze a business requirement document against the current codebase, producing a **strategic-level** enriched context that combines business information, domain concept identification, high-level approach decisions, and risk analysis — serving as high-quality input for `/pro-spdd:spdd-reasons-canvas`. This phase focuses on the "What" and "Why", leaving the "How" to the REASONS Canvas phase.
 
-**Input**: The argument after `/spdd-analysis` is a business requirement description or file reference.
+**Input**: The argument after `/pro-spdd:spdd-analysis` is a business requirement description or file reference.
 
 Input can be provided in two ways:
 
@@ -18,13 +18,13 @@ Input can be provided in two ways:
 
 ```
 # File reference
-/spdd-analysis @requirements/token-usage-billing-story.md
+/pro-spdd:spdd-analysis @requirements/token-usage-billing-story.md
 
 # Text description
-/spdd-analysis Implement monthly billing summary report for customers with usage breakdown
+/pro-spdd:spdd-analysis Implement monthly billing summary report for customers with usage breakdown
 
 # Combined
-/spdd-analysis @requirements/billing-report.md additionally needs CSV export support
+/pro-spdd:spdd-analysis @requirements/billing-report.md additionally needs CSV export support
 ```
 
 **Steps**
@@ -256,14 +256,14 @@ Input can be provided in two ways:
    - Open questions/risks: [count]
 
    🔗 Next step: Use this as input for REASONS Canvas generation:
-      /spdd-reasons-canvas @spdd/analysis/<file-name>.md
+      /pro-spdd:spdd-reasons-canvas @spdd/analysis/<file-name>.md
    ```
 
 8. **Offer to proceed with REASONS Canvas generation**
 
-   > "The enriched context is ready. Would you like me to proceed with `/spdd-reasons-canvas` using this analysis as input?"
+   > "The enriched context is ready. Would you like me to proceed with `/pro-spdd:spdd-reasons-canvas` using this analysis as input?"
 
-   If the user confirms, invoke the `/spdd-reasons-canvas` workflow with the saved analysis file as input.
+   If the user confirms, invoke the `/pro-spdd:spdd-reasons-canvas` workflow with the saved analysis file as input.
 
 **Output**
 
@@ -282,7 +282,7 @@ An enriched context document saved to `spdd/analysis/<file-name>.md` that transf
 - Do NOT make assumptions about codebase structure without reading actual files
 - Do NOT hardcode stack-specific terminology — always detect the project type first and adapt language to the discovered stack
 - Do NOT generate code — this command produces analysis only
-- Do NOT include implementation-level details (specific queries, JSON shapes, method signatures, annotations, component-layer inventories, step-by-step logic) — those belong in `/spdd-reasons-canvas`
+- Do NOT include implementation-level details (specific queries, JSON shapes, method signatures, annotations, component-layer inventories, step-by-step logic) — those belong in `/pro-spdd:spdd-reasons-canvas`
 - Do NOT leave placeholders or TODO items — generate complete, specific content
 - Do NOT modify any existing files in the codebase
 - Always read ALL `@` referenced files completely
@@ -310,7 +310,7 @@ This command is the **pre-processing phase** of the SPDD workflow, bridging raw 
 │                           SPDD Workflow                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Phase 0: /spdd-analysis                                                │
+│  Phase 0: /pro-spdd:spdd-analysis                                                │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Business Requirement                                            │    │
 │  │   + Concept-driven Codebase Exploration (targeted, not full)    │    │
@@ -323,7 +323,7 @@ This command is the **pre-processing phase** of the SPDD workflow, bridging raw 
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 1: /spdd-reasons-canvas                                         │
+│  Phase 1: /pro-spdd:spdd-reasons-canvas                                         │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Enriched Context → REASONS Canvas Structured Prompt             │    │
 │  │                                                                 │    │
@@ -331,7 +331,7 @@ This command is the **pre-processing phase** of the SPDD workflow, bridging raw 
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 2: /spdd-generate                                               │
+│  Phase 2: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Validate → Generate → Verify → Code        │    │
 │  │                                                                 │    │
@@ -339,7 +339,7 @@ This command is the **pre-processing phase** of the SPDD workflow, bridging raw 
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 3: /spdd-sync                                                   │
+│  Phase 3: /pro-spdd:spdd-sync                                                   │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Code Changes → Analyze → Update Prompt → Consistency           │    │
 │  └────────────────────────────────────────────────────────────────┘    │
@@ -349,17 +349,17 @@ This command is the **pre-processing phase** of the SPDD workflow, bridging raw 
 
 **Why This Phase Matters**
 
-Raw business requirements describe **what** to build but lack the technical context needed to produce high-quality REASONS Canvas prompts. `/spdd-analysis` bridges this gap by:
+Raw business requirements describe **what** to build but lack the technical context needed to produce high-quality REASONS Canvas prompts. `/pro-spdd:spdd-analysis` bridges this gap by:
 
 1. **Grounding in reality**: Analysis is based on actual codebase state, explored through concept-driven scoping rather than exhaustive reading
 2. **Surfacing hidden complexity**: Business rules, edge cases, and ambiguities that are implicit in the requirement become explicit
 3. **Setting strategic direction**: Key design decisions and trade-offs are resolved before detailed design begins
-4. **Reducing hallucination risk**: By feeding `/spdd-reasons-canvas` enriched context with real codebase data, the generated REASONS Canvas is more accurate and implementable
+4. **Reducing hallucination risk**: By feeding `/pro-spdd:spdd-reasons-canvas` enriched context with real codebase data, the generated REASONS Canvas is more accurate and implementable
 5. **Identifying risks early**: Open questions and ambiguities are surfaced before design, not during implementation
 
 **Separation of Concerns with REASONS Canvas**:
 
-| Concern | `/spdd-analysis` (this phase) | `/spdd-reasons-canvas` (next phase) |
+| Concern | `/pro-spdd:spdd-analysis` (this phase) | `/pro-spdd:spdd-reasons-canvas` (next phase) |
 |---------|-------------------------------|--------------------------------------|
 | Thinking level | Strategic — "What" & "Why" | Tactical — "How" |
 | Domain | Conceptual identification | Detailed entity modeling (E) |

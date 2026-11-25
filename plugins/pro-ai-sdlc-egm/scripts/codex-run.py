@@ -150,7 +150,7 @@ def opted_in(repo: str, ref: str | None = None) -> str | None:
     entry = answers.get("codex") if isinstance(answers, dict) else None
     if isinstance(entry, dict) and entry.get("answer") == "yes":
         return None
-    return f"{ANSWERS_FILE} has no yes for codex; answer it with /pro-dev install"
+    return f"{ANSWERS_FILE} has no yes for codex; answer it with /pro-core:pro-dev install"
 
 
 def preflight(cwd: str, ref: str | None = None) -> str:

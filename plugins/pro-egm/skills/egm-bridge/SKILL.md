@@ -1,6 +1,6 @@
 ---
 name: egm-bridge
-description: Bridge to Google's Elephant-Goldfish Model (EGM, egm@egm) for its whole lifecycle - an EGM brainstorm or discovery interview before a change exists, an EGM design doc drafted from a concepts brief, a staged goldfish review or Elephant-Goldfish review with fresh-context reviewers, resolving goldfish findings, README contracts for an existing codebase, design drift against the code and EGM lite for a small change. Use when someone asks for any EGM or goldfish step, wants a topic explored and options weighed before an intent, or wants to add or change a reviewer persona. This is a BRIDGE (not vendored); the plugin installs through the /pro-dev command.
+description: Bridge to Google's Elephant-Goldfish Model (EGM, egm@egm) for its whole lifecycle - an EGM brainstorm or discovery interview before a change exists, an EGM design doc drafted from a concepts brief, a staged goldfish review or Elephant-Goldfish review with fresh-context reviewers, resolving goldfish findings, README contracts for an existing codebase, design drift against the code and EGM lite for a small change. Use when someone asks for any EGM or goldfish step, wants a topic explored and options weighed before an intent, or wants to add or change a reviewer persona. This is a BRIDGE (not vendored); the plugin installs through the /pro-core:pro-dev command.
 ---
 
 # egm-bridge
@@ -37,8 +37,8 @@ Each review runs several subagents on the session model, which costs time and to
    It ends with `concepts_brief.md` and a recommendation; it writes no intent and no code.
 3. For work that goes through EGM: `/pro-egm:draft`, then `/pro-egm:review`, then `/pro-egm:resolve`.
    The design doc under `docs/designs/` is the design document for that work; no `spec.md` or `plan.md` is written for it.
-   For work that stays in the `pro-ai-sdlc` lane: `/intent` with the brief as input, one change at a time.
-4. Build only after the design doc is approved: `/execute`, or by hand, then `/review` on the diff.
+   For work that stays in the `pro-ai-sdlc` lane: `/pro-ai-sdlc:intent` with the brief as input, one change at a time.
+4. Build only after the design doc is approved: `/pro-ai-sdlc:execute`, or by hand, then `/pro-ai-sdlc:review` on the diff.
 5. `/pro-egm:drift` to compare the designs with the code afterwards.
 
 `/pro-egm:lite` is the short path for a bug fix or a small refactor that needs no design doc.
@@ -46,8 +46,8 @@ Each review runs several subagents on the session model, which costs time and to
 ## How it fits pro-ai-sdlc
 
 `sdlc-method.json` registers three offers.
-`/intent` offers `/pro-egm:brainstorm` for a topic that is not yet a clear change.
-`/spec` and `/plan` offer `/pro-egm:goldfish` on the draft before it is committed.
+`/pro-ai-sdlc:intent` offers `/pro-egm:brainstorm` for a topic that is not yet a clear change.
+`/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan` offer `/pro-egm:goldfish` on the draft before it is committed.
 The person accepts or contests each finding and EGM edits the draft in place.
 
 ## Running rules
@@ -75,7 +75,7 @@ Never run a path reviewer as a general-purpose agent, because a persona file is 
 
 ## Installing
 
-In Claude Code, run `/pro-dev install`.
+In Claude Code, run `/pro-core:pro-dev install`.
 It registers the EGM marketplace if needed and installs `egm@egm`.
 EGM 0.1.1 from the marketplace's main branch has all eight skills; an older install lacks `egm-lite` and the `/pro-egm:lite` command says to update it.
 In Codex, the person runs these two commands:

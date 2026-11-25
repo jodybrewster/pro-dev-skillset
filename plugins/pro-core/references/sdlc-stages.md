@@ -1,6 +1,6 @@
 # The AI-native SDLC in one page
 
-`/kaizen` reads this summary when the planning repo keeps no copy of the AI-native SDLC playbook under `playbook/`.
+`/pro-core:kaizen` reads this summary when the planning repo keeps no copy of the AI-native SDLC playbook under `playbook/`.
 It is a paraphrase for judging coverage, not the playbook itself.
 Each stage ends by committing an artifact the next stage reads: `intent.md`, `spec.md`, `plan.md`, the diff and its tests, the PR with its review findings and the incident record.
 That chain of commits is also the audit trail.

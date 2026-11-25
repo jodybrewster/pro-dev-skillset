@@ -1,5 +1,5 @@
 ---
-description: "Raise the bar. Compare a planning repo's tracked projects against what has become standard practice since the last run (AI-native SDLC, Claude Code features, hooks, skills, agents, evals, security), judge each project against its own profile, red-team it, then leave one improvement applied, the next ones briefed, a dated ledger entry and an HTML report with the per-project matrix. Run from a planning repo that holds STATUS.md and coverage.md; /kaizen init scaffolds one. Usage: /kaizen [init <repo> ... | focus]"
+description: "Raise the bar. Compare a planning repo's tracked projects against what has become standard practice since the last run (AI-native SDLC, Claude Code features, hooks, skills, agents, evals, security), judge each project against its own profile, red-team it, then leave one improvement applied, the next ones briefed, a dated ledger entry and an HTML report with the per-project matrix. Run from a planning repo that holds STATUS.md and coverage.md; /pro-core:kaizen init scaffolds one. Usage: /pro-core:kaizen [init <repo> ... | focus]"
 argument-hint: "[init <repo-path> ... | focus, e.g. hooks | evals | security | release]"
 allowed-tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, Skill, Artifact, Bash(git *), Bash(claude --version), Bash(claude --help:*), Bash(ls:*), Bash(cat:*), Bash(gh pr list:*), Bash(gh release list:*), Bash(gh api repos/*/rulesets*), Bash(gh api repos/*/branches/*/protection*)
 disable-model-invocation: true
@@ -19,7 +19,7 @@ Parse the first token of `$ARGUMENTS`:
 | *(empty)* | RUN over the whole setup |
 | anything else | RUN with `$ARGUMENTS` as the focus |
 
-In RUN mode, if `STATUS.md` or `coverage.md` is missing, say that this is not a planning repo yet, point at `/kaizen init <repo-path> ...` and stop.
+In RUN mode, if `STATUS.md` or `coverage.md` is missing, say that this is not a planning repo yet, point at `/pro-core:kaizen init <repo-path> ...` and stop.
 
 ## INIT
 
@@ -74,7 +74,7 @@ If no repo is named, ask once which repos to track and stop, since that cannot b
 
    Below the matrix, a "Where the repos live" list with one line per column: the column name and the path or `owner/name` it was given.
 
-3. `kaizen/README.md`: one paragraph: the folder holds one ledger and one report per `/kaizen` run, dated; each run reads the newest ledger first so the bar only moves up; `profiles.md` says what the bar means for each column.
+3. `kaizen/README.md`: one paragraph: the folder holds one ledger and one report per `/pro-core:kaizen` run, dated; each run reads the newest ledger first so the bar only moves up; `profiles.md` says what the bar means for each column.
 
 4. `kaizen/profiles.md`: one entry per named repo, each a `##` heading with the column name and these five fields left for the user to fill in:
 
@@ -91,7 +91,7 @@ If no repo is named, ask once which repos to track and stop, since that cannot b
    - A private app over live data: deterministic gates on every write path and personal data kept out of tracked files.
 
 Report the files created and the files left alone.
-Say that the first `/kaizen` run fills the `unchecked` cells from evidence once the profiles are written.
+Say that the first `/pro-core:kaizen` run fills the `unchecked` cells from evidence once the profiles are written.
 
 ## RUN
 

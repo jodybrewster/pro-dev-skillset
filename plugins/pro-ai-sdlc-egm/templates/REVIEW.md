@@ -1,6 +1,6 @@
 # Review
 
-How pull requests are reviewed in this repo, by a person or by an agent (`/review`, the `reviewer` subagent).
+How pull requests are reviewed in this repo, by a person or by an agent (`/pro-ai-sdlc-egm:review`, the `reviewer` subagent).
 Start from the change's brief: the `intent.md`, `spec.md` and `plan.md` under `intent/` that the PR points to.
 A review informs a human decision and never approves or rejects by itself.
 

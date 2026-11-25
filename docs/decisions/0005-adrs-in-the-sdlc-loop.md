@@ -17,10 +17,10 @@ Source: PDS-8, intent/2026-10-27-adrs-in-the-sdlc-loop/.
 ## Decision
 
 pro-ai-sdlc handles ADRs at four points.
-`/intent` flags a likely decision under Open questions and writes no ADR.
-`/spec` answers `ADR needed:` in Flagged concerns and, on yes, drafts the ADR as `proposed` in the same commit as the spec.
+`/pro-ai-sdlc:intent` flags a likely decision under Open questions and writes no ADR.
+`/pro-ai-sdlc:spec` answers `ADR needed:` in Flagged concerns and, on yes, drafts the ADR as `proposed` in the same commit as the spec.
 The Done section of `plan.md` accepts it: the person's sign-off moves the ADR to `accepted`.
-`/adr` records a decision with no change behind it, standalone and `accepted`.
+`/pro-ai-sdlc:adr` records a decision with no change behind it, standalone and `accepted`.
 The ADR folder is `docs/adr/` if it exists, else `docs/decisions/` if it exists, else a new `docs/adr/`.
 
 ## Consequences

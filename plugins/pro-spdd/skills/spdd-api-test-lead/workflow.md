@@ -1,5 +1,5 @@
 ---
-name: /spdd-api-test
+name: /pro-spdd:spdd-api-test
 id: spdd-api-test
 category: Testing
 description: Generate a self-contained shell script with cURL commands to test API endpoints based on generated code and acceptance criteria
@@ -18,7 +18,7 @@ This makes it easy for humans to:
 - Verify expected values are correct
 - Quickly identify which tests failed and why
 
-**Input**: The argument after `/spdd-api-test` is a reference to generated code, acceptance criteria document, or API specification.
+**Input**: The argument after `/pro-spdd:spdd-api-test` is a reference to generated code, acceptance criteria document, or API specification.
 
 Input can be provided in several ways:
 
@@ -30,16 +30,16 @@ Input can be provided in several ways:
 
 ```
 # Reference to generated code
-/spdd-api-test @src/main/java/com/example/controller/BillingController.java
+/pro-spdd:spdd-api-test @src/main/java/com/example/controller/BillingController.java
 
 # Reference to acceptance criteria
-/spdd-api-test @spdd/prompt/GGQPA-XXX-202603131530-[Feat]-token-usage-billing.md
+/pro-spdd:spdd-api-test @spdd/prompt/GGQPA-XXX-202603131530-[Feat]-token-usage-billing.md
 
 # Reference to multiple files
-/spdd-api-test @src/controllers/ @requirements/api-spec.md
+/pro-spdd:spdd-api-test @src/controllers/ @requirements/api-spec.md
 
 # With additional context
-/spdd-api-test @src/api/ test the billing endpoints with edge cases for zero tokens
+/pro-spdd:spdd-api-test @src/api/ test the billing endpoints with edge cases for zero tokens
 ```
 
 **Steps**
@@ -608,25 +608,25 @@ This command is the **validation phase** of the SPDD workflow:
 │                           SPDD Workflow                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Phase 1: /spdd-analysis                                                │
+│  Phase 1: /pro-spdd:spdd-analysis                                                │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Business Requirement → Enriched Context                         │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 2: /spdd-reasons-canvas                                         │
+│  Phase 2: /pro-spdd:spdd-reasons-canvas                                         │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Enriched Context → REASONS Canvas Structured Prompt             │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 3: /spdd-generate                                               │
+│  Phase 3: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Implementation Code                         │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 4: /spdd-api-test    ← YOU ARE HERE                            │
+│  Phase 4: /pro-spdd:spdd-api-test    ← YOU ARE HERE                            │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Generated Code + ACs → API Test Script                          │    │
 │  │                                                                 │    │
@@ -636,7 +636,7 @@ This command is the **validation phase** of the SPDD workflow:
 │                              ▼                                          │
 │  Phase 5: Validate & Iterate                                            │
 │  ┌────────────────────────────────────────────────────────────────┐    │
-│  │ Run tests → Identify issues → Update via /spdd-sync            │    │
+│  │ Run tests → Identify issues → Update via /pro-spdd:spdd-sync            │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘

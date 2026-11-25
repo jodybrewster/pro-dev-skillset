@@ -1,6 +1,6 @@
 ---
 name: tastemaker-bridge
-description: Bridge to codeswithroh/tastemaker, a 70-file script-driven engine for grounding UI in real pixels. Use it when the user supplies an actual reference image, screenshot, Pinterest or Dribbble pin, or URL to extract the look from - Python scripts pull palettes, tokens, and contrast from the image itself rather than a lossy text summary - or when a project needs a style lock that keeps every screen consistent via .tastemaker/style-lock.md. Fires on match this reference exactly, extract the look of, study this design, why does this look AI-generated, lock the style, give me comps. A named brand style or style recipe with no image supplied, such as in the style of Linear or Apple, belongs to web-design-engineer-bridge instead. This is a BRIDGE (not vendored); install via the /pro-dev command. Use taste-skills-bridge for aesthetic-family generation and image gen, taste-skill for a quick polish, impeccable-bridge for the full craft engine, screen-critique for a critique without the tastemaker gates.
+description: Bridge to codeswithroh/tastemaker, a 70-file script-driven engine for grounding UI in real pixels. Use it when the user supplies an actual reference image, screenshot, Pinterest or Dribbble pin, or URL to extract the look from - Python scripts pull palettes, tokens, and contrast from the image itself rather than a lossy text summary - or when a project needs a style lock that keeps every screen consistent via .tastemaker/style-lock.md. Fires on match this reference exactly, extract the look of, study this design, why does this look AI-generated, lock the style, give me comps. A named brand style or style recipe with no image supplied, such as in the style of Linear or Apple, belongs to web-design-engineer-bridge instead. This is a BRIDGE (not vendored); install via the /pro-core:pro-dev command. Use taste-skills-bridge for aesthetic-family generation and image gen, taste-skill for a quick polish, impeccable-bridge for the full craft engine, screen-critique for a critique without the tastemaker gates.
 ---
 
 # tastemaker-bridge
@@ -36,7 +36,7 @@ Route elsewhere when:
 - The ask is **aesthetic-family generation or reference imagery** (brutalist, minimalist, high-end, brand kits, image gen) -> `taste-skills-bridge`.
 - The ask is a **quick polish pass** on an existing surface -> `taste-skill`.
 - The ask is the **comprehensive in-code craft engine** -> `impeccable-bridge`.
-- The ask is a **structured critique** without the tastemaker gates and scripts -> `screen-critique` (or `/critique-screen`).
+- The ask is a **structured critique** without the tastemaker gates and scripts -> `screen-critique` (or `/pro-design:critique-screen`).
 
 ## Skill catalog (install names)
 
@@ -52,7 +52,7 @@ Route elsewhere when:
    If any of those subfolders is missing, the install is broken and the skill will not work - reinstall rather than working around it.
    - **If present:** follow that skill's `SKILL.md`.
      Read it top to bottom before starting; it is short by design and the reference files are only worth opening when a step calls for them.
-   - **If absent:** tell the user this is a bridge and the engine is not installed, then get it in place with **`/pro-dev install`** (answer yes when it asks about the tastemaker collection).
+   - **If absent:** tell the user this is a bridge and the engine is not installed, then get it in place with **`/pro-core:pro-dev install`** (answer yes when it asks about the tastemaker collection).
      Do not half-do the work here.
      Offer a focused pro-design skill in the meantime if the user wants to keep moving.
 2. **Defer to the upstream skill for the actual work.**
@@ -65,12 +65,12 @@ Without Python the palette generator, contrast matrix, and anti-slop scan are al
 
 ## Keeping it installed and current
 
-Use the **`/pro-dev`** command (in pro-core).
-Tastemaker is an optional engine: `/pro-dev install` and `/pro-dev update` install it when you answer yes.
+Use the **`/pro-core:pro-dev`** command (in pro-core).
+Tastemaker is an optional engine: `/pro-core:pro-dev install` and `/pro-core:pro-dev update` install it when you answer yes.
 
-- `/pro-dev check` - report presence and scope, and diff the local catalog against the live upstream.
-- `/pro-dev install` - install the engine with `ideagram` and the script/reference tree intact.
-- `/pro-dev update` - re-run the install; the newer files replace the older ones in place.
+- `/pro-core:pro-dev check` - report presence and scope, and diff the local catalog against the live upstream.
+- `/pro-core:pro-dev install` - install the engine with `ideagram` and the script/reference tree intact.
+- `/pro-core:pro-dev update` - re-run the install; the newer files replace the older ones in place.
 
 ## Why a bridge, not a fork
 

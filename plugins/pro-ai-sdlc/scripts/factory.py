@@ -154,7 +154,7 @@ def default_tip(root):
 
 
 def slug_of(folder):
-    """The folder name without its date or id prefix: the branch /execute and /auto name."""
+    """The folder name without its date or id prefix: the branch /pro-ai-sdlc:execute and /pro-ai-sdlc:auto name."""
     return PREFIX_RE.sub("", folder, count=1)
 
 
@@ -1189,7 +1189,7 @@ CHANGE_ID_RE = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*$")
 
 
 def head_branch(root, ref, phase, folder):
-    """The branch /auto names for this phase: <id>/brief or <id>/build when the intent at <ref> has an
+    """The branch /pro-ai-sdlc:auto names for this phase: <id>/brief or <id>/build when the intent at <ref> has an
     id: line (ADR-0026), else <slug>-brief or <slug>. factory/session.sh looks the PR up by the same name."""
     cid = frontmatter(show(root, ref, f"intent/{folder}/intent.md") or "")[0].get("id", "")
     if CHANGE_ID_RE.match(cid):
@@ -1204,7 +1204,7 @@ def binding_reasons(root, phase, folder, view, base, head, token):
     want = head_branch(root, base, phase, folder)
     if view.get("headRefName") != want:
         reasons.append((3, f"the PR head branch is {view.get('headRefName')!r}, not {want!r}"))
-    # /execute opens the build PR as a draft when a step ends doubted; the host marks it ready after its checks.
+    # /pro-ai-sdlc:execute opens the build PR as a draft when a step ends doubted; the host marks it ready after its checks.
     if phase == "brief" and view.get("isDraft"):
         reasons.append((2, "the brief PR is a draft"))
     me = gh_json(root, ["api", "user"], token).get("login")

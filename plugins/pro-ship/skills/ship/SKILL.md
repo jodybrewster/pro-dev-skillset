@@ -190,7 +190,7 @@ Read the results:
 
 ### Record the round
 
-With `LESSONS` found, write the round to the table as `/review` does:
+With `LESSONS` found, write the round to the table as `/pro-ai-sdlc:review` does:
 
 1. Hand every fresh finding to `raise`; never drop one yourself against the table read before grading.
    `raise` matches it against the live table by file and class.

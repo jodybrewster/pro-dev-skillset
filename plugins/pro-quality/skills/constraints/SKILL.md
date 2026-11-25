@@ -8,7 +8,7 @@ description: Use when asked to set or write down a repo's quality bar, floor rul
 A repo's quality bar belongs in a file that outlives the session.
 That file is `CONSTRAINTS.md` at the repo root.
 Read it before writing code and do not weaken it to make a change pass.
-`/constraints` writes it from what the repo already runs.
+`/pro-quality:constraints` writes it from what the repo already runs.
 
 ## The floor
 

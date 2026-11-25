@@ -1,5 +1,5 @@
 ---
-description: "Consolidate this project's Claude Code auto-memory: scan recent session transcripts for corrections, decisions, preferences, and patterns, merge them into the memory files, and rebuild a lean MEMORY.md index. Usage: /dream [dry-run|status]"
+description: "Consolidate this project's Claude Code auto-memory: scan recent session transcripts for corrections, decisions, preferences, and patterns, merge them into the memory files, and rebuild a lean MEMORY.md index. Usage: /pro-core:dream [dry-run|status]"
 argument-hint: "[dry-run|status]"
 ---
 
@@ -18,14 +18,14 @@ Parse the first token of `$ARGUMENTS` (case-insensitive, leading `--` allowed):
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dream-timer.py" --status` and report in three lines or fewer: when the last consolidation ran, whether one is due (the interval is 24h, tracked per project), and which memory directory it applies to.
 Do not read transcripts and do not write anything in this mode.
-Point at `/dream` as the next step only when one is actually due.
+Point at `/pro-core:dream` as the next step only when one is actually due.
 
 ## DRY RUN
 
 Invoke the `dream` skill and follow it up to the point of writing.
 Report what it would change and nothing more: the transcripts scanned, the findings extracted grouped by kind (correction, decision, preference, pattern), which memory file each finding would land in, which findings duplicate memory that already exists, and the projected `MEMORY.md` line count.
 Write no files, create no memory entries, and do not stamp the consolidation timestamp.
-End with `/dream` to apply.
+End with `/pro-core:dream` to apply.
 
 ## CONSOLIDATE
 

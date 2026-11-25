@@ -1,7 +1,7 @@
 {
   "name": "pro-starter",
-  "version": "1.14.4",
-  "description": "Deprecated: renamed to pro-dev-starter. Run /pro-dev update to switch.",
+  "version": "1.14.5",
+  "description": "Deprecated: renamed to pro-dev-starter. Run /pro-core:pro-dev update to switch.",
   "author": {
     "name": "pro-dev-skillset"
   },

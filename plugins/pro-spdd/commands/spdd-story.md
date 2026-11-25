@@ -1,13 +1,13 @@
 ---
-name: /spdd-story
+name: /pro-spdd:spdd-story
 id: spdd-story
 category: Development
 description: Decompose high-level feature requirements into INVEST-compliant, business-focused stories with clear scope boundaries and testable acceptance criteria
 ---
 
-Decompose high-level feature requirements into structured, business-focused development stories. Each story is independently deliverable, scoped to 1-5 days of work, and includes concrete acceptance criteria written in business language. Stories are split according to the INVEST principle and serve as input for the SPDD workflow (`/spdd-analysis` → `/spdd-reasons-canvas` → `/spdd-generate`). This command focuses on the **"What"** and **"For whom"** — technical analysis and implementation details are left to downstream SPDD phases.
+Decompose high-level feature requirements into structured, business-focused development stories. Each story is independently deliverable, scoped to 1-5 days of work, and includes concrete acceptance criteria written in business language. Stories are split according to the INVEST principle and serve as input for the SPDD workflow (`/pro-spdd:spdd-analysis` → `/pro-spdd:spdd-reasons-canvas` → `/pro-spdd:spdd-generate`). This command focuses on the **"What"** and **"For whom"** — technical analysis and implementation details are left to downstream SPDD phases.
 
-**Input**: The argument after `/spdd-story` is a business requirement description or file reference.
+**Input**: The argument after `/pro-spdd:spdd-story` is a business requirement description or file reference.
 
 Input can be provided in two ways:
 
@@ -18,13 +18,13 @@ Input can be provided in two ways:
 
 ```
 # File reference
-/spdd-story @requirements/team-management-feature.md
+/pro-spdd:spdd-story @requirements/team-management-feature.md
 
 # Text description
-/spdd-story Implement team management API with CRUD operations, member management, and role-based access control
+/pro-spdd:spdd-story Implement team management API with CRUD operations, member management, and role-based access control
 
 # Combined
-/spdd-story @requirements/team-management.md additionally needs invitation flow and audit logging
+/pro-spdd:spdd-story @requirements/team-management.md additionally needs invitation flow and audit logging
 ```
 
 **Steps**
@@ -52,7 +52,7 @@ Input can be provided in two ways:
 
 2. **Scan existing stories for context**
 
-   Do NOT explore the codebase — that is `/spdd-analysis`'s responsibility. Only gather enough context to avoid duplication and determine numbering.
+   Do NOT explore the codebase — that is `/pro-spdd:spdd-analysis`'s responsibility. Only gather enough context to avoid duplication and determine numbering.
 
    a. **List existing stories**:
     - List files in `requirements/` directory (if exists)
@@ -309,14 +309,14 @@ Input can be provided in two ways:
    ...
 
    🔗 Next step: Process each story through the SPDD workflow:
-      /spdd-analysis @requirements/<file-name>.md
+      /pro-spdd:spdd-analysis @requirements/<file-name>.md
    ```
 
 9. **Offer to proceed with SPDD analysis**
 
-   > "Stories are ready. Would you like me to proceed with `/spdd-analysis` for any of the generated stories?"
+   > "Stories are ready. Would you like me to proceed with `/pro-spdd:spdd-analysis` for any of the generated stories?"
 
-   If the user selects a story, invoke the `/spdd-analysis` workflow with that story file as input.
+   If the user selects a story, invoke the `/pro-spdd:spdd-analysis` workflow with that story file as input.
 
 **Output**
 
@@ -328,7 +328,7 @@ Structured, INVEST-compliant story document(s) saved to `requirements/`, contain
 **Guardrails**
 
 - Do NOT proceed without business requirement input
-- Do NOT explore the codebase — codebase analysis is `/spdd-analysis`'s responsibility
+- Do NOT explore the codebase — codebase analysis is `/pro-spdd:spdd-analysis`'s responsibility
 - Do NOT summarize or truncate the original business requirement — preserve it verbatim when referenced
 - Do NOT generate code — this command produces stories only
 - Do NOT leave placeholders or TODO items — generate complete, specific content
@@ -338,7 +338,7 @@ Structured, INVEST-compliant story document(s) saved to `requirements/`, contain
 - Do NOT over-fragment a single API endpoint into multiple stories
 - Do NOT specify HOW to implement — only WHAT the expected behavior is
 - Do NOT prescribe technical solutions in ACs (no caching strategies, indexing approaches, query patterns, error JSON formats, P95/P99 metrics)
-- Do NOT include security implementation details in ACs (no "use parameterized queries", "sanitize HTML", etc.) — those are `/spdd-reasons-canvas` Safeguards
+- Do NOT include security implementation details in ACs (no "use parameterized queries", "sanitize HTML", etc.) — those are `/pro-spdd:spdd-reasons-canvas` Safeguards
 - ACs MUST use business language that a QA engineer or Product Owner can understand
 - ACs MUST include concrete numbers, examples, and expected outcomes
 - Each story MUST pass INVEST compliance checks
@@ -366,7 +366,7 @@ This command is the **story decomposition phase** of the SPDD workflow, transfor
 │                           SPDD Workflow                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Pre-Phase: /spdd-story    ← YOU ARE HERE                              │
+│  Pre-Phase: /pro-spdd:spdd-story    ← YOU ARE HERE                              │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ High-Level Feature Requirement                                  │    │
 │  │   + INVEST Analysis (abstract task, compliance, split strategy) │    │
@@ -381,7 +381,7 @@ This command is the **story decomposition phase** of the SPDD workflow, transfor
 │                    │  For each story:   │                                │
 │                    └─────────┬─────────┘                                │
 │                              ▼                                          │
-│  Phase 0: /spdd-analysis                                                │
+│  Phase 0: /pro-spdd:spdd-analysis                                                │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Story → Enriched Context (domain concepts + strategy + risks)  │    │
 │  │                                                                 │    │
@@ -389,7 +389,7 @@ This command is the **story decomposition phase** of the SPDD workflow, transfor
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 1: /spdd-reasons-canvas                                         │
+│  Phase 1: /pro-spdd:spdd-reasons-canvas                                         │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Enriched Context → REASONS Canvas Structured Prompt             │    │
 │  │                                                                 │    │
@@ -397,19 +397,19 @@ This command is the **story decomposition phase** of the SPDD workflow, transfor
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 2: /spdd-generate                                               │
+│  Phase 2: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Validate → Generate → Verify → Code        │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 3: /spdd-api-test                                               │
+│  Phase 3: /pro-spdd:spdd-api-test                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Generated Code + ACs → API Test Script                          │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 4: /spdd-sync                                                   │
+│  Phase 4: /pro-spdd:spdd-sync                                                   │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Code Changes → Analyze → Update Prompt → Consistency           │    │
 │  └────────────────────────────────────────────────────────────────┘    │
@@ -419,17 +419,17 @@ This command is the **story decomposition phase** of the SPDD workflow, transfor
 
 **Why This Phase Matters**
 
-High-level feature requirements often describe complex capabilities that cannot be implemented in a single sprint. `/spdd-story` bridges this gap by:
+High-level feature requirements often describe complex capabilities that cannot be implemented in a single sprint. `/pro-spdd:spdd-story` bridges this gap by:
 
 1. **Right-sizing work**: INVEST analysis ensures each story is independently deliverable within 1-5 days
 2. **Business clarity**: ACs use concrete examples and business language that POs, QA, and developers all understand
 3. **Reducing rework**: Stories with clear scope boundaries and acceptance criteria minimize ambiguity during implementation
 4. **Enabling parallelism**: Independent stories can be developed concurrently by different team members
-5. **Feeding the SPDD pipeline**: Each generated story is immediately ready for `/spdd-analysis`, creating a smooth end-to-end workflow
+5. **Feeding the SPDD pipeline**: Each generated story is immediately ready for `/pro-spdd:spdd-analysis`, creating a smooth end-to-end workflow
 
 **Separation of Concerns across the SPDD Pipeline**:
 
-| Concern | `/spdd-story` | `/spdd-analysis` | `/spdd-reasons-canvas` |
+| Concern | `/pro-spdd:spdd-story` | `/pro-spdd:spdd-analysis` | `/pro-spdd:spdd-reasons-canvas` |
 |---------|---------------|-------------------|------------------------|
 | Audience | PO, Scrum Master, QA | Dev Team, Architect | Dev Team |
 | Language | Business language | Strategic / conceptual | Technical / implementation |

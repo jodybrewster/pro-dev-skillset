@@ -1,6 +1,6 @@
 {
   "name": "pro-egm",
-  "version": "0.4.0",
-  "description": "Glue for Google's Elephant-Goldfish Model (egm@egm), one command per EGM skill: /pro-egm:brainstorm (discovery interview, options research with dated sources, goldfish swarm and an architect, security and sponsor brief review, before any intent), /pro-egm:draft, /pro-egm:review (staged review, stages 5 to 9), /pro-egm:resolve, /pro-egm:bootstrap (README contracts), /pro-egm:drift (design against code, report only), /pro-egm:lite and /pro-egm:goldfish (review loop on a spec, plan or brief with reviewers a repo keeps in .egm/). Each reads the installed engine's SKILL.md and follows it. Needs egm@egm, installed by /pro-dev install. Codex users use the bridge's install lines and EGM's skill picker instead of the slash commands.",
+  "version": "0.4.1",
+  "description": "Glue for Google's Elephant-Goldfish Model (egm@egm), one command per EGM skill: /pro-egm:brainstorm (discovery interview, options research with dated sources, goldfish swarm and an architect, security and sponsor brief review, before any intent), /pro-egm:draft, /pro-egm:review (staged review, stages 5 to 9), /pro-egm:resolve, /pro-egm:bootstrap (README contracts), /pro-egm:drift (design against code, report only), /pro-egm:lite and /pro-egm:goldfish (review loop on a spec, plan or brief with reviewers a repo keeps in .egm/). Each reads the installed engine's SKILL.md and follows it. Needs egm@egm, installed by /pro-core:pro-dev install. Codex users use the bridge's install lines and EGM's skill picker instead of the slash commands.",
   "skills": "./skills/"
 }

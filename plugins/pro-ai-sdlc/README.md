@@ -8,21 +8,21 @@ Its board and chat start the plugin's commands and its autorun works accepted in
 It is a Claude Code only plugin: its commands target Claude Code and make no promise for Codex.
 
 Reference architecture: `ai-sdlc-kit-sample-repo`, a checkout kept beside this one if present, the kit installed into a repo.
-`/pro-dev install` writes toward that shape, with one departure: `intent/<id>-<slug>/{intent,spec,plan}.md` (or `intent/<date>-<slug>/` in a repo with no shortcode) live in one folder instead of flat `specs/` and `plans/`.
+`/pro-core:pro-dev install` writes toward that shape, with one departure: `intent/<id>-<slug>/{intent,spec,plan}.md` (or `intent/<date>-<slug>/` in a repo with no shortcode) live in one folder instead of flat `specs/` and `plans/`.
 
 ## The loop
 
 | Stage | Command | Writes |
 |---|---|---|
-| Intent | `/intent` | `intent/<ID>-<slug>/intent.md` in a repo with a shortcode, else `intent/<date>-<slug>/intent.md` |
-| Spec | `/spec` | `spec.md` beside the intent |
-| Plan | `/plan` | `plan.md` beside the spec |
-| Build | `/execute` | a worktree and branch off the default branch, the built change, the plan's Done section and an open PR; never a merge |
-| Decision | `/adr` | an ADR for a decision with no change behind it |
-| Review | `/review` | findings, a local finding ledger and, on a yes, one line in the agent file when a class of finding repeats |
-| Incident | `/incident` | `incident.md` beside a new `intent.md`, with the raw evidence kept out of git |
-| PR | `/pr-babysit` | fixes on the PR branch, never a merge |
-| Setup | `/pro-dev install` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
+| Intent | `/pro-ai-sdlc:intent` | `intent/<ID>-<slug>/intent.md` in a repo with a shortcode, else `intent/<date>-<slug>/intent.md` |
+| Spec | `/pro-ai-sdlc:spec` | `spec.md` beside the intent |
+| Plan | `/pro-ai-sdlc:plan` | `plan.md` beside the spec |
+| Build | `/pro-ai-sdlc:execute` | a worktree and branch off the default branch, the built change, the plan's Done section and an open PR; never a merge |
+| Decision | `/pro-ai-sdlc:adr` | an ADR for a decision with no change behind it |
+| Review | `/pro-ai-sdlc:review` | findings, a local finding ledger and, on a yes, one line in the agent file when a class of finding repeats |
+| Incident | `/pro-ai-sdlc:incident` | `incident.md` beside a new `intent.md`, with the raw evidence kept out of git |
+| PR | `/pro-ai-sdlc:pr-babysit` | fixes on the PR branch, never a merge |
+| Setup | `/pro-core:pro-dev install` | the agent file block, `intent/`, `REVIEW.md`; commits nothing |
 
 ## Templates
 
@@ -36,13 +36,13 @@ The templates are plain files at stable paths, nothing is generated at runtime, 
 - `templates/REVIEW.md`
 - `references/definition-of-done.md`, the standing definition of done that every plan's `## Done` section cites
 
-The interview rules for `/intent` live in `commands/intent.md`.
+The interview rules for `/pro-ai-sdlc:intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
 
 ## Change ids
 
 A repo that declares a shortcode in a tracked `intent/project.json` (`{"shortcode": "PDS"}`) gives every change an id such as `PDS-51` ([ADR-0026](../../docs/decisions/0026-change-ids.md)).
-`/intent` and `/incident` allocate it, name the folder `intent/<ID>-<slug>/` and write `id:` first in the frontmatter; `/spec` and `/plan` copy it into every file they write.
+`/pro-ai-sdlc:intent` and `/pro-ai-sdlc:incident` allocate it, name the folder `intent/<ID>-<slug>/` and write `id:` first in the frontmatter; `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan` copy it into every file they write.
 Tools read the id from frontmatter and never from the folder name.
 Every script that reads a folder accepts both forms.
 Without the file the loop works as before with date folders.
@@ -59,7 +59,7 @@ An id is never reused: a dropped or deleted intent keeps its number.
 
 ## Building a plan
 
-`/execute <path to plan.md>` runs on Opus, which builds the plan and dispatches subagents when a step benefits from one.
+`/pro-ai-sdlc:execute <path to plan.md>` runs on Opus, which builds the plan and dispatches subagents when a step benefits from one.
 Two scripts hold the parts that must not depend on the model:
 
 - `scripts/execute-gate.py` passes only a plan that is tracked, committed, `Status: approved` and not yet built, whose branch name is free locally and on origin.
@@ -69,12 +69,12 @@ Two scripts hold the parts that must not depend on the model:
   Every copy is removed if one would not be ignored in the worktree or fails.
 
 The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`; the session moves into it.
-`/execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
+`/pro-ai-sdlc:execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
 The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
 
 ## Records
 
-`/incident`, `/review` and the visual check in `/execute` write records in the shape of [docs/loop-records.md](../../docs/loop-records.md), through `scripts/evidence.py`.
+`/pro-ai-sdlc:incident`, `/pro-ai-sdlc:review` and the visual check in `/pro-ai-sdlc:execute` write records in the shape of [docs/loop-records.md](../../docs/loop-records.md), through `scripts/evidence.py`.
 Each lands under the excluded `.pro-dev/` and, when the repo has an ignored `.mieruka/evidence/`, there too.
 
 - `scripts/incident.py` prepares the excluded evidence folder, refuses an `incident.md` that holds a credential and writes the incident record.
@@ -85,10 +85,10 @@ Each lands under the excluded `.pro-dev/` and, when the repo has an ignored `.mi
 
 ADRs enter the loop at four points:
 
-- `/intent` flags a likely decision under Open questions and writes no ADR.
-- `/spec` answers `ADR needed:` in Flagged concerns and, on yes, drafts the ADR as `proposed` in the same commit as the spec.
+- `/pro-ai-sdlc:intent` flags a likely decision under Open questions and writes no ADR.
+- `/pro-ai-sdlc:spec` answers `ADR needed:` in Flagged concerns and, on yes, drafts the ADR as `proposed` in the same commit as the spec.
 - The Done section of `plan.md` accepts it: the person's sign-off moves the ADR to `accepted`.
-- `/adr` records a decision with no change behind it, standalone and `accepted`.
+- `/pro-ai-sdlc:adr` records a decision with no change behind it, standalone and `accepted`.
 
 The folder is `docs/adr/` if it exists, else `docs/decisions/` if it exists, else a new `docs/adr/`.
 A `README.md` index table in that folder gets a row for each new ADR.
@@ -97,7 +97,7 @@ A `README.md` index table in that folder gets a row for each new ADR.
 
 Another plugin from this marketplace can offer a different way to write or review a spec.
 It ships an `sdlc-method.json` at its root with a `method` id, a `requires` plugin id or `null` and a list of `handoffs`, each a `stage` (`intent`, `spec`, `plan` or `review`), a `when` line and an `offer` slash command with an optional `{target}` placeholder.
-`/intent`, `/spec`, `/plan` and `/review` run `scripts/methods.py` for their stage and offer each printed line once as a yes or no question.
+`/pro-ai-sdlc:intent`, `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan` and `/pro-ai-sdlc:review` run `scripts/methods.py` for their stage and offer each printed line once as a yes or no question.
 With no method installed it prints nothing and the commands run as they always have.
 The file is read as data from enabled installs that cover the repo, only when the `pro-dev-skillset` marketplace points at its github repo.
 The decision is in [ADR-0007](../../docs/decisions/0007-spec-method-plugins.md).

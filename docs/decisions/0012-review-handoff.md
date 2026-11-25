@@ -23,7 +23,7 @@ The template broke it.
 The author is usually an agent that is blind to its own assumptions, so a reviewer that reads the author's account inherits the same blind spots.
 Several callers in the marketplace dispatch a reviewer.
 Each could grow its own template and its own fields.
-`pro-ai-sdlc:reviewer` stays as `/review`'s narrow policy gate.
+`pro-ai-sdlc:reviewer` stays as `/pro-ai-sdlc:review`'s narrow policy gate.
 
 ## Decision
 

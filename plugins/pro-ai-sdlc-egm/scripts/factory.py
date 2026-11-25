@@ -154,7 +154,7 @@ def default_tip(root):
 
 
 def slug_of(folder):
-    """The folder name without its date or id prefix: the branch /execute and /auto name."""
+    """The folder name without its date or id prefix: the branch /pro-ai-sdlc-egm:execute and /pro-ai-sdlc-egm:auto name."""
     return PREFIX_RE.sub("", folder, count=1)
 
 
@@ -368,7 +368,7 @@ def compute(root, tip, rel):
     if names_dependency(clean):
         reasons.append((2, "a new dependency is named"))
     # A change that came from a brainstorm or has a design file is read by a person before it is built.
-    # Either copy counts, the default branch's or the working tree's: /design adds the line on a branch.
+    # Either copy counts, the default branch's or the working tree's: /pro-ai-sdlc-egm:design adds the line on a branch.
     seen = [fm] + ([frontmatter(work_text)[0]] if work_text is not None else [])
     if any(f.get("brief", "").strip() for f in seen):
         reasons.append((2, "the intent came from a brief"))
@@ -753,7 +753,7 @@ FINDINGS_RE = re.compile(r"^Open review findings:[ \t]*([0-9]+)[ \t]*$", re.M)
 
 
 def findings_reasons(body):
-    """[(level, reason)] from the `Open review findings: <n>` line /auto build writes in the build PR's body.
+    """[(level, reason)] from the `Open review findings: <n>` line /pro-ai-sdlc-egm:auto build writes in the build PR's body.
 
     A build whose review left an Important finding open goes to an engineer, never to a merge.
     A body with no such line, or with two, is read as unknown and stops the same way."""
@@ -1211,7 +1211,7 @@ CHANGE_ID_RE = re.compile(r"^[A-Z]{2,6}-[1-9][0-9]*$")
 
 
 def head_branch(root, ref, phase, folder):
-    """The branch /auto names for this phase: <id>/brief or <id>/build when the intent at <ref> has an
+    """The branch /pro-ai-sdlc-egm:auto names for this phase: <id>/brief or <id>/build when the intent at <ref> has an
     id: line (ADR-0026), else <slug>-brief or <slug>. factory/session.sh looks the PR up by the same name."""
     cid = frontmatter(show(root, ref, f"intent/{folder}/intent.md") or "")[0].get("id", "")
     if CHANGE_ID_RE.match(cid):
@@ -1226,7 +1226,7 @@ def binding_reasons(root, phase, folder, view, base, head, token):
     want = head_branch(root, base, phase, folder)
     if view.get("headRefName") != want:
         reasons.append((3, f"the PR head branch is {view.get('headRefName')!r}, not {want!r}"))
-    # /execute opens the build PR as a draft when a step ends doubted; the host marks it ready after its checks.
+    # /pro-ai-sdlc-egm:execute opens the build PR as a draft when a step ends doubted; the host marks it ready after its checks.
     if phase == "brief" and view.get("isDraft"):
         reasons.append((2, "the brief PR is a draft"))
     me = gh_json(root, ["api", "user"], token).get("login")

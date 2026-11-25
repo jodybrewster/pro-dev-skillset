@@ -14,7 +14,7 @@ When EGM is the method for this work, the design doc it writes is the design doc
 Read `${CLAUDE_PLUGIN_ROOT}/skills/egm-bridge/running-egm.md` and follow it for this whole run: how to find the engine, how to read and follow an EGM skill, how reviewers are spawned, where artifacts go and how the `Author` line is filled.
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py" egm`.
-If its `egmRoot` is null, print "pro-egm needs egm@egm: run /pro-dev install" and stop.
+If its `egmRoot` is null, print "pro-egm needs egm@egm: run /pro-core:pro-dev install" and stop.
 If `skills["egm-draft"]` is null, print the update line from `running-egm.md` and stop.
 Never call an EGM skill through the Skill tool: EGM's skills disable model invocation, so read the `SKILL.md` at `skills["egm-draft"]` and follow it here.
 

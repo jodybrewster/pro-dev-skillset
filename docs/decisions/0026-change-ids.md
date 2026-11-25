@@ -20,7 +20,7 @@ A hosted counter or a ticket system would add a service the loop does not have; 
 
 Each repo that uses the loop declares a shortcode of two to six capitals once, in a tracked `intent/project.json`.
 Every change has an id `<shortcode>-<n>` matching `^[A-Z]{2,6}-[1-9][0-9]*$`.
-`/intent` allocates it by fetching origin and taking the highest `id:` across `intent/*/intent.md` committed on any local or remote branch (the default branch among them) plus the current working tree, plus one; offline it uses the last fetch and says so.
+`/pro-ai-sdlc:intent` allocates it by fetching origin and taking the highest `id:` across `intent/*/intent.md` committed on any local or remote branch (the default branch among them) plus the current working tree, plus one; offline it uses the last fetch and says so.
 The id lives in the `id:` line of the intent's frontmatter and is copied into the spec and plan; tools read it from there, never from the folder name.
 New folders are named `intent/<id>-<slug>/`; existing folders keep their names and gain an `id:` line in `created:` order.
 An id is never reused or renumbered, a dropped intent keeps its folder and the shortcode never changes in place.

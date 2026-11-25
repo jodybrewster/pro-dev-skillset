@@ -1,5 +1,5 @@
 ---
-description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /lavish <what to render>"
+description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /pro-pdd:lavish <what to render>"
 argument-hint: "<what the artifact should show>"
 allowed-tools:
   - "Bash(test -f .claude/skills/lavish/SKILL.md*)"

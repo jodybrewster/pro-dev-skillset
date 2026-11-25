@@ -44,7 +44,7 @@ git config --global user.email "factory@users.noreply.github.com"
 git config --global credential.https://github.com.helper \
   '!f() { test "$1" = get && echo username=x-access-token && echo "password=$GH_TOKEN"; }; f'
 
-# Every commit in this container carries the run's trailer, whoever makes it (/execute commits
+# Every commit in this container carries the run's trailer, whoever makes it (/pro-ai-sdlc-egm:execute commits
 # on its own), so the host can bind the pull request to this run. The host still checks it.
 mkdir -p "$HOME/.factory-hooks"
 cat > "$HOME/.factory-hooks/commit-msg" <<HOOK
@@ -93,7 +93,7 @@ claude -p "/pro-ai-sdlc-egm:auto ${phase} ${dir}" \
   --output-format stream-json --verbose || echo "factory: claude exited $?" >&2
 
 # The PR is found by the branch name the phase is told to use: <id>/brief or <id>/build when the
-# intent's frontmatter has an id: line (ADR-0026), else <slug>-brief for the brief and /execute's own
+# intent's frontmatter has an id: line (ADR-0026), else <slug>-brief for the brief and /pro-ai-sdlc-egm:execute's own
 # <slug> for the build. There is no fallback to a newer PR; the host checks the same name again.
 cid=$(awk 'NR == 1 { sub(/\r$/, ""); if ($0 != "---") exit; next }
   { sub(/\r$/, "") } $0 == "---" { exit }

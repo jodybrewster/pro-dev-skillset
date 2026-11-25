@@ -42,7 +42,7 @@ No memory files, no MEMORY.md, no `.last-dream`.
 > Otherwise, an explicit request to consolidate applies directly.
 
 An explicit apply request does not skip the preview when either condition holds.
-`/dream` with no arguments is an explicit apply request, so it applies directly on a project that has been consolidated before and where the plan only adds and edits.
+`/pro-core:dream` with no arguments is an explicit apply request, so it applies directly on a project that has been consolidated before and where the plan only adds and edits.
 On a first-ever dream it previews, because that run has the largest blast radius and the least evidence that the layout was detected correctly.
 A run triggered by the interval nudge previews first as well.
 The nudge fires inside a live session with the user present, so the preview costs one beat and stops a bad merge from landing silently in their memory files.

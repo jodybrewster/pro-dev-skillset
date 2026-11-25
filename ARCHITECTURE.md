@@ -11,12 +11,12 @@ Longer version and the Mieruka bridge: [docs/overview.md](./docs/overview.md).
 | Part | Path | Job | Talks to |
 |------|------|-----|----------|
 | Marketplace | `.claude-plugin/marketplace.json` | Lists every plugin with its source and version | Each `plugins/<name>/` folder |
-| Core | `plugins/pro-core` | Skill finding, memory, `/pro-dev` install and update, the engine registry in `registry/engines.json` | Registry rows owned by other plugins (`registry/engines.json`) |
+| Core | `plugins/pro-core` | Skill finding, memory, `/pro-core:pro-dev` install and update, the engine registry in `registry/engines.json` | Registry rows owned by other plugins (`registry/engines.json`) |
 | SDLC methods | `plugins/pro-ai-sdlc`, `pro-ai-sdlc-egm` (experimental), `pro-pdd`, `pro-spdd`, `pro-speckit`, `pro-egm` | One way each of taking a change from idea to merged; pro-ai-sdlc also records incidents, review lessons and visual checks | The incident, review-lesson and visual-check records under `.pro-dev/` (`docs/loop-records.md`) and their copies in mieruka's `.mieruka/evidence/` |
 | Engineering discipline | `plugins/pro-execution`, `pro-quality`, `pro-testing`, `pro-data` | TDD, debugging, review, test and data-layer skills; pro-quality's `format-on-edit` hook runs the repo's own formatter and linter on each edited file | The repo's installed formatter and linter binaries; the per-repo opt-in for Prettier and ESLint in the hook guard folder |
 | Web and stacks | `plugins/pro-design`, `pro-motion`, `pro-nextjs`, `pro-astro` | Design, motion and framework conventions | nothing (independent) |
 | Gates | `plugins/pro-security`, `pro-legal`, `pro-ship` | Hooks that review or block a plan, push or release; pro-ship's `pr-check` and `/ship` preflight write the records those hooks read and `/pro-ship:deployed` writes the deploy record after a deploy | Claude Code hook events; pro-ai-sdlc's `verifier`, which pr-check dispatches when it is installed; the records under `.pro-dev/ship/` (`docs/pr-check-stamp.md`, `docs/ship-preflight.md`, `docs/loop-records.md`) and copies of the preflight and deploy records in mieruka's `.mieruka/evidence/` |
-| Research | `plugins/pro-research` | `/research` and `/lead-research` | Web sources |
+| Research | `plugins/pro-research` | `/pro-research:research` and `/pro-research:lead-research` | Web sources |
 | Starters | `plugins/pro-starter`, `pro-dev-starter` | Dependency aggregators with no skills of their own | The plugins named in its `dependencies` (`.claude-plugin/plugin.json`) |
 | Tests | `tests/check.mjs`, `tests/eval.mjs`, `tests/route-lexical.mjs`, `tests/*-hooks.mjs`, `tests/unit/` | Static checks, routing evals and hook tests | Every plugin manifest |
 
@@ -29,7 +29,7 @@ A user adds the marketplace and installs a plugin by the name in `.claude-plugin
 Claude Code reads the plugin's `.claude-plugin/plugin.json` and loads its skills and commands.
 It registers hooks from the one file `plugins/<name>/hooks/hooks.json` (for example `plugins/pro-ai-sdlc/hooks/hooks.json`).
 Each hook runs a script from the plugin's `scripts/` folder or an inline command when its event fires.
-`/pro-dev install` reads `plugins/pro-core/registry/engines.json` to install engines and companions.
+`/pro-core:pro-dev install` reads `plugins/pro-core/registry/engines.json` to install engines and companions.
 Shell helpers for setup live in `templates/` (`bootstrap.sh`, `codex-bootstrap.sh`, `install-companions.sh`).
 
 ## Boundaries

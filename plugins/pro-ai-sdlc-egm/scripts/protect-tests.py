@@ -5,7 +5,7 @@ When the project has a .claude/fix-mode marker (found by walking up from the
 edited file), edits to *.test.*, *.spec.*, tests/**, e2e/** and __tests__/**
 are flagged, so a fix cannot weaken the failing test it has to pass.
 A .claude/test-lock file (one path per line, relative to the root) written by
-/execute freezes the listed test files the same way; new test files stay free.
+/pro-ai-sdlc-egm:execute freezes the listed test files the same way; new test files stay free.
 warn mode (default): log, tell the session, allow. enforce mode: exit 2.
 """
 import os

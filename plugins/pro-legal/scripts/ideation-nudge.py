@@ -31,7 +31,7 @@ def main() -> int:
     if not isinstance(prompt, str) or not prompt.strip():
         return 0
     stripped = prompt.lstrip()
-    if stripped.startswith("/") and not re.match(r"/plan\b", stripped):
+    if stripped.startswith("/") and not re.match(r"/pro-ai-sdlc(-egm)?:plan\b", stripped):
         return 0
     if not PLANNING_RE.search(prompt):
         return 0

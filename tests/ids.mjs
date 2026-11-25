@@ -49,7 +49,7 @@ export function changeIdProblems(root) {
   const failures = [], warnings = [];
   const projectPath = join(root, "intent", "project.json");
   if (!existsSync(projectPath)) {
-    warnings.push("intent/project.json not found: change ids are not checked (run /pro-dev install to set a shortcode)");
+    warnings.push("intent/project.json not found: change ids are not checked (run /pro-core:pro-dev install to set a shortcode)");
     return { failures, warnings };
   }
   let code = null;

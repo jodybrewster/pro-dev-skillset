@@ -1,5 +1,5 @@
 ---
-description: "Run parallel divergent ideation under different cognitive frames on an open-ended design, architecture, naming, or fuzzy-debugging problem. Usage: /adhd <your problem>"
+description: "Run parallel divergent ideation under different cognitive frames on an open-ended design, architecture, naming, or fuzzy-debugging problem. Usage: /pro-pdd:adhd <your problem>"
 argument-hint: "<the open-ended problem to ideate on>"
 ---
 

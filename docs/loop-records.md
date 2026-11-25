@@ -34,7 +34,7 @@ Every record may also carry one optional top-level field:
 
 A writer checks the value against that pattern and leaves the field out when it does not match, because it comes from an `id:` line, a branch name or a commit subject, all text a diff can shape.
 Adding it keeps `schema` at `1`; a record without it reads exactly as before.
-The deploy record takes it from the deployed commit's subject when the subject starts with `<id>: `, or with `<id> ` when the id's prefix is the shortcode in `intent/project.json` at that commit (so a subject such as `UTF-8 decoding fix` names no change); the incident record from the `intent.md` beside `incident.md`; the visual check and the factory run record from the `intent.md` they record, read from the working tree first and from the default branch tip only when the working tree has none; the review round from `lessons.py round --change-id`, which `/review` passes.
+The deploy record takes it from the deployed commit's subject when the subject starts with `<id>: `, or with `<id> ` when the id's prefix is the shortcode in `intent/project.json` at that commit (so a subject such as `UTF-8 decoding fix` names no change); the incident record from the `intent.md` beside `incident.md`; the visual check and the factory run record from the `intent.md` they record, read from the working tree first and from the default branch tip only when the working tree has none; the review round from `lessons.py round --change-id`, which `/pro-ai-sdlc:review` passes.
 The pr-check stamp carries the same field ([pr-check-stamp.md](./pr-check-stamp.md)); the preflight record does not, because a release spans many changes.
 `evidence_key` never includes it.
 
@@ -143,7 +143,7 @@ The frontmatter of `incident.md`:
 
 ## The review lesson
 
-Written by `lessons.py` when `/review` sees the same class of finding on a second change.
+Written by `lessons.py` when `/pro-ai-sdlc:review` sees the same class of finding on a second change.
 
 | Field | Value |
 |---|---|
@@ -158,14 +158,14 @@ Local copies: the finding ledger `.pro-dev/review/findings.jsonl` (one line per 
 
 `detail_json` holds `class`, `state` (`proposed`, `accepted` or `declined`), `line` (the proposed text), `file` (`CLAUDE.md` or `AGENTS.md`), `seen` (a list of `{ref, head, file, claim}` for each change the class was found on, plus `change_id` when the ledger row has one) and `created`.
 
-A ledger row holds `ref`, `head`, `class`, `file`, `claim`, `created` and, when `/review` passed `--change-id`, `change_id`.
+A ledger row holds `ref`, `head`, `class`, `file`, `claim`, `created` and, when `/pro-ai-sdlc:review` passed `--change-id`, `change_id`.
 A finding is traced to the change it was raised on by that `change_id` and to the round that raised it by the `head` on its row.
-The round that closed it comes with the review-round record ([ADR-0027](./decisions/0027-review-memory.md)): its findings table row is graded `fixed` with `graded_at` set to that round's `head`; the review-round record at that head carries the same `change_id` when `/review` passed one.
+The round that closed it comes with the review-round record ([ADR-0027](./decisions/0027-review-memory.md)): its findings table row is graded `fixed` with `graded_at` set to that round's `head`; the review-round record at that head carries the same `change_id` when `/pro-ai-sdlc:review` passed one.
 
 ## The review round
 
 Written by `lessons.py round` once per review round, after the round's grades and new findings are in the findings table.
-`/review` and `/ship` both write it.
+`/pro-ai-sdlc:review` and `/ship` both write it.
 The decision behind it is [ADR-0027](./decisions/0027-review-memory.md).
 
 | Field | Value |
@@ -204,7 +204,7 @@ The claim stays in the local table and never reaches the record.
 
 ## The visual check
 
-Written by `visual.py record` when `/execute` compares a UI step with the mock the plan names.
+Written by `visual.py record` when `/pro-ai-sdlc:execute` compares a UI step with the mock the plan names.
 
 | Field | Value |
 |---|---|

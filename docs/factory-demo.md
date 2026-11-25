@@ -77,7 +77,7 @@ Review it as Sam Rivera and merge it; that is the human path working.
 Write the larger intent yourself in a Claude Code session in the repo:
 
 ```
-/intent Tasks get an optional due date and listTasks can filter to overdue tasks. Tests take today's date from an environment variable so they do not depend on the clock.
+/pro-ai-sdlc:intent Tasks get an optional due date and listTasks can filter to overdue tasks. Tests take today's date from an environment variable so they do not depend on the clock.
 ```
 
 Expected: the report ends `level: 3 (stop-list words in Constraints: environment variable)`, or names `Proposed outcome` when the intent puts the test clock there.
@@ -85,10 +85,10 @@ Accept it through a pull request; the runner's `--next` never picks it up.
 
 Then walk the gates:
 
-1. `/spec`: it flags the environment variable; close the concern as Pat Okafor (policy owner) and accept as Sam Rivera (product owner).
-2. `/plan`: `Approver:` names Sam Rivera and Lee Chen; set `Status: approved`.
-3. `/execute`: it builds test first and pauses at any stop-list step the plan did not consent to.
-4. `/review` and `/pr-babysit` until green.
+1. `/pro-ai-sdlc:spec`: it flags the environment variable; close the concern as Pat Okafor (policy owner) and accept as Sam Rivera (product owner).
+2. `/pro-ai-sdlc:plan`: `Approver:` names Sam Rivera and Lee Chen; set `Status: approved`.
+3. `/pro-ai-sdlc:execute`: it builds test first and pauses at any stop-list step the plan did not consent to.
+4. `/pro-ai-sdlc:review` and `/pro-ai-sdlc:pr-babysit` until green.
 5. Lee Chen merges with `--match-head-commit`; in mieruka, choosing Sam Rivera as "You are" shows the merge waiting for the lead.
 
 ## Act 5: mieruka

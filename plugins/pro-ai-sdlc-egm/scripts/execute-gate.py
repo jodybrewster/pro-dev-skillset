@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate for /execute: may this plan be built?
+"""Gate for /pro-ai-sdlc-egm:execute: may this plan be built?
 
   python3 execute-gate.py <path to plan.md>
 
@@ -135,7 +135,7 @@ def main():
     if git(top, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0:
         stop(f"branch {branch} already exists locally")
     if git(top, "remote", "get-url", "origin").returncode != 0:
-        stop("no origin remote; /execute pushes the branch and opens a pull request there")
+        stop("no origin remote; /pro-ai-sdlc-egm:execute pushes the branch and opens a pull request there")
     remote = git(top, "ls-remote", "--exit-code", "--heads", "origin", f"refs/heads/{branch}")
     if remote.returncode == 0:
         stop(f"branch {branch} already exists on origin")

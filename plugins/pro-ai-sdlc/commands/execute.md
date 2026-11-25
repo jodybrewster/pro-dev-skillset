@@ -1,5 +1,5 @@
 ---
-description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /execute <path to plan.md>"
+description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Usage: /pro-ai-sdlc:execute <path to plan.md>"
 argument-hint: "<path to plan.md>"
 model: opus
 allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/visual.py" record:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py":*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
@@ -15,7 +15,7 @@ allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash
 
 Requested plan: $ARGUMENTS
 
-This is the build stage of the SDLC loop, between `/plan` and `/pr-babysit`.
+This is the build stage of the SDLC loop, between `/pro-ai-sdlc:plan` and `/pro-ai-sdlc:pr-babysit`.
 The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails or the stop list fires.
 You are the builder: build the plan in this session and dispatch subagents only when a step benefits from one.
 Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, step N doubted (R rounds), checkpoint, visual check, proof of done, verifier, pr-check, PR opened).
@@ -94,7 +94,7 @@ Record each doubted step as one `Doubt:` line under `## Done` in plan.md.
 
 ### 1. Gate the plan
 
-If no path was given, stop and ask for one; `/execute` never guesses which plan to build.
+If no path was given, stop and ask for one; `/pro-ai-sdlc:execute` never guesses which plan to build.
 From the repo root run `git fetch origin`, then `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/execute-gate.py" <plan path>`.
 On exit 1 print its reason and stop; nothing has changed yet.
 On success it prints `slug`, `branch`, `change_id`, `intent_dir` and `default_branch`; use them below.
@@ -232,7 +232,7 @@ If `gh` fails, give the compare URL for the branch instead.
 ### 9. Report
 
 The PR URL, the worktree path, the checks that ran with their results, any departures and the doubted steps with their rounds.
-Suggest `/pr-babysit` as the next step.
+Suggest `/pro-ai-sdlc:pr-babysit` as the next step.
 
 Never merge, never push to the default branch, never force-push and never pass `--no-verify`.
 

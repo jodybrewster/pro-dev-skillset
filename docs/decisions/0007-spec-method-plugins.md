@@ -25,11 +25,11 @@ A third-party method plugin stays as its upstream ships it.
 A pro-dev glue plugin holds the bridge skill, any command and the `sdlc-method.json`; for EGM that is `pro-egm`, which runs EGM's review loop on our own spec and plan with goldfish a repo keeps in `.egm/`.
 
 ADR-0006's registry row gains an optional `marketplace` object, `{ "name", "source" }` with `source` as `owner/repo`.
-`/pro-dev` registers that marketplace before the row's install and refuses when a marketplace of that name points at a different source.
+`/pro-core:pro-dev` registers that marketplace before the row's install and refuses when a marketplace of that name points at a different source.
 This is a user-wide write, accepted for rows that name a marketplace.
 Such a row pins the surface it was reviewed with: the tools of each agent, skill and command plus a hash of every hook, MCP, LSP and `!` line declaration.
-`/pro-dev` installs or updates the plugin only while the copy it is about to install stays inside that pin, checks the installed copy again afterwards and disables it when it does not.
-`/pro-dev check` names an installed plugin that has grown past its pin; raising a pin is a reviewed registry change.
+`/pro-core:pro-dev` installs or updates the plugin only while the copy it is about to install stays inside that pin, checks the installed copy again afterwards and disables it when it does not.
+`/pro-core:pro-dev check` names an installed plugin that has grown past its pin; raising a pin is a reviewed registry change.
 Such a row may default to installed, since installing its glue plugin is the opt-in.
 
 ## Consequences

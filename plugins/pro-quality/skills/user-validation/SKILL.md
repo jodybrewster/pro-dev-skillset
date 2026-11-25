@@ -1,6 +1,6 @@
 ---
 name: user-validation
-description: Use when work has landed and the user needs to check it themselves ('what do I need to check on my end', 'before I sign off', 'what should I click through') - produces a validation handoff listing what changed, what was actually verified, and the concrete steps the user should perform on their end. The Stop hook suggests it with a one-line nudge when a session ends after writing files in the repo, and /validate runs it on demand.
+description: Use when work has landed and the user needs to check it themselves ('what do I need to check on my end', 'before I sign off', 'what should I click through') - produces a validation handoff listing what changed, what was actually verified, and the concrete steps the user should perform on their end. The Stop hook suggests it with a one-line nudge when a session ends after writing files in the repo, and /pro-quality:validate runs it on demand.
 ---
 
 # User validation
@@ -21,12 +21,12 @@ It is a list of actions the user performs, ordered by what would hurt most if it
 ## When this runs
 
 The `Stop` hook watches for sessions that wrote files inside the repo or ran `git commit`.
-By default (`PRO_DEV_VALIDATION=nudge`) it prints one line suggesting `/validate` and leaves the turn alone.
+By default (`PRO_DEV_VALIDATION=nudge`) it prints one line suggesting `/pro-quality:validate` and leaves the turn alone.
 `PRO_DEV_VALIDATION=block` makes it block the stop once and require the handoff.
 `PRO_DEV_VALIDATION=off` silences it.
 Conversation-only turns and writes outside the repo produce nothing.
 
-On demand, via `/validate`, at any point.
+On demand, via `/pro-quality:validate`, at any point.
 
 ## The gate
 

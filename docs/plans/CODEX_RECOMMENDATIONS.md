@@ -60,7 +60,7 @@ path so the user's main role becomes planning, approving plans, and reviewing PR
    Add a root `AGENTS.md` and make `CLAUDE.md` point to the same policy, either by symlink or by a
    tiny wrapper that links to `AGENTS.md`. If symlinks prove brittle across installers or editors,
    keep both files committed and add a drift check that fails when their shared policy sections
-   diverge. Update commands that read repo policy, especially `/gh`, to read `AGENTS.md`,
+   diverge. Update commands that read repo policy, especially `/pro-core:gh`, to read `AGENTS.md`,
    `CLAUDE.md`, `.agents/AGENTS.md`, and `.claude/CLAUDE.md` in that order.
 
 2. **Expand Codex parity from "skill body" to "plugin surface."**
@@ -92,10 +92,10 @@ path so the user's main role becomes planning, approving plans, and reviewing PR
    chose to skip formal planning.
 
 6. **Implement `/gate` as the first concrete Ship primitive.**
-   The gated pre-PR pipeline is a good fit because `pro-ship` is still planned and `/gh` intentionally
+   The gated pre-PR pipeline is a good fit because `pro-ship` is still planned and `/pro-core:gh` intentionally
    stays one-action-per-turn. `/gate` should own the pre-push middle: rebase, review, tests, docs,
    lint, explicit push approval, PR creation, and CI reporting. It should stop at a clean PR and
-   leave final PR review and `/gh ship` to the user.
+   leave final PR review and `/pro-core:gh ship` to the user.
 
 7. **Create a reusable Mieruka bridge contract.**
    Mieruka integration is promising but currently varies by skill. Extract a shared reference or
@@ -117,7 +117,7 @@ path so the user's main role becomes planning, approving plans, and reviewing PR
 
 ### Practical Next Steps
 
-1. Add `AGENTS.md` and update `/gh`, docs freshness hooks, and repo policy language to read both
+1. Add `AGENTS.md` and update `/pro-core:gh`, docs freshness hooks, and repo policy language to read both
    `AGENTS.md` and `CLAUDE.md`.
 2. Expand `tests/check.mjs` to scan commands and sidecars for Codex parity issues.
 3. Add an approved-plan artifact and Mieruka/file-mirror status schema for lifecycle gates.

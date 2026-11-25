@@ -1,6 +1,6 @@
 ---
 name: electron-skills-bridge
-description: Bridge to community Electron agent skills (jwynia/agent-skills electron-best-practices, laststance/skills electron-release) - typed IPC between main and renderer, preload and contextBridge, multi-window state, project structure, Electron Forge packaging, code signing, macOS notarization, auto-updates, GitHub release of an Electron app, Playwright E2E for Electron or seeing a running app through a manual MCP setup. Use when the task is one of those in an Electron app. This is a BRIDGE (not vendored); the skills install via the /pro-dev command. For an Electron major version upgrade use electron-upgrade; for a security audit use electron-security-audit.
+description: Bridge to community Electron agent skills (jwynia/agent-skills electron-best-practices, laststance/skills electron-release) - typed IPC between main and renderer, preload and contextBridge, multi-window state, project structure, Electron Forge packaging, code signing, macOS notarization, auto-updates, GitHub release of an Electron app, Playwright E2E for Electron or seeing a running app through a manual MCP setup. Use when the task is one of those in an Electron app. This is a BRIDGE (not vendored); the skills install via the /pro-core:pro-dev command. For an Electron major version upgrade use electron-upgrade; for a security audit use electron-security-audit.
 ---
 
 # electron-skills-bridge
@@ -41,7 +41,7 @@ They are third-party code and nothing in this bridge authorizes running them.
 1. Check whether the skill is installed.
    Upstream skills land in `.claude/skills/<install-name>/SKILL.md` (project scope) or the same path under the user's skills folder (user scope).
    - If present: load that `SKILL.md` and follow it.
-   - If absent: tell the person this is a bridge and the skill is not installed, tell them to run `/pro-dev install` (or `/pro-electron:install`), then stop.
+   - If absent: tell the person this is a bridge and the skill is not installed, tell them to run `/pro-core:pro-dev install` (or `/pro-electron:install`), then stop.
      Never install it yourself.
 2. Defer to the upstream skill for the work.
    Do not reimplement its steps here.
@@ -70,11 +70,11 @@ Rules for either server:
 
 ## Keeping the skills installed and current
 
-Use the `/pro-dev` command (in pro-core):
+Use the `/pro-core:pro-dev` command (in pro-core):
 
-- `/pro-dev check` - report which install names are present and where.
-- `/pro-dev install` - install both.
-- `/pro-dev update` - re-run the install. Updates move the pinned commit only when pro-electron does, so a new upstream revision is reviewed first.
+- `/pro-core:pro-dev check` - report which install names are present and where.
+- `/pro-core:pro-dev install` - install both.
+- `/pro-core:pro-dev update` - re-run the install. Updates move the pinned commit only when pro-electron does, so a new upstream revision is reviewed first.
 
 ---
 

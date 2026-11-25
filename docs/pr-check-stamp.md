@@ -145,7 +145,7 @@ A verifier result counts for the stamp's HEAD when its `status` is `done` and ei
 - its `head` is an ancestor of HEAD and every path in `git diff --name-status --no-renames <head> HEAD` starts with the top-level `intent/`.
   With rename detection off a rename shows as a delete and an add, so both the old and the new path must be under `intent/`.
   A symlink (mode 120000), a submodule entry (mode 160000) or a mode change in that diff voids the result.
-  This keeps `/execute`'s last `plan.md` commit from voiding a verifier pass and nothing else.
+  This keeps `/pro-ai-sdlc:execute`'s last `plan.md` commit from voiding a verifier pass and nothing else.
 
 A range that changes only top-level `intent/` paths, such as the factory's brief PR with its `spec.md` and `plan.md`, needs no verifier pass: there is no code to exercise.
 The same symlink, submodule and mode rules apply to that range.
@@ -254,7 +254,7 @@ Rule 1 wins in that case and `result` is `fail`.
 
 ## The PR body marker
 
-`pr-check.py marker` prints one line from the stamp for the PR body; `/execute` appends it when pro-ship is installed:
+`pr-check.py marker` prints one line from the stamp for the PR body; `/pro-ai-sdlc:execute` appends it when pro-ship is installed:
 
 `<!-- pro-ship:pr-check head=<sha> result=<result> tier=<tier> model=<model> host=<host> -->`
 

@@ -1,5 +1,274 @@
 {
-  "version": 5,
+  "version": 6,
+  "prerequisites": [
+    {
+      "id": "claude",
+      "label": "Claude Code",
+      "detect": {
+        "bin": "claude"
+      },
+      "why": "Every plugin install and update runs the claude CLI.",
+      "required": true,
+      "install": {},
+      "docs": "https://docs.claude.com/en/docs/claude-code/setup",
+      "note": "pro-dev never installs or updates Claude Code itself."
+    },
+    {
+      "id": "git",
+      "label": "Git",
+      "detect": {
+        "bin": "git",
+        "verify": [
+          "--version"
+        ],
+        "expect": "git version"
+      },
+      "why": "Every command reads the repo through git and the loop branches and commits with it.",
+      "required": true,
+      "install": {
+        "win32": [
+          "winget",
+          "install",
+          "--exact",
+          "--id",
+          "Git.Git",
+          "--accept-package-agreements",
+          "--accept-source-agreements"
+        ],
+        "darwin": [
+          "brew",
+          "install",
+          "git"
+        ]
+      },
+      "docs": "https://git-scm.com/downloads"
+    },
+    {
+      "id": "node",
+      "label": "Node.js LTS",
+      "detect": {
+        "bin": "npx",
+        "verify": [
+          "--version"
+        ],
+        "expect": ""
+      },
+      "why": "Every skills-cli and npx engine row installs with npx, which ships with Node.js.",
+      "required": true,
+      "install": {
+        "win32": [
+          "winget",
+          "install",
+          "--exact",
+          "--id",
+          "OpenJS.NodeJS.LTS",
+          "--accept-package-agreements",
+          "--accept-source-agreements"
+        ],
+        "darwin": [
+          "brew",
+          "install",
+          "node"
+        ]
+      },
+      "docs": "https://nodejs.org/en/download",
+      "note": "The LTS line on purpose: the skills CLI and the engine installs are tested against it."
+    },
+    {
+      "id": "python3",
+      "label": "Python 3",
+      "detect": {
+        "bin": "python3",
+        "verify": [
+          "--version"
+        ],
+        "expect": "Python 3",
+        "altBin": [
+          "python",
+          "py"
+        ]
+      },
+      "why": "Every pro-dev command, hook and guard runs a python3 script.",
+      "required": true,
+      "install": {
+        "win32": [
+          "winget",
+          "install",
+          "--exact",
+          "--id",
+          "Python.Python.3.13",
+          "--accept-package-agreements",
+          "--accept-source-agreements",
+          "--scope",
+          "user"
+        ],
+        "darwin": [
+          "brew",
+          "install",
+          "python"
+        ]
+      },
+      "docs": "https://www.python.org/downloads/",
+      "manual": {
+        "win32": [
+          "Windows installs python.exe, never python3.exe, and the commands here all call python3.",
+          "Turn off the Microsoft Store stub: Settings > Apps > Advanced app settings > App execution aliases, switch off python.exe and python3.exe.",
+          "Then copy the real binary next to itself under the name python3.exe, for example: copy \"%LOCALAPPDATA%\\Programs\\Python\\Python313\\python.exe\" \"%LOCALAPPDATA%\\Programs\\Python\\Python313\\python3.exe\"",
+          "Open a new terminal and check: python3 --version"
+        ]
+      },
+      "note": "Detection runs python3 --version and reads the output, because Windows keeps a python3 alias on PATH that only opens the Microsoft Store."
+    },
+    {
+      "id": "gh",
+      "label": "GitHub CLI",
+      "detect": {
+        "bin": "gh",
+        "verify": [
+          "--version"
+        ],
+        "expect": "gh version"
+      },
+      "why": "The /pro-core:gh command, the pull-request steps of the loop and the private-repo bootstrap all run gh.",
+      "required": true,
+      "install": {
+        "win32": [
+          "winget",
+          "install",
+          "--exact",
+          "--id",
+          "GitHub.cli",
+          "--accept-package-agreements",
+          "--accept-source-agreements"
+        ],
+        "darwin": [
+          "brew",
+          "install",
+          "gh"
+        ]
+      },
+      "docs": "https://cli.github.com",
+      "manual": {
+        "all": [
+          "gh auth login"
+        ]
+      },
+      "note": "The install does not log in. gh auth login is the person's own step and pro-dev never runs it."
+    },
+    {
+      "id": "uv",
+      "label": "uv",
+      "detect": {
+        "bin": "uv",
+        "verify": [
+          "--version"
+        ],
+        "expect": "uv "
+      },
+      "why": "Only the spec-kit rows need it: specify-cli installs with uv tool.",
+      "required": false,
+      "install": {},
+      "docs": "https://docs.astral.sh/uv/getting-started/installation/",
+      "note": "pro-dev never installs uv, whatever the platform (ADR-0018 applies: a tool that installs other tools is the person's own choice)."
+    }
+  ],
+  "profiles": [
+    {
+      "id": "landing-page",
+      "label": "Landing or launch page",
+      "what": "A few sections, a hero, strong visual craft and no product behind it.",
+      "yes": [
+        "elaya",
+        "taste-skill",
+        "mengto",
+        "tastemaker",
+        "garden",
+        "owl",
+        "vercel-react",
+        "vercel"
+      ]
+    },
+    {
+      "id": "website",
+      "label": "Content website",
+      "what": "Several pages, a CMS or MDX, where SEO and speed matter. The default when nothing else fits.",
+      "default": true,
+      "yes": [
+        "taste-skill",
+        "garden",
+        "owl",
+        "playwright",
+        "vercel-react",
+        "vercel-skills",
+        "vercel"
+      ]
+    },
+    {
+      "id": "web-app",
+      "label": "Product web app",
+      "what": "Something people sign in to: forms, state and a backend behind it.",
+      "yes": [
+        "taste-skill",
+        "owl",
+        "jakub",
+        "playwright",
+        "vercel-react",
+        "vercel-skills",
+        "vercel"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "label": "Data or analytics dashboard",
+      "what": "Charts, tables, filters and dense screens read by analysts.",
+      "yes": [
+        "owl",
+        "jakub",
+        "garden",
+        "playwright",
+        "vercel-react",
+        "vercel-skills"
+      ]
+    },
+    {
+      "id": "mobile-app",
+      "label": "Mobile app",
+      "what": "React Native, Expo or a hybrid shell around a web view.",
+      "yes": [
+        "taste-skill",
+        "owl",
+        "emil",
+        "playwright"
+      ]
+    },
+    {
+      "id": "desktop-app",
+      "label": "Desktop app",
+      "what": "Electron or another packaged desktop shell.",
+      "yes": [
+        "owl",
+        "jakub",
+        "playwright"
+      ]
+    },
+    {
+      "id": "service",
+      "label": "Service, API, CLI or library",
+      "what": "No UI of its own, so none of the design or browser engines apply.",
+      "yes": []
+    },
+    {
+      "id": "custom",
+      "label": "Ask me about every engine",
+      "what": "One question per optional engine, which is what the install used to do.",
+      "ask": true
+    }
+  ],
+  "alwaysAsk": [
+    "spec-kit",
+    "codex",
+    "vercel-deploy"
+  ],
   "engines": [
     {
       "id": "lavish",
@@ -21,9 +290,10 @@
       },
       "install": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "kunchenguid/lavish-axi",
+        "https://github.com/kunchenguid/lavish-axi/tree/2b32b92ec8e8fcfb7069af3e1a89c0cabc3bf9aa",
         "--agent",
         "claude-code",
         "-y",
@@ -32,9 +302,10 @@
       ],
       "update": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "kunchenguid/lavish-axi",
+        "https://github.com/kunchenguid/lavish-axi/tree/2b32b92ec8e8fcfb7069af3e1a89c0cabc3bf9aa",
         "--agent",
         "claude-code",
         "-y",
@@ -42,7 +313,7 @@
         "lavish"
       ],
       "why": "Browser review of plans and specs through the lavish-axi artifact playbooks.",
-      "note": "Only the project-local .claude/skills/lavish/SKILL.md counts as installed; a user-scope copy does not satisfy it. The CLI itself runs on demand with npx -y lavish-axi."
+      "note": "Only the project-local .claude/skills/lavish/SKILL.md counts as installed; a user-scope copy does not satisfy it. The CLI itself runs on demand with npx -y lavish-axi. Pinned to commit 2b32b92 so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "impeccable",
@@ -65,18 +336,20 @@
       },
       "install": [
         "npx",
-        "impeccable",
+        "-y",
+        "impeccable@4.11.0",
         "skills",
         "install"
       ],
       "update": [
         "npx",
-        "impeccable",
+        "-y",
+        "impeccable@4.11.0",
         "skills",
         "update"
       ],
       "why": "The whole-surface UI and UX design engine that impeccable-bridge routes to.",
-      "note": "This is the build compiled for the harness. Never run the shared build (npx skills add pbakaus/impeccable) over a newer harness build, because it tracks npm latest and downgrades."
+      "note": "This is the build compiled for the harness, pinned to 4.11.0 so an install is reproducible and /pro-core:pro-dev update never pulls a new upstream build unreviewed. Never run the shared build (npx skills add pbakaus/impeccable) over a newer harness build, because it tracks npm latest and downgrades."
     },
     {
       "id": "qa-skills",
@@ -169,9 +442,10 @@
       },
       "install": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "petrkindlmann/qa-skills",
+        "https://github.com/petrkindlmann/qa-skills/tree/5087a3461d49da76b1e794d9b0bfbd23f38dc75b",
         "-y",
         "--agent",
         "claude-code",
@@ -190,9 +464,10 @@
       ],
       "update": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "petrkindlmann/qa-skills",
+        "https://github.com/petrkindlmann/qa-skills/tree/5087a3461d49da76b1e794d9b0bfbd23f38dc75b",
         "-y",
         "--agent",
         "claude-code",
@@ -210,7 +485,7 @@
         "qa-project-context"
       ],
       "why": "The curated testing-core subset of petrkindlmann/qa-skills behind qa-suite.",
-      "note": "--skill must stay last because it consumes every name after it. The full library has 50 skills; vitest, agent-browser and storybook-interactions are native pro-testing skills."
+      "note": "--skill must stay last because it consumes every name after it. The full library has 50 skills; vitest, agent-browser and storybook-interactions are native pro-testing skills. Pinned to commit 5087a34 so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "taste-skill",
@@ -233,9 +508,10 @@
       },
       "install": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "https://github.com/Leonxlnx/taste-skill",
+        "https://github.com/Leonxlnx/taste-skill/tree/d1a2bb41d927083ac7118f60cfc9cdf711810ea0",
         "-a",
         "claude-code",
         "-y",
@@ -244,9 +520,10 @@
       ],
       "update": [
         "npx",
-        "skills",
+        "-y",
+        "skills@1.9.0",
         "add",
-        "https://github.com/Leonxlnx/taste-skill",
+        "https://github.com/Leonxlnx/taste-skill/tree/d1a2bb41d927083ac7118f60cfc9cdf711810ea0",
         "-a",
         "claude-code",
         "-y",
@@ -258,7 +535,7 @@
         "gh api repos/Leonxlnx/taste-skill/contents/skills --jq '.[] | select(.type==\"dir\") | .name'",
         "gh api repos/Leonxlnx/taste-skill/contents/skills/<dir>/SKILL.md -H \"Accept: application/vnd.github.raw\" | grep '^name:'"
       ],
-      "note": "Upstream folder names do not match install names (brutalist-skill installs as industrial-brutalist-ui), so the upstream catalog is read from each SKILL.md name: line."
+      "note": "Upstream folder names do not match install names (brutalist-skill installs as industrial-brutalist-ui), so the upstream catalog is read from each SKILL.md name: line. Pinned to commit d1a2bb4 so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "next-skills",
@@ -317,9 +594,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "https://github.com/vercel/next.js/tree/canary/skills",
+        "https://github.com/vercel/next.js/tree/b8e68eb8f87dc64e8e5490d8fd4fb9f758424d41/skills",
         "-a",
         "claude-code",
         "-y"
@@ -327,9 +604,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "https://github.com/vercel/next.js/tree/canary/skills",
+        "https://github.com/vercel/next.js/tree/b8e68eb8f87dc64e8e5490d8fd4fb9f758424d41/skills",
         "-a",
         "claude-code",
         "-y"
@@ -338,7 +615,7 @@
       "upstream": [
         "gh api 'repos/vercel/next.js/git/trees/canary?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
       ],
-      "note": "Point at the skills/ folder URL, not at vercel/next.js alone: the repo root also holds maintainer skills under .agents/skills/."
+      "note": "Point at the skills/ folder URL, not at vercel/next.js alone: the repo root also holds maintainer skills under .agents/skills/. Pinned to commit b8e68eb so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "garden",
@@ -362,9 +639,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "ConardLi/garden-skills",
+        "https://github.com/ConardLi/garden-skills/tree/f2d7adeaf53dcce3d0eb19cbffe8c04f4c636c2a",
         "-a",
         "claude-code",
         "-y",
@@ -374,9 +651,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "ConardLi/garden-skills",
+        "https://github.com/ConardLi/garden-skills/tree/f2d7adeaf53dcce3d0eb19cbffe8c04f4c636c2a",
         "-a",
         "claude-code",
         "-y",
@@ -386,7 +663,8 @@
       "why": "The web-design-engineer skill with its style recipes and acceptance harness.",
       "upstream": [
         "gh api repos/ConardLi/garden-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
-      ]
+      ],
+      "note": "Pinned to commit f2d7ade so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "mengto",
@@ -452,9 +730,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "MengTo/Skills",
+        "https://github.com/MengTo/Skills/tree/a5b1d3d28bd72b206a28e4a76b653792fc7b4859",
         "-a",
         "claude-code",
         "-y",
@@ -470,9 +748,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "MengTo/Skills",
+        "https://github.com/MengTo/Skills/tree/a5b1d3d28bd72b206a28e4a76b653792fc7b4859",
         "-a",
         "claude-code",
         "-y",
@@ -489,7 +767,7 @@
       "upstream": [
         "gh api repos/MengTo/Skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ],
-      "note": "Installs the seven notable skills only, not all 130. The repo lays skills out as agent-skills/<group>/<name>/. -s stays last because it consumes every name after it."
+      "note": "Installs the seven notable skills only, not all 130. The repo lays skills out as agent-skills/<group>/<name>/. -s stays last because it consumes every name after it. Pinned to commit a5b1d3d so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "tastemaker",
@@ -513,9 +791,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "codeswithroh/tastemaker",
+        "https://github.com/codeswithroh/tastemaker/tree/792a28a820ec4e9159ef8621c21a6c88528bbf2e",
         "-a",
         "claude-code",
         "-y"
@@ -523,9 +801,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "codeswithroh/tastemaker",
+        "https://github.com/codeswithroh/tastemaker/tree/792a28a820ec4e9159ef8621c21a6c88528bbf2e",
         "-a",
         "claude-code",
         "-y"
@@ -534,7 +812,7 @@
       "upstream": [
         "gh api repos/codeswithroh/tastemaker/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ],
-      "note": "No -s filter and no --full-depth: the folder copies whole, including the nested ideagram sub-skill. The scripts need Python 3 (Pillow for the image paths)."
+      "note": "No -s filter and no --full-depth: the folder copies whole, including the nested ideagram sub-skill. The scripts need Python 3 (Pillow for the image paths). Pinned to commit 792a28a so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "emil",
@@ -556,9 +834,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "emilkowalski/skills",
+        "https://github.com/emilkowalski/skills/tree/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
         "-a",
         "claude-code",
         "-y",
@@ -568,9 +846,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "emilkowalski/skills",
+        "https://github.com/emilkowalski/skills/tree/64eb3deb9a5fbfa041faf783e0bc3fd635872e9c",
         "-a",
         "claude-code",
         "-y",
@@ -581,7 +859,7 @@
       "upstream": [
         "gh api repos/emilkowalski/skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ],
-      "note": "Some of these skills are forked in pro-design (emil-design-eng, animate, apple-design, animation-vocabulary); the external copy is redundant but harmless."
+      "note": "Some of these skills are forked in pro-design (emil-design-eng, animate, apple-design, animation-vocabulary); the external copy is redundant but harmless. Pinned to commit 64eb3de so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "jakub",
@@ -603,9 +881,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "jakubkrehel/skills",
+        "https://github.com/jakubkrehel/skills/tree/672ae44ace6aaed65b86cbb1e2fd6fbea0e79578",
         "-a",
         "claude-code",
         "-y",
@@ -615,9 +893,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "jakubkrehel/skills",
+        "https://github.com/jakubkrehel/skills/tree/672ae44ace6aaed65b86cbb1e2fd6fbea0e79578",
         "-a",
         "claude-code",
         "-y",
@@ -628,7 +906,7 @@
       "upstream": [
         "gh api repos/jakubkrehel/skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ],
-      "note": "Install all 11 for full coverage out of interface-review; the three pro-design forks alone leave most domains unreviewed."
+      "note": "Install all 11 for full coverage out of interface-review; the three pro-design forks alone leave most domains unreviewed. Pinned to commit 672ae44 so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "elaya",
@@ -650,9 +928,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "elayadesign/ai-design-skills",
+        "https://github.com/elayadesign/ai-design-skills/tree/456d9e0d3e2d84c748bb143c6ca3d90c45e16213",
         "-a",
         "claude-code",
         "-y"
@@ -660,9 +938,9 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "elayadesign/ai-design-skills",
+        "https://github.com/elayadesign/ai-design-skills/tree/456d9e0d3e2d84c748bb143c6ca3d90c45e16213",
         "-a",
         "claude-code",
         "-y"
@@ -670,7 +948,8 @@
       "why": "One landing-page-design skill from elayadesign.",
       "upstream": [
         "gh api repos/elayadesign/ai-design-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
-      ]
+      ],
+      "note": "Pinned to commit 456d9e0 so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "owl",
@@ -709,14 +988,14 @@
             ]
           },
           {
-            "file": "skills/screen-critique/SKILL.md",
+            "file": "skills/design-critique/SKILL.md",
             "scopes": [
               "project",
               "user"
             ]
           },
           {
-            "file": "skills/perception-laws/SKILL.md",
+            "file": "skills/visual-hierarchy/SKILL.md",
             "scopes": [
               "project",
               "user"
@@ -727,9 +1006,9 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "Owl-Listener/designer-skills",
+        "https://github.com/Owl-Listener/designer-skills/tree/9a6930cf84a822eb458624bd11c61aac5bbdf224",
         "-a",
         "claude-code",
         "-y",
@@ -738,15 +1017,15 @@
         "design-token",
         "motion-system",
         "typography-scale",
-        "screen-critique",
-        "perception-laws"
+        "design-critique",
+        "visual-hierarchy"
       ],
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
-        "Owl-Listener/designer-skills",
+        "https://github.com/Owl-Listener/designer-skills/tree/9a6930cf84a822eb458624bd11c61aac5bbdf224",
         "-a",
         "claude-code",
         "-y",
@@ -755,14 +1034,14 @@
         "design-token",
         "motion-system",
         "typography-scale",
-        "screen-critique",
-        "perception-laws"
+        "design-critique",
+        "visual-hierarchy"
       ],
-      "why": "Six designer skills from Owl-Listener (accessibility, tokens, motion, typography, critique).",
+      "why": "Six designer skills from Owl-Listener (accessibility, tokens, motion, typography, critique, hierarchy).",
       "upstream": [
         "gh api repos/Owl-Listener/designer-skills/git/trees/HEAD?recursive=1 --jq '.tree[] | select(.path | endswith(\"SKILL.md\")) | .path'"
       ],
-      "note": "Installs only the six that pro-design forks, not all 107. Also installable as Claude plugins: /plugin marketplace add Owl-Listener/designer-skills."
+      "note": "Installs only six of 107. pro-design's screen-critique and perception-laws are forks that aggregate the upstream critique-* and law-of-* families under one name each; they are not upstream skill names, so this row does not install them. Pinned to commit 9a6930c so /pro-core:pro-dev update never pulls new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md files. Also installable as Claude plugins: /plugin marketplace add Owl-Listener/designer-skills. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "vercel",
@@ -1015,7 +1294,7 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1028,7 +1307,7 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1042,7 +1321,7 @@
       "upstream": [
         "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
       ],
-      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs."
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-core:pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "vercel-deploy",
@@ -1066,7 +1345,7 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1078,7 +1357,7 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1087,11 +1366,11 @@
         "-s",
         "deploy-to-vercel"
       ],
-      "why": "The upstream deploy-to-vercel skill can fire on \"deploy\" prompts without the bridge, may stage with git add . and can fall back to a public temporary deploy; the bridge's rules apply only when the bridge loads. .claude/skills/deploy-to-vercel/ is not to be committed, so /pro-dev adds it to the repo's .git/info/exclude.",
+      "why": "The upstream deploy-to-vercel skill can fire on \"deploy\" prompts without the bridge, may stage with git add . and can fall back to a public temporary deploy; the bridge's rules apply only when the bridge loads. .claude/skills/deploy-to-vercel/ is not to be committed, so /pro-core:pro-dev adds it to the repo's .git/info/exclude.",
       "upstream": [
         "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
       ],
-      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs.",
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-core:pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program.",
       "gitExclude": [
         ".claude/skills/deploy-to-vercel/"
       ]
@@ -1125,7 +1404,7 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1138,7 +1417,7 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills",
         "-a",
@@ -1152,7 +1431,7 @@
       "upstream": [
         "gh api 'repos/vercel-labs/agent-skills/git/trees/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62?recursive=1' --jq '.tree[] | select(.path | test(\"^skills/[^/]+/SKILL.md$\")) | .path'"
       ],
-      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs."
+      "note": "-s filters on the frontmatter name, not the folder name (composition-patterns installs as vercel-composition-patterns). The source is pinned to commit 1a2c79d so /pro-core:pro-dev update does not pull new upstream steps unreviewed. Moving the pin rereads the upstream SKILL.md files and updates the folder digest in tests/bridge-install-smoke.mjs. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "specify-cli",
@@ -1184,7 +1463,7 @@
         "--from",
         "git+https://github.com/github/spec-kit.git@43486672fe826d230d884815be7cc2026469a6ba"
       ],
-      "note": "spec-kit v1.2.4 (tag v1.2.4, commit 4348667), installed user-wide with uv tool. The commit and the --exclude-newer timestamp pin the CLI and its build and runtime dependencies; /pro-dev update never moves it. Moving the pin is a reviewed PR that changes the commit, the timestamp, pinnedFiles and the 10 core skill names in pro-dev.py together. See ADR-0008."
+      "note": "spec-kit v1.2.4 (tag v1.2.4, commit 4348667), installed user-wide with uv tool. The commit and the --exclude-newer timestamp pin the CLI and its build and runtime dependencies; /pro-core:pro-dev update never moves it. Moving the pin is a reviewed PR that changes the commit, the timestamp, pinnedFiles and the 10 core skill names in pro-dev.py together. See ADR-0008."
     },
     {
       "id": "spec-kit",
@@ -1296,7 +1575,7 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32/skills/tech/development/tooling/electron-best-practices",
         "-a",
@@ -1308,7 +1587,7 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/jwynia/agent-skills/tree/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32/skills/tech/development/tooling/electron-best-practices",
         "-a",
@@ -1321,7 +1600,7 @@
       "upstream": [
         "gh api 'repos/jwynia/agent-skills/git/trees/e02ec7e226a6e4f8419fd3b88a1d8e472d421b32?recursive=1' --jq '.tree[] | select(.path | startswith(\"skills/tech/development/tooling/electron-best-practices/\")) | .path'"
       ],
-      "note": "Pinned to commit e02ec7e so /pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md and scripts. The repo has no LICENSE file (the SKILL.md frontmatter says MIT). The skill ships Deno scripts, which the bridge asks before running."
+      "note": "Pinned to commit e02ec7e so /pro-core:pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md and scripts. The repo has no LICENSE file (the SKILL.md frontmatter says MIT). The skill ships Deno scripts, which the bridge asks before running. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     },
     {
       "id": "electron-release",
@@ -1345,7 +1624,7 @@
       "install": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/laststance/skills/tree/746d4db0d9cbd767f19b96a432a15c0e42beaa29/skills/electron-release",
         "-a",
@@ -1357,7 +1636,7 @@
       "update": [
         "npx",
         "-y",
-        "skills",
+        "skills@1.9.0",
         "add",
         "https://github.com/laststance/skills/tree/746d4db0d9cbd767f19b96a432a15c0e42beaa29/skills/electron-release",
         "-a",
@@ -1370,7 +1649,7 @@
       "upstream": [
         "gh api 'repos/laststance/skills/git/trees/746d4db0d9cbd767f19b96a432a15c0e42beaa29?recursive=1' --jq '.tree[] | select(.path | startswith(\"skills/electron-release/\")) | .path'"
       ],
-      "note": "Pinned to commit 746d4db so /pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md. MIT licensed."
+      "note": "Pinned to commit 746d4db so /pro-core:pro-dev update does not pull new upstream steps unreviewed; moving the pin is a reviewed PR that rereads the upstream SKILL.md. MIT licensed. The fetcher is pinned too: npx resolves `skills` to npm latest on every run, so the row names `skills@1.9.0` and an install places the same bytes with the same program."
     }
   ]
 }

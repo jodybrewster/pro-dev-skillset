@@ -117,9 +117,9 @@ scored leads as readable evidence. See `references/mieruka.md`.
 This engine serves two entry points over the **same** scripts and methodology:
 
 - **General research (any topic)** — decompose → dispatch generic `research-agent`s per angle → verify
-  → **synthesize a cited report** (`.research/<run-id>/report.md`). No §4 scoring. Driven by `/research`.
+  → **synthesize a cited report** (`.research/<run-id>/report.md`). No §4 scoring. Driven by `/pro-research:research`.
 - **Lead/account research** — the steps above with the company/signals/people agents and the §4 scoring
-  + `lead_profile.json` output. Driven by `/lead-research`.
+  + `lead_profile.json` output. Driven by `/pro-research:lead-research`.
 
 Sections §1–§3 (plan, dispatch, retrieval) apply to both. §4 scoring + §5 lead profiles are lead-only;
 general runs use the synthesis output in `references/methodology.md`.

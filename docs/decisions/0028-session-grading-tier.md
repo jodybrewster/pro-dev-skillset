@@ -9,7 +9,7 @@ Source: PDS-57, intent/PDS-57-skill-improve-loop/
 
 The repo has three eval tiers ([ADR-0009](./0009-three-eval-tiers.md)): keyless routing gates CI, model routing and behavioral evals run on demand and a new skill has to ship a routing case and, where one exists, a behavioral case.
 None of them read a finished session back.
-CI says whether a skill routes; `tests/behavioral.mjs` runs 7 of 99 skills against a written case; `/review` writes lessons about findings in a diff.
+CI says whether a skill routes; `tests/behavioral.mjs` runs 7 of 99 skills against a written case; `/pro-ai-sdlc:review` writes lessons about findings in a diff.
 So an agent that hits a stale instruction, re-reads files, re-runs the verify command or rewrites a PR body by hand leaves no mark anywhere a person looks, and a merged skill edit is a guess with no before-and-after number.
 The method from the talk "Your AI Agent Is Hiding Its Mistakes From You" (Warp, 2026-11-06) and its open-source `skill-doctor` scores real agent conversations against short rubrics, aggregates pass and fail rates over time and, on the failures, drafts changes to the skills; Harness-squared (Google Research, 2026) is the answer-free research counterpart.
 The constraint pulling against adoption is cost and privacy: scoring spends model tokens and reads local transcripts that must never leave the machine.

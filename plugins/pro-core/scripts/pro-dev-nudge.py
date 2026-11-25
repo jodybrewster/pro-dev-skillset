@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """SessionStart hook - tell the person when the pro-dev engine registry has moved on.
 
-`/pro-dev install` and `/pro-dev update` record the registry version they ran
+`/pro-core:pro-dev install` and `/pro-core:pro-dev update` record the registry version they ran
 against in `.claude/pro-dev.json` (`registryVersion`). When the installed
 pro-core ships a registry with a different `version`, a plugin update brought
-new or changed engines and the repo has not run `/pro-dev update` since. This
+new or changed engines and the repo has not run `/pro-core:pro-dev update` since. This
 hook adds one line of session context, the same way dream-nudge.py does, asking
 the agent to pass it on.
 
@@ -20,7 +20,7 @@ import os
 import stat
 import sys
 
-LINE = "pro-dev plugins changed since the last /pro-dev run: run /pro-dev update"
+LINE = "pro-dev plugins changed since the last run: run /pro-core:pro-dev update"
 
 
 def read_payload() -> dict:

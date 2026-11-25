@@ -509,7 +509,7 @@ export function runQualityHookCases() {
     };
     const add = (id, expect, r, ok) => out.results.push({ id, expect, actual: ok ? expect : "other", ok, reason: ok ? "" : `status ${r.status} stdout ${r.stdout.slice(0, 160)} stderr ${r.stderr.slice(0, 120)}` });
     const silent = (r) => r.status === 0 && !r.stdout.trim();
-    const nudged = (r) => r.status === 0 && typeof r.json?.systemMessage === "string" && !("decision" in r.json) && /\/validate/.test(r.json.systemMessage);
+    const nudged = (r) => r.status === 0 && typeof r.json?.systemMessage === "string" && !("decision" in r.json) && /\/pro-quality:validate/.test(r.json.systemMessage);
 
     // R3: nothing counted
     let s = fresh();

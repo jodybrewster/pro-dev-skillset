@@ -4,9 +4,40 @@ A Claude Code and OpenAI Codex plugin marketplace for professional software deve
 
 ## Quick start
 
-**Prerequisites:**
-- [Homebrew](https://brew.sh) — package manager used to install the tools below (macOS/Linux)
-- [`gh` CLI](https://cli.github.com) — required to bootstrap from this private repo; also powers the `/gh` command in `pro-core`
+### Prerequisites
+
+`/pro-core:pro-dev install` checks every tool below and offers to install the ones that are missing, so this list is only for someone who would rather do it first.
+On macOS the install lines need [Homebrew](https://brew.sh); on Windows they need winget, which ships with Windows 11.
+
+| Tool | What needs it | Windows | macOS | Linux |
+|---|---|---|---|---|
+| Claude Code | Every plugin install and update runs the `claude` CLI | pro-dev never installs it: [setup docs](https://docs.claude.com/en/docs/claude-code/setup) | same | same |
+| Git | Every command reads the repo through git; the loop branches and commits with it | `winget install --exact --id Git.Git --accept-package-agreements --accept-source-agreements` | `brew install git` | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| Node.js LTS | Every engine row that installs with `npx`, which ships with Node.js | `winget install --exact --id OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements` | `brew install node` | [nodejs.org/en/download](https://nodejs.org/en/download) |
+| Python 3 | Every pro-dev command, hook and guard runs a `python3` script | `winget install --exact --id Python.Python.3.13 --accept-package-agreements --accept-source-agreements --scope user` | `brew install python` | [python.org/downloads](https://www.python.org/downloads/) |
+| GitHub CLI | `/pro-core:gh`, the pull-request steps of the loop and the bootstrap from this private repo | `winget install --exact --id GitHub.cli --accept-package-agreements --accept-source-agreements` | `brew install gh` | [cli.github.com](https://cli.github.com) |
+| uv | Only the spec-kit rows: `specify-cli` installs with `uv tool` | pro-dev never installs it: [uv install docs](https://docs.astral.sh/uv/getting-started/installation/) | same | same |
+
+Node.js is pinned to the LTS line on purpose: the skills CLI and the engine installs are tested against it.
+The GitHub CLI install does not sign you in; `gh auth login` is your own step and pro-dev never runs it.
+
+#### On Windows, make python3 resolve
+
+Windows installs `python.exe` and never `python3.exe`.
+Every command in this marketplace calls `python3`.
+Windows also keeps a `python3` alias on PATH that only opens the Microsoft Store, so `python3 --version` appears to work until it does not.
+
+Two steps fix it:
+
+1. Turn the aliases off: Settings > Apps > Advanced app settings > App execution aliases, switch off `python.exe` and `python3.exe`.
+2. Copy the real binary next to itself under the name `python3.exe`:
+
+```
+copy "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" "%LOCALAPPDATA%\Programs\Python\Python313\python3.exe"
+```
+
+Then open a new terminal and check `python3 --version`.
+`/pro-core:pro-dev install` prints these same lines from the `python3` prerequisite row when it finds the stub.
 
 Optional machine-level status lines for both Claude Code and Codex CLI:
 
@@ -27,25 +58,29 @@ bash <(gh api repos/jodybrewster/pro-dev-skillset/contents/templates/bootstrap.s
 ```
 
 This writes the project settings and installs `pro-dev-starter`, the meta-plugin that pulls the default stack: `pro-core`, `pro-pdd`, `pro-execution`, `pro-quality`, `pro-design`, `pro-motion`, `pro-testing`, `pro-data`, `pro-research` and `pro-security`.
-It then tells you to run `/pro-dev install` in a Claude Code session.
+It then tells you to run `/pro-core:pro-dev install` in a Claude Code session.
 
 ### Set up a site
 
 1. Install `pro-dev-starter` and any stack or method plugins you want, such as `claude plugin install pro-nextjs@pro-dev-skillset`.
    `pro-nextjs`, `pro-astro` and `pro-electron` are opt-in.
-2. Run `/pro-dev install` in a Claude Code session.
-3. After each `claude plugin update`, run `/pro-dev update`.
-4. Run `/pro-dev check` any time to see what is installed and what is stale.
+2. Run `/pro-core:pro-dev install` in a Claude Code session.
+3. After each `claude plugin update`, run `/pro-core:pro-dev update`.
+4. Run `/pro-core:pro-dev check` any time to see what is installed and what is stale.
 
 Every bridge skill routes to an external engine.
 Each engine is a row in the registry at `plugins/pro-core/registry/engines.json`.
-`/pro-dev install` installs the default rows (`lavish`, `impeccable` and `qa-skills` among them) and asks once per optional engine.
-It saves the answers in `.claude/pro-dev.json`, which is meant to be committed so a team shares its choices.
+`/pro-core:pro-dev install` installs the default rows (`lavish`, `impeccable` and `qa-skills` among them).
+For the optional ones it asks a single question about what kind of project this is, then installs the engines that project type needs.
+Only the three that carry real consent are asked one at a time.
+`spec-kit` writes files into the repo, `codex` sends the diff to OpenAI when a review runs and `vercel-deploy` can put a site live.
+It saves the profile and the answers in `.claude/pro-dev.json`, which is meant to be committed so a team shares its choices.
+[docs/install-profiles.md](./docs/install-profiles.md) lists the profiles, what each one turns on and how to change it.
 
-`/pro-dev update` updates the pro-dev plugins in user scope and in project installs at or under the repo, such as `demo/app`.
+`/pro-core:pro-dev update` updates the pro-dev plugins in user scope and in project installs at or under the repo, such as `demo/app`.
 It then updates the engines and offers to remove dead installs, after you confirm and with a backup of `installed_plugins.json`.
 It ends with a reminder to restart Claude Code.
-A SessionStart nudge tells you to run `/pro-dev update` when a plugin update brought a newer registry than the one `.claude/pro-dev.json` records.
+A SessionStart nudge tells you to run `/pro-core:pro-dev update` when a plugin update brought a newer registry than the one `.claude/pro-dev.json` records.
 
 ### Install one plugin on its own
 
@@ -57,9 +92,9 @@ Codex users keep the install lines in each bridge skill.
 
 `pro-starter` is now a shim that depends only on `pro-dev-starter` and stays for one release.
 An existing site keeps loading.
-`/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`; an install you disabled is left as it is.
+`/pro-core:pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`; an install you disabled is left as it is.
 
-Once installed, open Claude in your project and run `/using-pro-dev` to orient yourself.
+Once installed, open Claude in your project and ask for the `using-pro-dev` skill to orient yourself.
 
 For Codex CLI, use the Codex bootstrap instead:
 
@@ -73,8 +108,8 @@ Then open Codex in the project and run `/skills` to confirm the pro-dev skills a
 
 `pro-pdd` is the default: plan-driven development, which is Claude Code as it is plus a written plan you approve before `pro-execution` builds it test first.
 
-`pro-ai-sdlc`, heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (PDF on that page), is an opt-in plugin for changes that need a record: `/intent`, `/spec`, `/plan`, `/execute`, `/review` and `/pr-babysit` check each change against the repo's rules and record sign-off.
-`/incident` turns a production incident into an incident record and a new intent and `/review` proposes an agent-file line when the same kind of finding comes back on a second change.
+`pro-ai-sdlc`, heavily inspired by Anthropic's [AI-native SDLC playbook](https://claude.com/resources/articles/the-ai-native-sdlc-playbook) (PDF on that page), is an opt-in plugin for changes that need a record: `/pro-ai-sdlc:intent`, `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan`, `/pro-ai-sdlc:execute`, `/pro-ai-sdlc:review` and `/pro-ai-sdlc:pr-babysit` check each change against the repo's rules and record sign-off.
+`/pro-ai-sdlc:incident` turns a production incident into an incident record and a new intent and `/pro-ai-sdlc:review` proposes an agent-file line when the same kind of finding comes back on a second change.
 
 Three more methods are opt-in plugins, installed with `claude plugin install <name>@pro-dev-skillset`:
 
@@ -96,10 +131,9 @@ A larger one stops for the people who own each gate ([ADR-0024](./docs/decisions
 
 ### Required
 
-| Tool | Purpose | Install |
-|---|---|---|
-| Homebrew | Package manager for the tools below | [brew.sh](https://brew.sh) |
-| `gh` (GitHub CLI) | Bootstrap from this private repo; powers the `/gh` command in `pro-core` | `brew install gh` |
+Claude Code, Git, Node.js LTS, Python 3 and the GitHub CLI, with uv only for the spec-kit rows.
+The install line per platform is in [Prerequisites](#prerequisites) above.
+`/pro-core:pro-dev install` offers to install whatever is missing.
 
 ### Optional
 
@@ -196,14 +230,14 @@ mkdir -p .claude
 gh api repos/jodybrewster/pro-dev-skillset/contents/templates/project-settings.json --jq .content | base64 -d > .claude/settings.json
 ```
 
-On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-dev-starter` installs (which cascades to the rest). Then run `/pro-dev install`.
+On the next `claude` open, accept the folder-trust prompt → the marketplace registers and `pro-dev-starter` installs (which cascades to the rest). Then run `/pro-core:pro-dev install`.
 
 ### Ad-hoc, mid-development
 
 ```bash
 claude plugin marketplace add jodybrewster/pro-dev-skillset
 claude plugin install pro-dev-starter@pro-dev-skillset --scope project
-# then, in a session: /pro-dev install
+# then, in a session: /pro-core:pro-dev install
 ```
 
 ## What's here
@@ -214,31 +248,31 @@ One continuous software lifecycle, delivered as a plugin marketplace. **Start wi
 
 | Phase | Skills | Plugin |
 |---|---|---|
-| **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills`, [`dream`](./plugins/pro-core/skills/dream/SKILL.md) + `/dream` (consolidate this project's Claude Code auto-memory into a lean `MEMORY.md`), `/kaizen` (raise each project's bar one notch per run from a planning repo) | `pro-core` |
-| **Define** | `interview-me`, `idea-refine`, `brainstorming`, `adhd` (parallel divergent ideation, `/adhd`) | `pro-pdd` |
-| **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/pro-dev install`) | `pro-pdd` |
+| **Meta** | [`using-pro-dev`](./plugins/pro-core/skills/using-pro-dev/SKILL.md) (router — start here), `find-skills`, [`dream`](./plugins/pro-core/skills/dream/SKILL.md) + `/pro-core:dream` (consolidate this project's Claude Code auto-memory into a lean `MEMORY.md`), `/pro-core:kaizen` (raise each project's bar one notch per run from a planning repo) | `pro-core` |
+| **Define** | `interview-me`, `idea-refine`, `brainstorming`, `adhd` (parallel divergent ideation, `/pro-pdd:adhd`) | `pro-pdd` |
+| **Plan** | planning mode for drafting, `writing-plans`, `lavish`◆ for substantive plan review (render output as annotatable HTML artifacts → lavish-axi, via `/pro-core:pro-dev install`) | `pro-pdd` |
 | **Spec** *(branch)* | goldfish review of a spec or plan: `egm-bridge` → `egm@egm` reviewers with fresh context | `pro-egm` *(opt-in)* |
 | **Spec** *(branch)* | GitHub spec-kit: `spec-kit-bridge` → pinned `specify` CLI, then `/speckit-constitution`, `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement` | `pro-speckit` *(opt-in)* |
 | **Spec** *(branch)* | open-SPDD: `spdd-story → analysis → reasons-canvas → generate → code-review`/`api-test → sync`/`reverse` | `pro-spdd` *(opt-in)* |
 | **Build** | `test-driven-development`, `subagent-driven-development`, `using-git-worktrees` | `pro-execution` |
-| **Build** | `emil-design-eng` (start here for product UI), `landing-page-design`, `build-awwwards-quality-sites`, `apple-design`, `animate` + `animation-vocabulary`, `screen-critique` (`/critique-screen`), `interface-review`, `better-interface`, `better-layout`, `perception-laws`, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition, `frontend-ui-engineering`†, `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/pro-dev install`), `taste-skills-bridge`◆ (via `/pro-dev install`), `web-design-engineer-bridge`◆, `tastemaker-bridge`◆, `mengto-skills-bridge`◆ (all three via `/pro-dev install`) | `pro-design` |
+| **Build** | `emil-design-eng` (start here for product UI), `landing-page-design`, `build-awwwards-quality-sites`, `apple-design`, `animate` + `animation-vocabulary`, `screen-critique` (`/pro-design:critique-screen`), `interface-review`, `better-interface`, `better-layout`, `perception-laws`, design tokens, accessibility audit, motion system, typography scale, shadcn/ui composition, `frontend-ui-engineering`†, `impeccable-bridge`◆ (full UI/UX pass → impeccable, via `/pro-core:pro-dev install`), `taste-skills-bridge`◆ (via `/pro-core:pro-dev install`), `web-design-engineer-bridge`◆, `tastemaker-bridge`◆, `mengto-skills-bridge`◆ (all three via `/pro-core:pro-dev install`) | `pro-design` |
 | **Build** | `web-design-guidelines` (lint UI files against Vercel's Web Interface Guidelines), `react-patterns-bridge`◆ (React composition and view transitions) | `pro-design` |
-| **Build** | `vercel-skills-bridge`◆ (React performance and Vercel cost, vercel-labs/agent-skills, via `/pro-dev install`) | `pro-nextjs` |
+| **Build** | `vercel-skills-bridge`◆ (React performance and Vercel cost, vercel-labs/agent-skills, via `/pro-core:pro-dev install`) | `pro-nextjs` |
 | **Build** | drizzle (orm + schema), prisma, nextauth | `pro-data` |
 | **Build** | `context-engineering`†, `doubt-driven-development`† | `pro-core` |
-| **Verify** | `qa-suite`◆ → `qa-do`/`qa-start` + playwright/visual/api/contract/strategy/risk/planning (bridged qa-skills, via `/pro-dev install`), `agent-browser` (interactive), `vitest` (unit), `storybook-interactions` | `pro-testing` |
+| **Verify** | `qa-suite`◆ → `qa-do`/`qa-start` + playwright/visual/api/contract/strategy/risk/planning (bridged qa-skills, via `/pro-core:pro-dev install`), `agent-browser` (interactive), `vitest` (unit), `storybook-interactions` | `pro-testing` |
 | **Verify** | `systematic-debugging` | `pro-execution` |
 | **Verify** | `verification-before-completion`; the floor guard warns on `git push` and `gh pr create` when a diff lowers the bar; `format-on-edit` runs the repo's own formatter and linter on each edited file | `pro-quality` |
-| **Verify** | `user-validation`, `/validate` — hands *you* the checklist; a Stop hook suggests `/validate` after repo edits (`PRO_DEV_VALIDATION` = nudge, block or off) | `pro-quality` |
-| **Document** | `technical-writer`, `documentation-engineer`, `api-documenter` subagents, `/document` + `/api-docs`, `required-docs.py` (the required-document check); `/pro-dev install` in `pro-core` calls that agent to draft missing required documents when `pro-quality` is present | `pro-quality` |
-| **Review** | `requesting-code-review`, `receiving-code-review`, `constraints` + `/constraints` (writes a repo's `CONSTRAINTS.md`, which the floor guard reads), `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
-| **Security** | `security-architect` + `/threat-model` (challenges ideas, plans and diffs; held once at push by a hook), `security-audit` + `/security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
-| **Legal** | `software-counsel` + `/legal-review` (issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by hooks) | `pro-legal` *(opt-in)* |
-| **Ship** | `ship` (a go/no-go before a tag, release, deploy or publish: reviews only the commits no passing `pr-check` covered, runs the release checks, writes a rollback plan per target and records the verdict for HEAD that the `ship-gate` hook reads), `deployed` (after a deploy: the post-deploy checks and a deploy record mieruka reads, from the facts or a GitHub deployment), `pr-check` (build, lint, typecheck and tests, then the reviewers and the verifier, then a stamp for HEAD that the gate hook on `gh pr create` reads), `risk-tiers` (a deterministic low, medium or high tier from the diff, with every signal printed and the merge pinned to one HEAD sha), `documentation-and-adrs` (which docs a change touches, ADRs in the repo's own convention; docs are judgment, never a gate) and `vercel-deploy-bridge`◆ (deploy to Vercel with token and `.env` checks, via `/pro-dev install`) | `pro-ship` |
+| **Verify** | `user-validation`, `/pro-quality:validate` — hands *you* the checklist; a Stop hook suggests `/pro-quality:validate` after repo edits (`PRO_DEV_VALIDATION` = nudge, block or off) | `pro-quality` |
+| **Document** | `technical-writer`, `documentation-engineer`, `api-documenter` subagents, `/pro-quality:document` + `/pro-quality:api-docs`, `required-docs.py` (the required-document check); `/pro-core:pro-dev install` in `pro-core` calls that agent to draft missing required documents when `pro-quality` is present | `pro-quality` |
+| **Review** | `requesting-code-review`, `receiving-code-review`, `constraints` + `/pro-quality:constraints` (writes a repo's `CONSTRAINTS.md`, which the floor guard reads), `code-simplification`†, `performance-optimization`†, `/code-review` + `/simplify` built-ins | `pro-quality` |
+| **Security** | `security-architect` + `/pro-security:threat-model` (challenges ideas, plans and diffs; held once at push by a hook), `security-audit` + `/pro-security:security-audit` (whole-repo audit), `security-auditor` subagent, `security-and-hardening`† | `pro-security` |
+| **Legal** | `software-counsel` + `/pro-legal:legal-review` (issue spotting on plans and releases: licensing, privacy, AI, client IP; enforced by hooks) | `pro-legal` *(opt-in)* |
+| **Ship** | `ship` (a go/no-go before a tag, release, deploy or publish: reviews only the commits no passing `pr-check` covered, runs the release checks, writes a rollback plan per target and records the verdict for HEAD that the `ship-gate` hook reads), `deployed` (after a deploy: the post-deploy checks and a deploy record mieruka reads, from the facts or a GitHub deployment), `pr-check` (build, lint, typecheck and tests, then the reviewers and the verifier, then a stamp for HEAD that the gate hook on `gh pr create` reads), `risk-tiers` (a deterministic low, medium or high tier from the diff, with every signal printed and the merge pinned to one HEAD sha), `documentation-and-adrs` (which docs a change touches, ADRs in the repo's own convention; docs are judgment, never a gate) and `vercel-deploy-bridge`◆ (deploy to Vercel with token and `.env` checks, via `/pro-core:pro-dev install`) | `pro-ship` |
 | **Ship** | `ci-cd-and-automation`, `deprecation-and-migration` | `pro-ship` *(planned)* |
-| **Research** *(cross-cutting)* | `/research`, `/lead-research` | `pro-research` *(opt-in)* |
+| **Research** *(cross-cutting)* | `/pro-research:research`, `/pro-research:lead-research` | `pro-research` *(opt-in)* |
 
-*(opt-in)* = not in `pro-dev-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/pro-dev install`, `impeccable-bridge` → `impeccable` via `/pro-dev install`).
+*(opt-in)* = not in `pro-dev-starter`. *(planned)* = plugin not yet built. † = referenced by the `using-pro-dev` router but not yet forked; route to it when present, otherwise fall back to the nearest available skill. ◆ = **bridge**: a thin router to an external engine or project-local upstream skill installed separately (e.g. `lavish` → `.claude/skills/lavish/SKILL.md` via `/pro-core:pro-dev install`, `impeccable-bridge` → `impeccable` via `/pro-core:pro-dev install`).
 
 ### Plugins
 
@@ -246,10 +280,10 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 
 **Skill-bearing plugins:**
 
-- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/intent`, `/spec`, `/plan`, `/execute` (build an approved plan in its own worktree and open the PR), `/review` and `/pr-babysit`, with repo setup for the loop in `/pro-dev install` (`pro-core`), the intent, spec, plan and REVIEW templates, a standing definition of done every plan cites, a stop list that pauses `/execute` before risky steps, a `doubt-driven-development` skill that `/execute` runs on irreversible steps, the `researcher`, `verifier`, `simplifier` and `reviewer` agents and warn-mode hooks for protected tests, plan drift and production actions.
-- **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/gh` GitHub workflow command, `dream` memory consolidation, and safety/parallelism hooks.
+- **`pro-ai-sdlc`** - the AI-native SDLC as one stack-agnostic plugin: `/pro-ai-sdlc:intent`, `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan`, `/pro-ai-sdlc:execute` (build an approved plan in its own worktree and open the PR), `/pro-ai-sdlc:review` and `/pro-ai-sdlc:pr-babysit`, with repo setup for the loop in `/pro-core:pro-dev install` (`pro-core`), the intent, spec, plan and REVIEW templates, a standing definition of done every plan cites, a stop list that pauses `/pro-ai-sdlc:execute` before risky steps, a `doubt-driven-development` skill that `/pro-ai-sdlc:execute` runs on irreversible steps, the `researcher`, `verifier`, `simplifier` and `reviewer` agents and warn-mode hooks for protected tests, plan drift and production actions.
+- **`pro-core`** — universal base skills and guardrails: find-skills, Karpathy guidelines, the `using-pro-dev` lifecycle router (maps a task to the right phase and skill), `/pro-core:gh` GitHub workflow command, `dream` memory consolidation, and safety/parallelism hooks.
   `dream` (forked from [`grandamenium/dream-skill`](https://github.com/grandamenium/dream-skill), MIT) reads this project's Claude Code auto-memory at `~/.claude/projects/<project-slug>/memory/`, scans the project's session transcripts for corrections, decisions, preferences, and patterns, merges what it finds into the memory files, and rebuilds `MEMORY.md` as a lean index under 200 lines.
-  Run it with `/dream`; `/dream dry-run` previews the proposed merges, rewrites, and deletions without writing, and `/dream status` reports the timer.
+  Run it with `/pro-core:dream`; `/pro-core:dream dry-run` previews the proposed merges, rewrites, and deletions without writing, and `/pro-core:dream status` reports the timer.
   Consolidation rewrites memory files in place, so the dry run is the recommended first invocation.
   Two hooks keep it on schedule: a `Stop` hook (`scripts/dream-flag.py`) checks the per-project timer as a session ends and leaves a pending flag when consolidation is overdue, and a `SessionStart` hook (`scripts/dream-nudge.py`) turns that flag into a one-time nudge at the start of the next session.
   The interval defaults to 24h and is overridable with `PRO_DEV_DREAM_INTERVAL_HOURS`; `PRO_DEV_DREAM_DISABLED=1` turns the feature off entirely.
@@ -257,24 +291,24 @@ The same skills, grouped by how they're packaged, installed, and attributed.
   The auto-trigger deliberately does not spawn a background agent.
   Upstream's `Stop` hook launched a detached `nohup claude -p ... --allowedTools "Read,Write,Edit,Bash,Glob,Grep" &`, an unsupervised agent with write access across every project on the machine; this fork replaces that with flag-on-exit plus nudge-at-next-session-start, so consolidation always runs inside a real session the user is present for.
   `dream` ships inside `pro-core`, so every `pro-dev-starter` install picks it up with no extra step.
-  `/kaizen` raises the bar one notch per run from a planning repo (a repo holding `STATUS.md` and `coverage.md`; `/kaizen init <repo-path> ...` scaffolds one): it judges each tracked project against its own profile in `kaizen/profiles.md`, red-teams it, applies at most one reversible improvement, briefs the rest and writes a dated ledger plus an HTML report with the coverage matrix.
+  `/pro-core:kaizen` raises the bar one notch per run from a planning repo (a repo holding `STATUS.md` and `coverage.md`; `/pro-core:kaizen init <repo-path> ...` scaffolds one): it judges each tracked project against its own profile in `kaizen/profiles.md`, red-teams it, applies at most one reversible improvement, briefs the rest and writes a dated ledger plus an HTML report with the coverage matrix.
 - **`pro-execution`** — execution discipline skills forked from [obra/superpowers](https://github.com/obra/superpowers): TDD, systematic debugging, git worktrees, subagent-driven development. Includes all upstream sidecar files (`testing-anti-patterns.md`, `root-cause-tracing.md`, `defense-in-depth.md`, `condition-based-waiting.md`, `find-polluter.sh`, `condition-based-waiting-example.ts`).
-- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (dispatches the `code-reviewer` agent: Opus, read-only, fresh context, a four-field handoff of range, brief, policy and risk), receiving code review, verification-before-completion, plus the original `user-validation` handoff. A floor guard warns on `git push` and `gh pr create` when a diff lowers the bar (deleted tests, loosened lint, skipped checks), and `/constraints` writes a repo's `CONSTRAINTS.md`, adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (MIT). A `Stop` hook watches for sessions that wrote files inside the repo and ends the turn with one line suggesting `/validate`. `/validate` hands you a checklist — what changed, what was actually verified, and the concrete steps you should check on your end — written to `.pro-dev/validation/latest.md` and echoed in chat. Set `PRO_DEV_VALIDATION` in the `env` block of `.claude/settings.json` to `off` to silence the hook or `block` to have it block the stop once and require the checklist. Conversation-only turns and writes outside the repo produce nothing. Ships three documentation subagents — `technical-writer` (release notes, migration guides, README prose), `documentation-engineer` (doc drift, broken setup paths, structure), and `api-documenter` (references built from the real handlers, schemas, and serializers) — reachable via `/document` and `/api-docs`. All three are constrained to write only what they can trace to a file they opened. Codex counterparts ship as `.toml` under `.codex-plugin/agents/`. Doc freshness is a judgment step in `pro-ship`'s `/pr-check` (docs changed where behavior changed, reported as Should-fix), not a push hook. An API-contract hook nudges `api-documenter` when an OpenAPI, GraphQL, or proto file changes. Pairs with the optional `playwright@claude-plugins-official` companion.
+- **`pro-quality`** — quality-gate skills forked from `obra/superpowers`: requesting code review (dispatches the `code-reviewer` agent: Opus, read-only, fresh context, a four-field handoff of range, brief, policy and risk), receiving code review, verification-before-completion, plus the original `user-validation` handoff. A floor guard warns on `git push` and `gh pr create` when a diff lowers the bar (deleted tests, loosened lint, skipped checks), and `/pro-quality:constraints` writes a repo's `CONSTRAINTS.md`, adapted from [agent-skills](https://github.com/addyosmani/agent-skills) (MIT). A `Stop` hook watches for sessions that wrote files inside the repo and ends the turn with one line suggesting `/pro-quality:validate`. `/pro-quality:validate` hands you a checklist — what changed, what was actually verified, and the concrete steps you should check on your end — written to `.pro-dev/validation/latest.md` and echoed in chat. Set `PRO_DEV_VALIDATION` in the `env` block of `.claude/settings.json` to `off` to silence the hook or `block` to have it block the stop once and require the checklist. Conversation-only turns and writes outside the repo produce nothing. Ships three documentation subagents — `technical-writer` (release notes, migration guides, README prose), `documentation-engineer` (doc drift, broken setup paths, structure), and `api-documenter` (references built from the real handlers, schemas, and serializers) — reachable via `/pro-quality:document` and `/pro-quality:api-docs`. All three are constrained to write only what they can trace to a file they opened. Codex counterparts ship as `.toml` under `.codex-plugin/agents/`. Doc freshness is a judgment step in `pro-ship`'s `/pro-ship:pr-check` (docs changed where behavior changed, reported as Should-fix), not a push hook. An API-contract hook nudges `api-documenter` when an OpenAPI, GraphQL, or proto file changes. Pairs with the optional `playwright@claude-plugins-official` companion.
 - **`pro-design`** - the design surface, grouped by what you are actually doing.
   Start here and craft: `emil-design-eng` (polished product UI - components, screens, empty and loading states), `apple-design` (Apple HIG principles applied to a screen), `animate`, and `animation-vocabulary`, all forked from [emilkowalski/skills](https://github.com/emilkowalski/skills) (MIT); `landing-page-design` (a single-CTA conversion page with a real visual system, and it asks you questions before it designs) from [elayadesign/ai-design-skills](https://github.com/elayadesign/ai-design-skills) (MIT); `build-awwwards-quality-sites` (the principles and techniques behind Awwwards-level immersive scroll storytelling) from [MengTo/Skills](https://github.com/MengTo/Skills) (MIT).
   Motion: `animate` adds or refines animation on a site that already exists and decides what should move at all, `animation-vocabulary` turns "snappy but not bouncy" into exact easing, duration, and spring terms, and the older `motion` (Framer Motion implementation and discipline) and `motion-system` skills still cover implementation and token-level motion scales.
-  Review and fix: `screen-critique` with the `/critique-screen` command judges a rendered screen through seven critique lenses, and `perception-laws` covers Gestalt grouping, Von Restorff, and visual hierarchy - both from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT). `interface-review` reviews the UI changes in a PR, branch, or working tree and flags regressions, `better-interface` is the holistic pass that consolidates the `better-*` family into one ranked verdict (any domain whose skill is not installed comes back as `Not reviewed`), and `better-layout` fixes spacing, alignment, and grouping to the pixel - all three from [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (MIT). `accessibility-audit` (WCAG 2.2 POUR) rounds it out.
+  Review and fix: `screen-critique` with the `/pro-design:critique-screen` command judges a rendered screen through seven critique lenses, and `perception-laws` covers Gestalt grouping, Von Restorff, and visual hierarchy - both from [Owl-Listener/designer-skills](https://github.com/Owl-Listener/designer-skills) (MIT). `interface-review` reviews the UI changes in a PR, branch, or working tree and flags regressions, `better-interface` is the holistic pass that consolidates the `better-*` family into one ranked verdict (any domain whose skill is not installed comes back as `Not reviewed`), and `better-layout` fixes spacing, alignment, and grouping to the pixel - all three from [jakubkrehel/skills](https://github.com/jakubkrehel/skills) (MIT). `accessibility-audit` (WCAG 2.2 POUR) rounds it out.
   Systems: `design-token` and `typography-scale` (Owl-Listener/designer-skills), `shadcn-ui-composition` with OKLCH theming, cva variants, compound components, and Field form layout (from [agents-inc/skills](https://github.com/agents-inc/skills), MIT), `stitch-skill` (create/update `DESIGN.md`), and `taste-skill` (a targeted visual polish pass).
-  Bridges (not vendored): `impeccable-bridge` routes to the standalone `impeccable` engine via `/pro-dev install`; `taste-skills-bridge` routes to [`Leonxlnx/taste-skill`](https://github.com/Leonxlnx/taste-skill) via `/pro-dev install`; `web-design-engineer-bridge` routes to [`ConardLi/garden-skills`](https://github.com/ConardLi/garden-skills) `web-design-engineer`, which grounds a design in real references, ships style recipes for Apple/Linear/Vercel/Stripe and friends, and scores the result so you can iterate against a number; `tastemaker-bridge` routes to [`codeswithroh/tastemaker`](https://github.com/codeswithroh/tastemaker), which extracts tokens from a reference image's actual pixels with scripts, locks that style across a project, and gates the usual AI slop (needs Python 3); `mengto-skills-bridge` routes to the full [`MengTo/Skills`](https://github.com/MengTo/Skills) library of 130 skills - scroll storytelling, WebGL/shader/3D effects, style recipes, and video-to-superprompt; `react-patterns-bridge` routes to the React composition and view-transition skills in [`vercel-labs/agent-skills`](https://github.com/vercel-labs/agent-skills) (MIT per its README).
+  Bridges (not vendored): `impeccable-bridge` routes to the standalone `impeccable` engine via `/pro-core:pro-dev install`; `taste-skills-bridge` routes to [`Leonxlnx/taste-skill`](https://github.com/Leonxlnx/taste-skill) via `/pro-core:pro-dev install`; `web-design-engineer-bridge` routes to [`ConardLi/garden-skills`](https://github.com/ConardLi/garden-skills) `web-design-engineer`, which grounds a design in real references, ships style recipes for Apple/Linear/Vercel/Stripe and friends, and scores the result so you can iterate against a number; `tastemaker-bridge` routes to [`codeswithroh/tastemaker`](https://github.com/codeswithroh/tastemaker), which extracts tokens from a reference image's actual pixels with scripts, locks that style across a project, and gates the usual AI slop (needs Python 3); `mengto-skills-bridge` routes to the full [`MengTo/Skills`](https://github.com/MengTo/Skills) library of 130 skills - scroll storytelling, WebGL/shader/3D effects, style recipes, and video-to-superprompt; `react-patterns-bridge` routes to the React composition and view-transition skills in [`vercel-labs/agent-skills`](https://github.com/vercel-labs/agent-skills) (MIT per its README).
   `web-design-guidelines` is native: it lints the UI files you name against Vercel's [Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) and fetches the rules at run time from a pinned commit.
-  The last three install with `/pro-dev install`, which also pulls the non-vendored remainder of every collection.
+  The last three install with `/pro-core:pro-dev install`, which also pulls the non-vendored remainder of every collection.
   The bridge trade-off is worth stating plainly: a bridged engine does nothing in a project until it has been installed there, so run the install command before you rely on one.
   Pairs with the optional `figma@claude-plugins-official` companion for Figma-MCP integration.
-- **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via `/pro-dev install` (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Pairs with the optional `playwright@claude-plugins-official` companion.
+- **`pro-testing`** — the Verify phase. Native skills: `vitest` (unit/component, from `PaulRBerg/agent-skills`), `agent-browser` (interactive verification, `vercel-labs/agent-browser`, Apache-2.0), `storybook-interactions` (`peterknezek/skills`). Plus `qa-suite` — a **bridge** (not vendored) to the `petrkindlmann/qa-skills` library (43 skills, MIT) installed on demand via `/pro-core:pro-dev install` (`npx skills add`): `qa-do`/`qa-start` routers, `playwright-automation`, `visual-testing`, api/contract-testing, test-reliability, and QA strategy/risk/planning. Pairs with the optional `playwright@claude-plugins-official` companion.
 - **`pro-data`** — data + auth skills from `Yoraexe/ceobe`, `Intense-Visions/harness-engineering`, `a5c-ai/babysitter`, `IvanTorresEdge/molcajete.ai` (all MIT): drizzle-orm-architecture, drizzle-schema-definition, nextauth-patterns, prisma-schema-patterns.
 - **`pro-security`** - the Security phase, in the default stack.
-  `security-architect` challenges a specific idea, plan, spec or diff: it restates the plan as a system, draws the trust boundaries, names the unstated assumptions and the attack that breaks each, and returns a `## Security challenge` section to fold into the plan (`/threat-model`, plus a read-only `security-architect` subagent for a fresh-context pass).
-  `security-audit` is the whole-repo posture audit (`/security-audit`), with the `security-auditor` subagent judging each finding independently.
+  `security-architect` challenges a specific idea, plan, spec or diff: it restates the plan as a system, draws the trust boundaries, names the unstated assumptions and the attack that breaks each, and returns a `## Security challenge` section to fold into the plan (`/pro-security:threat-model`, plus a read-only `security-architect` subagent for a fresh-context pass).
+  `security-audit` is the whole-repo posture audit (`/pro-security:security-audit`), with the `security-auditor` subagent judging each finding independently.
   One hook gates the push.
   A `git push` or `gh pr create` whose diff against its upstream touches auth, data, input handling, payments, secrets, LLM tools or CI is held once per distinct diff, and the identical retry passes.
   `git commit` is never gated.
@@ -283,31 +317,31 @@ The same skills, grouped by how they're packaged, installed, and attributed.
 - **`pro-legal`** - the Legal phase, opt-in and not in `pro-dev-starter`.
   `software-counsel` is an in-house product counsel persona that spots legal issues in a plan or a release.
   It is issue spotting and not legal advice.
-  In `plan` mode it reviews an idea, plan or spec and returns a `## Legal review` section to fold into the plan (`/legal-review`).
+  In `plan` mode it reviews an idea, plan or spec and returns a `## Legal review` section to fold into the plan (`/pro-legal:legal-review`).
   In `release` mode it reviews what is about to ship.
   Hooks make it hard to skip.
   Exiting plan mode with a plan that touches licensing, personal data, AI, scraping or payments is denied until the plan carries a `## Legal review` section produced by an independent `software-counsel` pass.
   A release gate holds `git tag`, `gh release create`, package publishes, production deploys, `gh pr create` and commits that add problematically licensed dependencies or change LICENSE and NOTICE files.
   A dated `legal-landscape.md` baseline backs the review, with a CI staleness check.
   The content is original.
-- **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-prompt-update`, `/spdd-sync`, `/spdd-api-test`, `/spdd-code-review`, `/spdd-reverse`. Not included in `pro-dev-starter` yet.
-- **`pro-ai-sdlc-egm`** - experimental and opt-in: the loop in three steps with EGM as the design step. `/intent` records what a person wants (an idea, a bug, a brief or a PRD, with an optional brainstorm), `/design` keeps one design file per feature under `docs/designs/`, has fresh-context reviewers check it and records approvals by role against the exact version approved, and `/execute` writes the build ticket from the approved design and builds it. A copy of `pro-ai-sdlc` to start with, so enable one of the two in a repo, never both ([ADR-0029](./docs/decisions/0029-design-file-loop-experiment.md)).
-- **`pro-egm`** - opt-in glue for Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Apache-2.0, bridged, not vendored): one command per EGM skill (`/pro-egm:brainstorm`, `draft`, `review`, `resolve`, `bootstrap`, `drift`, `lite` and `goldfish`). The `egm-bridge` skill routes to them and points to `/pro-dev install`, which installs `egm@egm`. The brainstorm adds a discovery primer, options research with dated sources and an architect, security and sponsor review of the brief. Once installed, `/intent` offers the brainstorm and `/spec` and `/plan` offer the goldfish review. EGM's skills cannot be started by a model, so each command reads the installed EGM skill file and follows it, with custom goldfish run through a read-only reviewer agent. Not included in `pro-dev-starter`.
-- **`pro-speckit`** - opt-in glue for GitHub's [spec-kit](https://github.com/github/spec-kit) (MIT, bridged, not vendored): the `spec-kit-bridge` skill points to `/pro-dev install` or `/pro-speckit:install`, which install the `specify` CLI at a pinned commit and then set spec-kit up in the repo with model invocation off and its event hooks off. `/pro-speckit:remove` takes spec-kit out of the repo and never touches `specs/`. `/pro-dev check` hashes the files spec-kit wrote against the registry pin without running `specify`. Not included in `pro-dev-starter`.
-- **`pro-ship`** - the shipping plugin, included in `pro-dev-starter`. It holds `/pro-ship:pr-check`, which runs the repo's build, lint, typecheck and tests, then the reviewers, then writes a stamp for HEAD. On a high-tier PR it can also run Codex as an advisory second reviewer when the repo opted in through `/pro-dev install`. It also holds a `PreToolUse` gate hook on `gh pr create` that denies once when the stamp is missing (it starts in warn mode and fails open). `/pro-ship:ship` is the go/no-go before a release: it finds the ship targets (a Ship block in `CLAUDE.md` or `AGENTS.md` overrides detection), reviews only the commits no passing `pr-check` marker from someone who can push covered, runs agent-skills' pre-launch checklist with pro-quality's `test-engineer` and `web-performance-auditor`, writes rollout, rollback and post-launch plans per target and records the verdict for HEAD in `.pro-dev/ship/preflight.json` (copied into an ignored `.mieruka/evidence/` for mieruka, see `docs/ship-preflight.md`). It never deploys. A second gate hook, `ship-gate`, warns on a tag, release, publish or production deploy with no fresh GO. `/pro-ship:risk-tiers` explains the risk classifier, which sorts a diff into low, medium or high. It also covers how `/merge-pr` shows its signals before a merge. Then there is `vercel-deploy-bridge`, which deploys through Vercel's `deploy-to-vercel` skill with its own checks: the token comes only from the environment and no `.env` file is uploaded or committed. Every stage, commit, push, link, global install and production deploy waits for a yes. `/pro-dev install` asks once and installs the upstream skill pinned, with its folder kept out of commits. The other Ship skills are still planned.
-- **`pro-pdd`** — Define + Plan skills included in `pro-dev-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/pro-dev install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
+- **`pro-spdd`** — opt-in Structured Prompt-Driven Development workflow adapted from [gszhangwei/open-spdd](https://github.com/gszhangwei/open-spdd) (MIT): `/pro-spdd:spdd-story`, `/pro-spdd:spdd-analysis`, `/pro-spdd:spdd-reasons-canvas`, `/pro-spdd:spdd-generate`, `/pro-spdd:spdd-prompt-update`, `/pro-spdd:spdd-sync`, `/pro-spdd:spdd-api-test`, `/pro-spdd:spdd-code-review`, `/pro-spdd:spdd-reverse`. Not included in `pro-dev-starter` yet.
+- **`pro-ai-sdlc-egm`** - experimental and opt-in: the loop in three steps with EGM as the design step. `/pro-ai-sdlc-egm:intent` records what a person wants (an idea, a bug, a brief or a PRD, with an optional brainstorm). `/pro-ai-sdlc-egm:design` keeps one design file per feature under `docs/designs/`, has fresh-context reviewers check it and records approvals by role against the exact version approved. `/pro-ai-sdlc-egm:execute` writes the build ticket from the approved design and builds it. A copy of `pro-ai-sdlc` to start with, so enable one of the two in a repo, never both ([ADR-0029](./docs/decisions/0029-design-file-loop-experiment.md)).
+- **`pro-egm`** - opt-in glue for Google's [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (Apache-2.0, bridged, not vendored): one command per EGM skill (`/pro-egm:brainstorm`, `draft`, `review`, `resolve`, `bootstrap`, `drift`, `lite` and `goldfish`). The `egm-bridge` skill routes to them and points to `/pro-core:pro-dev install`, which installs `egm@egm`. The brainstorm adds a discovery primer, options research with dated sources and an architect, security and sponsor review of the brief. Once installed, `/pro-ai-sdlc:intent` offers the brainstorm and `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan` offer the goldfish review. EGM's skills cannot be started by a model, so each command reads the installed EGM skill file and follows it, with custom goldfish run through a read-only reviewer agent. Not included in `pro-dev-starter`.
+- **`pro-speckit`** - opt-in glue for GitHub's [spec-kit](https://github.com/github/spec-kit) (MIT, bridged, not vendored): the `spec-kit-bridge` skill points to `/pro-core:pro-dev install` or `/pro-speckit:install`, which install the `specify` CLI at a pinned commit and then set spec-kit up in the repo with model invocation off and its event hooks off. `/pro-speckit:remove` takes spec-kit out of the repo and never touches `specs/`. `/pro-core:pro-dev check` hashes the files spec-kit wrote against the registry pin without running `specify`. Not included in `pro-dev-starter`.
+- **`pro-ship`** - the shipping plugin, included in `pro-dev-starter`. It holds `/pro-ship:pr-check`, which runs the repo's build, lint, typecheck and tests, then the reviewers, then writes a stamp for HEAD. On a high-tier PR it can also run Codex as an advisory second reviewer when the repo opted in through `/pro-core:pro-dev install`. It also holds a `PreToolUse` gate hook on `gh pr create` that denies once when the stamp is missing (it starts in warn mode and fails open). `/pro-ship:ship` is the go/no-go before a release: it finds the ship targets (a Ship block in `CLAUDE.md` or `AGENTS.md` overrides detection), reviews only the commits no passing `pr-check` marker from someone who can push covered, runs agent-skills' pre-launch checklist with pro-quality's `test-engineer` and `web-performance-auditor`, writes rollout, rollback and post-launch plans per target and records the verdict for HEAD in `.pro-dev/ship/preflight.json` (copied into an ignored `.mieruka/evidence/` for mieruka, see `docs/ship-preflight.md`). It never deploys. A second gate hook, `ship-gate`, warns on a tag, release, publish or production deploy with no fresh GO. `/pro-ship:risk-tiers` explains the risk classifier, which sorts a diff into low, medium or high. It also covers how `/merge-pr` shows its signals before a merge. Then there is `vercel-deploy-bridge`, which deploys through Vercel's `deploy-to-vercel` skill with its own checks: the token comes only from the environment and no `.env` file is uploaded or committed. Every stage, commit, push, link, global install and production deploy waits for a yes. `/pro-core:pro-dev install` asks once and installs the upstream skill pinned, with its folder kept out of commits. The other Ship skills are still planned.
+- **`pro-pdd`** — Define + Plan skills included in `pro-dev-starter`: `interview-me` and `idea-refine` (Define-phase intent extraction and idea refinement, forked from [`agent-skills`](https://github.com/addyosmani/agent-skills), MIT) plus `brainstorming` and written implementation plans (forked from `obra/superpowers`), `adhd` — parallel divergent ideation for open-ended design/architecture/naming/API-surface/fuzzy-debugging decisions, forked from [`UditAkhourii/adhd`](https://github.com/UditAkhourii/adhd) (MIT): spawns 5 isolated subagents under different cognitive frames (regulator, biology, speedrunner, 10-year-old, etc.), scores and clusters the results, prunes traps, and deepens the top 3 survivors. Trigger with `/pro-pdd:adhd <problem>` or "ADHD mode". And `lavish` — a **bridge** (not vendored) plus `/pro-pdd:lavish` command for the [`lavish-axi`](https://github.com/kunchenguid/lavish-axi) CLI that renders agent output (plans, tables, diagrams, diffs, reports) as reviewable HTML artifacts the user annotates in the browser. The starter/bootstrap path materializes the upstream skill at `.claude/skills/lavish/SKILL.md` and project command at `.claude/commands/lavish.md`; if missing, run `/pro-core:pro-dev install` or `npx skills add kunchenguid/lavish-axi --agent claude-code --skill lavish` from the project root. Use this when you want a conversational define-to-plan workflow instead of SPDD.
 
 **Framework plugins (skills trigger from file context in projects that use the framework):**
 
-- **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/pro-dev install`, `vercel-skills-bridge`, which routes to the React performance and Vercel cost skills in [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT per its README) the same way and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
+- **`pro-nextjs`** - Next.js projects: `next-best-practices` and `next-upgrade`, written from the Next.js docs, `next-skills-bridge`, which routes to the official Next.js agent skills in vercel/next.js and installs them with `/pro-core:pro-dev install`, `vercel-skills-bridge`, which routes to the React performance and Vercel cost skills in [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT per its README) the same way and `shadcn`. Pairs with the optional `vercel@claude-plugins-official` and `figma@claude-plugins-official` companions.
 - **`pro-astro`** - Astro projects: `astro-best-practices` (auto-applied guardrails), `astro-upgrade` (Astro 5 to 6 to 7 and adapter majors), `astro-on-cloudflare` (`@astrojs/cloudflare` on Workers) and `astro-on-vercel` (`@astrojs/vercel`). The content is original, written from the official Astro, Cloudflare and Vercel docs. Pairs with the official Astro Docs MCP server and, on Cloudflare, the official `cloudflare/skills` plugin.
-- **`pro-electron`** - Electron apps: `electron-skills-bridge` (routes to jwynia's `electron-best-practices` and laststance's `electron-release`, pinned and installed with `/pro-dev install`), `electron-upgrade` (major-version upgrades) and `electron-security-audit` (a read-only audit against the official security checklist). Driving the running app through Playwright MCP over CDP is a manual setup the skills describe.
+- **`pro-electron`** - Electron apps: `electron-skills-bridge` (routes to jwynia's `electron-best-practices` and laststance's `electron-release`, pinned and installed with `/pro-core:pro-dev install`), `electron-upgrade` (major-version upgrades) and `electron-security-audit` (a read-only audit against the official security checklist). Driving the running app through Playwright MCP over CDP is a manual setup the skills describe.
 
 **Meta:**
 
 - **`pro-dev-starter`** - pulls the default stack: `pro-core` + `pro-pdd` + `pro-execution` + `pro-quality` + `pro-design` + `pro-testing` + `pro-data` + `pro-research` + `pro-motion` + `pro-security` + `pro-ship`. One install gives the default stack. `pro-ai-sdlc`, `pro-nextjs`, `pro-astro`, `pro-electron`, `pro-spdd`, `pro-egm` and `pro-speckit` are opt-in and installed by hand.
   Version 3.0.0 dropped `pro-ai-sdlc` from the stack; removing a dependency does not uninstall it, so a site that already has it keeps it until you run `claude plugin uninstall pro-ai-sdlc@pro-dev-skillset`.
-- **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-dev update` to switch.
+- **`pro-starter`** - a deprecated shim for one release: it depends only on `pro-dev-starter`. Run `/pro-core:pro-dev update` to switch.
 
 ### Layout
 
@@ -350,7 +384,7 @@ RELEASING.md                         # version-bump law + tag scheme
 
 ```bash
 ./demo/setup.sh         # install marketplace (project scope) → build → test the site
-cd demo/app && claude   # then run /pro-dev check to verify the install through the skills
+cd demo/app && claude   # then run /pro-core:pro-dev check to verify the install through the skills
 ```
 
 See [demo/LIFECYCLE.md](./demo/LIFECYCLE.md) for the phase-by-phase build trail.

@@ -9,7 +9,7 @@
 // This is the same gate CI runs; it also ships (in spirit) as /pro-dev check
 // for the installed marketplace. See tests/README.md.
 
-import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync, lstatSync } from "node:fs";
 import { join, dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -79,6 +79,18 @@ const COMMANDS = new Set(["code-review", "simplify", "pro-dev", "validate", "doc
 const EXTERNAL_WIKILINKS = new Set(["qa-do", "qa-start"]);
 // Frontmatter keys guaranteed portable by Codex / Agent Skills.
 const PORTABLE_SKILL_FM_KEYS = new Set(["name", "description", "tags", "tools", "model"]);
+// Optional engine rows that no profile and no alwaysAsk entry decides, on purpose.
+// figma needs a Figma account and an authorized connector, so no project profile
+// turns it on. Everything else optional belongs to a profile or to alwaysAsk.
+const PROFILE_EXEMPT_ENGINES = new Set(["figma"]);
+// The package managers a prerequisite install argv may start with. The install runs
+// with no shell, so anything outside this set has not been reviewed.
+const PREREQ_INSTALLERS = new Set(["winget", "brew", "apt-get"]);
+// Trees the command-namespace rule does not reach. Vendored upstream content is not ours to
+// edit; an eval prompt is simulated user input, and a person typing a half-remembered command
+// is realistic input; test fixtures record prompts, not instructions anyone follows.
+const NAMESPACE_EXEMPT_PREFIXES = ["plugins/pro-spdd/upstream/", "tests/"];
+
 
 // ── tiny helpers ────────────────────────────────────────────────────────────
 const isDir = (p) => existsSync(p) && statSync(p).isDirectory();
@@ -781,8 +793,8 @@ checks.bridges = (m) => {
   for (const p of m.plugins) for (const s of p.skills) {
     if (!BRIDGES.includes(s.slug)) continue;
     const body = readFileSync(s.path, "utf8");
-    if (!/\/pro-dev\b/.test(body))
-      failures.push(`bridge ${p.name}/${s.slug}: does not name /pro-dev`);
+    if (!/\/pro-core:pro-dev\b/.test(body))
+      failures.push(`bridge ${p.name}/${s.slug}: does not name /pro-core:pro-dev`);
     if (s.slug === "vercel-deploy-bridge") {
       // this bridge owns its deploy rules; the other bridges do defer to upstream for the work
       if (body.includes("Defer to the upstream skill"))
@@ -917,6 +929,303 @@ checks.registry = (m) => {
   }
   for (const b of BRIDGES)
     if (m.skillSlugs.has(b) && !covered.has(b)) failures.push(`bridge ${b} has no row in engines.json`);
+  return { failures, warnings };
+};
+
+// Read the engine registry for the checks below, which each want it whole rather
+// than row by row. A missing or unparseable file is the registry check's finding,
+// so these report it once and stop instead of repeating it.
+function loadRegistry() {
+  const regPath = join(ROOT, "plugins", "pro-core", "registry", "engines.json");
+  if (!existsSync(regPath)) return { error: "plugins/pro-core/registry/engines.json missing" };
+  try { return { reg: readJSON(regPath) }; }
+  catch (e) { return { error: `engines.json: unparseable - ${e.message}` }; }
+}
+// The engine rows, keyed by id, skipping rows the registry check already reports.
+const engineRowsById = (reg) =>
+  new Map((Array.isArray(reg.engines) ? reg.engines : [])
+    .filter((r) => r && typeof r.id === "string" && r.id)
+    .map((r) => [r.id, r]));
+
+// Registry profiles. `/pro-core:pro-dev install` asks which kind of project this is
+// and installs that profile's engines, so a profile is a promise about what lands.
+// A profile that names an id no row has installs nothing and nobody notices; a
+// profile that names a default: true row carries dead weight that rots, because
+// defaults install anyway; a row in both a profile's yes list and alwaysAsk gets
+// decided twice; and an optional row nobody decides can never be installed at all.
+checks.registryProfiles = () => {
+  const failures = [], warnings = [];
+  const { reg, error } = loadRegistry();
+  if (error) { failures.push(error); return { failures, warnings }; }
+  if (typeof reg.version !== "number" || reg.version < 6)
+    failures.push(`engines.json: version must be a number of at least 6 (prerequisites, profiles and alwaysAsk landed in version 6), found ${JSON.stringify(reg.version)}`);
+
+  const byId = engineRowsById(reg);
+  const profiles = reg.profiles;
+  if (!Array.isArray(profiles) || !profiles.length) {
+    failures.push("engines.json: profiles must be a non-empty array - the install has one question to ask and no answers without it");
+    return { failures, warnings };
+  }
+
+  const PROFILE_ID = /^[a-z][a-z0-9-]*$/;
+  const seen = new Set();
+  const decided = new Set();   // optional rows a profile's yes list names
+  let defaults = 0, asks = 0;
+  for (const [i, p] of profiles.entries()) {
+    const id = p && typeof p.id === "string" ? p.id : null;
+    if (!id || !PROFILE_ID.test(id)) {
+      failures.push(`engines.json profiles[${i}]: needs a string id of lowercase letters, digits and dashes starting with a letter, found ${JSON.stringify(p?.id)}`);
+      continue;
+    }
+    if (seen.has(id)) failures.push(`engines.json profile ${id}: duplicate id - give each profile its own, the install picks one by id`);
+    seen.add(id);
+    if (typeof p.label !== "string" || !p.label.trim())
+      failures.push(`engines.json profile ${id}: label must be a non-empty string - it is the line the install offers`);
+    if (typeof p.what !== "string" || !p.what.trim())
+      failures.push(`engines.json profile ${id}: what must be a non-empty string - it is how the person tells this profile from the next one`);
+    if (p.default === true) defaults++;
+    if (p.ask === true) asks++;
+
+    if (!("yes" in p)) {
+      if (p.ask !== true)
+        failures.push(`engines.json profile ${id}: needs a yes array of engine ids, empty when the profile installs nothing extra; only the ask: true profile may leave it out`);
+      continue;
+    }
+    if (!Array.isArray(p.yes)) {
+      failures.push(`engines.json profile ${id}: yes must be an array of engine ids`);
+      continue;
+    }
+    for (const want of p.yes) {
+      if (typeof want !== "string" || !want) {
+        failures.push(`engines.json profile ${id}: yes holds ${JSON.stringify(want)} - every entry is an engine id string`);
+        continue;
+      }
+      const row = byId.get(want);
+      if (!row) {
+        failures.push(`engines.json profile ${id}: yes names "${want}", which is no row in engines - fix the id or add the row`);
+        continue;
+      }
+      if (row.default === true)
+        failures.push(`engines.json profile ${id}: yes names "${want}", a default: true row that installs anyway - drop it from the profile`);
+      else decided.add(want);
+    }
+  }
+  if (defaults !== 1)
+    failures.push(`engines.json profiles: ${defaults} carry default: true, exactly one does - that is the profile the install falls back to`);
+  if (asks !== 1)
+    failures.push(`engines.json profiles: ${asks} carry ask: true, exactly one does - that is the one question per optional engine path`);
+
+  const always = reg.alwaysAsk;
+  if (!Array.isArray(always)) {
+    failures.push("engines.json: alwaysAsk must be an array of engine ids");
+    return { failures, warnings };
+  }
+  const asked = new Set();
+  for (const id of always) {
+    if (typeof id !== "string" || !id) {
+      failures.push(`engines.json alwaysAsk: holds ${JSON.stringify(id)} - every entry is an engine id string`);
+      continue;
+    }
+    if (asked.has(id)) failures.push(`engines.json alwaysAsk: duplicate id "${id}" - list it once`);
+    asked.add(id);
+    const row = byId.get(id);
+    if (!row) {
+      failures.push(`engines.json alwaysAsk: names "${id}", which is no row in engines - fix the id or add the row`);
+      continue;
+    }
+    if (row.default === true)
+      failures.push(`engines.json alwaysAsk: names "${id}", a default: true row that installs anyway - drop it from alwaysAsk`);
+    const named = profiles.filter((p) => Array.isArray(p?.yes) && p.yes.includes(id)).map((p) => p.id);
+    if (named.length)
+      failures.push(`engines.json alwaysAsk: "${id}" is also in the yes list of profile ${named.join(", ")} - a row is decided by the profile or asked separately, never both`);
+  }
+  for (const row of byId.values()) {
+    if (row.default === true) continue;
+    if (asked.has(row.id) || decided.has(row.id) || PROFILE_EXEMPT_ENGINES.has(row.id)) continue;
+    warnings.push(`engines.json ${row.id}: optional and nothing decides it, so /pro-core:pro-dev install will never install it - name it in a profile's yes list, add it to alwaysAsk, or put it in PROFILE_EXEMPT_ENGINES with the reason`);
+  }
+  return { failures, warnings };
+};
+
+// Registry prerequisites. These rows are what `/pro-core:pro-dev install` runs before
+// any engine, so each one has to be printable and runnable as written: a label and a
+// why the person reads, an https:// docs link they can open, a detect the command can
+// test and an install argv it can hand to the OS. The argv runs with no shell, so a
+// shell metacharacter in an element means someone wrote a shell line into an argv and
+// it would be passed through as a literal argument. A required row with nothing to
+// install needs a note, or the command has nothing true to print about it.
+checks.registryPrereqs = () => {
+  const failures = [], warnings = [];
+  const { reg, error } = loadRegistry();
+  if (error) { failures.push(error); return { failures, warnings }; }
+  const pres = reg.prerequisites;
+  if (!Array.isArray(pres) || !pres.length) {
+    failures.push("engines.json: prerequisites must be a non-empty array - the install checks these before it touches an engine row");
+    return { failures, warnings };
+  }
+
+  const PREREQ_ID = /^[a-z][a-z0-9-]*$/;
+  const PLATFORMS = new Set(["win32", "darwin", "linux"]);
+  const SHELL_META = /[;&|><`$(){}\n]/;
+  const seen = new Set();
+  for (const [i, row] of pres.entries()) {
+    const id = row && typeof row.id === "string" ? row.id : null;
+    if (!id || !PREREQ_ID.test(id)) {
+      failures.push(`engines.json prerequisites[${i}]: needs a string id of lowercase letters, digits and dashes starting with a letter, found ${JSON.stringify(row?.id)}`);
+      continue;
+    }
+    if (seen.has(id)) failures.push(`engines.json prerequisite ${id}: duplicate id - give each one its own`);
+    seen.add(id);
+    if (typeof row.label !== "string" || !row.label.trim())
+      failures.push(`engines.json prerequisite ${id}: label must be a non-empty string - it is the name the install prints`);
+    if (typeof row.why !== "string" || !row.why.trim())
+      failures.push(`engines.json prerequisite ${id}: why must be a non-empty string - it is the reason the person is being asked for it`);
+    if (typeof row.required !== "boolean")
+      failures.push(`engines.json prerequisite ${id}: required must be true or false`);
+    if (typeof row.docs !== "string" || !row.docs.startsWith("https://"))
+      failures.push(`engines.json prerequisite ${id}: docs must be an https:// URL the person can open, found ${JSON.stringify(row.docs)}`);
+
+    const d = row.detect;
+    if (!d || typeof d !== "object" || Array.isArray(d)) {
+      failures.push(`engines.json prerequisite ${id}: detect must be an object carrying at least a bin`);
+    } else {
+      if (typeof d.bin !== "string" || !d.bin)
+        failures.push(`engines.json prerequisite ${id}: detect.bin must be a non-empty string - the binary the install looks for on PATH`);
+      if ("verify" in d && (!Array.isArray(d.verify) || d.verify.some((x) => typeof x !== "string")))
+        failures.push(`engines.json prerequisite ${id}: detect.verify must be an array of strings - the argv the install runs after the bin`);
+      if ("expect" in d && typeof d.expect !== "string")
+        failures.push(`engines.json prerequisite ${id}: detect.expect must be a string - it is matched against what verify printed`);
+      if ("altBin" in d && (!Array.isArray(d.altBin) || d.altBin.some((x) => typeof x !== "string" || !x)))
+        failures.push(`engines.json prerequisite ${id}: detect.altBin must be an array of non-empty strings`);
+    }
+
+    const ins = row.install;
+    if (!ins || typeof ins !== "object" || Array.isArray(ins)) {
+      failures.push(`engines.json prerequisite ${id}: install must be an object keyed by platform, empty when pro-dev does not install it`);
+    } else {
+      for (const [plat, argv] of Object.entries(ins)) {
+        if (!PLATFORMS.has(plat)) {
+          failures.push(`engines.json prerequisite ${id}: install key "${plat}" is not win32, darwin or linux`);
+          continue;
+        }
+        if (!Array.isArray(argv) || !argv.length || argv.some((x) => typeof x !== "string" || !x)) {
+          failures.push(`engines.json prerequisite ${id}: install.${plat} must be a non-empty array of non-empty strings (an argv, never a shell string)`);
+          continue;
+        }
+        if (!PREREQ_INSTALLERS.has(argv[0]))
+          failures.push(`engines.json prerequisite ${id}: install.${plat} starts with "${argv[0]}" - only ${[...PREREQ_INSTALLERS].join(", ")} are reviewed, so the install would run something nobody signed off on`);
+        for (const el of argv)
+          if (SHELL_META.test(el))
+            failures.push(`engines.json prerequisite ${id}: install.${plat} element ${JSON.stringify(el)} holds a shell metacharacter - the install runs this argv with no shell, so the character is passed through as a literal argument; split it into argv elements`);
+      }
+      if (row.required === true && !Object.keys(ins).length && (typeof row.note !== "string" || !row.note.trim()))
+        failures.push(`engines.json prerequisite ${id}: required with an empty install, so it needs a non-empty note saying pro-dev does not install it - that note is all the command has to print`);
+    }
+
+    if ("manual" in row) {
+      const man = row.manual;
+      if (!man || typeof man !== "object" || Array.isArray(man)) {
+        failures.push(`engines.json prerequisite ${id}: manual must be an object keyed by win32, darwin, linux or all`);
+      } else {
+        for (const [plat, steps] of Object.entries(man)) {
+          if (!PLATFORMS.has(plat) && plat !== "all")
+            failures.push(`engines.json prerequisite ${id}: manual key "${plat}" is not win32, darwin, linux or all`);
+          if (!Array.isArray(steps) || !steps.length || steps.some((x) => typeof x !== "string" || !x))
+            failures.push(`engines.json prerequisite ${id}: manual.${plat} must be a non-empty array of non-empty strings - each one a step the person performs`);
+        }
+      }
+    }
+  }
+  return { failures, warnings };
+};
+
+// Upstream pins. A skills-cli row installs third-party skills straight into the
+// person's repo, so `/pro-core:pro-dev update` must land the same bytes it landed
+// last time. An owner/repo shorthand or a branch in the tree/ position tracks the
+// default branch instead: the next-skills row sat on tree/canary/skills for months
+// and pulled whatever Vercel had merged. An update argv that resolves to a different
+// source than install defeats the pin from the other end. A note that does not name
+// the sha leaves a reviewer with no way to tell which commit they are raising.
+//
+// The -s/--skill comparison catches the break that hid in the owl row: it asked for
+// six skills, two of which (screen-critique and perception-laws) are this repo's own
+// aggregating forks and no upstream skill at all. The CLI exited 0 having copied
+// four, detect.all still named six, so detect could never pass and the install
+// reinstalled the row on every run with nothing to show. A detect entry naming a
+// skill the install never asks for is that same mistake, offline and visible.
+checks.enginePins = () => {
+  const failures = [], warnings = [];
+  const { reg, error } = loadRegistry();
+  if (error) { failures.push(error); return { failures, warnings }; }
+
+  const GH_PIN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/tree\/[0-9a-f]{40}(\/.*)?$/;
+  const SHORTHAND = /^[\w.-]+\/[\w.-]+$/;
+  const EXACT_NPM_VERSION = /^[@\w][\w.@/-]*@\d+\.\d+\.\d+$/;
+  // the source is the first argv element that is a GitHub URL or an owner/repo shorthand
+  const sourceOf = (argv) => argv.find((x) =>
+    typeof x === "string" && !x.startsWith("-") && (x.startsWith("https://github.com/") || SHORTHAND.test(x)));
+  // the names after -s / --skill, which consume every following non-flag element
+  const skillFilter = (argv) => {
+    const i = argv.findIndex((x) => x === "-s" || x === "--skill");
+    if (i < 0) return null;
+    const names = [];
+    for (const x of argv.slice(i + 1)) {
+      if (typeof x !== "string" || x.startsWith("-")) break;
+      names.push(x);
+    }
+    return names;
+  };
+  const argvOf = (row, k) => (Array.isArray(row[k]) ? row[k].filter((x) => typeof x === "string") : []);
+
+  for (const row of engineRowsById(reg).values()) {
+    const id = row.id;
+    if (row.kind === "skills-cli") {
+      const src = {};
+      for (const k of ["install", "update"]) {
+        const found = sourceOf(argvOf(row, k));
+        if (!found) {
+          failures.push(`engines.json ${id}: ${k} names no source - a skills-cli row installs from an https://github.com/<owner>/<repo>/tree/<40 hex commit> URL`);
+          continue;
+        }
+        src[k] = found;
+        if (!found.startsWith("https://github.com/")) {
+          failures.push(`engines.json ${id}: ${k} source "${found}" is an owner/repo shorthand, which tracks the default branch, so /pro-core:pro-dev update pulls unreviewed upstream changes - use https://github.com/${found}/tree/<40 hex commit>`);
+          continue;
+        }
+        if (!GH_PIN.test(found))
+          failures.push(`engines.json ${id}: ${k} source "${found}" is not pinned - the tree/ position must hold a 40-character commit sha, never a branch name like canary, main or HEAD`);
+      }
+      if (src.install && src.update && src.install !== src.update)
+        failures.push(`engines.json ${id}: install reads "${src.install}" but update reads "${src.update}" - an update that moves off the pin defeats it, so pin both to one source`);
+      const sha = (src.install ?? src.update ?? "").match(/\/tree\/([0-9a-f]{40})/)?.[1];
+      if (sha) {
+        const short = sha.slice(0, 7);
+        if (typeof row.note !== "string" || !row.note.includes(short))
+          failures.push(`engines.json ${id}: note never mentions the pinned commit ${short} - the note is where a reviewer learns which commit they are raising, so say "Pinned to commit ${short}" in it`);
+      }
+    }
+
+    if (row.kind === "npx") {
+      if (!argvOf(row, "install").some((x) => EXACT_NPM_VERSION.test(x)))
+        failures.push(`engines.json ${id}: install names no exact version - an npx row needs <package>@<x.y.z> or it tracks npm latest and an install stops being reproducible`);
+    }
+
+    if (row.kind === "skills-cli" || row.kind === "npx") {
+      for (const k of ["install", "update"]) {
+        const names = skillFilter(argvOf(row, k));
+        // no -s filter installs everything upstream ships, so there is nothing to compare
+        if (!names || !names.length || names.includes("*")) continue;
+        const want = new Set(names.map((n) => `skills/${n}/SKILL.md`));
+        const all = Array.isArray(row.detect?.all) ? row.detect.all : [];
+        for (const entry of all) {
+          const file = entry?.file;
+          if (typeof file !== "string") continue; // a malformed detect entry is the registry check's finding
+          if (!want.has(file))
+            failures.push(`engines.json ${id}: detect.all names "${file}" but ${k} asks only for ${names.join(", ")} - that entry can never appear, so detect never passes and the row reinstalls on every run; add the skill to ${k} or drop the detect entry`);
+        }
+      }
+    }
+  }
   return { failures, warnings };
 };
 
@@ -1760,6 +2069,72 @@ checks["doubt"] = () => {
 };
 
 // ── runner ──────────────────────────────────────────────────────────────────
+// Every slash command written anywhere in this repo carries its plugin namespace.
+//
+// Claude Code registers a plugin's commands under the plugin's name, so a bare `/pro-dev`
+// is not a shorter spelling of `/pro-core:pro-dev`; it is a command that does not exist and
+// typing it does nothing. Someone setting the marketplace up on a fresh machine was told to
+// run `/pro-dev install` and nothing happened. Nine command names here are owned by more than
+// one plugin, so the short form is not even unambiguous - `/review` could mean four commands.
+//
+// The name set is built from the command files themselves, so a new command is covered the
+// moment it lands. A block that names another project's commands, or that shows the broken
+// form on purpose, opts out between `<!-- command-namespace: off -->` and
+// `<!-- command-namespace: on -->` markers (see docs/command-naming.md).
+checks.commandNamespace = (m) => {
+  const failures = [], warnings = [];
+  const names = new Set();
+  for (const p of m.plugins) {
+    const dir = join(p.dir, "commands");
+    if (!isDir(dir)) continue;
+    for (const f of readdirSync(dir)) if (f.endsWith(".md")) names.add(f.replace(/\.md$/, ""));
+  }
+  if (!names.size) { failures.push("no command files found under plugins/*/commands - the namespace check has nothing to enforce"); return { failures, warnings }; }
+  // Longest first so /pr-babysit is not matched as /pr.
+  const alt = [...names].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  // A command reference is a / that no path, namespace, word, substitution or placeholder runs
+  // into, a known command name, then no character that would make it a path, a longer word or a
+  // longer word. The ) and > on the left keep `$(git rev-parse --show-toplevel)/intent` and the
+  // `<id>/plan` branch name out, and the guard in the loop below keeps a regex literal out. Those
+  // are path segments that happen to be spelled like a command and they must stay bare.
+  const pat = new RegExp(`(?<![a-zA-Z0-9_./:)>-])/(${alt})(?![a-zA-Z0-9_/.-])`, "g");
+
+  const res = spawnSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", timeout: 10_000, maxBuffer: 32 << 20 });
+  if (res.error || res.signal || res.status !== 0) {
+    warnings.push(`command-namespace scan skipped - git ls-files could not answer (${res.error?.code ?? res.signal ?? res.status})`);
+    return { failures, warnings };
+  }
+  const exts = [".md", ".json", ".mjs", ".py", ".toml", ".sh", ".yaml", ".yml"];
+  for (const relPath of res.stdout.split("\0").filter(Boolean)) {
+    if (!exts.some((e) => relPath.endsWith(e))) continue;
+    if (NAMESPACE_EXEMPT_PREFIXES.some((pre) => relPath.startsWith(pre))) continue;
+    if (relPath.includes("/evals/")) continue;
+    const full = join(ROOT, relPath);
+    let text;
+    try {
+      if (lstatSync(full).isSymbolicLink()) continue; // it points at a file this scan already read
+      text = readFileSync(full, "utf8");
+    } catch { continue; }
+    let live = true;
+    let lineNo = 0;
+    for (const line of text.split("\n")) {
+      lineNo += 1;
+      if (line.includes("command-namespace: off")) { live = false; continue; }
+      if (line.includes("command-namespace: on")) { live = true; continue; }
+      if (!live) continue;
+      for (const hit of line.matchAll(pat)) {
+        // `r"/intent\.md"` is a regex over a repo path, not a command reference.
+        if (line[hit.index + hit[0].length] === "\\") continue;
+        const name = hit[1];
+        const owners = m.plugins.filter((p) => existsSync(join(p.dir, "commands", `${name}.md`))).map((p) => p.name);
+        const full_ = owners.length === 1 ? `/${owners[0]}:${name}` : owners.map((o) => `/${o}:${name}`).join(" or ");
+        failures.push(`${relPath}:${lineNo}: "/${name}" has no plugin namespace - write ${full_}, because Claude Code resolves nothing shorter (docs/command-naming.md)`);
+      }
+    }
+  }
+  return { failures, warnings };
+};
+
 const only = process.argv[2];
 const model = loadModel();
 const names = only ? [only] : Object.keys(checks);

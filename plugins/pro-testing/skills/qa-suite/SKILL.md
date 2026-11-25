@@ -11,7 +11,7 @@ This is a **bridge, not a vendored library.** The broad QA capability is the sta
 
 1. **Check whether `qa-skills` is installed.** Look for its skills at user scope (`~/.claude/skills/`) or project scope (`.claude/skills/`) — e.g. `qa-do`, `qa-start`, `playwright-automation`.
    - **If present:** defer to the installed suite. `qa-do` is its task router and `qa-start` sets QA up in a project — hand off to them; they own the routing within testing. Don't re-implement that here.
-   - **If absent:** tell the user the suite isn't installed, then run **`/pro-dev install`** (or directly: `npx skills add petrkindlmann/qa-skills -y --agent claude-code --skill <skills>` — the `-y`/`--agent`/trailing `--skill` flags are required to install non-interactively into `.claude/skills/`; bare skill names trigger the interactive picker). Offer the focused native skills in the meantime: `vitest` (unit/component), `agent-browser` (interactive browser check), `storybook-interactions`.
+   - **If absent:** tell the user the suite isn't installed, then run **`/pro-core:pro-dev install`** (or directly: `npx skills add petrkindlmann/qa-skills -y --agent claude-code --skill <skills>` — the `-y`/`--agent`/trailing `--skill` flags are required to install non-interactively into `.claude/skills/`; bare skill names trigger the interactive picker). Offer the focused native skills in the meantime: `vitest` (unit/component), `agent-browser` (interactive browser check), `storybook-interactions`.
 2. **Defer to `qa-skills` for the actual work.** Do not reimplement its skills or references in this repo — the point of the bridge is that the library updates independently.
 
 ## What stays native in `pro-testing`
@@ -24,15 +24,15 @@ These are **not** part of the bridge — they're first-class pro-testing skills,
 
 ## Keeping the suite installed and current
 
-Use **`/pro-dev [check|install|update]`** (in pro-core):
+Use **`/pro-core:pro-dev [check|install|update]`** (in pro-core):
 
-- `/pro-dev check` — report which qa-skills are installed and where.
-- `/pro-dev install` — `npx skills add petrkindlmann/qa-skills <curated subset>`.
-- `/pro-dev update` — re-add the subset **and** `claude plugin update` for the pro-dev stack.
+- `/pro-core:pro-dev check` — report which qa-skills are installed and where.
+- `/pro-core:pro-dev install` — `npx skills add petrkindlmann/qa-skills <curated subset>`.
+- `/pro-core:pro-dev update` — re-add the subset **and** `claude plugin update` for the pro-dev stack.
 
 ## Why a bridge, not a vendored library
 
-Carrying `qa-skills` in-repo (the prior approach) meant maintaining a ~1.8 MB / 176-file tree and re-syncing on every upstream change. Bridging removes that maintenance entirely and lets the suite track upstream on its own cadence. The trade-off: the qa-skills don't exist or trigger in a project until `/pro-dev install` has run there.
+Carrying `qa-skills` in-repo (the prior approach) meant maintaining a ~1.8 MB / 176-file tree and re-syncing on every upstream change. Bridging removes that maintenance entirely and lets the suite track upstream on its own cadence. The trade-off: the qa-skills don't exist or trigger in a project until `/pro-core:pro-dev install` has run there.
 
 ---
 

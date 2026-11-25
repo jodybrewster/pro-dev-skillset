@@ -11,19 +11,19 @@ It is a Claude Code only plugin: its commands target Claude Code and make no pro
 
 | Step | Command | Who leads | Writes |
 |---|---|---|---|
-| Say what you want | `/intent` | product, or anyone with an idea or a bug | `intent/<ID>-<slug>/intent.md` |
-| Agree the solution | `/design` | design and engineering, with product signing the goals | `docs/designs/<feature>.md` and `design-record.json` beside the intent |
-| Build it | `/execute` | engineering, or the factory for small work | `plan.md` beside the intent, the code, the tests and an open PR; never a merge |
+| Say what you want | `/pro-ai-sdlc-egm:intent` | product, or anyone with an idea or a bug | `intent/<ID>-<slug>/intent.md` |
+| Agree the solution | `/pro-ai-sdlc-egm:design` | design and engineering, with product signing the goals | `docs/designs/<feature>.md` and `design-record.json` beside the intent |
+| Build it | `/pro-ai-sdlc-egm:execute` | engineering, or the factory for small work | `plan.md` beside the intent, the code, the tests and an open PR; never a merge |
 
 A person always creates an intent and a person always accepts it.
-A brainstorm is a depth of `/intent` and `/intent` also reads a brief, a PRD or notes and asks only what they leave open.
+A brainstorm is a depth of `/pro-ai-sdlc-egm:intent` and `/pro-ai-sdlc-egm:intent` also reads a brief, a PRD or notes and asks only what they leave open.
 
 A feature has one design file and it stays true as changes land.
 The intent is the request for one change to it and names it in a `design:` line.
-`/design` writes the file through EGM's draft for a new feature and proposes edits for a feature that already has one, then has fresh-context reviewers read it with the repo's `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md` and `SECURITY.md`.
+`/pro-ai-sdlc-egm:design` writes the file through EGM's draft for a new feature and proposes edits for a feature that already has one, then has fresh-context reviewers read it with the repo's `PRODUCT.md`, `DESIGN.md`, `ARCHITECTURE.md` and `SECURITY.md`.
 
 `plan.md` is the builder's ticket.
-`/execute` writes it from the approved design and nobody has to read it unless something goes wrong.
+`/pro-ai-sdlc-egm:execute` writes it from the approved design and nobody has to read it unless something goes wrong.
 
 ## Levels and approvals
 
@@ -41,53 +41,65 @@ An edit to the design voids its reviews and approvals without anyone clearing a 
 The approver is `git config user.name` checked against the Roles block in `REVIEW.md`; that is routing, not authentication.
 
 A level 1 build whose review leaves an Important finding open is not merged.
-`/auto build` writes `Open review findings: <n>` in the pull request and the runner sends anything above zero to an engineer.
+`/pro-ai-sdlc-egm:auto build` writes `Open review findings: <n>` in the pull request and the runner sends anything above zero to an engineer.
 
 ## What differs from pro-ai-sdlc
 
 Keep this list current, so the experiment can be merged back or dropped as a known set of changes.
 
-- `/spec` is gone and `/design` is new, with `scripts/design.py` and `templates/design.md`.
-- `/plan` writes the build ticket from the design and stays inside it; `/execute` takes a change id and runs `/plan` itself.
-- `/intent` picks a depth (brief, bug or brainstorm) and no longer reads `methods.py`; the intent template has `brief:` and `design:` lines.
+- `/pro-ai-sdlc:spec` is gone and `/pro-ai-sdlc-egm:design` is new, with `scripts/design.py` and `templates/design.md`.
+- `/pro-ai-sdlc-egm:plan` writes the build ticket from the design and stays inside it; `/pro-ai-sdlc-egm:execute` takes a change id and runs `/pro-ai-sdlc-egm:plan` itself.
+- `/pro-ai-sdlc-egm:intent` picks a depth (brief, bug or brainstorm) and no longer reads `methods.py`; the intent template has `brief:` and `design:` lines.
 - `factory.py level` reads a `brief:` or `design:` line as level 2.
 - `execute-gate.py` runs `design.py check` when the intent names a design.
-- `factory.py` stops a build whose pull request does not say `Open review findings: 0`; `/review` and `/auto build` write that line.
-- `/review` and the `reviewer` agent compare the diff with the design file.
+- `factory.py` stops a build whose pull request does not say `Open review findings: 0`; `/pro-ai-sdlc-egm:review` and `/pro-ai-sdlc-egm:auto build` write that line.
+- `/pro-ai-sdlc-egm:review` and the `reviewer` agent compare the diff with the design file.
 - The factory's level 1 brief still writes a short `spec.md` and `plan.md`, as in pro-ai-sdlc.
 
 ## Permissions in a longer conversation
 
 A command's own tool permissions last for the turn that starts it.
-`/intent` and `/design` stop to ask a question, so the steps after the answer ask for permission again: the pro-egm step, the plugin's scripts and the commit.
+`/pro-ai-sdlc-egm:intent` and `/pro-ai-sdlc-egm:design` stop to ask a question, so the steps after the answer ask for permission again: the pro-egm step, the plugin's scripts and the commit.
 In Claude Code that is a prompt to answer.
 In a headless run or a chat with no prompt the step is declined, so allow these in the repo's `.claude/settings.json` first:
+
+A pro-egm step is not a skill call.
+The Skill tool cannot start a slash command and every EGM skill sets `disable-model-invocation`, so a `Skill(pro-egm:...)` entry allows nothing.
+`/pro-ai-sdlc-egm:design` finds pro-egm with `scripts/pro-egm.py`, then reads pro-egm's own command file and its `running-egm.md` and follows them, which runs pro-egm's `goldfish.py` from the folder that script prints as `goldfish`:
+
+`${CLAUDE_PLUGIN_ROOT}` is a plugin-command variable and does not expand in a repo's `.claude/settings.json`, so an entry naming it matches nothing.
+Both entries take the absolute path the resolver printed on this machine, which looks like this:
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Skill(pro-egm:brainstorm)",
-      "Skill(pro-egm:draft)",
-      "Skill(pro-egm:review)",
-      "Skill(pro-egm:resolve)"
+      "Bash(python3 <plugin cache>/pro-dev-skillset/plugins/pro-ai-sdlc-egm/scripts/pro-egm.py)",
+      "Bash(python3 <plugin cache>/egm/scripts/goldfish.py egm)"
     ]
   }
 }
 ```
 
-A headless run also needs `python3`, `git add` and `git commit` allowed.
+Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-egm.py"` once in a session.
+It prints its own absolute path and the `goldfish` path. Those two go in, in place of `<plugin cache>` and the rest.
+Neither entry needs a `:*` suffix: the resolver takes no argument and the goldfish call takes only `egm`.
+Without them the second call prompts, because a script in another plugin's folder is never pre-approved.
+
+Never widen this to `Bash(python3 ...)` or `Bash(python3:*)`.
+That pre-approves every Python invocation in the repo, including a script a cloned repo brought with it, which is a much larger grant than the two calls this loop needs.
+A headless run also needs `git add` and `git commit` allowed.
 
 ## Other commands
 
 | Command | Writes |
 |---|---|
-| `/plan` | the build ticket without building, for reading it first |
-| `/adr` | an ADR for a decision with no change behind it |
-| `/review` | findings, a local finding ledger and, on a yes, one line in the agent file when a class of finding repeats |
-| `/incident` | `incident.md` beside a new `intent.md`, with the raw evidence kept out of git |
-| `/pr-babysit` | fixes on the PR branch, never a merge |
-| `/auto brief\|build` | one unattended phase for the factory |
+| `/pro-ai-sdlc-egm:plan` | the build ticket without building, for reading it first |
+| `/pro-ai-sdlc-egm:adr` | an ADR for a decision with no change behind it |
+| `/pro-ai-sdlc-egm:review` | findings, a local finding ledger and, on a yes, one line in the agent file when a class of finding repeats |
+| `/pro-ai-sdlc-egm:incident` | `incident.md` beside a new `intent.md`, with the raw evidence kept out of git |
+| `/pro-ai-sdlc-egm:pr-babysit` | fixes on the PR branch, never a merge |
+| `/pro-ai-sdlc-egm:auto brief\|build` | one unattended phase for the factory |
 
 ## Templates
 
@@ -102,13 +114,13 @@ The templates are plain files at stable paths, nothing is generated at runtime a
 - `templates/REVIEW.md`
 - `references/definition-of-done.md`, the standing definition of done that every plan's `## Done` section cites
 
-The interview rules for `/intent` live in `commands/intent.md`.
+The interview rules for `/pro-ai-sdlc-egm:intent` live in `commands/intent.md`.
 Another tool that wants the same fields reads these files from the installed plugin.
 
 ## Change ids
 
 A repo that declares a shortcode in a tracked `intent/project.json` (`{"shortcode": "PDS"}`) gives every change an id such as `PDS-51` ([ADR-0026](../../docs/decisions/0026-change-ids.md)).
-`/intent` and `/incident` allocate it, name the folder `intent/<ID>-<slug>/` and write `id:` first in the frontmatter; `/plan` copies it into the ticket.
+`/pro-ai-sdlc-egm:intent` and `/pro-ai-sdlc-egm:incident` allocate it, name the folder `intent/<ID>-<slug>/` and write `id:` first in the frontmatter; `/pro-ai-sdlc-egm:plan` copies it into the ticket.
 Tools read the id from frontmatter and never from the folder name.
 Every script that reads a folder accepts both forms.
 Without the file the loop works as before with date folders.
@@ -125,7 +137,7 @@ An id is never reused: a dropped or deleted intent keeps its number.
 
 ## Building a plan
 
-`/execute <path to plan.md>` runs on Opus, which builds the plan and dispatches subagents when a step benefits from one.
+`/pro-ai-sdlc-egm:execute <path to plan.md>` runs on Opus, which builds the plan and dispatches subagents when a step benefits from one.
 Two scripts hold the parts that must not depend on the model:
 
 - `scripts/execute-gate.py` passes only a plan that is tracked, committed, `Status: approved` and not yet built, whose branch name is free locally and on origin.
@@ -135,12 +147,12 @@ Two scripts hold the parts that must not depend on the model:
   Every copy is removed if one would not be ignored in the worktree or fails.
 
 The worktree is a sibling folder `../<repo>.<slug>` on a branch from `origin/<default branch>`; the session moves into it.
-`/execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
+`/pro-ai-sdlc-egm:execute` also has a stop list: it pauses for a person before a step that touches auth, migrations, payments, deploys or secrets unless the plan's Risks names the category and the header names an approver.
 The run stops on a failed gate, an unignored env file or a red baseline; otherwise it goes on to the pull request.
 
 ## Records
 
-`/incident`, `/review` and the visual check in `/execute` write records in the shape of [docs/loop-records.md](../../docs/loop-records.md), through `scripts/evidence.py`.
+`/pro-ai-sdlc-egm:incident`, `/pro-ai-sdlc-egm:review` and the visual check in `/pro-ai-sdlc-egm:execute` write records in the shape of [docs/loop-records.md](../../docs/loop-records.md), through `scripts/evidence.py`.
 Each lands under the excluded `.pro-dev/` and, when the repo has an ignored `.mieruka/evidence/`, there too.
 
 - `scripts/incident.py` prepares the excluded evidence folder, refuses an `incident.md` that holds a credential and writes the incident record.
@@ -151,10 +163,10 @@ Each lands under the excluded `.pro-dev/` and, when the repo has an ignored `.mi
 
 ADRs enter the loop at four points:
 
-- `/intent` flags a likely decision under Open questions and writes no ADR.
-- `/design` says when a design sets a rule other work must follow and suggests `/adr`.
+- `/pro-ai-sdlc-egm:intent` flags a likely decision under Open questions and writes no ADR.
+- `/pro-ai-sdlc-egm:design` says when a design sets a rule other work must follow and suggests `/pro-ai-sdlc-egm:adr`.
 - The Done section of `plan.md` accepts it: the person's sign-off moves the ADR to `accepted`.
-- `/adr` records a decision with no change behind it, standalone and `accepted`.
+- `/pro-ai-sdlc-egm:adr` records a decision with no change behind it, standalone and `accepted`.
 
 The folder is `docs/adr/` if it exists, else `docs/decisions/` if it exists, else a new `docs/adr/`.
 A `README.md` index table in that folder gets a row for each new ADR.

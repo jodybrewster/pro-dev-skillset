@@ -1,5 +1,5 @@
 ---
-description: "Review the current diff or a PR against the repo's REVIEW.md: a bugs pass, a security pass and a compliance pass against the intent, design and plan. Findings inform a human and never approve or block. Usage: /review [pr-number | url | branch] [--since <sha>]"
+description: "Review the current diff or a PR against the repo's REVIEW.md: a bugs pass, a security pass and a compliance pass against the intent, design and plan. Findings inform a human and never approve or block. Usage: /pro-ai-sdlc-egm:review [pr-number | url | branch] [--since <sha>]"
 argument-hint: "[pr-number | url | branch] [--since <sha>]  (default: the current branch against its base)"
 allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git merge-base:*), Bash(git rev-parse:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/lessons.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py":*), Read, Glob, Grep
 ---
@@ -35,7 +35,7 @@ Work out the ref now, as step 6 names it; the findings table for this PR or bran
 ### 2. Load the policy
 
 Read the repo's `REVIEW.md`.
-If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the repo has no review policy of its own; `/pro-dev install` can add one.
+If it has none, read `${CLAUDE_PLUGIN_ROOT}/templates/REVIEW.md` and say the repo has no review policy of its own; `/pro-core:pro-dev install` can add one.
 Read `CONSTRAINTS.md` at the repo root when "Review policy present" lists it, beside `REVIEW.md`.
 Read the repo's agent file (`CLAUDE.md` or `AGENTS.md`) and `DESIGN.md` if present.
 Find the brief: the `intent.md` and `plan.md` the PR or branch names plus the design file the intent's `design:` line names (or a `spec.md` beside them in an older folder), else the newest folder under `intent/` the diff relates to.
@@ -83,7 +83,7 @@ Never pass the table to the fresh pass, nor any grade, claim or earlier finding:
 ### 4. Count what is still open
 
 End the findings with one line, `Open review findings: <n>`, where `<n>` is the number of Important findings nobody has fixed or refuted.
-`/auto build` copies that line into the pull request and the factory runner sends a build with any open finding to an engineer.
+`/pro-ai-sdlc-egm:auto build` copies that line into the pull request and the factory runner sends a build with any open finding to an engineer.
 
 ### 5. Record the fresh findings, then report
 

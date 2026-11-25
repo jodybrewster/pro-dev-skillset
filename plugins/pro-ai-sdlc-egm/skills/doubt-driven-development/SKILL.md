@@ -1,6 +1,6 @@
 ---
 name: doubt-driven-development
-description: Use when /execute or a build session finishes a step that is hard to undo (a data migration, a public API change, an auth rule, a deploy or infrastructure config, or a delete that other code depends on) and the decision should face a fresh-context adversarial reviewer before the next step. Not for mechanical edits, renames, formatting, one-line changes, specs or plans.
+description: Use when /pro-ai-sdlc-egm:execute or a build session finishes a step that is hard to undo (a data migration, a public API change, an auth rule, a deploy or infrastructure config, or a delete that other code depends on) and the decision should face a fresh-context adversarial reviewer before the next step. Not for mechanical edits, renames, formatting, one-line changes, specs or plans.
 ---
 
 # doubt-driven-development
@@ -11,10 +11,10 @@ This skill sends one finished step to a reviewer that has never seen the author'
 ## When to use it
 
 A step is hard to undo when it changes a data migration, a public API, an auth rule or a deploy or infrastructure config, or when it deletes a file that other code depends on.
-`/execute` doubts every step the plan marks `irreversible`, with no question.
-When pro-ship is installed, `/execute` adds an unmarked step only when a checkpoint's classifier range reads high tier.
+`/pro-ai-sdlc-egm:execute` doubts every step the plan marks `irreversible`, with no question.
+When pro-ship is installed, `/pro-ai-sdlc-egm:execute` adds an unmarked step only when a checkpoint's classifier range reads high tier.
 Skip mechanical edits, renames, formatting and one-line changes.
-Skip designs and plans: EGM goldfish, through `/design`, reviews those.
+Skip designs and plans: EGM goldfish, through `/pro-ai-sdlc-egm:design`, reviews those.
 This skill reviews a build decision and shares no loop with goldfish.
 
 ## Main session only
@@ -78,7 +78,7 @@ On yes:
 3. Treat its output as findings tagged `codex`.
 
 When the runner prints `could-not-run: <reason>` (not-opted-in, not-installed, not-logged-in, timeout, an exit code or empty output), show "Codex could not run: <reason>" and offer retry or skip.
-For not-opted-in, say to run `/pro-dev install`, which asks for the consent.
+For not-opted-in, say to run `/pro-core:pro-dev install`, which asks for the consent.
 Record a failure as could-not-run and never as a clean review.
 
 ### Reconcile
@@ -111,7 +111,7 @@ After three rounds with substantive findings still open:
 
 - An interactive run stops at that step, prints the open findings in your own words and waits for the person.
 - An unattended run does not stop the build.
-  It records the open findings for `/execute`, which opens the pull request as a draft and lists them under "Potential concerns".
+  It records the open findings for `/pro-ai-sdlc-egm:execute`, which opens the pull request as a draft and lists them under "Potential concerns".
 
 ## Record it
 

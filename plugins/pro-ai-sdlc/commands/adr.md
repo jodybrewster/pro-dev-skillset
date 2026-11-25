@@ -1,5 +1,5 @@
 ---
-description: "Record an architecture decision that has no change behind it: interview one question at a time, write the ADR from the template as accepted and commit it with its index row. Usage: /adr <the decision, in a sentence>"
+description: "Record an architecture decision that has no change behind it: interview one question at a time, write the ADR from the template as accepted and commit it with its index row. Usage: /pro-ai-sdlc:adr <the decision, in a sentence>"
 argument-hint: "<the decision, in a sentence>"
 allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git config:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Read, Glob, Grep, Write, Edit
 ---
@@ -17,7 +17,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 The decision: $ARGUMENTS
 
 This command records a decision that has no change behind it.
-When a change is being built, `/spec` drafts the ADR instead and the Done sign-off accepts it.
+When a change is being built, `/pro-ai-sdlc:spec` drafts the ADR instead and the Done sign-off accepts it.
 
 ## Your task
 

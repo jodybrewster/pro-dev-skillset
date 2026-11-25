@@ -5,7 +5,7 @@ Fires when the session is about to end its turn. If the session wrote files
 inside the repo (or ran `git commit`) since the hook last spoke, it says so.
 `PRO_DEV_VALIDATION` picks how:
 
-  nudge (default)  one `systemMessage` line suggesting `/validate`; the turn
+  nudge (default)  one `systemMessage` line suggesting `/pro-quality:validate`; the turn
                    ends normally and the model is told nothing. Spoken once
                    per distinct set of changed files per session.
   block            blocks the stop once and instructs the session to produce a
@@ -249,9 +249,9 @@ def nudge_message(root: str, count: int) -> str:
         noun = "file" if count == 1 else "files"
         return (
             f"pro-quality: this session changed {count} {noun} in {repo}. "
-            "Run /validate for a checklist."
+            "Run /pro-quality:validate for a checklist."
         )
-    return f"pro-quality: this session committed changes in {repo}. Run /validate for a checklist."
+    return f"pro-quality: this session committed changes in {repo}. Run /pro-quality:validate for a checklist."
 
 
 def main() -> int:

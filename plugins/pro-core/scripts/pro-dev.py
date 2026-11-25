@@ -3,7 +3,7 @@
 
 Reads the engine registry (registry/engines.json) and the plugin installs that
 `claude plugin list --json` reports, then installs, updates and reports on the
-external engines the bridge skills route to. The /pro-dev command owns the
+external engines the bridge skills route to. The /pro-core:pro-dev command owns the
 questions and the file drafting; everything else lives here so it also works
 from a plain terminal with no Claude session.
 
@@ -11,6 +11,10 @@ Subcommands:
   status [--json]                  plugins covering the repo, engine states, answers
   run <id|all> install|update      run one engine row, or every row that applies
   answer <id> yes|no               save an answer for an optional row
+  prereqs [--json]                 whether claude, git, node, python3, gh and uv work here
+  prereq-install <id>              install one prerequisite with this platform's package manager
+  profiles [--json]                the project profiles and the optional engines each one turns on
+  profile <id> [--force]           save a whole profile's answers instead of asking row by row
   plugins update                   refresh the marketplace, update covering installs
   plugins swap-starter             replace pro-starter with pro-dev-starter
   stale [--remove]                 list (or remove) installs whose folder is gone
@@ -51,6 +55,13 @@ Rules this script keeps:
     read is capped and any failure reads as "surface unknown"
   - a `manual-cli` row (ADR-0018) is detect-only: `shutil.which` on its `bin`, never a run of
     the CLI; install and update print the row's `manual` lines for the person to run
+  - a prerequisite is probed, never trusted: the binary has to be on PATH and its `verify`
+    argv has to exit 0 and print the row's `expect` text, because Windows keeps a `python3`
+    on PATH that only opens the Microsoft Store. `prereqs` and `profiles` read and print;
+    `prereq-install` is the one subcommand that changes the machine outside the repo; it runs
+    only the argv the registry holds for this platform, never a line it was handed
+  - `profile` writes the answers file and nothing else: one answer per optional row of an
+    active owner, never for a default row and never for a row in the registry's `alwaysAsk`
   - only python3 and the standard library
 """
 from __future__ import annotations
@@ -68,13 +79,21 @@ import subprocess
 import sys
 import tempfile
 
+# Windows searches the current directory before PATH, in two places at once: shutil.which
+# inserts os.curdir unless this variable is set, and CreateProcessW looks there when it is
+# given no application name. The cwd here is the repo, so without both halves of the fix a
+# cloned repo holding git.exe, python3.exe, npx.exe, gh.exe or uv.exe runs its own copy the
+# moment anything probes for that tool. Every subprocess below therefore goes through
+# resolved(), which runs the absolute path shutil.which returned.
+os.environ.setdefault("NoDefaultCurrentDirectoryInExePath", "1")
+
 MARKETPLACE = "pro-dev-skillset"
 SCOPES = ("user", "project", "local")
 ANSWERS_FILE = os.path.join(".claude", "pro-dev.json")
 PLUGIN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*@[A-Za-z0-9][A-Za-z0-9._-]*$")
 ENGINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 OWNER_RE = ENGINE_ID_RE
-OWNER = None  # set once in main from --owner; None means the unfiltered /pro-dev run
+OWNER = None  # set once in main from --owner; None means the unfiltered /pro-core:pro-dev run
 STARTER_DEPS = ("pro-nextjs", "pro-astro")
 TOOL_NAME_RE = ENGINE_ID_RE
 PIN_FROM_RE = re.compile(r"^git\+(https://[^@\s]+)@([0-9a-f]{40})$")
@@ -180,7 +199,7 @@ def read_installed_file() -> list[dict] | None:
 
 def read_installs() -> tuple[list[dict], str]:
     """Return (installs, source). Prefer `claude plugin list --json`."""
-    exe = shutil.which("claude")
+    exe = resolved("claude")
     if exe:
         try:
             res = subprocess.run([exe, "plugin", "list", "--json"], capture_output=True, text=True,
@@ -929,6 +948,32 @@ def detected(row: dict, repo: str, installs: list[dict]) -> bool:
     return True
 
 
+def missing_detect(row: dict, repo: str) -> list[str]:
+    """The `detect.all` files that are under none of their scopes, so an install can name them.
+
+    An upstream CLI can exit 0 having copied some of the skills a row asks for; the files it
+    did not write are the only evidence of that. A detect that is not an `all` block gives [].
+    """
+    det = row.get("detect")
+    needed = det.get("all") if isinstance(det, dict) else None
+    if not isinstance(needed, list):
+        return []
+    out = []
+    for item in needed:
+        if not isinstance(item, dict) or not isinstance(item.get("file"), str):
+            continue
+        scopes = item.get("scopes") if isinstance(item.get("scopes"), list) else []
+        found = False
+        for scope in scopes:
+            root = skill_root(scope, repo) if isinstance(scope, str) else None
+            if root and os.path.isfile(os.path.join(root, *item["file"].split("/"))):
+                found = True
+                break
+        if not found:
+            out.append(item["file"])
+    return out
+
+
 def engine_state(row: dict, repo: str, installs: list[dict], answers: dict) -> dict:
     owner = row["owner"]
     ans = saved_answer(answers, row["id"])
@@ -973,22 +1018,39 @@ def tool_missing(argv: list[str]) -> str | None:
         return "npx is not on PATH. Install Node.js (it ships npx), then retry."
     if exe == "uv":
         return f"uv is not on PATH. Install uv from its official docs ({UV_DOCS}), then retry. pro-dev never installs it."
+    if exe == "winget":
+        return "winget is not on PATH. Update App Installer from the Microsoft Store, then retry."
+    if exe == "brew":
+        return "brew is not on PATH. Install Homebrew from https://brew.sh, then retry."
     return f"{exe} is not on PATH."
 
 
 # The repo is the cwd on purpose: project-scope skills installs need it. The repo's own
 # .npmrc and node_modules/.bin can influence what npx resolves, which is the same trust
 # the person already gives the repo by opening it.
+def resolved(name: str) -> str | None:
+    """The absolute path of `name` on PATH, or None. Never a bare name: see the note on
+    NoDefaultCurrentDirectoryInExePath above."""
+    found = shutil.which(name)
+    return os.path.abspath(found) if found else None
+
+
 def run_argv(argv: list[str], cwd: str) -> tuple[bool, str]:
     missing = tool_missing(argv)
     if missing:
         return False, missing
+    exe = resolved(argv[0])
+    if exe is None:  # tool_missing already answered, so this only races a PATH change
+        return False, f"{argv[0]} is not on PATH."
     try:
-        res = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=900,
-                             stdin=subprocess.DEVNULL)
+        res = subprocess.run([exe, *argv[1:]], cwd=cwd, capture_output=True, text=True,
+                             timeout=900, stdin=subprocess.DEVNULL)
     except (OSError, subprocess.SubprocessError) as exc:
         return False, f"{type(exc).__name__}: {exc}"
-    tail = (res.stdout + res.stderr).strip().splitlines()[-3:]
+    # The command is third-party and its output is relayed into the session, so keep it to
+    # printable ASCII and three short lines.
+    tail = [re.sub(r"[^\x20-\x7e]", "?", line)[:300]
+            for line in (res.stdout + res.stderr).strip().splitlines()[-3:]]
     return res.returncode == 0, " | ".join(tail)
 
 
@@ -996,10 +1058,15 @@ def valid_argv(value) -> bool:
     return isinstance(value, list) and bool(value) and all(isinstance(a, str) for a in value)
 
 
+def self_line(rest: str) -> str:
+    """How to run this script again with another subcommand."""
+    return f"python3 {os.path.abspath(__file__)} {rest}"
+
+
 def retry_line(engine_id: str, action: str) -> str:
     if OWNER:
         return f"/{OWNER}:install" + (" update" if action == "update" else "")
-    return f"python3 {os.path.abspath(__file__)} run {engine_id} {action}"
+    return self_line(f"run {engine_id} {action}")
 
 
 def exclude_path_problem(path) -> str | None:
@@ -1096,7 +1163,7 @@ def take_tree_snapshot(repo: str) -> tuple[bool, list[str], str]:
 
     `git status --porcelain=v1 -z --untracked-files=all` lists every untracked file, not a
     collapsed folder. Only the exact path of the answers file is dropped, because
-    /pro-dev install saves the answer there before any row runs.
+    /pro-core:pro-dev install saves the answer there before any row runs.
     """
     ok, inside = git_out(["rev-parse", "--is-inside-work-tree"], repo)
     if not ok or inside != "true":
@@ -1353,7 +1420,10 @@ def run_engine(row: dict, action: str, repo: str, installs: list[dict], answers:
     elif not detected(row, repo, installs) and row.get("kind") != "claude-plugin":
         after = detected(row, repo, read_installs()[0])
         if not after:
-            return "failed", f"{eid}: {action} exited 0 but the engine is still not detected. Retry: {retry_line(eid, action)}"
+            gone = missing_detect(row, repo)
+            names = f" (missing: {', '.join(gone)})" if gone else ""
+            return "failed", (f"{eid}: {action} exited 0 but the engine is still not detected{names}. "
+                              f"Retry: {retry_line(eid, action)}")
     if pinned:  # the copy on disk is what runs: check every install that covers the repo, not the first
         after = read_installs()[0]
         mine = [i for i in after if i.get("id") == pid and i.get("enabled") is not False and covers_repo(i, repo)]
@@ -1629,6 +1699,206 @@ def _spec_kit_checks(repo: str, row: dict, names: list[str], out: list[str]) -> 
         guarded(label, fn)
 
 
+# --- prerequisites and profiles -----------------------------------------------
+
+# status tool key -> prerequisite id -> binary to look for when the registry has no such row.
+# The keys stay as they are today so anything reading them keeps working: npx is the node row.
+TOOL_PREREQS = (("claude", "claude", "claude"), ("npx", "node", "npx"), ("uv", "uv", "uv"),
+                ("python3", "python3", "python3"), ("git", "git", "git"), ("gh", "gh", "gh"))
+
+
+def probe_bin(name: str, verify: list | None, expect: str) -> tuple[bool, str]:
+    """Return (usable, failure detail) for one binary. The detail is "" when it is usable.
+
+    Presence on PATH is not enough: Windows ships a `python3` that only opens the Microsoft
+    Store, so a row with a `verify` argv has to exit 0 and print its `expect` text as well.
+    """
+    exe = resolved(name)
+    if exe is None:
+        return False, "not on PATH"
+    if not isinstance(verify, list) or not verify or not all(isinstance(v, str) for v in verify):
+        return True, ""
+    try:
+        res = subprocess.run([exe, *verify], capture_output=True, text=True, timeout=10,
+                             stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, type(exc).__name__
+    if res.returncode != 0:
+        return False, f"exit {res.returncode}"
+    printed = (res.stdout or "") + (res.stderr or "")
+    if expect and expect not in printed:
+        return False, "printed " + re.sub(r"[^\x20-\x7e]", "?", printed.strip()[:80])
+    return True, ""
+
+
+def text_field(row: dict, key: str) -> str:
+    value = row.get(key)
+    return value if isinstance(value, str) else ""
+
+
+def platform_argv(row: dict, problems: list[str]) -> list[str] | None:
+    """This platform's install argv, or None when pro-dev does not install the row here.
+
+    An empty `install` object means pro-dev never installs it, whatever the platform.
+    """
+    block = row.get("install")
+    if block is None:
+        return None
+    if not isinstance(block, dict):
+        problems.append(f"{row['id']}: install is not an object, read as absent")
+        return None
+    argv = block.get(sys.platform)
+    if argv is None:
+        return None
+    if not valid_argv(argv):
+        problems.append(f"{row['id']}: the {sys.platform} install argv is not a list of strings, read as absent")
+        return None
+    return argv
+
+
+def platform_manual(row: dict, problems: list[str]) -> list[str]:
+    """This platform's manual lines, then the ones that apply everywhere."""
+    block = row.get("manual")
+    if block is None:
+        return []
+    if not isinstance(block, dict):
+        problems.append(f"{row['id']}: manual is not an object, read as absent")
+        return []
+    out: list[str] = []
+    for key in (sys.platform, "all"):
+        lines = block.get(key)
+        if lines is None:
+            continue
+        if not isinstance(lines, list) or not all(isinstance(ln, str) for ln in lines):
+            problems.append(f"{row['id']}: the {key} manual lines are not a list of strings, read as absent")
+            continue
+        out.extend(lines)
+    return out
+
+
+def prereq_list(reg: dict) -> tuple[list[dict], list[str]]:
+    """Every prerequisite with its state here, plus one line per row this script cannot read.
+
+    The one builder behind `prereqs`, `prereq-install` and status, so the three cannot drift.
+    """
+    problems: list[str] = []
+    rows = reg.get("prerequisites")
+    if rows is None:
+        return [], problems
+    if not isinstance(rows, list):
+        return [], ["registry prerequisites is not a list, read as absent"]
+    out: list[dict] = []
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+            problems.append(f"prerequisite {i} has no string id, skipped")
+            continue
+        det = row.get("detect") if isinstance(row.get("detect"), dict) else {}
+        name = det.get("bin")
+        if not isinstance(name, str) or not name:
+            problems.append(f"{row['id']}: detect names no binary, skipped")
+            continue
+        verify = det.get("verify")
+        expect = det["expect"] if isinstance(det.get("expect"), str) else ""
+        present, detail = probe_bin(name, verify, expect)
+        entry = {
+            "id": row["id"], "label": text_field(row, "label") or row["id"], "why": text_field(row, "why"),
+            "required": bool(row.get("required")), "docs": text_field(row, "docs"),
+            "state": "present" if present else "missing", "found": name if present else None,
+        }
+        if detail:
+            entry["probe"] = detail
+        if text_field(row, "note"):
+            entry["note"] = row["note"]
+        if "altBin" in det:
+            alt = det["altBin"]
+            if not isinstance(alt, list):
+                problems.append(f"{row['id']}: altBin is not a list, read as absent")
+                alt = []
+            entry["altFound"] = next((o for o in alt if isinstance(o, str) and o and probe_bin(o, verify, expect)[0]), None)
+        argv = platform_argv(row, problems)
+        entry["installLine"] = " ".join(argv) if argv else None
+        entry["manual"] = platform_manual(row, problems)
+        out.append(entry)
+    return out, problems
+
+
+def tools_map(prereqs: list[dict]) -> dict:
+    """The status `tools` map: one bool per tool, from the prerequisite probe where there is one."""
+    states = {p["id"]: p["state"] == "present" for p in prereqs}
+    return {key: states[pid] if pid in states else bool(shutil.which(binary))
+            for key, pid, binary in TOOL_PREREQS}
+
+
+def all_optional_ids(reg: dict) -> set[str]:
+    """Every engine id that is not a default row, whatever is installed here."""
+    return {r["id"] for r in reg.get("engines", [])
+            if isinstance(r, dict) and isinstance(r.get("id"), str) and not r.get("default")}
+
+
+def optional_ids(reg: dict, repo: str, installs: list[dict]) -> list[str]:
+    """The engine ids a profile may answer here: not a default row and the owner is active."""
+    known = all_optional_ids(reg)
+    return [r["id"] for r in reg.get("engines", []) if isinstance(r, dict) and r.get("id") in known
+            and owner_active(installs, str(r.get("owner")), repo)]
+
+
+def always_ask_ids(reg: dict, repo: str, installs: list[dict]) -> list[str]:
+    """The registry's alwaysAsk ids that have an engine row with an active owner here."""
+    listed = reg.get("alwaysAsk")
+    if not isinstance(listed, list):
+        return []
+    rows = {r["id"]: r for r in reg.get("engines", []) if isinstance(r, dict) and isinstance(r.get("id"), str)}
+    out = []
+    for eid in listed:
+        row = rows.get(eid) if isinstance(eid, str) else None
+        if row is not None and owner_active(installs, str(row.get("owner")), repo):
+            out.append(eid)
+    return out
+
+
+def profile_list(reg: dict, repo: str, installs: list[dict]) -> tuple[list[dict], list[str], list[str]]:
+    """Return (profiles, alwaysAsk ids, problems): the one builder behind profiles, profile and status.
+
+    A profile with `ask` answers nothing, so it carries no `on` or `off`. Every other profile
+    splits the optional rows of the active owners in two, leaving the alwaysAsk rows out of both.
+    A `yes` entry whose owner is not active here is left out quietly; one that names no optional
+    engine at all is a registry problem and says so.
+    """
+    asked = always_ask_ids(reg, repo, installs)
+    problems: list[str] = []
+    rows = reg.get("profiles")
+    if rows is None:
+        return [], asked, problems
+    if not isinstance(rows, list):
+        return [], asked, ["registry profiles is not a list, read as absent"]
+    optional = optional_ids(reg, repo, installs)
+    known = all_optional_ids(reg)
+    out: list[dict] = []
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+            problems.append(f"profile {i} has no string id, skipped")
+            continue
+        entry = {
+            "id": row["id"], "label": text_field(row, "label") or row["id"], "what": text_field(row, "what"),
+            "default": bool(row.get("default")), "ask": bool(row.get("ask")),
+        }
+        if not entry["ask"]:
+            listed = row.get("yes")
+            if not isinstance(listed, list):
+                problems.append(f"{row['id']}: yes is not a list, read as empty")
+                listed = []
+            on = []
+            for eid in listed:
+                if isinstance(eid, str) and eid in optional:
+                    on.append(eid)
+                elif not (isinstance(eid, str) and eid in known):
+                    problems.append(f"{row['id']}: yes names {eid!r}, which is no optional engine, skipped")
+            entry["on"] = on
+            entry["off"] = [eid for eid in optional if eid not in on and eid not in asked]
+        out.append(entry)
+    return out, asked, problems
+
+
 # --- subcommands --------------------------------------------------------------
 
 def row_findings(row: dict, repo: str, installs: list[dict], st: dict) -> dict:
@@ -1682,7 +1952,7 @@ SHORTCODE_RE = re.compile(r"^[A-Z]{2,6}$")
 
 
 def shortcode_default(repo: str):
-    """The shortcode /pro-dev install proposes for this repo folder, or None to ask with no default.
+    """The shortcode /pro-core:pro-dev install proposes for this repo folder, or None to ask with no default.
 
     The capitalised initials of the folder's hyphen-separated words for two to six words, the first
     three letters of a single word and the first six initials beyond six words; proposed only when
@@ -1722,13 +1992,19 @@ def cmd_status(args, repo: str) -> int:
                  and p["installPath"]), None)
     starter = [{"scope": p["scope"], "projectPath": p["projectPath"]} for p in plugins
                if p["name"] == "pro-starter" and p["covers"]]
+    prereqs, prereq_problems = prereq_list(reg)
+    profiles, asked, profile_problems = profile_list(reg, repo, installs)
+    saved_profile = data.get("profile") if isinstance(data.get("profile"), str) else None
     out = {
         "repo": repo, "registryVersion": reg.get("version"), "source": source,
-        "tools": {"claude": bool(shutil.which("claude")), "npx": bool(shutil.which("npx")),
-                  "uv": bool(shutil.which("uv"))},
+        "tools": tools_map(prereqs),
         "answersFileMalformed": malformed, "savedRegistryVersion": data.get("registryVersion"),
         "plugins": plugins, "engines": engines, "aiSdlcInstallPath": sdlc, "starterShim": starter,
         "staleCount": len(find_stale()[0]),
+        "laggingCount": sum(1 for p in plugins if p["covers"] and p["lagging"]),
+        "prerequisites": prereqs, "prerequisiteProblems": prereq_problems,
+        "profiles": profiles, "alwaysAsk": asked, "profileProblems": profile_problems,
+        "profile": saved_profile,
         "shortcode": {"projectFile": os.path.exists(os.path.join(repo, "intent", "project.json")),
                       "default": shortcode_default(repo)},
     }
@@ -1739,6 +2015,13 @@ def cmd_status(args, repo: str) -> int:
         return 0
     say(f"repo: {repo}")
     say(f"registry version: {out['registryVersion']} (last run: {out['savedRegistryVersion']})")
+    short = [p for p in prereqs if p["state"] == "missing"]
+    if short:
+        say("prerequisites:")
+        for p in short:
+            say(f"  {p['id']}: missing" + (f" ({p['probe']})" if p.get("probe") else ""))
+            say(f"    {self_line('prereq-install ' + p['id']) if p['installLine'] else p['docs']}")
+    say(f"profile: {saved_profile or 'not set'}")
     say("plugins:")
     for p in plugins:
         mark = "" if p["covers"] else " (other repo, left alone)"
@@ -1878,6 +2161,145 @@ def cmd_answer(args, repo: str) -> int:
         say(f"cannot save the answer: {exc}")
         return 1
     say(f"{args.id}: {args.value}" + ("" if changed else " (unchanged)"))
+    return 0
+
+
+def cmd_prereqs(args, repo: str) -> int:
+    reg = load_registry()
+    rows, problems = prereq_list(reg)
+    if args.json:
+        say(json.dumps({"platform": sys.platform, "prerequisites": rows, "problems": problems}, indent=2))
+        return 0
+    for row in rows:
+        say(f"{row['id']}: {row['state']}")
+        if row["state"] != "missing":
+            continue
+        if row.get("probe"):
+            say(f"  probe: {row['probe']}")
+        if row["installLine"]:
+            say(f"  install: {row['installLine']}")
+        elif row["docs"]:
+            say(f"  docs: {row['docs']}")
+        for line in row["manual"]:
+            say(f"  {line}")
+    for line in problems:
+        say(line)
+    return 0
+
+
+def cmd_prereq_install(args, repo: str) -> int:
+    """Install one prerequisite with this platform's package manager. The one machine-wide write here."""
+    reg = load_registry()
+    rows, problems = prereq_list(reg)
+    for line in problems:
+        say(line)
+    found = next((r for r in rows if r["id"] == args.id), None)
+    if found is None:
+        say(f"unknown prerequisite id: {args.id}. Known ids: " + (", ".join(r["id"] for r in rows) or "none"))
+        return 2
+    if found["state"] == "present":
+        say(f"{args.id}: already installed")
+        return 0
+    row = next(r for r in reg["prerequisites"] if isinstance(r, dict) and r.get("id") == args.id)
+    argv = platform_argv(row, [])
+    if not argv:
+        if found["docs"]:
+            say(f"{args.id}: {found['docs']}")
+        for line in found["manual"]:
+            say(f"  {line}")
+        say(f"{args.id}: pro-dev does not install this one on {sys.platform}; install it by hand, then retry.")
+        return 2
+    gap = tool_missing(argv)
+    if gap:
+        say(f"{args.id}: {gap}")
+        if found["docs"]:
+            say(f"{args.id}: {found['docs']}")
+        return 2
+    say(f"{args.id}: running {' '.join(argv)}")
+    ok, detail = run_argv(argv, repo)
+    if not ok:
+        say(f"{args.id}: install failed ({detail}). Retry: {self_line('prereq-install ' + args.id)}")
+        return 1
+    after, _ = prereq_list(reg)
+    now = next((r for r in after if r["id"] == args.id), None)
+    verified = now is not None and now["state"] == "present"
+    if verified:
+        say(f"{args.id}: installed and it verifies")
+    else:
+        say(f"{args.id}: installed but it does not verify yet"
+            + (f" ({now['probe']})" if now and now.get("probe") else ""))
+    say(f"{args.id}: a tool installed just now is usually not on this session's PATH yet, so restart Claude Code "
+        f"and the terminal before the engine installs are retried.")
+    if not verified:
+        for line in found["manual"]:
+            say(f"  {line}")
+    return 0 if verified else 1
+
+
+def cmd_profiles(args, repo: str) -> int:
+    reg = load_registry()
+    installs, _ = read_installs()
+    profiles, asked, problems = profile_list(reg, repo, installs)
+    if args.json:
+        say(json.dumps({"profiles": profiles, "alwaysAsk": asked, "problems": problems}, indent=2))
+        return 0
+    for p in profiles:
+        say(p["id"] + (" (default)" if p["default"] else ""))
+        say(f"  {p['label']}")
+        if p["what"]:
+            say(f"  {p['what']}")
+        if p["ask"]:
+            say("  asks about every optional engine, one at a time")
+        else:
+            say("  on: " + (", ".join(p["on"]) or "none"))
+            say("  off: " + (", ".join(p["off"]) or "none"))
+    say("always asked: " + (", ".join(asked) or "none"))
+    for line in problems:
+        say(line)
+    return 0
+
+
+def cmd_profile(args, repo: str) -> int:
+    """Save one profile and the answers it implies. Writes the answers file and nothing else."""
+    reg = load_registry()
+    installs, _ = read_installs()
+    profiles, asked, problems = profile_list(reg, repo, installs)
+    for line in problems:
+        say(line)
+    found = next((p for p in profiles if p["id"] == args.id), None)
+    if found is None:
+        say(f"unknown profile id: {args.id}. Known ids: " + (", ".join(p["id"] for p in profiles) or "none"))
+        return 2
+    data, malformed = read_answers(repo)
+    if malformed:
+        say(f"cannot save the profile: {answers_problem(repo) or ANSWERS_FILE + ' is not valid JSON. Fix or delete it, then retry'}")
+        return 1
+    saved = data.get("profile")
+    if isinstance(saved, str) and saved != args.id and not args.force:
+        say(f"this repo already records the {saved} profile; nothing changed. Run it again with --force to replace it.")
+        return 2
+    answers = data.get("answers") if isinstance(data.get("answers"), dict) else {}
+    written: list[tuple[str, str, bool]] = []
+    if not found["ask"]:  # an ask profile saves no answers: every row is asked one at a time
+        for eid in optional_ids(reg, repo, installs):
+            if eid in asked:
+                continue  # an alwaysAsk row keeps its own answer, which a profile never sets or clears
+            value = "yes" if eid in found["on"] else "no"
+            before = answers.get(eid)
+            written.append((eid, value, isinstance(before, dict) and before.get("answer") == value))
+            answers[eid] = {"answer": value, "registryVersion": reg.get("version")}
+        if written:
+            data["answers"] = answers
+    data["profile"] = args.id
+    try:
+        write_answers(repo, data)
+    except AnswersError as exc:
+        say(f"cannot save the profile: {exc}")
+        return 1
+    for eid, value, unchanged in written:
+        say(f"{eid}: {value}" + (" (unchanged)" if unchanged else ""))
+    say(f"profile: {args.id}, {len(written)} answer(s) written. "
+        f"Still asked one at a time: {', '.join(asked) or 'none'}")
     return 0
 
 
@@ -2077,6 +2499,15 @@ def build_parser() -> argparse.ArgumentParser:
     a = sub.add_parser("answer")
     a.add_argument("id")
     a.add_argument("value", choices=["yes", "no"])
+    pq = sub.add_parser("prereqs")
+    pq.add_argument("--json", action="store_true")
+    pqi = sub.add_parser("prereq-install")
+    pqi.add_argument("id")
+    pfs = sub.add_parser("profiles")
+    pfs.add_argument("--json", action="store_true")
+    pf = sub.add_parser("profile")
+    pf.add_argument("id")
+    pf.add_argument("--force", action="store_true")
     pl = sub.add_parser("plugins")
     pl.add_argument("what", choices=["update", "swap-starter"])
     st = sub.add_parser("stale")
@@ -2094,8 +2525,8 @@ def main(argv: list[str]) -> int:
         if not OWNER_RE.match(args.owner) or args.owner not in owners:
             say(f"unknown owner: {args.owner}")
             return 2
-        if args.cmd in ("plugins", "stale", "surface"):
-            say("not available with --owner; use /pro-dev")
+        if args.cmd in ("plugins", "stale", "surface", "profile", "profiles"):
+            say("not available with --owner; use /pro-core:pro-dev")
             return 2
         OWNER = args.owner
     repo = find_repo(args.repo)
@@ -2106,6 +2537,14 @@ def main(argv: list[str]) -> int:
             return cmd_run(args, repo)
         if args.cmd == "answer":
             return cmd_answer(args, repo)
+        if args.cmd == "prereqs":
+            return cmd_prereqs(args, repo)
+        if args.cmd == "prereq-install":
+            return cmd_prereq_install(args, repo)
+        if args.cmd == "profiles":
+            return cmd_profiles(args, repo)
+        if args.cmd == "profile":
+            return cmd_profile(args, repo)
         if args.cmd == "plugins":
             return cmd_plugins_update(args, repo) if args.what == "update" else cmd_swap_starter(args, repo)
         if args.cmd == "stale":

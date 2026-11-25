@@ -42,4 +42,4 @@ Like the stamp and the preflight, every record is a local file anyone with a she
 ## What would reverse it
 
 mieruka gaining its own kinds for incidents or lessons would move those records to the new kinds.
-A verifier that proves too slow or too noisy to run on every PR would move it back to `/execute` only.
+A verifier that proves too slow or too noisy to run on every PR would move it back to `/pro-ai-sdlc:execute` only.
