@@ -1,5 +1,5 @@
 ---
-name: /spdd-code-review
+name: /pro-spdd:spdd-code-review
 id: spdd-code-review
 category: Development
 description: Review AI-generated code against REASONS-Canvas structured prompts, detecting intent drift, safeguard violations, and scope boundary issues to reduce human reviewer cognitive load
@@ -7,7 +7,7 @@ description: Review AI-generated code against REASONS-Canvas structured prompts,
 
 Review implementation code against its corresponding REASONS-Canvas structured prompt, producing a structured review report that highlights alignment gaps, intent drift, safeguard violations, and areas requiring human attention — reducing the cognitive load of reviewing AI-generated code.
 
-**Input**: The argument after `/spdd-code-review` includes the structured prompt file reference and the code scope to review.
+**Input**: The argument after `/pro-spdd:spdd-code-review` includes the structured prompt file reference and the code scope to review.
 
 Input can be provided in several ways:
 
@@ -20,16 +20,16 @@ Input can be provided in several ways:
 
 ```
 # Review specific files against prompt
-/spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md @src/main/java/com/example/user/
+/pro-spdd:spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md @src/main/java/com/example/user/
 
 # Review with explicit file list
-/spdd-code-review @spdd/prompt/GGQPA-XXX-202603131530-[Feat]-token-usage-billing.md @src/controllers/BillingController.java @src/services/BillingService.java
+/pro-spdd:spdd-code-review @spdd/prompt/GGQPA-XXX-202603131530-[Feat]-token-usage-billing.md @src/controllers/BillingController.java @src/services/BillingService.java
 
 # Review recent changes against prompt
-/spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md --git-diff HEAD~3
+/pro-spdd:spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md --git-diff HEAD~3
 
 # Review with prompt only (auto-infer code scope from Operations)
-/spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md
+/pro-spdd:spdd-code-review @spdd/prompt/GGQPA-169-202603061530-[Feat]-api-user-registration.md
 ```
 
 **Steps**
@@ -472,10 +472,10 @@ Input can be provided in several ways:
 
     > Based on the review findings:
     >
-    > - [If prompt needs update]: "Would you like me to update the prompt using `/spdd-prompt-update`?"
+    > - [If prompt needs update]: "Would you like me to update the prompt using `/pro-spdd:spdd-prompt-update`?"
     > - [If code needs fixing]: "Would you like me to fix the identified code issues?"
     > - [If all aligned]: "The code is well-aligned with the prompt. Ready to merge."
-    > - [If sync needed]: "Would you like me to sync the accepted changes back to the prompt using `/spdd-sync`?"
+    > - [If sync needed]: "Would you like me to sync the accepted changes back to the prompt using `/pro-spdd:spdd-sync`?"
 
 **Output**
 
@@ -533,25 +533,25 @@ This command fills the **quality assurance gap** between code generation and pro
 │                           SPDD Workflow                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Phase 0: /spdd-analysis                                                │
+│  Phase 0: /pro-spdd:spdd-analysis                                                │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Business Requirement → Enriched Context                         │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 1: /spdd-reasons-canvas                                         │
+│  Phase 1: /pro-spdd:spdd-reasons-canvas                                         │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Enriched Context → REASONS Canvas Structured Prompt             │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 2: /spdd-generate                                               │
+│  Phase 2: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Implementation Code                         │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Phase 3: /spdd-code-review  ← YOU ARE HERE                           │
+│  Phase 3: /pro-spdd:spdd-code-review  ← YOU ARE HERE                           │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt + Code → Alignment Analysis                    │    │
 │  │                                                                 │    │
@@ -570,12 +570,12 @@ This command fills the **quality assurance gap** between code generation and pro
 │              [Issues Found]   [All Aligned]                             │
 │                       │             │                                    │
 │                       ▼             ▼                                    │
-│  Fix: /spdd-prompt-update    Phase 4: /spdd-sync                       │
+│  Fix: /pro-spdd:spdd-prompt-update    Phase 4: /pro-spdd:spdd-sync                       │
 │       or code fix            ┌────────────────────────────────────┐    │
 │       │                      │ Code Changes → Update Prompt        │    │
 │       │                      └────────────────────────────────────┘    │
 │       │                                                                  │
-│       └──► Re-run /spdd-code-review                                     │
+│       └──► Re-run /pro-spdd:spdd-code-review                                     │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -603,7 +603,7 @@ This command operationalizes three key insights from the SPDD design philosophy:
 **Common Review Scenarios**
 
 1. **Post-Generation Review**
-   - Trigger: Right after `/spdd-generate`
+   - Trigger: Right after `/pro-spdd:spdd-generate`
    - Focus: Full REASONS alignment, especially Operations and Safeguards
    - Goal: Catch drift before code enters the codebase
 
@@ -615,9 +615,9 @@ This command operationalizes three key insights from the SPDD design philosophy:
 3. **Iterative Development Review**
    - Trigger: After manual code modifications
    - Focus: Detect where manual changes diverge from prompt
-   - Goal: Decide whether to update prompt (`/spdd-prompt-update`) or revert code
+   - Goal: Decide whether to update prompt (`/pro-spdd:spdd-prompt-update`) or revert code
 
 4. **Pre-Sync Validation**
-   - Trigger: Before running `/spdd-sync`
+   - Trigger: Before running `/pro-spdd:spdd-sync`
    - Focus: Understand the full scope of drift before syncing
    - Goal: Ensure intentional changes are synced while accidental drift is fixed

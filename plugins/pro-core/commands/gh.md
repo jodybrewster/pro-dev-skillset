@@ -91,29 +91,29 @@ Output exactly this block layout (no preamble, no postscript):
 📝 Uncommitted: <one-line summary, or "clean">
 
 👉 Recommendation: <ONE specific action>
-   Run: /gh <subcommand>
+   Run: /pro-core:gh <subcommand>
 ```
 
 ### Recommendation priority (first that applies)
 
-1. **Mergeable approved PR with green CI (not draft)** → `/gh ship <N>`
-2. **On main, dirty** → "you have uncommitted changes on main; `/gh new` to move them to a branch"
-3. **On main, clean, ready to start** → mention `/gh new`
-4. **Dirty from this session (< 1 hour since last commit, or no commits)** → `/gh commit`
+1. **Mergeable approved PR with green CI (not draft)** → `/pro-core:gh ship <N>`
+2. **On main, dirty** → "you have uncommitted changes on main; `/pro-core:gh new` to move them to a branch"
+3. **On main, clean, ready to start** → mention `/pro-core:gh new`
+4. **Dirty from this session (< 1 hour since last commit, or no commits)** → `/pro-core:gh commit`
 5. **Dirty from a previous session (> 1 hour ago)** → offer to summarize the diff before deciding
-6. **Branch ahead of remote with no open PR** → `/gh pr` (draft)
-7. **Draft PR, green CI, looks complete** → `/gh pr ready`
-8. **PR has conflicts or is behind main** → `/gh sync`
+6. **Branch ahead of remote with no open PR** → `/pro-core:gh pr` (draft)
+7. **Draft PR, green CI, looks complete** → `/pro-core:gh pr ready`
+8. **PR has conflicts or is behind main** → `/pro-core:gh sync`
 9. **PR has failing CI** → offer to read the failure logs
 10. **PR waiting on review > 2 days** → offer to draft a nudge comment
-11. **Stale feature branch (> 3 days, behind main)** → `/gh sync` or ship
+11. **Stale feature branch (> 3 days, behind main)** → `/pro-core:gh sync` or ship
 12. **On main, clean, with only others' PRs open** → status only, no action
 
 Stop at the first rule that matches. Do not list lower-priority options.
 
 ---
 
-## 3. NEW BRANCH MODE — `/gh new [name]`
+## 3. NEW BRANCH MODE — `/pro-core:gh new [name]`
 
 1. `git status --short` and `git branch --show-current` (parallel).
 2. If on a feature branch **with uncommitted work**: stop. Offer three options — (a) commit here first, (b) stash and switch, (c) cancel. Wait for the answer.
@@ -131,14 +131,14 @@ Stop at the first rule that matches. Do not list lower-priority options.
    git push -u origin <branch>
    gh pr create --draft --title "[WIP] <description>" --body "<placeholder>"
    ```
-7. Report what changed in two lines max. End with "Start coding, or `/gh commit` once you have something."
+7. Report what changed in two lines max. End with "Start coding, or `/pro-core:gh commit` once you have something."
 
 ---
 
-## 4. COMMIT MODE — `/gh commit [message]`
+## 4. COMMIT MODE — `/pro-core:gh commit [message]`
 
 1. `git status --short` + `git diff --stat` (parallel). If empty → "Nothing to commit." Stop.
-2. If on `main` / `master`: stop. Suggest `/gh new` first.
+2. If on `main` / `master`: stop. Suggest `/pro-core:gh new` first.
 3. Show files staged + unstaged in one compact block.
 4. If a message was provided, use it verbatim.
 5. Otherwise read the diff and draft a **Conventional Commits** message:
@@ -147,7 +147,7 @@ Stop at the first rule that matches. Do not list lower-priority options.
    - Body bullets only if the change isn't self-evident from the subject.
 6. Show the proposed message and ask: **"Commit with this message? (y / edit / n)"**
 7. If nothing is staged, run `git add -A` — but **warn first** if the unstaged set includes anything that looks unrelated to the diff under discussion (different directories, generated files).
-8. On `y`: `git commit -m "..."`. Report `✅ Committed: <short-sha> <subject>`, then "Keep working, or `/gh push` to send it up?"
+8. On `y`: `git commit -m "..."`. Report `✅ Committed: <short-sha> <subject>`, then "Keep working, or `/pro-core:gh push` to send it up?"
 
 **Safety rules:**
 - Never `git commit --amend` without explicit user request.
@@ -156,18 +156,18 @@ Stop at the first rule that matches. Do not list lower-priority options.
 
 ---
 
-## 5. PUSH MODE — `/gh push`
+## 5. PUSH MODE — `/pro-core:gh push`
 
 1. If uncommitted changes exist → ask: "Push what's already committed, or commit the rest first?"
-2. If on `main` / `master` → **stop**. Suggest `/gh pr` instead. (The PreToolUse hook will block direct push to main anyway; surface the policy here so the user understands.)
+2. If on `main` / `master` → **stop**. Suggest `/pro-core:gh pr` instead. (The PreToolUse hook will block direct push to main anyway; surface the policy here so the user understands.)
 3. Check upstream: `git rev-parse --abbrev-ref --symbolic-full-name @{u}` (silently). If no upstream → `git push -u origin <branch>`.
 4. If diverged from remote → ask before any force-push. Use `--force-with-lease`, never `--force`.
 5. If clean fast-forward → `git push`.
-6. If push succeeds **and no PR exists for this branch** → end with "Want me to open a PR? `/gh pr`."
+6. If push succeeds **and no PR exists for this branch** → end with "Want me to open a PR? `/pro-core:gh pr`."
 
 ---
 
-## 6. PR MODE — `/gh pr [draft|ready]`
+## 6. PR MODE — `/pro-core:gh pr [draft|ready]`
 
 Default state is **draft** — open early so collaborators can see direction, mark ready when CI is green and the description is final.
 
@@ -195,11 +195,11 @@ Default state is **draft** — open early so collaborators can see direction, ma
      ```
    - Show the title + body, ask "Open this PR? (y / edit / n)".
    - On `y`: `gh pr create --draft --title "..." --body "..."` (or without `--draft` if the user asked for `ready`).
-6. Report URL and the next step ("CI will run; `/gh pr ready` once it's green").
+6. Report URL and the next step ("CI will run; `/pro-core:gh pr ready` once it's green").
 
 ---
 
-## 7. SHIP MODE — `/gh ship [pr-number]`
+## 7. SHIP MODE — `/pro-core:gh ship [pr-number]`
 
 1. If no PR number was given, find the user's mergeable approved PRs:
    ```
@@ -222,11 +222,11 @@ Default state is **draft** — open early so collaborators can see direction, ma
 
 ---
 
-## 8. SYNC MODE — `/gh sync`
+## 8. SYNC MODE — `/pro-core:gh sync`
 
 1. **Read the policy first.** Rebase is the default. Use merge only if `AGENTS.md`, `CLAUDE.md`, or a nested project policy file overrides it.
 2. Announce which strategy is being used: *"Syncing with main via rebase."* (or "via merge (per project override)").
-3. If uncommitted changes → offer to stash. On `y`: `git stash push -u -m "/gh sync"`.
+3. If uncommitted changes → offer to stash. On `y`: `git stash push -u -m "/pro-core:gh sync"`.
 4. `git fetch origin main`.
 5. Count distance: `git rev-list --count HEAD..origin/main`. If zero → "Already up to date." Stop.
 6. Show what's coming: `git log HEAD..origin/main --oneline | head -10`.
@@ -237,11 +237,11 @@ Default state is **draft** — open early so collaborators can see direction, ma
    - Pop the stash if you pushed one: `git stash pop`. If pop conflicts, surface them and stop.
    - For rebase: offer `git push --force-with-lease` (only path forward after history rewrite).
    - For merge: offer regular `git push`.
-9. **On conflict**: STOP. List the conflicted files. Suggest `/gh resolve`. Do **not** attempt to resolve automatically; do not run `--continue`, `--abort`, or `commit`.
+9. **On conflict**: STOP. List the conflicted files. Suggest `/pro-core:gh resolve`. Do **not** attempt to resolve automatically; do not run `--continue`, `--abort`, or `commit`.
 
 ---
 
-## 9. RESOLVE MODE — `/gh resolve`
+## 9. RESOLVE MODE — `/pro-core:gh resolve`
 
 Patient pair-programmer walkthrough. For each conflicted file:
 
@@ -270,4 +270,4 @@ Never resolve conflicts silently. Never batch-apply across files without per-fil
 - **Keep responses tight.** A briefing is 6 lines, not 30. A commit confirmation is 4 lines, not a wall.
 - **One recommendation per turn.** Surface the next-best action only after the user redirects.
 
-If the user invokes `/gh` from a context where any of these would be unsafe (detached HEAD, mid-rebase, mid-merge), surface that state first and recommend the recovery step before doing anything else.
+If the user invokes `/pro-core:gh` from a context where any of these would be unsafe (detached HEAD, mid-rebase, mid-merge), surface that state first and recommend the recovery step before doing anything else.

@@ -3,7 +3,7 @@ name: research-agent
 description: >-
   General-purpose research subagent for deep-research runs on ANY topic. Takes one decomposed
   angle / sub-question and gathers cited, falsifiable evidence from public web sources via the
-  bundled retrieval ladder. Dispatched by the /research orchestrator, one instance per angle.
+  bundled retrieval ladder. Dispatched by the /pro-research:research orchestrator, one instance per angle.
   Returns a compact JSON summary; writes evidence to the run directory. Domain-agnostic — for
   lead/account specifics use company-researcher / signals-researcher / people-researcher instead.
 model: haiku

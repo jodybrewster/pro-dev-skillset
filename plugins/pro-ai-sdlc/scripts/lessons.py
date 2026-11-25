@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""lessons - the finding ledger and review lessons behind /review's "Learning from repeats".
+"""lessons - the finding ledger and review lessons behind /pro-ai-sdlc:review's "Learning from repeats".
 
   lessons.py add --ref <pr or branch> --head <40 hex> --class <slug> --file <path> [--change-id <id>]   (claim on stdin)
   lessons.py classes
@@ -347,7 +347,7 @@ def cmd_round(a) -> dict:
                f"fresh pass {a.fresh}")
     record = {
         "schema": 1,
-        # Two refs can reach the same head and round (a branch /review and a /ship), so the key names the ref too.
+        # Two refs can reach the same head and round (a branch /pro-ai-sdlc:review and a /ship), so the key names the ref too.
         "evidence_key": f"review-round-{a.head[:12]}-{a.round}-{hashlib.sha1(ref.encode()).hexdigest()[:8]}",
         "kind": "review",
         "artifact_kind": "review-round",

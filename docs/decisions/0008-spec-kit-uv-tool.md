@@ -46,18 +46,18 @@ Its `install` passes `--ignore-agent-tools`, because `specify init` exits 1 with
 The `spec-kit` row stores in the registry a `pinnedFiles` map: the sha256 of every file the pinned CLI writes with the pinned options under `.claude/skills/speckit-*/`, `.specify/scripts/` and `.specify/templates/`.
 `init` writes 30 files and the map pins 22 of them: the 10 core skills, the 6 scripts, the 5 templates and `.specify/workflows/speckit/workflow.yml`.
 The two `.specify/integrations/*.manifest.json` files and `.specify/workflows/workflow-registry.json` differ between repos only in timestamps, so they sit in the row's `knownUnpinned` list instead.
-`knownUnpinned` is an array of repo-relative paths under `.specify/`; `/pro-dev check` treats them as expected, so the workflow and integration surface it reports does not flag them.
+`knownUnpinned` is an array of repo-relative paths under `.specify/`; `/pro-core:pro-dev check` treats them as expected, so the workflow and integration surface it reports does not flag them.
 The constitution, `.specify/integration.json`, `init-options.json`, `.specify/.gitignore` and `.constitution-template.json` are byte-identical across repos but are not pinned: the constitution is the user's to edit and the rest hold no executable content.
 The 27 byte-identical files held across three repos on one Mac; two runs of the final pinned command in fresh repos gave the same 22 hashes; the Linux comparison was not run.
 `specify integration upgrade` does not stop on an edited script: it keeps the edit, names it and exits 0.
 The update never passes `--force`.
 `pro-dev.py` names the 10 core skill names in code (`SPEC_KIT_CORE`), so moving the pin to a release that renames, adds or drops a command also updates that list in the same PR.
-An edited script therefore survives an upgrade and the hash check in `/pro-dev check` is what catches it.
-`/pro-dev check` hashes those files on disk with the standard library and never runs `specify`; it also reports extension, preset, workflow and `specify` hook paths and a feature pointer outside `specs/`.
+An edited script therefore survives an upgrade and the hash check in `/pro-core:pro-dev check` is what catches it.
+`/pro-core:pro-dev check` hashes those files on disk with the standard library and never runs `specify`; it also reports extension, preset, workflow and `specify` hook paths and a feature pointer outside `specs/`.
 The constitution, spec-kit's own manifests and `specs/` are never pinned.
 
 `uv tool install` is a second named user-wide write, after ADR-0007's marketplace step, recorded in the `pro-dev.py` docstring.
-`/pro-dev` never installs `uv`; when it is missing it says how to get it from uv's docs.
+`/pro-core:pro-dev` never installs `uv`; when it is missing it says how to get it from uv's docs.
 The CLI is shared machine-wide.
 If two repos on different pins keep downgrading each other, the fallback is `uvx` with the same pin and no shared install.
 

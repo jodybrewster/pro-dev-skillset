@@ -26,7 +26,7 @@ The claim holds no file and names no person: its author is `change-id`.
 The ref is outside `refs/heads` and `refs/tags`, so no branch list, tag list or release page shows it and a default fetch does not bring it down.
 A claim is never deleted, so an abandoned intent costs one number.
 
-`/intent` and `/incident` call `claim` where they called `next`.
+`/pro-ai-sdlc:intent` and `/pro-ai-sdlc:incident` call `claim` where they called `next`.
 When origin cannot be reached or refuses the push, the id is still printed with a line saying it is not claimed and the loop goes on as it did under ADR-0026.
 
 Allocation counts three more places: the claims on origin, every intent folder git history ever added on any ref and the ids that open the subject of the commits that added them.
@@ -42,7 +42,7 @@ This amends the rule in ADR-0026 that an id is never renumbered: an id is renumb
 ## Consequences
 
 Two people cannot be given the same id while origin is reachable.
-`/intent` now pushes to origin before the intent is committed, where it pushed nothing before; what it pushes is an empty commit on a ref nothing displays.
+`/pro-ai-sdlc:intent` now pushes to origin before the intent is committed, where it pushed nothing before; what it pushes is an empty commit on a ref nothing displays.
 A host that refuses pushes outside `refs/heads` and `refs/tags` leaves the loop where ADR-0026 left it, with the duplicate caught at the gate and not at allocation.
 The claims add one ref per change to origin for the life of the repo.
 A branch or a commit made before a renumber keeps the old id in its name.

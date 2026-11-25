@@ -7,9 +7,9 @@
 
   reviewmodel.py marker                  print the pr-check marker line through pro-ship's pr-check.py,
                                          found in the repo layout or the plugin cache; not-installed
-                                         and exit 3 without pro-ship (/execute stage 8)
+                                         and exit 3 without pro-ship (/pro-ai-sdlc:execute stage 8)
 
-factory.py and lessons.py import it; /review, the doubt step and /execute run it. pro-ship's pr-check.py and ship.py hold the same block, because
+factory.py and lessons.py import it; /pro-ai-sdlc:review, the doubt step and /pro-ai-sdlc:execute run it. pro-ship's pr-check.py and ship.py hold the same block, because
 plugins do not import each other; the review-model check in tests/check.mjs keeps the copies equal.
 
 Python 3 standard library only. No network calls.
@@ -117,7 +117,7 @@ def model_mode():
 
 
 def cmd_marker():
-    """/execute stage 8 (spec-m2 R17): find pro-ship's pr-check.py as factory.py finds it, in the repo
+    """/pro-ai-sdlc:execute stage 8 (spec-m2 R17): find pro-ship's pr-check.py as factory.py finds it, in the repo
     layout or the plugin cache; print its marker line. not-installed and exit 3 when it is absent."""
     sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
     import factory  # imported here, since factory imports this module

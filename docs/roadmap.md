@@ -17,7 +17,7 @@ Nothing below the "Now" section is decided until it moves into an intent or a sp
 
 The intent loop is no longer used for this repo's own changes; `CLAUDE.md` says how a change lands now.
 The pro-egm full bridge (every EGM skill reachable from Claude Code, a discovery primer, options research and brief-stage goldfish) is built as one PR.
-`pro-ai-sdlc-egm` is a new experimental plugin: the loop as `/intent`, `/design` and `/execute` with one design file per feature and approvals bound to its version ([ADR-0029](./decisions/0029-design-file-loop-experiment.md)).
+`pro-ai-sdlc-egm` is a new experimental plugin: the loop as `/pro-ai-sdlc:intent`, `/pro-ai-sdlc-egm:design` and `/pro-ai-sdlc:execute` with one design file per feature and approvals bound to its version ([ADR-0029](./decisions/0029-design-file-loop-experiment.md)).
 Left for later in that experiment: an inbox of what waits on each role, a quick path on EGM-lite, designer and architect roles, a users and brand reviewer, personas and a Codex reviewer.
 The open findings stop it adds to the factory runner is not in `pro-ai-sdlc` yet.
 
@@ -61,17 +61,17 @@ The maintainer stopped the run there; the demo is removed.
 
 Findings not yet in an intent:
 
-- `/intent` says no pull request while the docs say an intent is accepted through one.
+- `/pro-ai-sdlc:intent` says no pull request while the docs say an intent is accepted through one.
 - A role is only `user.name`, so a missed switch acts as the wrong person without warning. Squash merges credit the GitHub account.
 - A demo session overrode reviewers from Opus to Sonnet. Opus found an Important finding and two high test gaps the Sonnet runs had not. Small sample, but no gate caught the override.
-- A bare `/review` can reach the wrong reviewer.
+- A bare `/pro-ai-sdlc:review` can reach the wrong reviewer.
 - `/ship` gives reviewers the first and last uncovered commit. That range pulls in covered commits and stops before a covered fix, so a fixed finding came back as Important.
 - A small pull request with no intent makes `ship.py version` propose a major version until someone answers.
 - A pr-check stamp can never cover the sign-off commit, so a signed-off pull request reads as uncovered.
 - `/ship` recorded legal as `could-not-run` where the plugin was not installed. It also condensed a specialist report that should be verbatim.
 - `factory.py level` raises to 3 on stop-list words in the text of an intent that only discusses them.
 - A rerun of `/pro-ship:deployed` for a tag overwrites the earlier record, so its history is lost.
-- `/execute`'s test-file freeze forces extra test files in review fixes. `protect-tests` in enforce mode would block a legitimately reversed test, which is input to the 2026-11-13 enforce decision.
+- `/pro-ai-sdlc:execute`'s test-file freeze forces extra test files in review fixes. `protect-tests` in enforce mode would block a legitimately reversed test, which is input to the 2026-11-13 enforce decision.
 - `## Done` goes stale after later commits.
 - The demo fixture has no `AGENTS.md`.
 
@@ -85,7 +85,7 @@ Follow-ups: a failed build on a merged brief has no retry path, because `run --n
 
 ### Done: the loop after the build
 
-PDS-40 intent/2026-11-01-after-build-loop: a deploy record, `/incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) accepted).
+PDS-40 intent/2026-11-01-after-build-loop: a deploy record, `/pro-ai-sdlc:incident`, review lessons, the verifier in the pr-check stamp, a format hook and a visual check of UI steps, all as records mieruka reads ([docs/loop-records.md](./loop-records.md), [ADR-0023](./decisions/0023-loop-records.md) accepted).
 Built in #128 and signed off on 2026-11-01; the hand runs of AC9 wait for the first real use.
 mieruka's readers are merged in its own repo: the Ship page shows the preflight and deploys, and the board runs past build through Validate, Review, Ship, Done and Maintain; `tests/mieruka-sync.mjs` passes against its main.
 Next after it, each its own intent with a security challenge first: `claude -p` in CI, tiered deploy autonomy, a rollback command and a control-band watcher.
@@ -152,7 +152,7 @@ Folder: PDS-24 intent/2026-10-29-constraint-floor/.
 - Plan: plan.md, 18 steps in four parallel tracks plus a serial tail; approved on 2026-10-30.
   Three spec changes found while planning were approved on 2026-10-29: `gh pr create` diffs against `main`, the marker rules skip `.md` files and `AGENTS.md` may be a symlink to `CLAUDE.md`.
 - Build: steps 1 to 16 done on [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81) (pro-quality 0.13.0, pro-ai-sdlc 0.7.0, marketplace 1.60.0); 129 guard cases pass and a mutation run broke each rule, the mode lookup, `floor-allow:` and redaction in turn, each caught by at least one case.
-- Steps 17 and 18 done: the `/constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
+- Steps 17 and 18 done: the `/pro-quality:constraints` trial passed and the review pass found six problems, all fixed test first (152 guard cases).
 - Signed off on 2026-10-30 and merged in #81. AC9 (a week of warn-mode use in two repos) gates the later switch to enforce mode.
 
 Decisions already made for constraint-floor (2026-10-29): the hook is Python, not Rust or bash; it lives in pro-quality; it starts in warn mode; out of scope are installing semgrep, osv-scanner, Lighthouse or axe, running it in CI, enforce mode and writing `CONSTRAINTS.md` into other repos.
@@ -186,12 +186,12 @@ Cross-cutting decisions:
 - One PR per intent: each intent's PR holds its intent, spec, plan and build and stays a draft until the build lands.
   constraint-floor [#81](https://github.com/jodybrewster/pro-dev-skillset/pull/81), review-policy [#82](https://github.com/jodybrewster/pro-dev-skillset/pull/82), code-reviewer [#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), pr-gate [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84) and risk-tiers [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85).
 
-review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-dev update`.
+review-policy shipped in #82 on 2026-10-30 with ADR-0011: round cap three for every round, the finding count first, no REVIEW.md refresh in `/pro-core:pro-dev update`.
 code-reviewer shipped in #87 on 2026-10-30 with ADR-0012 (the four-field handoff).
 pr-gate shipped in #89 on 2026-10-30 with ADR-0014 (the gate stamp); pro-ship joined `pro-dev-starter` in the same release.
 risk-tiers shipped in #88 on 2026-10-30 with ADR-0015. All of P0 (ranked items 1 to 6) shipped on 2026-10-30.
 What still blocks enforce mode, per gate and with owners: [docs/enforce-mode.md](./enforce-mode.md); the decision record is pending until 2026-11-13.
-Decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
+Decided on 2026-10-29 for code-reviewer: effort high set by the dispatcher, subagent dispatch, one shared `handoff.md`; the mutation check moves out of the read-only reviewer into pr-check (pr-gate R29), which records `mutation` in the stamp; callers of the old reviewer template are added (pro-quality `/pro-ai-sdlc:review` and pro-execution's quality-reviewer prompt; the third, the old PR gate script, is deleted by pr-gate).
 
 ## Parked intents
 
@@ -211,9 +211,9 @@ Marked `done` on 2026-10-31 after checking each against its merged PR: constrain
 Marked `done` on 2026-10-29 after checking git history: execute-command (#63), plugin-installers (#70) and pro-speckit (#71).
 Still `proposed` because part of each did not ship:
 
-- pro-dev-setup: #65 left its item 5 undone (pro-quality's `/review`, `/api-docs` and `/lead-research` still exist).
+- pro-dev-setup: #65 left its item 5 undone (pro-quality's `/pro-ai-sdlc:review`, `/pro-quality:api-docs` and `/pro-research:lead-research` still exist).
 - design-vercel-bridges: #68 shipped everything except Hallmark, which was held.
-- spec-methods: #66 shipped the EGM hand-off, but #73 made pro-pdd the default against the intent's "pro-ai-sdlc stays the default", and the `/intent` offer was not built.
+- spec-methods: #66 shipped the EGM hand-off, but #73 made pro-pdd the default against the intent's "pro-ai-sdlc stays the default", and the `/pro-ai-sdlc:intent` offer was not built.
 - pro-dev-simplify: item G has no intent; C and D are partial.
 
 Each needs the maintainer's call: finish the remainder, or mark it `done` with the remainder dropped.
@@ -260,12 +260,12 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 
 ### P1: every feature through the loop plus safety
 
-- [x] 7. `/execute` guardrails (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 7. `/pro-ai-sdlc:execute` guardrails (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 8. Spec template additions (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 9. Plan template additions and a definition of done (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 10. A test-design lens for the verifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 11. Untrusted-input rules for browser and error output (S, pro-testing, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
-- [x] 12. Doubt-driven step in `/execute` (M, pro-ai-sdlc): built as doubt-driven-execute, intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
+- [x] 12. Doubt-driven step in `/pro-ai-sdlc:execute` (M, pro-ai-sdlc): built as doubt-driven-execute, intent drafted in [#93](https://github.com/jodybrewster/pro-dev-skillset/pull/93), built in [#102](https://github.com/jodybrewster/pro-dev-skillset/pull/102)
 - [x] 13. Codex as a second reviewer (M, pro-quality, pro-core): intent drafted in [#94](https://github.com/jodybrewster/pro-dev-skillset/pull/94), built in [#99](https://github.com/jodybrewster/pro-dev-skillset/pull/99)
 - [x] 14. Required documents per project (L, pro-core, pro-ai-sdlc, pro-quality): intent drafted in [#95](https://github.com/jodybrewster/pro-dev-skillset/pull/95), built in [#103](https://github.com/jodybrewster/pro-dev-skillset/pull/103)
 - [x] 35. Reviewer memory: grade each earlier finding fixed, not fixed or no longer applies at the new head before the fresh pass, then review merge-base to head instead of the first and last uncovered commit (M, pro-ai-sdlc, pro-ship) ([#192](https://github.com/jodybrewster/pro-dev-skillset/pull/192))
@@ -288,24 +288,24 @@ The tiers rank where an item fires; this rates how much this repo needs each ope
 - [ ] 20. Installed skills declare runnable checks (M, pro-core, stack plugins)
 - [ ] 21. The scaling block and `repo-hygiene` (M, pro-ship)
 - [ ] 22. Reviewer evals from past bugs (M, this repo)
-- [ ] 55. `/spec lint`: a check that each acceptance criterion is testable, before a card runs (S, pro-ai-sdlc)
-- [ ] 56. A bridge readiness check in `/pro-dev`: the upstream a bridge routes to is installed before a skill calls it, per registry row (S-M, pro-core)
+- [ ] 55. `/pro-ai-sdlc:spec lint`: a check that each acceptance criterion is testable, before a card runs (S, pro-ai-sdlc)
+- [ ] 56. A bridge readiness check in `/pro-core:pro-dev`: the upstream a bridge routes to is installed before a skill calls it, per registry row (S-M, pro-core)
 - [ ] 44. Worktree cleanup that finds merged branches four ways, keeps unmerged work and writes a recovery file before it deletes (M, pro-ai-sdlc)
 - [ ] 45. Verified role identity: check the `gh api user` login against the role map before acting (M, pro-ai-sdlc)
 - [x] 46. Done means on the base: `factory.py record --state merged` checks the SHA is on the fetched base; plan-sync writes `Done as of <sha>` (S, pro-ai-sdlc): built in [#173](https://github.com/jodybrewster/pro-dev-skillset/pull/173)
 - [x] 47. `factory.py level` scans only added lines for stop-list words (S, pro-ai-sdlc): built in [#173](https://github.com/jodybrewster/pro-dev-skillset/pull/173) as a scan of the requirement sections
 - [x] 48. A CI matrix with macOS and Python 3.9 for the hook tests (S, this repo): built in [#175](https://github.com/jodybrewster/pro-dev-skillset/pull/175) as a path-filtered `hooks-macos` workflow
-- [x] 49. `/constraints` runs each check against a known violation and a clean control before it calls the check enforced (S, pro-quality) [#174](https://github.com/jodybrewster/pro-dev-skillset/pull/174)
+- [x] 49. `/pro-quality:constraints` runs each check against a known violation and a clean control before it calls the check enforced (S, pro-quality) [#174](https://github.com/jodybrewster/pro-dev-skillset/pull/174)
 
 ### P3: small polish, one batch
 
 - [ ] 23. Re-sync `interview-me` and `idea-refine` (S, pro-pdd)
-- [x] 24. `/adr` convention detection and a Deprecated status (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 24. `/pro-ai-sdlc:adr` convention detection and a Deprecated status (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 25. Two guards in the simplifier (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [x] 26. Debugging addendum (S, pro-execution): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
 - [x] 27. An accessibility checklist sidecar (S, pro-design): intent drafted in [#91](https://github.com/jodybrewster/pro-dev-skillset/pull/91), built in [#97](https://github.com/jodybrewster/pro-dev-skillset/pull/97)
 - [ ] 28. Two `/fix` tweaks (S, pro-core or user scope)
-- [x] 29. Optional capability map in `/spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
+- [x] 29. Optional capability map in `/pro-ai-sdlc:spec` (S, pro-ai-sdlc): intent drafted in [#90](https://github.com/jodybrewster/pro-dev-skillset/pull/90), built in [#98](https://github.com/jodybrewster/pro-dev-skillset/pull/98)
 - [ ] 57. A head-pinned PR body block rewrite: rewrite one marker block of a PR body and refuse when the head moved; `pr-check` and `/ship` then stop overwriting each other's sections (S, pro-ship)
 - [ ] 58. The `m11` SIGINT case in `tests/ship-check.mjs` waits a fixed two seconds for a pid file and can crash `check.mjs` on a loaded machine; poll for the file instead (XS, this repo)
 - [ ] 50. The reviewer writes two to four hypotheses from the criteria and the raw diff before it reads the builder's claims (S, pro-ai-sdlc, pro-quality)
@@ -398,31 +398,31 @@ Source: pro-ship features 7 and 8.
 ### 5. REVIEW.md template upgrade
 
 What: add to pro-ai-sdlc's template what failure looks like in this repo, paths to skip, evidence as file and line, the Pre-existing tag, a summary that starts with the count, the optional tier table and sensitive paths.
-Why it is P0: `/pro-dev install` writes this template into every new repo; every reviewer reads it.
+Why it is P0: `/pro-core:pro-dev install` writes this template into every new repo; every reviewer reads it.
 Source: pro-ship feature 10, "REVIEW.md template changes".
 
 ### 6. Review convergence rules
 
 What: after the first full review, later rounds look only at new commits; a finding is never raised twice; a class of bug is named once so every instance is fixed together; old bugs are tagged Pre-existing and do not block.
-`/pr-babysit` already stops at five rounds; the pro-ship brainstorm proposes three.
+`/pro-ai-sdlc:pr-babysit` already stops at five rounds; the pro-ship brainstorm proposes three.
 Why it is P0: an agent author and an agent reviewer can loop for dozens of rounds.
 Each nit costs a commit and a round.
 Source: pro-ship feature 9, "Convergence".
 
-### 7. `/execute` guardrails
+### 7. `/pro-ai-sdlc:execute` guardrails
 
 What, all from agent-skills:
 - Stop and ask before a task that touches auth, migrations, payments, deploys or secrets (`commands/build.toml:35-39`).
-- A "NOTICED BUT NOT TOUCHING" note for problems outside the task, in `/execute` and the implementer prompt (`skills/incremental-implementation/SKILL.md:126-133`).
+- A "NOTICED BUT NOT TOUCHING" note for problems outside the task, in `/pro-ai-sdlc:execute` and the implementer prompt (`skills/incremental-implementation/SKILL.md:126-133`).
 - Stage only the task's files, never `git add -A` (`commands/build.toml:34`).
 - A change summary in the PR body with "THINGS I DIDN'T TOUCH" and "POTENTIAL CONCERNS" (`skills/git-workflow-and-versioning/SKILL.md:191-209`).
-Why it is P1: `/execute` now runs a whole plan unattended with no stop list today.
+Why it is P1: `/pro-ai-sdlc:execute` now runs a whole plan unattended with no stop list today.
 Keep ours: the scripted gate, the worktree, the green baseline, the verifier and never merge.
 
 ### 8. Spec template additions
 
 What:
-- An "ASSUMPTIONS I'M MAKING, correct me now" block before the draft, in `/spec` step 3 (`skills/spec-driven-development/SKILL.md:71-80`).
+- An "ASSUMPTIONS I'M MAKING, correct me now" block before the draft, in `/pro-ai-sdlc:spec` step 3 (`skills/spec-driven-development/SKILL.md:71-80`).
 - Vague asks turned into measurable criteria, for example "faster" becomes LCP under 2.5s (`:156-168`).
 - Always / Ask first / Never boundaries in `templates/spec.md` (`:110-113`).
 Why it is P1: wrong assumptions caught at the spec are the cheapest fix in the loop.
@@ -432,9 +432,9 @@ Why it is P1: wrong assumptions caught at the spec are the cheapest fix in the l
 What:
 - Task sizes XS to XL with split triggers: over 2 hours, over 3 acceptance criteria, "and" in the title, 2 or more subsystems (`skills/planning-and-task-breakdown/SKILL.md:125-142`).
 - A checkpoint every 2-3 tasks, risky tasks early and never overwriting an unfinished plan (`:144-187`).
-- The `writing-plans` self-review (spec coverage, placeholder scan, type consistency) in `/plan` step 3; neither `/plan` nor theirs has it.
+- The `writing-plans` self-review (spec coverage, placeholder scan, type consistency) in `/pro-ai-sdlc:plan` step 3; neither `/pro-ai-sdlc:plan` nor theirs has it.
 - `references/definition-of-done.md` as a pro-ai-sdlc reference cited by the plan's Done block: one standing bar for every change, separate from each task's acceptance criteria.
-Why it is P1: right-sized tasks are what let `/execute` and its verifier work in small steps.
+Why it is P1: right-sized tasks are what let `/pro-ai-sdlc:execute` and its verifier work in small steps.
 
 ### 10. A test-design lens for the verifier
 
@@ -450,23 +450,23 @@ What:
 Why it is P1: these are prompt-injection holes in every browser session and every failing build.
 The fix is a few lines.
 
-### 12. Doubt-driven step in `/execute`
+### 12. Doubt-driven step in `/pro-ai-sdlc:execute`
 
 What: before a decision that is hard to undo stands, send only the artifact and its contract (never the author's claim that it is right) to a fresh-context reviewer told to find problems, at most three rounds, with a cross-model option through the Codex CLI.
 EGM goldfish already does this for specs and plans; nothing does it during the build.
-How: a skill in pro-ai-sdlc that `/execute` offers on irreversible steps; it runs in the main session because subagents cannot spawn subagents.
+How: a skill in pro-ai-sdlc that `/pro-ai-sdlc:execute` offers on irreversible steps; it runs in the main session because subagents cannot spawn subagents.
 Source: `skills/doubt-driven-development/SKILL.md`.
 
 ### 13. Codex as a second reviewer
 
 What: the same `code-reviewer` as a Codex `.toml`, run with `codex exec` in parallel on high-risk PRs; findings both models raise count as stronger; disagreements are shown as they are.
-Codex is an opt-in engine row that `/pro-dev install` asks about.
+Codex is an opt-in engine row that `/pro-core:pro-dev install` asks about.
 Source: pro-ship feature 5.
 Depends on: 3.
 
 ### 14. Required documents per project
 
-What: a conditional set (README, CLAUDE.md, AGENTS.md, REVIEW.md and ADRs always; ARCHITECTURE, PRODUCT and DESIGN when they apply), new templates, `/pro-dev install` drafting missing ones from the code and pr-check listing what is missing.
+What: a conditional set (README, CLAUDE.md, AGENTS.md, REVIEW.md and ADRs always; ARCHITECTURE, PRODUCT and DESIGN when they apply), new templates, `/pro-core:pro-dev install` drafting missing ones from the code and pr-check listing what is missing.
 Why it is P1: the reviewer, the classifier and CI all read these documents.
 Source: pro-ship features 14-16.
 
@@ -527,7 +527,7 @@ Only the two `SKILL.md` files differ from upstream; the sidecars are identical.
 - `interview-me`: the terminal turn and stop rule (theirs lines 124-131) with its red flag (line 215) and checklist item (line 234).
 - `idea-refine`: the rationalizations table (about lines 165-174) and the "not for" line that routes to `interview-me` or a spec.
 
-### 24. `/adr` additions
+### 24. `/pro-ai-sdlc:adr` additions
 
 Detect the repo's existing ADR convention (`skills/documentation-and-adrs/SKILL.md:36-44`), add a Deprecated status and a rule never to delete an old ADR.
 
@@ -550,7 +550,7 @@ Also `git bisect run` for regressions (`:101-109`).
 Detect the stack instead of assuming `npm test` (`skills/test-driven-development/SKILL.md:24-36`).
 Have a subagent write the repro test without seeing the fix (`:343-357`).
 
-### 29. Optional capability map in `/spec`
+### 29. Optional capability map in `/pro-ai-sdlc:spec`
 
 For big work, a module table with stable ids and a build order, then one spec per module (`skills/spec-driven-development/SKILL.md:34-65`).
 
@@ -583,7 +583,7 @@ Ported guards run under our warn and enforce modes instead of super-board's plai
 - 42: `run.md` caps rebuilds per root-cause hash and sweeps stranded cards; `factory.py` resumes only when a build or brief PR exists.
 - 43: `hooks/guard-delete-outside.py`; `git-safe.py` blocks only `rm -rf` of `/`, `~` and `$HOME`.
 - 44: `hooks/cleanup-wt.py`, run at session start only when a base tip moved.
-- 49: agent-skills #694 (`ba3d99e`); semgrep and axe can exit 0 on findings. Port its `quality-gate.mjs` only if `/constraints` gains a tool table.
+- 49: agent-skills #694 (`ba3d99e`); semgrep and axe can exit 0 on findings. Port its `quality-gate.mjs` only if `/pro-quality:constraints` gains a tool table.
 - 51: agent-skills #750 (`2b14012`) and `skills/super-qa/references/iteration-preamble.md`.
 - 52: `skills/super-qa/SKILL.md` evidence rules and agent-skills #733 (`57bfe5d`).
 
@@ -600,6 +600,8 @@ Their own comment says a second router on top of native routing is wrong.
 - Their security skill as a replacement: it teaches secure coding, ours audits, so they do different jobs.
 
 Every fork keeps the upstream footer and a row in `docs/licenses.md` (MIT, Copyright (c) 2025 Addy Osmani).
+
+<!-- command-namespace: off (the Command column below holds another project's command names) -->
 
 ## The agent-skills comparison
 
@@ -696,3 +698,4 @@ None of our equivalents should be replaced.
 | browser testing | Page content is untrusted, JavaScript runs read-only, never follow URLs found on a page | The `agent-browser` workflow, `qa-suite` | Add a security-boundaries section | 11 |
 | meta-skill | A list of 10 failure modes | A real router, session-start hooks that run | Nothing | |
 
+<!-- command-namespace: on -->

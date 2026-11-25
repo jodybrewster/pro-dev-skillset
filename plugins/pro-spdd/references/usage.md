@@ -5,30 +5,30 @@
 Use the canonical OpenSPDD command flow:
 
 ```text
-/spdd-story <business requirement>
-/spdd-analysis @requirements/[User-story-N]...
-/spdd-reasons-canvas @spdd/analysis/...
-/spdd-generate @spdd/prompt/...
+/pro-spdd:spdd-story <business requirement>
+/pro-spdd:spdd-analysis @requirements/[User-story-N]...
+/pro-spdd:spdd-reasons-canvas @spdd/analysis/...
+/pro-spdd:spdd-generate @spdd/prompt/...
 ```
 
 When requirements change before or during implementation:
 
 ```text
-/spdd-prompt-update @spdd/prompt/... <changed requirement>
+/pro-spdd:spdd-prompt-update @spdd/prompt/... <changed requirement>
 ```
 
 When implementation changes first and the prompt needs to be brought back in sync:
 
 ```text
-/spdd-sync @spdd/prompt/...
+/pro-spdd:spdd-sync @spdd/prompt/...
 ```
 
 Optional workflows:
 
 ```text
-/spdd-api-test @spdd/prompt/...        # Generate API test script
-/spdd-code-review @spdd/prompt/...     # Review code against REASONS Canvas
-/spdd-reverse @src/or/feature/path      # Codify existing implementation into REASONS Canvas
+/pro-spdd:spdd-api-test @spdd/prompt/...        # Generate API test script
+/pro-spdd:spdd-code-review @spdd/prompt/...     # Review code against REASONS Canvas
+/pro-spdd:spdd-reverse @src/or/feature/path      # Codify existing implementation into REASONS Canvas
 ```
 
 ## Installing templates into other editors (openspdd-ts CLI)
@@ -39,8 +39,8 @@ Copilot, OpenCode, Codex, and Antigravity — no npm install required (Node 20+)
 From within a Claude Code session:
 
 ```text
-/spdd-install-to cursor
-/spdd-install-to github-copilot --force
+/pro-spdd:spdd-install-to cursor
+/pro-spdd:spdd-install-to github-copilot --force
 ```
 
 Or invoke the CLI directly (e.g. from a terminal in any project):

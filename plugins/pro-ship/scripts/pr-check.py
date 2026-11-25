@@ -508,7 +508,7 @@ def find_sibling(root: str, plugin: str, filename: str) -> str:
         return inplace
     installed = read_installed()
     mkt = own_marketplace(installed)
-    # An /execute worktree sits beside the checkout a project or local install names, so a
+    # An /pro-ai-sdlc:execute worktree sits beside the checkout a project or local install names, so a
     # record counts for the repo's main checkout too.
     roots = (root, main_checkout(root))
     scoped, user = [], []
@@ -589,7 +589,7 @@ def settings_disable(root: str, key: str) -> str | None:
 def enabled_install(root: str, plugin: str, rel: str) -> str | None:
     """Path of <plugin>/<rel> from an install record that no settings file disables, else None.
     Never the in-place sibling or the repo's own plugins/ folder: a file there proves no install.
-    A project or local record counts for root or the main checkout beside it (an /execute worktree),
+    A project or local record counts for root or the main checkout beside it (an /pro-ai-sdlc:execute worktree),
     preferring the closest; then a user record."""
     installed = read_installed()
     mkt = own_marketplace(installed)

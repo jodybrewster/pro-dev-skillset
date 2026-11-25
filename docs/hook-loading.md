@@ -45,7 +45,7 @@ It flags a read of a dotenv file, a private SSH key, a `.pem` file, `.npmrc`, a 
 Its helper `scripts/env-check.py` prints `present`, `empty` or `missing` per key name and is run by the agent, not registered.
 
 `pro-core` registers a SessionStart hook that runs `scripts/pro-dev-nudge.py` with a 10 second timeout.
-It prints one line asking for `/pro-dev update` when the registry has moved on and changes nothing.
+It prints one line asking for `/pro-core:pro-dev update` when the registry has moved on and changes nothing.
 
 ## Registered by pro-security
 

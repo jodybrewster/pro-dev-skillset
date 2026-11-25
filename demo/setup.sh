@@ -9,7 +9,7 @@
 #   ./demo/setup.sh            # full setup
 #   ./demo/setup.sh --clean    # tear down first, then set up
 #
-# After it finishes: open Claude Code inside demo/app and run /pro-dev check.
+# After it finishes: open Claude Code inside demo/app and run /pro-core:pro-dev check.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -81,7 +81,7 @@ cat <<EOF
 
     cd "$APP"
     claude            # open Claude Code here
-    > /pro-dev check # verifies the installed stack + routing
+    > /pro-core:pro-dev check # verifies the installed stack + routing
 
   To preview the site:        npm run dev   (then open http://localhost:3000)
   To tear the demo back down:  ./demo/teardown.sh

@@ -44,7 +44,7 @@ Every subcommand prints JSON and is run from the repo root.
    Exit 3 prints `documents   missing <n>` and one `Should-fix: <doc> (<rule>)` line for each entry in `missing`.
    Exit 2 prints `documents   could-not-run <reason>` and never reads as none missing.
    Any other exit prints `documents   could-not-run <stderr tail>` and never reads as none missing.
-   When `REVIEW.md` is among the missing documents, point to `/pro-dev install`.
+   When `REVIEW.md` is among the missing documents, point to `/pro-core:pro-dev install`.
    A missing document is Should-fix.
    It never changes `result`, never stops the run and never blocks.
 4. Check that docs changed where behavior changed (the definition of done).
@@ -52,7 +52,7 @@ Every subcommand prints JSON and is run from the repo root.
    A doc is stale only when it now says something the diff made untrue, or leaves out a command, flag, setting or rule the diff added.
    A doc that describes nothing the diff touched needs no change, so a code change does not require every doc to move.
    Print `docs        current` or `docs        stale <n>` with one `Should-fix: <doc> (<what changed>)` line each.
-   For each stale doc, either fix it with `/document` from the diff, commit and rerun, or give the doc and why it stays on the Docs line of the PR body.
+   For each stale doc, either fix it with `/pro-quality:document` from the diff, commit and rerun, or give the doc and why it stays on the Docs line of the PR body.
    Never edit a doc only to show it moved.
    The `documentation-and-adrs` skill has the table of which change touches which doc.
    A stale doc never changes `result`, never stops the run and never blocks.
@@ -175,7 +175,7 @@ When `run` is true:
    The runner stops by itself after 540 seconds.
 
 The runner checks consent, the `codex` binary and the login itself.
-It never sends anything unless the repo answered yes for `codex` through `/pro-dev install`.
+It never sends anything unless the repo answered yes for `codex` through `/pro-core:pro-dev install`.
 `--consent-ref <base>` reads that answer from the base branch, so a PR cannot add its own opt-in.
 A Codex finding never blocks the merge and never makes `result` `incomplete`.
 
@@ -212,7 +212,7 @@ An `inline` security review does not satisfy the push gate.
 ### Verifier pass
 
 A verifier result counts for HEAD only when its `HEAD:` line is HEAD, or an ancestor of HEAD with nothing but files under the top-level `intent/` changed since (`pr-check.py stamp` decides, `docs/pr-check-stamp.md` has the rule).
-When `/execute` already ran the verifier in this session and its report is in front of you, reuse it instead of dispatching a second one.
+When `/pro-ai-sdlc:execute` already ran the verifier in this session and its report is in front of you, reuse it instead of dispatching a second one.
 Check that its `HEAD:` line is HEAD or that only `intent/` files changed since it: `git diff --name-status --no-renames <its head> HEAD` lists paths that all start with `intent/`.
 Otherwise dispatch a new one.
 Never reuse a report from another session or one you cannot see.
@@ -246,7 +246,7 @@ Codex report: when the Codex run was started, read its first line with the same 
 - Trigger false: `skipped`, with the trigger's reason.
 - `$TWIN` is `not-installed` or the runner file is missing: `not-installed`, reason `runner or instructions missing`.
 - Runner exit 3: `not-installed`, reason the runner's word (`not-opted-in`, `not-installed` or `not-logged-in`).
-  For `not-opted-in` say to run `/pro-dev install`, which asks for the consent even when the codex command is already on PATH.
+  For `not-opted-in` say to run `/pro-core:pro-dev install`, which asks for the consent even when the codex command is already on PATH.
 - Runner exit 0 with the tally line first: `done`, `important` from the tally.
 - Runner exit 0 without that line, exit 2, exit 4 or any other exit: `could-not-run`, reason the runner's word (`timeout`, `exit-<n>`, `empty-output`, `usage`) or `no tally line`.
 

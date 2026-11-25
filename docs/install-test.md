@@ -11,7 +11,7 @@ All must pass - don't commit if any fail.
 # 4. Test pro-dev-starter (the user-facing meta-install) from inside demo/app
 cd demo/app
 claude plugin install pro-dev-starter@pro-dev-skillset --scope project
-# then, in a session: /pro-dev install, /pro-dev check
+# then, in a session: /pro-core:pro-dev install, /pro-core:pro-dev check
 
 # 5. Codex install smoke test (requires Codex access — run after 6:10 PM if at daily limit)
 #    Install the touched plugin(s) via Codex and confirm skills load without errors.

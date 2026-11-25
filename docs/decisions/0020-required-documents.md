@@ -13,7 +13,7 @@ Source: PDS-32, intent/2026-10-30-required-documents/.
 
 The reviewer's policy field, the risk classifier and `pr-check` all read a repo's documents, so a reviewer given an empty or stale policy reviews against nothing.
 Nothing in the marketplace said which documents a project must have.
-`/pro-dev install` drafted only `CLAUDE.md` and `REVIEW.md`.
+`/pro-core:pro-dev install` drafted only `CLAUDE.md` and `REVIEW.md`.
 `docs-before-push.py` checks that existing key documents move with the code, but never asks for a missing one.
 On 2026-10-28 the requirement was set that every project has the documents it needs.
 
@@ -34,8 +34,8 @@ Every repo with the plugins has these documents:
 | DESIGN.md | the project has a UI |
 
 One deterministic script, `plugins/pro-quality/scripts/required-docs.py`, works the set out from the tracked files.
-`/pro-dev install` passes `--worktree` so a file that exists on disk but is not committed still counts as present.
-`/pro-dev install` and `pr-check` both run it; pr-check carries none; install keeps a fallback table for when pro-quality is absent.
+`/pro-core:pro-dev install` passes `--worktree` so a file that exists on disk but is not committed still counts as present.
+`/pro-core:pro-dev install` and `pr-check` both run it; pr-check carries none; install keeps a fallback table for when pro-quality is absent.
 
 A repo tunes the set with one fenced block under `## Required documents` in `REVIEW.md`, holding `add` and `remove` lists.
 `remove` may name only the three conditional rows.
@@ -61,7 +61,7 @@ What must stay true:
 
 - `pr-check` only consumes the check; the rules live in one script.
 - "Could not run" is never reported as "nothing missing".
-- `/pro-dev install` never overwrites a document that exists.
+- `/pro-core:pro-dev install` never overwrites a document that exists.
 - The stamp contract does not carry the list.
 
 Revisit if the detection picks the wrong rows in more than one repo in a month or when ranked item 21 adds the severity dial.

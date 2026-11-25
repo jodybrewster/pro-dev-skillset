@@ -48,7 +48,7 @@ It amends ADR-0012: a grading dispatch is a second contract with one extra input
 ## Consequences
 
 A finding fixed anywhere in the range is graded `fixed` with evidence and stops being reported.
-An unfixed finding keeps its id across rounds, sessions and `/review` or `/ship`.
+An unfixed finding keeps its id across rounds, sessions and `/pro-ai-sdlc:review` or `/ship`.
 A later round costs one extra dispatch when the table has an open row and none otherwise.
 A review of the whole merge-base range costs more on a long branch or a large release than a review of new commits alone.
 The table is a local file under `.pro-dev/`.
@@ -68,7 +68,7 @@ Revisit if grading proves no cheaper than a full fresh review, if the merge-base
 
 - Hand earlier findings to the fresh reviewer: it anchors the read, which is the leak ADR-0012 closes.
 - Keep the list in the session: it is lost between sessions, which is the failure the retest showed.
-- Post the table as a PR comment, as super-board does: a GitHub write every round, while `/review` also runs on branches with no PR.
+- Post the table as a PR comment, as super-board does: a GitHub write every round, while `/pro-ai-sdlc:review` also runs on branches with no PR.
 - Keep reviewing only new commits and add the covered fixes to the range: a release's uncovered commits are not contiguous, which makes any partial range drop some fix.
 
 ## Where it is enforced

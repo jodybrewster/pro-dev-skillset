@@ -1,5 +1,5 @@
 ---
-description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Writes the build ticket from the approved design first when there is none. Usage: /execute <change id, intent folder or path to plan.md>"
+description: "Build an approved plan in its own worktree: gate the plan, branch off the default branch, copy the git-ignored env files, prove a green baseline, build test-first, fill in Done and open a pull request. Never merges. Writes the build ticket from the approved design first when there is none. Usage: /pro-ai-sdlc-egm:execute <change id, intent folder or path to plan.md>"
 argument-hint: "<change id, intent folder or path to plan.md>"
 model: opus
 allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git show:*), Bash(git add:*), Bash(git commit:*), Bash(git restore:*), Bash(git push:*), Bash(git rev-parse:*), Bash(git merge-base:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh repo view:*), Bash(npm install:*), Bash(npm ci:*), Bash(npm run:*), Bash(npm test:*), Bash(pnpm install:*), Bash(pnpm run:*), Bash(pnpm test:*), Bash(yarn install:*), Bash(yarn run:*), Bash(yarn test:*), Bash(bun install:*), Bash(bun run:*), Bash(bun test:*), Bash(make:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/visual.py" record:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/reviewmodel.py":*), Read, Edit, Write, Glob, Grep, Agent, EnterWorktree
@@ -15,7 +15,7 @@ allowed-tools: Bash(git fetch:*), Bash(git worktree:*), Bash(git branch:*), Bash
 
 Requested: $ARGUMENTS
 
-This is the third of the three steps: `/intent` says what a person wants, `/design` agrees the solution and `/execute` builds it.
+This is the third of the three steps: `/pro-ai-sdlc-egm:intent` says what a person wants, `/pro-ai-sdlc-egm:design` agrees the solution and `/pro-ai-sdlc-egm:execute` builds it.
 The committed, approved plan is the gate; from there the run goes to an open pull request with no pause unless something fails or the stop list fires.
 You are the builder: build the plan in this session and dispatch subagents only when a step benefits from one.
 Print one short line as each stage finishes (gate passed, worktree made, env files copied, baseline green, step N of M built, step N doubted (R rounds), checkpoint, visual check, proof of done, verifier, pr-check, PR opened).
@@ -94,7 +94,7 @@ Record each doubted step as one `Doubt:` line under `## Done` in plan.md.
 
 ### 1. Gate the plan
 
-If nothing was given, stop and ask for the change; `/execute` never guesses which one to build.
+If nothing was given, stop and ask for the change; `/pro-ai-sdlc-egm:execute` never guesses which one to build.
 When the argument is a change id or an intent folder and not a path to a plan, the plan is `<intent dir>/plan.md`.
 If that file does not exist yet, write it first by running the plan command through the Skill tool, as a person would type `/pro-ai-sdlc-egm:plan <intent>`.
 It writes the build ticket from the approved design, or from the intent when the change has no design, and it stops when the design is not approved for its current version or the ticket still needs the engineer's yes; if it stops, print its reason and stop here too.
@@ -236,7 +236,7 @@ If `gh` fails, give the compare URL for the branch instead.
 ### 9. Report
 
 The PR URL, the worktree path, the checks that ran with their results, any departures and the doubted steps with their rounds.
-Suggest `/pr-babysit` as the next step.
+Suggest `/pro-ai-sdlc-egm:pr-babysit` as the next step.
 
 Never merge, never push to the default branch, never force-push and never pass `--no-verify`.
 

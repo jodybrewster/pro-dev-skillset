@@ -1,5 +1,5 @@
 ---
-description: "Run one unattended phase of the software factory on an accepted intent: brief writes spec.md and plan.md and opens a PR, build runs /execute and /review and leaves a PR. Never merges. Usage: /auto brief|build <intent dir>"
+description: "Run one unattended phase of the software factory on an accepted intent: brief writes spec.md and plan.md and opens a PR, build runs /pro-ai-sdlc:execute and /pro-ai-sdlc:review and leaves a PR. Never merges. Usage: /pro-ai-sdlc:auto brief|build <intent dir>"
 argument-hint: "brief|build <intent dir>"
 model: opus
 allowed-tools: Bash(git fetch:*), Bash(git status:*), Bash(git branch:*), Bash(git switch:*), Bash(git rev-parse:*), Bash(git log:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(date:*), Bash(ls:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/factory.py" level:*), Read, Write, Edit, Glob, Grep, Skill
@@ -24,8 +24,8 @@ If either is missing or the folder has no `intent.md`, print `factory: stopped l
 ## Limits
 
 Never merge, tag, deploy, publish or push to the default branch.
-Never edit `REVIEW.md`, `CLAUDE.md`, `AGENTS.md` or anything under `.claude/`, with one exception: `/execute` writes `.claude/test-lock` and git excludes it, so that one file is allowed and nothing else under `.claude/`.
-Never lower a level, run `/pr-babysit`, act on a PR comment or pass `--no-verify`.
+Never edit `REVIEW.md`, `CLAUDE.md`, `AGENTS.md` or anything under `.claude/`, with one exception: `/pro-ai-sdlc:execute` writes `.claude/test-lock` and git excludes it, so that one file is allowed and nothing else under `.claude/`.
+Never lower a level, run `/pro-ai-sdlc:pr-babysit`, act on a PR comment or pass `--no-verify`.
 Never open, print or quote an env file or a token.
 
 ## brief
@@ -39,7 +39,7 @@ Never open, print or quote an env file or a token.
 4. Write `<dir>/plan.md` from `${CLAUDE_PLUGIN_ROOT}/templates/plan.md` the same way: files touched, order of work, tests that prove it, proof of done.
    The header reads `Status: approved` and `Approver: factory, level 1`.
    The Risks section carries `Stop-list categories: none`.
-   Each step in Order of work holds the tests and the code they prove, because `/execute` freezes a test once its step is committed and the runner stops a build that changes one afterwards; a test seen failing and then passing in one step can still be corrected before that.
+   Each step in Order of work holds the tests and the code they prove, because `/pro-ai-sdlc:execute` freezes a test once its step is committed and the runner stops a build that changes one afterwards; a test seen failing and then passing in one step can still be corrected before that.
 5. If any concern applies, or any stop-list category (auth, migrations, payments, deploys, secrets, environment variables) or a new dependency would be touched, print `factory: stopped level 2 (<reason>)` and stop without a branch, commit or PR.
 6. Otherwise create the branch `<id>/brief` when `intent.md` has an `id:` line (ADR-0026), or `<slug>-brief` (the folder name without its date or id prefix) when it has none, off the default branch and stage only the two files by path.
    Commit with the message `<id>: brief: <slug>`, or `brief: <slug>` with no id.

@@ -32,9 +32,9 @@ Plugins cannot import each other (ADR-0003).
   No model call merges, ranks or settles findings.
 - One runner, `codex-run.py`, runs Codex: consent, binary and login checks, then `codex exec -s read-only --ephemeral` with the instructions and the prompt on stdin, a timeout and one `could-not-run: <reason>: <detail>` line with a nonzero exit on any failure.
   It names no plugin, so a second plugin carries a byte-identical copy that a check keeps equal.
-- Consent is the `codex` answer `yes` in the repo's `.claude/pro-dev.json`, given through `/pro-dev install`; the runner refuses without it.
-- Codex is a registry row of a new detect-only kind, `manual-cli`: detected by a PATH lookup, never executed by `/pro-dev`, with printed manual install lines and no install or update argv.
-  The row is owned by pro-core, whose installer is `/pro-dev`, so it applies to every repo that runs `/pro-dev` whichever plugin uses it.
+- Consent is the `codex` answer `yes` in the repo's `.claude/pro-dev.json`, given through `/pro-core:pro-dev install`; the runner refuses without it.
+- Codex is a registry row of a new detect-only kind, `manual-cli`: detected by a PATH lookup, never executed by `/pro-core:pro-dev`, with printed manual install lines and no install or update argv.
+  The row is owned by pro-core, whose installer is `/pro-core:pro-dev`, so it applies to every repo that runs `/pro-core:pro-dev` whichever plugin uses it.
   This amends ADR-0006 for that kind and that owner.
 - Codex loads `AGENTS.md` files by itself; that is accepted as the same policy and personal instructions a Claude subagent loads, not session context.
 

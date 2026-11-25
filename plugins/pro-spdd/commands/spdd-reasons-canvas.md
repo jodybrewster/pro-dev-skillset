@@ -1,5 +1,5 @@
 ---
-name: /spdd-reasons-canvas
+name: /pro-spdd:spdd-reasons-canvas
 id: spdd-reasons-canvas
 category: Development
 description: Generate REASONS-Canvas structured prompts from business context without external template
@@ -7,7 +7,7 @@ description: Generate REASONS-Canvas structured prompts from business context wi
 
 Generate implementation-ready structured prompts using the built-in REASONS-Canvas framework (Requirements, Entities, Approach, Structure, Operations, Norms, Safeguards).
 
-**Input**: Business context/requirement description after `/spdd-reasons-canvas`
+**Input**: Business context/requirement description after `/pro-spdd:spdd-reasons-canvas`
 
 Input can be provided in two ways:
 
@@ -18,16 +18,16 @@ Input can be provided in two ways:
 
 ```
 # Text description
-/spdd-reasons-canvas Implement user registration functionality, supporting email verification and mobile phone binding
+/pro-spdd:spdd-reasons-canvas Implement user registration functionality, supporting email verification and mobile phone binding
 
 # File reference
-/spdd-reasons-canvas @requirements/user-registration.md
+/pro-spdd:spdd-reasons-canvas @requirements/user-registration.md
 
 # Combined (text + file reference)
-/spdd-reasons-canvas @requirements/user-registration.md additionally requires support for third-party OAuth login
+/pro-spdd:spdd-reasons-canvas @requirements/user-registration.md additionally requires support for third-party OAuth login
 
 # Multiple file references
-/spdd-reasons-canvas @requirements/user-registration.md @docs/api-spec.yaml
+/pro-spdd:spdd-reasons-canvas @requirements/user-registration.md @docs/api-spec.yaml
 ```
 
 **Steps**

@@ -892,7 +892,7 @@ const CASES = [
   },
   {
     id: "run/update-needs-an-installed-engine",
-    run: (s) => {
+    run: (s, pr) => {
       s.setPlugins([s.entry("pro-pdd", "project", s.repo)]);
       s.run(["run", "lavish", "update"]);
       if (s.calls("npx").length) return bad("update ran on a missing engine");
@@ -900,7 +900,8 @@ const CASES = [
       writeFileSync(join(s.repo, LAVISH_FILE), "x");
       s.run(["run", "lavish", "update"]);
       const npx = s.calls("npx");
-      return npx.length === 1 && npx[0].argv.includes("kunchenguid/lavish-axi") ? ok() : bad("update did not run the update argv");
+      const want = registry(pr).engines.find((e) => e.id === "lavish").update.slice(1);
+      return npx.length === 1 && same(npx[0].argv, want) ? ok() : bad(`update argv ${JSON.stringify(npx.map((c) => c.argv))}`);
     },
   },
   {
@@ -1241,7 +1242,7 @@ function nudgeCase(id, setup, expectLine, { payload = {}, cwdKey = "repo" } = {}
       if (r.status !== 0) return bad(`exit ${r.status}: ${r.stderr}`);
       const out = r.stdout.trim();
       if (expectLine) {
-        return out.split("\n").length === 1 && (() => { try { return JSON.parse(out).hookSpecificOutput.additionalContext.endsWith("pro-dev plugins changed since the last /pro-dev run: run /pro-dev update"); } catch { return false; } })()
+        return out.split("\n").length === 1 && (() => { try { return JSON.parse(out).hookSpecificOutput.additionalContext.endsWith("pro-dev plugins changed since the last run: run /pro-core:pro-dev update"); } catch { return false; } })()
           ? ok() : bad(`stdout ${JSON.stringify(out)}`);
       }
       return out === "" ? ok() : bad(`should be silent, printed ${JSON.stringify(out)}`);
@@ -1493,12 +1494,13 @@ CASES.push(
   },
   {
     id: "owner/run-all-install-reaches-only-the-owners-argv",
-    run: (s) => {
+    run: (s, pr) => {
       s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo), s.entry("pro-pdd", "project", s.repo)]);
       const r = s.run(["--owner", "pro-nextjs", "run", "all", "install"], { extra: { FAKE_NPX_FILES: NEXT_FILES } });
       if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
       const c = s.calls();
-      if (c.length !== 1 || c[0].tool !== "npx" || !c[0].argv.includes("https://github.com/vercel/next.js/tree/canary/skills")) {
+      const want = registry(pr).engines.find((e) => e.id === "next-skills").install.slice(1);
+      if (c.length !== 1 || c[0].tool !== "npx" || !same(c[0].argv, want)) {
         return bad(`calls ${JSON.stringify(c)}`);
       }
       return ok();
@@ -1506,7 +1508,7 @@ CASES.push(
   },
   {
     id: "owner/run-all-update-acts-only-on-the-owners-installed-rows",
-    run: (s) => {
+    run: (s, pr) => {
       s.setPlugins([s.entry("pro-nextjs", "project", s.repo), s.entry("pro-design", "project", s.repo)]);
       const files = [".claude/skills/impeccable/SKILL.md", ...["next-cache-components-adoption", "next-cache-components-optimizer",
         "next-partial-prefetching-adoption", "next-partial-prefetching-optimizer", "next-bundle-optimizer", "next-dev-loop"]
@@ -1515,7 +1517,8 @@ CASES.push(
       const r = s.run(["--owner", "pro-nextjs", "run", "all", "update"]);
       const c = s.calls();
       if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
-      return c.length === 1 && c[0].argv.includes("https://github.com/vercel/next.js/tree/canary/skills") ? ok() : bad(`calls ${JSON.stringify(c)}`);
+      const want = registry(pr).engines.find((e) => e.id === "next-skills").update.slice(1);
+      return c.length === 1 && same(c[0].argv, want) ? ok() : bad(`calls ${JSON.stringify(c)}`);
     },
   },
   {
@@ -1539,13 +1542,15 @@ CASES.push(
     },
   },
   {
-    id: "owner/plugins-stale-and-surface-are-refused",
+    id: "owner/plugins-stale-surface-and-profiles-are-refused",
     run: (s) => {
       s.setPlugins([s.entry("pro-nextjs", "project", s.repo)]);
-      for (const args of [["plugins", "update"], ["plugins", "swap-starter"], ["stale"], ["stale", "--remove"], ["surface", "vercel"]]) {
+      for (const args of [["plugins", "update"], ["plugins", "swap-starter"], ["stale"], ["stale", "--remove"],
+        ["surface", "vercel"], ["profiles"], ["profile", "website"]]) {
         const r = s.run(["--owner", "pro-nextjs", ...args]);
-        if (r.code !== 2 || !r.out.includes("not available with --owner; use /pro-dev")) return bad(`${args.join(" ")}: exit ${r.code}: ${r.out}`);
+        if (r.code !== 2 || !r.out.includes("not available with --owner; use /pro-core:pro-dev")) return bad(`${args.join(" ")}: exit ${r.code}: ${r.out}`);
       }
+      if (existsSync(s.answersPath)) return bad("a refused profile wrote the answers file");
       return s.calls().length ? bad("something ran") : ok();
     },
   },
@@ -1847,7 +1852,7 @@ CASES.push(
       const b = ownerBox(s, pr, { versions: ["0.18.1"] });
       s.setPlugins([b.core("project", "0.18.1")]);
       const r = b.go(["status", "--json"]);
-      return refused(r, "pro-core 0.18.1 is older than 0.19.0; update it with /pro-dev update or claude plugin update pro-core@pro-dev-skillset");
+      return refused(r, "pro-core 0.18.1 is older than 0.19.0; update it with /pro-core:pro-dev update or claude plugin update pro-core@pro-dev-skillset");
     },
   },
   {
@@ -2813,6 +2818,167 @@ CASES.push(
       s.run(["answer", "codex", "no"], { bin: w.bin });
       const d = s.engine(s.status({ bin: w.bin }), "codex");
       return d.state === "declined" ? ok() : bad(JSON.stringify(d));
+    },
+  },
+);
+
+// --- prerequisites, profiles and partial installs ------------------------------
+// The sandbox PATH holds the fake claude and npx plus real python3 and git, so gh and uv
+// are genuinely absent there: that is what the missing rows below read.
+
+const allOwners = (pr) => [...new Set(registry(pr).engines.map((e) => e.owner))];
+// every logged call but the `<tool> --version` the prerequisite probe runs
+const installed = (s) => s.calls().filter((c) => !same(c.argv, ["--version"]));
+
+CASES.push(
+  {
+    id: "prereqs/json-reads-every-row-and-an-absent-binary-is-missing",
+    run: (s, pr) => {
+      const reg = registry(pr);
+      const r = s.run(["prereqs", "--json"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const out = JSON.parse(r.stdout);
+      if (out.platform !== process.platform) return bad(`platform ${out.platform}`);
+      if (out.prerequisites.length !== reg.prerequisites.length) return bad(`${out.prerequisites.length} rows`);
+      if (out.problems.length) return bad(`problems ${JSON.stringify(out.problems)}`);
+      for (const row of out.prerequisites) {
+        const miss = ["id", "label", "why", "required", "docs", "state", "found", "installLine", "manual"]
+          .filter((k) => !(k in row));
+        if (miss.length) return bad(`${row.id} lacks ${miss.join(", ")}`);
+      }
+      const by = Object.fromEntries(out.prerequisites.map((p) => [p.id, p]));
+      if (by.gh.state !== "missing" || by.gh.found !== null || by.gh.probe !== "not on PATH") return bad(JSON.stringify(by.gh));
+      if (by.uv.state !== "missing" || by.uv.installLine !== null) return bad(JSON.stringify(by.uv));
+      if (by.git.state !== "present" || by.git.found !== "git" || "probe" in by.git) return bad(JSON.stringify(by.git));
+      if (by.claude.state !== "present" || by.claude.installLine !== null) return bad(JSON.stringify(by.claude));
+      if (!("altFound" in by.python3) || "altFound" in by.git) return bad("altFound sits on the wrong rows");
+      if (by.gh.required !== true || by.uv.required !== false) return bad("required is wrong");
+      const text = s.run(["prereqs"]);
+      return /^gh: missing$/m.test(text.out) && /^git: present$/m.test(text.out) ? ok() : bad(text.out);
+    },
+  },
+  {
+    id: "prereqs/status-tools-keep-their-names-and-add-python3-git-gh",
+    run: (s, pr) => {
+      const st = s.status();
+      const want = { claude: true, npx: true, uv: false, python3: true, git: true, gh: false };
+      for (const [k, v] of Object.entries(want)) if (st.tools[k] !== v) return bad(`tools.${k} is ${st.tools[k]}, want ${v}`);
+      if (st.prerequisites.length !== registry(pr).prerequisites.length) return bad(`${st.prerequisites.length} prerequisites`);
+      if (st.profiles.length !== registry(pr).profiles.length) return bad(`${st.profiles.length} profiles`);
+      if (st.profile !== null) return bad(`profile ${st.profile}`);
+      if (typeof st.laggingCount !== "number") return bad(`laggingCount ${st.laggingCount}`);
+      const text = s.run(["status"]).out;
+      return /^prerequisites:$/m.test(text) && /^profile: not set$/m.test(text) ? ok() : bad(text);
+    },
+  },
+  {
+    id: "profiles/json-lists-every-profile-and-omits-inactive-owners",
+    run: (s, pr) => {
+      const reg = registry(pr);
+      s.setPlugins([s.entry("pro-design", "project", s.repo)]);
+      const out = JSON.parse(s.run(["profiles", "--json"]).stdout);
+      if (out.profiles.length !== reg.profiles.length) return bad(`${out.profiles.length} profiles`);
+      if (out.problems.length) return bad(`problems ${JSON.stringify(out.problems)}`);
+      if (out.alwaysAsk.length) return bad(`alwaysAsk ${JSON.stringify(out.alwaysAsk)}`);
+      const site = out.profiles.find((p) => p.id === "website");
+      if (site.default !== true || !site.on.includes("taste-skill")) return bad(JSON.stringify(site));
+      for (const id of ["playwright", "vercel", "vercel-skills"]) {
+        if (site.on.includes(id) || site.off.includes(id)) return bad(`${id} is listed although pro-design does not own it`);
+      }
+      if (!site.off.includes("figma")) return bad(`off ${JSON.stringify(site.off)}`);
+      const custom = out.profiles.find((p) => p.id === "custom");
+      return custom.ask === true && !("on" in custom) ? ok() : bad(JSON.stringify(custom));
+    },
+  },
+  {
+    id: "profile/website-answers-the-optional-rows-and-leaves-alwaysAsk-alone",
+    run: (s, pr) => {
+      const reg = registry(pr);
+      s.setPlugins(allOwners(pr).map((o) => s.entry(o, "project", s.repo)));
+      const r = s.run(["profile", "website"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const f = json(s.answersPath);
+      if (f.profile !== "website") return bad(`profile ${f.profile}`);
+      const yes = reg.profiles.find((p) => p.id === "website").yes;
+      for (const row of reg.engines.filter((e) => !e.default)) {
+        const want = reg.alwaysAsk.includes(row.id) ? undefined : (yes.includes(row.id) ? "yes" : "no");
+        const got = f.answers?.[row.id]?.answer;
+        if (got !== want) return bad(`${row.id}: saved ${got}, want ${want}`);
+      }
+      if (!Number.isInteger(f.answers["taste-skill"].registryVersion)) return bad("an answer has no registry version");
+      if (!/^taste-skill: yes$/m.test(r.out) || !/^elaya: no$/m.test(r.out)) return bad(r.out);
+      return s.status().profile === "website" ? ok() : bad("status does not report the saved profile");
+    },
+  },
+  {
+    id: "profile/custom-saves-the-profile-and-no-answers",
+    run: (s, pr) => {
+      s.setPlugins(allOwners(pr).map((o) => s.entry(o, "project", s.repo)));
+      const r = s.run(["profile", "custom"]);
+      if (r.code !== 0) return bad(`exit ${r.code}: ${r.out}`);
+      const f = json(s.answersPath);
+      return f.profile === "custom" && f.answers === undefined ? ok() : bad(read(s.answersPath));
+    },
+  },
+  {
+    id: "profile/a-second-profile-needs-force-and-changes-nothing-without-it",
+    run: (s, pr) => {
+      s.setPlugins(allOwners(pr).map((o) => s.entry(o, "project", s.repo)));
+      if (s.run(["profile", "website"]).code !== 0) return bad("the first profile failed");
+      const before = read(s.answersPath);
+      const r = s.run(["profile", "service"]);
+      if (r.code !== 2 || !r.out.includes("--force")) return bad(`second: exit ${r.code}: ${r.out}`);
+      if (read(s.answersPath) !== before) return bad("the refused profile changed the file");
+      if (s.run(["profile", "website"]).code !== 0) return bad("the same profile was refused");
+      const f = s.run(["profile", "service", "--force"]);
+      if (f.code !== 0) return bad(`--force: exit ${f.code}: ${f.out}`);
+      const saved = json(s.answersPath);
+      return saved.profile === "service" && saved.answers["taste-skill"].answer === "no"
+        ? ok() : bad(read(s.answersPath));
+    },
+  },
+  {
+    id: "profile/unknown-id-exits-2-and-writes-nothing",
+    run: (s, pr) => {
+      s.setPlugins(allOwners(pr).map((o) => s.entry(o, "project", s.repo)));
+      const r = s.run(["profile", "nope"]);
+      if (r.code !== 2 || !r.out.includes("unknown profile id: nope")) return bad(`exit ${r.code}: ${r.out}`);
+      return existsSync(s.answersPath) ? bad("a refused profile wrote the file") : ok();
+    },
+  },
+  {
+    id: "prereq-install/an-unknown-id-exits-2-and-runs-nothing",
+    run: (s) => {
+      const r = s.run(["prereq-install", "nope"]);
+      if (r.code !== 2 || !r.out.includes("unknown prerequisite id: nope")) return bad(`exit ${r.code}: ${r.out}`);
+      if (!r.out.includes("git")) return bad(`the known ids were not listed: ${r.out}`);
+      return installed(s).length ? bad(`something ran: ${JSON.stringify(installed(s))}`) : ok();
+    },
+  },
+  {
+    id: "prereq-install/an-already-present-row-is-a-no-op",
+    run: (s) => {
+      const r = s.run(["prereq-install", "claude"]);
+      // the fake claude is on PATH, so the row reads present before any install is considered
+      if (r.code !== 0 || !r.out.includes("claude: already installed")) return bad(`exit ${r.code}: ${r.out}`);
+      return installed(s).length ? bad(`something ran: ${JSON.stringify(installed(s))}`) : ok();
+    },
+  },
+  {
+    id: "run/a-partial-install-names-the-files-that-are-missing",
+    run: (s) => {
+      s.useRows([{
+        id: "two", owner: "pro-design", bridges: [], kind: "skills-cli", default: true,
+        detect: { all: [{ file: "skills/a/SKILL.md", scopes: ["project"] }, { file: "skills/b/SKILL.md", scopes: ["project"] }] },
+        install: ["npx", "-y", "skills", "add", "two"],
+        update: ["npx", "-y", "skills", "add", "two"],
+        why: "test row",
+      }]);
+      s.setPlugins([s.entry("pro-design", "project", s.repo)]);
+      const r = s.run(["run", "two", "install"], { extra: { FAKE_NPX_FILES: ".claude/skills/a/SKILL.md" } });
+      if (r.code !== 1) return bad(`exit ${r.code}: ${r.out}`);
+      if (!r.out.includes("(missing: skills/b/SKILL.md)")) return bad(r.out);
+      return r.out.includes("skills/a/SKILL.md") ? bad(`it named the file that is there: ${r.out}`) : ok();
     },
   },
 );

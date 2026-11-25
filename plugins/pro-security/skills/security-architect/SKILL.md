@@ -30,7 +30,7 @@ Both modes are read-only: you produce findings and required changes and never ed
 
 ## When not to use
 
-- Whole-repository posture audit, secrets archaeology, supply chain or CI/CD sweep: use the `security-audit` skill or `/security-audit`.
+- Whole-repository posture audit, secrets archaeology, supply chain or CI/CD sweep: use the `security-audit` skill or `/pro-security:security-audit`.
 - A single question of the form "is this finding real?": dispatch the `security-auditor` subagent.
 - General code quality or correctness review with no security angle.
 

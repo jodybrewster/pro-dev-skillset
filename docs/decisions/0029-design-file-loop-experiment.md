@@ -9,7 +9,7 @@ Decided by: the maintainer
 `pro-ai-sdlc` records a change as `intent.md`, `spec.md` and `plan.md` in one folder.
 `pro-egm` bridges Google's Elephant-Goldfish Model, whose strength is the conversation that gets to a design and the fresh-context reviewers that check it.
 EGM keeps one design file per feature under `docs/designs/` and stops when the design is approved: approval is a sentence in chat, nothing records who agreed and it builds no code.
-The two meet only where `/spec` and `/plan` offer a goldfish review once.
+The two meet only where `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan` offer a goldfish review once.
 
 People outside engineering found the loop hard to follow: three documents per change, two of them engineering documents and no one place where product, design and engineering agree on the same text.
 Changing the shape of `pro-ai-sdlc` to try a different one would put the factory, Mieruka and every repo on the loop at risk.
@@ -22,11 +22,11 @@ It starts as a copy of `pro-ai-sdlc` and a repo enables one of the two, never bo
 
 The loop has three steps:
 
-1. `/intent` records what a person wants.
+1. `/pro-ai-sdlc:intent` records what a person wants.
    A person always creates an intent and a person always accepts it.
-   A brainstorm is a depth of `/intent` and it reads a brief, a PRD or notes.
-2. `/design` writes or updates the one design file of the feature through EGM's draft, has fresh-context reviewers read it with the repo's product, design, architecture and security files and records approvals.
-3. `/execute` writes the build ticket (`plan.md`) from the approved design and builds it.
+   A brainstorm is a depth of `/pro-ai-sdlc:intent` and it reads a brief, a PRD or notes.
+2. `/pro-ai-sdlc-egm:design` writes or updates the one design file of the feature through EGM's draft, has fresh-context reviewers read it with the repo's product, design, architecture and security files and records approvals.
+3. `/pro-ai-sdlc:execute` writes the build ticket (`plan.md`) from the approved design and builds it.
 
 The strictness comes from scripts that read files in git, never from trusting that a step was followed:
 
@@ -44,8 +44,8 @@ The record sits beside the intent, not in the design file, so EGM's file stays E
 - Two copies of the loop exist until the experiment ends.
   The plugin's README lists what it changed, so the changes can be merged back or dropped as a known set.
 - Mieruka's board reads `spec.md` and `plan.md` and does not show a design file.
-- `/pro-dev install` and pro-ship look the loop plugin up by the name `pro-ai-sdlc`, so loop setup and the verifier lookup do not find the experiment.
-- EGM's draft writes a new design file and has no step for a later change, so `/design` proposes those edits itself and only the review and resolve steps are EGM's.
+- `/pro-core:pro-dev install` and pro-ship look the loop plugin up by the name `pro-ai-sdlc`, so loop setup and the verifier lookup do not find the experiment.
+- EGM's draft writes a new design file and has no step for a later change, so `/pro-ai-sdlc-egm:design` proposes those edits itself and only the review and resolve steps are EGM's.
 - An approver is a git user name checked against the role map, which is routing and not authentication.
 - Two changes in flight on one design file void each other: an edit for the second sends the first back for review and approval unless it is already built.
   That is strict on purpose for now and is the first thing to revisit.

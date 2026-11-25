@@ -459,7 +459,7 @@ export function runLegalHookCases({ only = null } = {}) {
   add("ideation-nudge/repo-talk-plan-silent", NONE, () => nudge("in2b", "plan how to fork a subagent per plugin and bump the minor version"));
   add("ideation-nudge/not-planning-silent", NONE, () => nudge("in3", "fix the scraper timeout"));
   add("ideation-nudge/slash-command-silent", NONE, () => nudge("in4", "/commit the cold email plan"));
-  add("ideation-nudge/slash-plan-nudges", CONTEXT, () => nudge("in5", "/plan collect PII for a marketing list"));
+  add("ideation-nudge/slash-plan-nudges", CONTEXT, () => nudge("in5", "/pro-ai-sdlc:plan collect PII for a marketing list"));
   add("ideation-nudge/llm-token-design-silent", NONE, () => nudge("in6", "design a token budget for the context window"));
   add("ideation-nudge/malformed-stdin-passes", NONE, () => run("ideation-nudge.py", "garbage", env));
 

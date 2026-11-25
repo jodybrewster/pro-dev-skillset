@@ -38,7 +38,7 @@ The audiences form four layers, each tested by one question:
 
 | Layer | Test: would this person want all of it? | Today |
 |---|---|---|
-| core | anyone working with AI, in any domain, with no codebase | `pro-core` (find-skills, dream and memory, the session ledger, `/pro-dev`, the engine registry), `/research` |
+| core | anyone working with AI, in any domain, with no codebase | `pro-core` (find-skills, dream and memory, the session ledger, `/pro-core:pro-dev`, the engine registry), `/pro-research:research` |
 | domain | anyone in this practice, with no UI and no chosen method | `pro-dev` for software engineering: today's `pro-execution` and `pro-quality`, the reviewer, the PR gate and risk tiers; a future `pro-gtm`, seeded by `lead-research` |
 | layer under a domain | anyone on this surface, on any stack | one web plugin: today's `pro-design`, `pro-motion`, `pro-testing` and the Drizzle and Prisma skills |
 | stack | anyone on this framework or language | `pro-nextjs` (gaining NextAuth and the Vercel deploy bridge), `pro-astro`, later rust and python |
@@ -69,14 +69,14 @@ The web layer assumes JS/TS and React today; its description says so, and it spl
 
 ## Consequences
 
-Consolidation moves install ids, and an install id is a plugin's name, so every move is a migration for every install and a shim or a `/pro-dev update` step.
+Consolidation moves install ids, and an install id is a plugin's name, so every move is a migration for every install and a shim or a `/pro-core:pro-dev update` step.
 It therefore lands in one release together with the parked rename intent, whose naming becomes `pro-core`, `pro-dev-*` and `pro-gtm-*`, a domain prefix per plugin.
 The rows in the engine registry move with their skills, which is a `pro-core` bump under ADR-0006.
 
 The review stack ([#83](https://github.com/jodybrewster/pro-dev-skillset/pull/83), [#84](https://github.com/jodybrewster/pro-dev-skillset/pull/84), [#85](https://github.com/jodybrewster/pro-dev-skillset/pull/85)) is planned against today's names; it places the PR gate and risk tiers in the dev domain, not in `pro-ship`, and the fold of `pro-quality` waits until `pr-gate` has replaced `pr-quality-gate.py`.
 `pro-ship` and `pro-data` go away.
 `using-pro-dev`, the router, maps a task to an SDLC phase and so belongs to the dev domain or becomes domain-aware before a second domain exists.
-`/kaizen` runs across projects from a planning repo and does not pass the core test cleanly; it is noted, not moved.
+`/pro-core:kaizen` runs across projects from a planning repo and does not pass the core test cleanly; it is noted, not moved.
 
 A bigger `pro-dev` is bumped by most PRs under the version-bump law, so stacked PRs become the norm there.
 Every hook that moves keeps its own `mode.<name>` file so one gate can be turned off without the rest.

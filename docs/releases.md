@@ -8,9 +8,9 @@ Marketplace `metadata.version`: 1.70.0.
 
 | Plugin | Version | Date | What shipped | Commit | Last tag before this table |
 |---|---|---|---|---|---|
-| pro-ai-sdlc | 0.12.0 | 2026-10-30 | README, ARCHITECTURE and PRODUCT templates (PRODUCT adapted from impeccable) and a Required documents block in the REVIEW template. Also carries 0.11.0 (doubt-driven `/execute`, PR 102) and 0.10.0 (loop guardrails, PR 98) | intent/2026-10-30-required-documents | |
+| pro-ai-sdlc | 0.12.0 | 2026-10-30 | README, ARCHITECTURE and PRODUCT templates (PRODUCT adapted from impeccable) and a Required documents block in the REVIEW template. Also carries 0.11.0 (doubt-driven `/pro-ai-sdlc:execute`, PR 102) and 0.10.0 (loop guardrails, PR 98) | intent/2026-10-30-required-documents | |
 | pro-astro | 0.1.1 | 2026-10-16 | Standard original-skill footer on the four Astro skills | this PR | none |
-| pro-core | 0.23.0 | 2026-10-30 | `/pro-dev install` works out the required documents, drafts the missing ones from the code and never overwrites one that exists. Also carries 0.22.0 (router names `pr-check` and `risk-tiers`, PR 101) and 0.21.0 (the `codex` row, PR 99) | intent/2026-10-30-required-documents | |
+| pro-core | 0.23.0 | 2026-10-30 | `/pro-core:pro-dev install` works out the required documents, drafts the missing ones from the code and never overwrites one that exists. Also carries 0.22.0 (router names `pr-check` and `risk-tiers`, PR 101) and 0.21.0 (the `codex` row, PR 99) | intent/2026-10-30-required-documents | |
 | pro-data | 0.4.5 | 2026-07-26 | Hooks merged into one `hooks/hooks.json` | 8597453 (PR 34) | pro-data--v0.2.0 |
 | pro-design | 0.12.0 | 2026-10-28 | `/pro-design:install` sets up its engines (needs pro-core installed). Also carries 0.11.0 (PR 68) | PR 70 | pro-design--v0.3.0 |
 | pro-dev-starter | 3.0.0 | 2026-10-28 | Drops `pro-ai-sdlc` from the default stack: it is now opt-in beside `pro-nextjs` and `pro-astro`; `pro-pdd` stays | PR 73 | none |
@@ -24,7 +24,7 @@ Marketplace `metadata.version`: 1.70.0.
 | pro-research | 0.3.3 | 2026-10-17 | The four research agents declare `model: haiku` | this PR | none |
 | pro-security | 0.2.0 | 2026-10-28 | One push gate replaces the commit, plan-mode, plan-document and ideation hooks; `security-architect` diff mode reviews the diff and its direct callers only | this PR | none |
 | pro-ship | 0.7.0 | 2026-10-30 | `pr-check` lists missing required documents as Should-fix in its deterministic stage. Also carries 0.6.0 (merge gate classifies the PR it is given, PR 101) and 0.5.0 (optional Codex second review, PR 99) | intent/2026-10-30-required-documents | |
-| pro-spdd | 0.3.6 | 2026-10-28 | Adds `sdlc-method.json` so pro-ai-sdlc offers `/spdd-story` at the intent stage. Also carries the PORT-PLAN placeholder change (0.3.5) | PR 66 | pro-spdd--v0.2.1 |
+| pro-spdd | 0.3.6 | 2026-10-28 | Adds `sdlc-method.json` so pro-ai-sdlc offers `/pro-spdd:spdd-story` at the intent stage. Also carries the PORT-PLAN placeholder change (0.3.5) | PR 66 | pro-spdd--v0.2.1 |
 | pro-speckit | 0.1.0 | 2026-10-28 | First release: bridge skill for GitHub spec-kit, `/pro-speckit:install` and `/pro-speckit:remove` and an `sdlc-method.json` hand-off at the intent stage. The `specify-cli` and `spec-kit` rows live in pro-core | PR 71 | none |
 | pro-starter | 1.14.3 | 2026-10-28 | Version bump only, because pro-dev-starter ships a new version | PR 73 | pro-starter--v1.0.3 |
 | pro-testing | 0.7.0 | 2026-10-28 | `/pro-testing:install` sets up its engines (needs pro-core installed). Also carries 0.6.0 | PR 70 | pro-testing--v0.2.0 |

@@ -125,7 +125,7 @@ def main():
     m = re.match(r"^(\d+)\.(\d+)\.(\d+)", found)
     if not m or tuple(int(x) for x in m.groups()) < MIN_VERSION:
         floor = ".".join(map(str, MIN_VERSION))
-        die(f"pro-core {found} is older than {floor}; update it with /pro-dev update or claude plugin update {PRO_CORE}")
+        die(f"pro-core {found} is older than {floor}; update it with /pro-core:pro-dev update or claude plugin update {PRO_CORE}")
     print(f"pro-core {found} at {script}", file=sys.stderr, flush=True)
     sys.stdout.flush()
     os.chdir(repo)

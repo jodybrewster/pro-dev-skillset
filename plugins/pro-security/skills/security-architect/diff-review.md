@@ -79,4 +79,4 @@ End with one of:
 
 Keep the report short.
 Do not add a disclaimer block.
-For a broader posture check, point to `/security-audit`.
+For a broader posture check, point to `/pro-security:security-audit`.

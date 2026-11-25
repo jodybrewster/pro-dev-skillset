@@ -193,7 +193,7 @@ def roles_of(root):
     tip, _name = factory.default_tip(root)
     text = factory.show(root, tip, "REVIEW.md")
     if text is None:
-        raise Refuse(f"design: no REVIEW.md on {tip}; /pro-dev install writes one with a Roles block")
+        raise Refuse(f"design: no REVIEW.md on {tip}; /pro-core:pro-dev install writes one with a Roles block")
     try:
         return factory.parse_roles(text)
     except factory.Refuse as e:
@@ -218,7 +218,7 @@ def state(root, arg):
             out["reasons"].append(ids.duplicate_line(shared, folders).replace("ids: ", "", 1))
     raw = fm.get("design", "").strip()
     if not raw:
-        out["reasons"].append("the intent names no design file; /design writes one")
+        out["reasons"].append("the intent names no design file; /pro-ai-sdlc-egm:design writes one")
         out["missing"] = out["required"]
         return out
     design = check_design_path(root, raw)

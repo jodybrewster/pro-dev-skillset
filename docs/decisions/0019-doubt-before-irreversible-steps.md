@@ -11,9 +11,9 @@ Source: PDS-33, intent/2026-10-30-doubt-driven-execute/.
 
 ## Context
 
-`/execute` builds a whole plan in one long session.
+`/pro-ai-sdlc:execute` builds a whole plan in one long session.
 That session turns its own assumptions into facts.
-The first fresh read today comes after the build, from the verifier and then from `/review` or the code-reviewer.
+The first fresh read today comes after the build, from the verifier and then from `/pro-ai-sdlc:review` or the code-reviewer.
 By then later steps stand on any wrong choice in a migration, a public API, an auth rule, a deploy config or a delete.
 EGM goldfish gives specs and plans a fresh read; nothing does it for a decision made during the build.
 A reviewer that sees the author's claim tends to agree with it, which is why ADR-0012 bars author prose from every handoff.
@@ -21,9 +21,9 @@ pro-ai-sdlc cannot depend on pro-quality or pro-ship (ADR-0013), so it cannot re
 
 ## Decision
 
-When `/execute` finishes a step that is hard to undo, the main session runs the `doubt-driven-development` skill on that step's commit: before the next step for a step the plan marks, before the next group for a step the classifier raises.
+When `/pro-ai-sdlc:execute` finishes a step that is hard to undo, the main session runs the `doubt-driven-development` skill on that step's commit: before the next step for a step the plan marks, before the next group for a step the classifier raises.
 A step is hard to undo when the plan marks it `irreversible`.
-When pro-ship is installed, the risk classifier is a backstop at the checkpoints `/execute` already has, never per step: a high tier on the group's own range (since the previous checkpoint, not the cumulative range, and not from the size signal alone) makes every undoubted step in it a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
+When pro-ship is installed, the risk classifier is a backstop at the checkpoints `/pro-ai-sdlc:execute` already has, never per step: a high tier on the group's own range (since the previous checkpoint, not the cumulative range, and not from the size signal alone) makes every undoubted step in it a candidate, offered to the person in an interactive run and doubted without a question in an unattended one.
 The plan marker always triggers doubt; the classifier adds steps only on a high tier.
 A classifier run that did not happen is printed as `classifier could not run: <reason>` and listed under "Potential concerns".
 The reviewer is a fresh subagent, never a fork.

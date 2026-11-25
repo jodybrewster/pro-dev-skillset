@@ -1,6 +1,6 @@
 ---
 name: documentation-and-adrs
-description: Use when deciding what to document for a change and how - writing an architecture decision record (ADR) for a choice that is expensive to reverse, recording the why behind a design, keeping agent instruction files and project docs true after behavior changed, documenting a public API or a known gotcha, or judging which docs a branch made stale before a PR. Docs are judgment, not a gate. Not for drafting docs from a finished diff (/document and its subagents) or for listing which documents a repo must have (required-docs in pr-check).
+description: Use when deciding what to document for a change and how - writing an architecture decision record (ADR) for a choice that is expensive to reverse, recording the why behind a design, keeping agent instruction files and project docs true after behavior changed, documenting a public API or a known gotcha, or judging which docs a branch made stale before a PR. Docs are judgment, not a gate. Not for drafting docs from a finished diff (/pro-quality:document and its subagents) or for listing which documents a repo must have (required-docs in pr-check).
 ---
 
 # Documentation and ADRs
@@ -37,11 +37,11 @@ A doc needs a change only when the diff made something in it untrue, or added a 
 | Who uses it or what it promises changed | `PRODUCT.md` |
 | Visual system or UI pattern changed | `DESIGN.md` |
 | A decision was made or reversed | a new ADR |
-| Public API surface changed | the API reference (the `/api-docs` command) |
+| Public API surface changed | the API reference (the `/pro-quality:api-docs` command) |
 
 When a doc stays as it is, say why in one line on the PR body's Docs line.
 Never edit a doc only to show it moved.
-To draft the update itself, run `/document` and give it the diff, so it writes from the code.
+To draft the update itself, run `/pro-quality:document` and give it the diff, so it writes from the code.
 
 ## Architecture decision records
 
@@ -112,7 +112,7 @@ Do not leave a TODO for something you can do now, or commented-out code; git has
 Document a public function or endpoint with its inputs, its return value, its errors and one example.
 In TypeScript, put it in the doc comment on the type.
 For REST, keep the OpenAPI file current.
-For a full reference built from the handlers, use `/api-docs`.
+For a full reference built from the handlers, use `/pro-quality:api-docs`.
 
 ## README
 

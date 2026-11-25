@@ -968,13 +968,13 @@ Suggested Mieruka/lifecycle commands:
 - `/mieruka-start <title>` - create a workstream folder and `status.json`.
 - `/mieruka-status` - show active workstreams, phase, blockers, and next action.
 - `/story` - turn idea/research into user stories.
-- `/research` - create or update focused research notes.
-- `/spec` - create or update current product intent.
+- `/pro-research:research` - create or update focused research notes.
+- `/pro-ai-sdlc:spec` - create or update current product intent.
 - `/prototype` - create or update a Mieruka prototype and handoff.
-- `/plan` - create or update implementation strategy and agent brief.
+- `/pro-ai-sdlc:plan` - create or update implementation strategy and agent brief.
 - `/build` - execute the current plan.
-- `/verify` - run verification gates and update `verification.md`.
-- `/review` - run product/design/code review and update `verification.md` or decision logs.
+- `/pro-quality:verify` - run verification gates and update `verification.md`.
+- `/pro-ai-sdlc:review` - run product/design/code review and update `verification.md` or decision logs.
 - `/ship` - prepare release, merge, deploy, and update `release.md`.
 - `/mieruka-advance` - move phase only if required gates pass.
 - `/mieruka-block <reason>` - mark workstream blocked.
@@ -1125,15 +1125,15 @@ scripts/
 Canonical SPDD commands:
 
 ```text
-/spdd-story
-/spdd-analysis
-/spdd-reasons-canvas
-/spdd-generate
-/spdd-prompt-update
-/spdd-sync
-/spdd-api-test
-/spdd-code-review
-/spdd-reverse
+/pro-spdd:spdd-story
+/pro-spdd:spdd-analysis
+/pro-spdd:spdd-reasons-canvas
+/pro-spdd:spdd-generate
+/pro-spdd:spdd-prompt-update
+/pro-spdd:spdd-sync
+/pro-spdd:spdd-api-test
+/pro-spdd:spdd-code-review
+/pro-spdd:spdd-reverse
 ```
 
 Mieruka can later index or display these artifacts, but `pro-spdd` itself should stay OpenSPDD-compatible and should not depend on the Mieruka app.

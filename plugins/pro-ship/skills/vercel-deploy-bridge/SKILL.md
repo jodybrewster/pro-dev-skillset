@@ -1,6 +1,6 @@
 ---
 name: vercel-deploy-bridge
-description: Deploy the current project to Vercel with checks before anything leaves the machine - the token comes only from the environment, no .env file is uploaded or committed, preview by default and every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy waits for a yes. Use when the person says "deploy this to Vercel", "push this live" or "give me a preview URL". This is a BRIDGE (not vendored); the upstream skill installs via /pro-dev install.
+description: Deploy the current project to Vercel with checks before anything leaves the machine - the token comes only from the environment, no .env file is uploaded or committed, preview by default and every stage, commit, push, link, global install, anonymous --temporary deploy and production deploy waits for a yes. Use when the person says "deploy this to Vercel", "push this live" or "give me a preview URL". This is a BRIDGE (not vendored); the upstream skill installs via /pro-core:pro-dev install.
 ---
 
 # vercel-deploy-bridge
@@ -58,11 +58,11 @@ Report the preview URL and say which deploy type it was.
 
 ## Install
 
-Run `/pro-dev install` and answer yes on the `vercel-deploy` row.
+Run `/pro-core:pro-dev install` and answer yes on the `vercel-deploy` row.
 For Codex run `npx -y skills add https://github.com/vercel-labs/agent-skills/tree/1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62/skills -a codex -g -y -s deploy-to-vercel`, at user scope so the skill never sits in the repo.
 Do not commit `.claude/skills/deploy-to-vercel/`.
 A committed copy loads for anyone who opens the repo, with or without pro-ship.
-`/pro-dev` keeps the folder out of commits through `.git/info/exclude`; this line is the second layer.
+`/pro-core:pro-dev` keeps the folder out of commits through `.git/info/exclude`; this line is the second layer.
 
 ## Alternative
 

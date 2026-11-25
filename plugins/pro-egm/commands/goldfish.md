@@ -25,7 +25,7 @@ If it exited non-zero, print its message and stop.
 ### Review a file
 
 Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/goldfish.py" egm`.
-If its `egmLoop` is null, print "pro-egm needs egm@egm: run /pro-dev install" and stop.
+If its `egmLoop` is null, print "pro-egm needs egm@egm: run /pro-core:pro-dev install" and stop.
 EGM's skills cannot be started by a model; EGM's own guide says a caller reads the skill file and follows it, which step 5 does.
 
 1. Work out the stage.

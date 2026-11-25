@@ -1,6 +1,6 @@
 ---
 name: web-design-engineer-bridge
-description: Bridge to ConardLi/garden-skills web-design-engineer, a 39-file engine for browser-rendered visual artifacts - pages, dashboards, prototypes, HTML slide decks, data visualizations, animations. Carries 26 named style recipes with concrete palette, type, spacing, radius, shadow, and motion values (apple-hig, linear, vercel-mesh, stripe-press, raycast, dieter-rams-braun, bloomberg-terminal and about twenty more), so a request in the style of Apple, Linear, Vercel, Stripe or any named brand with no image supplied routes here. Grounds the work in real reference sites and grades it against a critique guide, scoring five dimensions so you can iterate to a target score. This is a BRIDGE (not vendored); install via the /pro-dev command. Use impeccable-bridge for the craft pass inside an existing codebase, emil-design-eng for product UI components, landing-page-design for a conversion page, tastemaker-bridge only when the user supplies an actual reference image, screenshot, or URL, screen-critique to judge without building.
+description: Bridge to ConardLi/garden-skills web-design-engineer, a 39-file engine for browser-rendered visual artifacts - pages, dashboards, prototypes, HTML slide decks, data visualizations, animations. Carries 26 named style recipes with concrete palette, type, spacing, radius, shadow, and motion values (apple-hig, linear, vercel-mesh, stripe-press, raycast, dieter-rams-braun, bloomberg-terminal and about twenty more), so a request in the style of Apple, Linear, Vercel, Stripe or any named brand with no image supplied routes here. Grounds the work in real reference sites and grades it against a critique guide, scoring five dimensions so you can iterate to a target score. This is a BRIDGE (not vendored); install via the /pro-core:pro-dev command. Use impeccable-bridge for the craft pass inside an existing codebase, emil-design-eng for product UI components, landing-page-design for a conversion page, tastemaker-bridge only when the user supplies an actual reference image, screenshot, or URL, screen-critique to judge without building.
 ---
 
 # web-design-engineer-bridge
@@ -31,7 +31,7 @@ Route elsewhere when:
 - The work is **product UI components** (the built app, not a visual artifact) -> `emil-design-eng`.
 - The work is a **conversion-focused landing page** -> `landing-page-design`.
 - The work is **matching an exact reference image's pixels** -> `tastemaker-bridge`.
-- The work is **judging a screen without building anything** -> `screen-critique` (or `/critique-screen`).
+- The work is **judging a screen without building anything** -> `screen-critique` (or `/pro-design:critique-screen`).
 
 ## Skill catalog (install names)
 
@@ -47,7 +47,7 @@ The same collection also ships `beautiful-article`, `web-video-presentation`, `g
    It lands in `~/.claude/skills/web-design-engineer/` (user scope) or `.claude/skills/web-design-engineer/` (project scope).
    - **If present:** follow that skill's `SKILL.md`.
      Load only the one style recipe you picked, not the whole catalog, and read its `references/style-recipes/INDEX.md` first when browsing.
-   - **If absent:** tell the user this is a bridge and the engine is not installed, then get it in place with **`/pro-dev install`** (answer yes when it asks about the garden collection).
+   - **If absent:** tell the user this is a bridge and the engine is not installed, then get it in place with **`/pro-core:pro-dev install`** (answer yes when it asks about the garden collection).
      Do not half-do the work here.
      Offer a focused pro-design skill in the meantime if the user wants to keep moving.
 2. **Defer to the upstream skill for the actual work.**
@@ -59,12 +59,12 @@ The acceptance harness is optional and only runs when the user explicitly asks f
 
 ## Keeping it installed and current
 
-Use the **`/pro-dev`** command (in pro-core).
-The garden collection is optional: `/pro-dev install` and `/pro-dev update` install it when you answer yes.
+Use the **`/pro-core:pro-dev`** command (in pro-core).
+The garden collection is optional: `/pro-core:pro-dev install` and `/pro-core:pro-dev update` install it when you answer yes.
 
-- `/pro-dev check` - report which install names from this collection are present and at which scope, and diff the local catalog against the live upstream.
-- `/pro-dev install` - install the collection, including `web-design-engineer`.
-- `/pro-dev update` - re-run the install; the newer files replace the older ones in place.
+- `/pro-core:pro-dev check` - report which install names from this collection are present and at which scope, and diff the local catalog against the live upstream.
+- `/pro-core:pro-dev install` - install the collection, including `web-design-engineer`.
+- `/pro-core:pro-dev update` - re-run the install; the newer files replace the older ones in place.
 
 ## Why a bridge, not a fork
 

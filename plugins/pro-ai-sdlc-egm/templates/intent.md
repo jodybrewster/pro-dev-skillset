@@ -7,7 +7,7 @@ status: draft
 risk: <low | medium | high>
 level: <1 | 2 | 3>
 brief: <repo path of the brief this came from, or delete this line>
-design: <repo path of the design file this changes, written by /design, or delete this line>
+design: <repo path of the design file this changes, written by /pro-ai-sdlc-egm:design, or delete this line>
 created: <ISO 8601 timestamp with offset>
 author: <name>
 ---

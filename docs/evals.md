@@ -142,7 +142,7 @@ Pin the model and note the Claude Code version whenever you quote numbers.
 
 `node tests/loop.mjs` runs the whole pro-ai-sdlc loop with pro-egm in the same Linux container.
 It installs both plugins from the GitHub marketplace at the current branch (push it first, or pass `--ref`), so `methods.py` sees a trusted install and offers the Goldfish review.
-It scaffolds the tiny-tasks fixture with an accepted intent and a local `origin`, then runs `/spec`, `/plan` and `/execute` as real `claude -p` sessions.
+It scaffolds the tiny-tasks fixture with an accepted intent and a local `origin`, then runs `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan` and `/pro-ai-sdlc:execute` as real `claude -p` sessions.
 Between them it accepts the spec and approves the plan the way a person would, by editing the status line and committing.
 
 ```bash
@@ -151,15 +151,15 @@ node tests/loop.mjs
 ```
 
 It runs `/pro-egm:install` first, which installs Google's `egm@egm` through pro-core after checking it against the pinned surface, and answers yes the way a person would.
-At `/spec` and `/plan` it says yes to the Goldfish review, then asks for the recommended fixes and the commit.
+At `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan` it says yes to the Goldfish review, then asks for the recommended fixes and the commit.
 It checks that egm@egm installed, that each stage offered the review, that the review resolved its reviewers, ran and wrote `goldfish_review_report.md`, and that the file was committed.
-For `/execute` it checks the build ran on its own branch and worktree without touching main, pushed, changed `src/` and `test/`, added tests that pass and filled in the plan's Done section.
+For `/pro-ai-sdlc:execute` it checks the build ran on its own branch and worktree without touching main, pushed, changed `src/` and `test/`, added tests that pass and filled in the plan's Done section.
 `--no-egm` skips egm@egm and checks only that the review is offered.
 Transcripts, each Goldfish report and `checks.json` land in `tests/loop-results/`, which git ignores.
 
 First runs on 2026-10-29, Sonnet:
 
-- Without egm@egm: 17 of 17 checks for $1.35; `/execute` built due dates in four test-first commits and the suite went from 3 tests to 16.
+- Without egm@egm: 17 of 17 checks for $1.35; `/pro-ai-sdlc:execute` built due dates in four test-first commits and the suite went from 3 tests to 16.
 - With egm@egm: 21 of 23 checks live for $3.52. The two misses were the offer check reading the goldfish command's own text, which quotes the install line; with the check reading only the stage's first turn, the same transcripts pass 23 of 23.
   Four Goldfish reviewers (zoom_out, design_critic, policy, scope) reviewed the spec and raised five distinct major findings, mostly escalations to the intent's author; the suite ended at 18 tests.
 
@@ -176,7 +176,7 @@ pro-core, pro-ai-sdlc, pro-ship, pro-quality and pro-security are installed at p
 |---|---|---|
 | 1 | product owner | "list tasks sorted by title", level 1, `factory.py run`, merged |
 | 2 | engineer | "a task with an empty title is accepted", level 1, the first build commit adds a test and no `src/` change, merged |
-| 3 | engineer, policy owner, product owner, lead | "export tasks to a file under EXPORT_DIR", level 3: spec flags a concern, the policy owner closes it, the product owner accepts, a plan with two approver names, `/execute`, `/review`, the lead's merge with `--match-head-commit`, `/pro-ship:ship`, tag `v1.1.0`, `ship.py deployed`, then `/incident` writes an intent with source incident and level 2 or more |
+| 3 | engineer, policy owner, product owner, lead | "export tasks to a file under EXPORT_DIR", level 3: spec flags a concern, the policy owner closes it, the product owner accepts, a plan with two approver names, `/pro-ai-sdlc:execute`, `/pro-ai-sdlc:review`, the lead's merge with `--match-head-commit`, `/pro-ship:ship`, tag `v1.1.0`, `ship.py deployed`, then `/pro-ai-sdlc:incident` writes an intent with source incident and level 2 or more |
 
 ```bash
 export ANTHROPIC_API_KEY=...
@@ -270,7 +270,7 @@ Findings:
 
 - All three pro-ai-sdlc hooks load and fire in a real session; the hook tests only prove the scripts behave when called.
   In warn mode they announce and allow, so the cases grade that the hook fired, not that it blocked.
-- `/review` with its reviewer agent found both the planted off-by-one and the `console.log` rule breach as blocking in 1 of 3 runs; plain Sonnet did in 2 of 3. The Linux run below shows this was the sandbox breaking its git lines.
+- `/pro-ai-sdlc:review` with its reviewer agent found both the planted off-by-one and the `console.log` rule breach as blocking in 1 of 3 runs; plain Sonnet did in 2 of 3. The Linux run below shows this was the sandbox breaking its git lines.
 - The main session answered the wide "walk me through every file" question inline in 3 of 3 runs and never used `researcher`.
 - On macOS the eval sandbox cannot run `/usr/bin/git` (the xcrun shim cannot write its cache), so `spec-from-intent`, `plan-from-spec` and `execute-refuses-draft-plan` are tagged `needs:git` and the runner skips them there.
   They run under `--docker`; see the Linux run below.
@@ -292,12 +292,12 @@ The other pro-ai-sdlc rows matched the macOS baseline.
 
 Findings:
 
-- `/spec` loaded only after its context lines ended in `; true`: an `ls` of policy files the repo lacks exits non-zero and aborts the whole command, so before this fix `/spec` failed to load in any repo without all of `DESIGN.md`, `AGENTS.md`, `SECURITY.md` and the ADR folders. `/plan`, `/review` and `/adr` had the same pattern.
+- `/pro-ai-sdlc:spec` loaded only after its context lines ended in `; true`: an `ls` of policy files the repo lacks exits non-zero and aborts the whole command, so before this fix `/pro-ai-sdlc:spec` failed to load in any repo without all of `DESIGN.md`, `AGENTS.md`, `SECURITY.md` and the ADR folders. `/pro-ai-sdlc:plan`, `/pro-ai-sdlc:review` and `/pro-ai-sdlc:adr` had the same pattern.
 - The fixture repos had no git author, so `git config user.name` aborted the commands the same way; a real repo has one, so the scaffolds now set it.
 - Both arms write a good spec; the plugin's difference is the template and the commit, so `spec-from-intent` also grades `git commit`.
 - The spec judge (Haiku) failed sound specs that fixed UTC to avoid time zones or cited a `REVIEW.md` rule; the grader now says both are fine.
-- The plan judge asked every step to cite R numbers, which `/plan` never asks for; it now checks that every requirement is cited somewhere and tied to a test.
-- `/review` found both planted problems in 3 of 3 runs on Linux. The 1 of 3 on macOS came from its git context lines failing in the sandbox, not from the review.
+- The plan judge asked every step to cite R numbers, which `/pro-ai-sdlc:plan` never asks for; it now checks that every requirement is cited somewhere and tied to a test.
+- `/pro-ai-sdlc:review` found both planted problems in 3 of 3 runs on Linux. The 1 of 3 on macOS came from its git context lines failing in the sandbox, not from the review.
 
 ## Credit
 

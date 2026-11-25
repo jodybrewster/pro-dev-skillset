@@ -89,7 +89,7 @@ Vendor but do not expose:
 | qa-skills `release-readiness` vs planned `pro-ship/shipping-and-launch` | HOLD | Release readiness belongs to `pro-ship`. |
 | qa-skills `test-strategy`/`risk-based-testing`/`test-planning` vs `pro-pdd`/`pro-spdd` planning | CROSS-REF | QA test strategy is not product/spec planning. |
 | `agent-browser` vs vendored `playwright-automation` | CROSS-REF | Interactive verification vs committed typed regression suite. |
-| `/test` command vs built-in `/run`, `/verify`, `/code-review` | CROSS-REF | `/test` runs suites; `/run` launches app; `/verify` confirms a change; `/code-review` reviews a diff. |
+| `/test` command vs built-in `/run`, `/pro-quality:verify`, `/code-review` | CROSS-REF | `/test` runs suites; `/run` launches app; `/pro-quality:verify` confirms a change; `/code-review` reviews a diff. |
 
 Before committing each exposed shim: read its upstream description and `AGENTS.md` anti-triggers, grep other plugins' skill descriptions for keyword collisions, and either hold the skill or sharpen both sides. Any new collision gets a row in this table before exposure.
 

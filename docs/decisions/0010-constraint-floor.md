@@ -53,5 +53,5 @@ Revisit the decision if the floor's findings turn out mostly to be ones that get
 
 - `plugins/pro-quality/scripts/floor-guard.py`, registered under the `Bash` matcher of `PreToolUse` in `plugins/pro-quality/hooks/hooks.json`; it runs on `git push` and `gh pr create` and as `--check` from a shell.
 - Its cases in `tests/quality-hooks.mjs`, run by the `quality-hooks` check in `tests/check.mjs`.
-- `plugins/pro-quality/templates/CONSTRAINTS.md`, the `constraints` skill and `/constraints`.
-- pro-ai-sdlc's `reviewer` agent and `/review`, which read `CONSTRAINTS.md` beside `REVIEW.md`.
+- `plugins/pro-quality/templates/CONSTRAINTS.md`, the `constraints` skill and `/pro-quality:constraints`.
+- pro-ai-sdlc's `reviewer` agent and `/pro-ai-sdlc:review`, which read `CONSTRAINTS.md` beside `REVIEW.md`.

@@ -73,7 +73,7 @@ def main() -> int:
                 f"Before this session ends, make sure the reference docs still match: "
                 f"field types and nullability, status codes, the auth and error models, "
                 f"and any deprecation or migration note the change implies. "
-                f"Run /api-docs or dispatch the api-documenter subagent against {path}. "
+                f"Run /pro-quality:api-docs or dispatch the api-documenter subagent against {path}. "
                 f"If the change is additive and no published doc describes the affected "
                 f"surface, say so and move on - don't invent a doc to satisfy this."
             ),

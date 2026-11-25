@@ -29,7 +29,7 @@ The AI-native SDLC playbook is the guide and `pro-ai-sdlc` is where it is encode
 Mieruka runs the same loop too.
 Its board and chat start the plugin's commands and its autorun works accepted intents by itself, reading the plugin's templates and rules.
 This repo ships the loop but does not run its own changes through it.
-The loop commands (`/intent`, `/spec`, `/plan`, `/execute`) are used here only when the maintainer asks or when the loop itself is being tested.
+The loop commands (`/pro-ai-sdlc:intent`, `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan`, `/pro-ai-sdlc:execute`) are used here only when the maintainer asks or when the loop itself is being tested.
 
 ## Model split
 
@@ -37,13 +37,14 @@ The loop commands (`/intent`, `/spec`, `/plan`, `/execute`) are used here only w
 - Sonnet runs the subagents: per-plugin edits, drafting, validation and code search, dispatched in parallel in one turn with self-contained prompts ([docs/subagents.md](./docs/subagents.md)).
 - Haiku runs the bounded fetch-and-extract agents of `pro-research` and the read-only `researcher` of `pro-ai-sdlc`.
 - Every agent declares `model:` for its role in frontmatter: readers and explorers on haiku, builders on sonnet, reviewers on opus.
-- One exception: `pro-ai-sdlc`'s `/execute` runs on Opus as the builder and dispatches subagents when a step needs one.
+- One exception: `pro-ai-sdlc`'s `/pro-ai-sdlc:execute` runs on Opus as the builder and dispatches subagents when a step needs one.
 
-## The three laws
+## The laws
 
 - Version-bump law: a content change under `plugins/<name>/` bumps that plugin in both manifests and its marketplace entry, plus `metadata.version`, in the same commit ([ADR-0002](./docs/decisions/0002-version-bump-law.md), [detail](./docs/version-bump-law.md)).
 - Hook-loading law: every hook a plugin registers lives in its one `hooks/hooks.json` and every script a hook runs exists and is tracked by git ([ADR-0003](./docs/decisions/0003-one-hooks-json-per-plugin.md), [detail](./docs/hook-loading.md)).
 - Codex parity: every skill-bearing plugin also loads under Codex, with harness-neutral prose, standard frontmatter, a version-aligned `.codex-plugin/plugin.json` and a `.toml` per agent ([ADR-0004](./docs/decisions/0004-codex-parity.md), [detail](./docs/codex-parity.md)).
+- Command naming: every slash command written anywhere in this repo uses the full `/<plugin>:<command>` form, because Claude Code resolves nothing shorter ([detail](./docs/command-naming.md)).
 - Layering: a plugin boundary exists where a real audience ends (core, domain, a layer under a domain, stack) or where a gate needs its own switch; methods are switchable plugins; a skill goes in the narrowest layer whose every user would want it ([ADR-0013](./docs/decisions/0013-plugin-layering.md), proposed).
 
 Other decisions are in [docs/decisions/](./docs/decisions/README.md).
@@ -140,7 +141,7 @@ changelog: generated
   Eight hook files in pro-core, pro-data and pro-quality never ran until 8597453 (PR 34) merged them into `hooks/hooks.json`.
 - Declaring a hard dependency on a plugin from another marketplace.
   The `worktrunk@worktrunk` dependency blocked pro-execution and pro-starter from loading until 4337f0a (PR 44) dropped it, because an upstream with no `version` resolves to `unknown` and a `*` constraint cannot match it.
-  Companions are optional rows in the `/pro-dev` engine registry and `/pro-dev install` asks about them.
+  Companions are optional rows in the `/pro-core:pro-dev` engine registry and `/pro-core:pro-dev install` asks about them.
   `templates/install-companions.sh` still works standalone.
 - Adding a bridge skill without a row in `plugins/pro-core/registry/engines.json`.
   The `registry` check fails and the row needs a pro-core bump per [ADR-0006](./docs/decisions/0006-engine-registry-and-pro-dev.md).
@@ -149,6 +150,17 @@ changelog: generated
   `plugins swap-starter` did that until pro-core 0.18.1 learned to skip disabled installs.
 - Calling a third-party skill that sets `disable-model-invocation` through the Skill tool, which refuses it.
   `/pro-egm:goldfish` 0.1.0 shipped that way and could not start EGM's review loop until 0.1.1 read the skill's `SKILL.md` and followed it, as EGM's own guide says.
+- Writing a slash command without its plugin namespace.
+  The install command is `/pro-core:pro-dev install`; drop the `pro-core:` and Claude Code has no such command, so typing it does nothing.
+  Nine command names are owned by more than one plugin, so a bare name is not even unambiguous.
+  The `commandNamespace` check fails on a bare one.
+- Naming an upstream skill in a registry row that does not exist upstream.
+  The `owl` row asked the skills CLI for `screen-critique` and `perception-laws`, which are this repo's own aggregating forks and have never been upstream skill names.
+  The CLI exited 0 having copied four of six, `detect` could never pass and the row reinstalled on every run.
+  A new or changed `-s` list is checked against the row's `upstream` catalog before it ships.
+- Pointing a registry row at a branch or a bare `owner/repo`.
+  It tracks the default branch, so an update pulls upstream changes nobody reviewed.
+  Every `skills-cli` row names a 40-character commit and every `npx` row an exact version; the `enginePins` check fails otherwise.
 - Writing a home-directory path into a command or doc; use a path relative to the repo root.
 
 More symptoms and fixes: [docs/troubleshooting.md](./docs/troubleshooting.md).

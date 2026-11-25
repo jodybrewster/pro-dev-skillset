@@ -97,7 +97,7 @@ install_lavish_project_command() {
   mkdir -p .claude/commands
   cat > .claude/commands/lavish.md <<'LAVISH_COMMAND'
 ---
-description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /lavish <what to render>"
+description: "Render a plan, comparison, diagram, table, code diff, report, or other complex response as a Lavish review artifact. Usage: /pro-pdd:lavish <what to render>"
 argument-hint: "<what the artifact should show>"
 allowed-tools:
   - "Bash(test -f .claude/skills/lavish/SKILL.md*)"
@@ -124,7 +124,7 @@ Then follow `.claude/skills/lavish/SKILL.md` exactly:
 
 Lavish is the default review surface for substantive implementation plans, milestone plans, client-facing plans, decision matrices, diagrams, dense tables, code diffs, and reports. Keep short answers in plain text.
 LAVISH_COMMAND
-  echo "Project /lavish command installed at .claude/commands/lavish.md"
+  echo "Project /pro-pdd:lavish command installed at .claude/commands/lavish.md"
 }
 
 for plugin in "${DEFAULT_PLUGINS[@]}"; do
@@ -158,7 +158,7 @@ Codex setup complete.
 Verify from the target repo with:
   codex "/skills"
   test -f .claude/skills/lavish/SKILL.md && echo "lavish project skill installed"
-  test -f .claude/commands/lavish.md && echo "/lavish project command installed"
+  test -f .claude/commands/lavish.md && echo "/pro-pdd:lavish project command installed"
   codex "Summarize active project instructions."
 
 If you want project-local instructions, add an AGENTS.md at the target repo root.

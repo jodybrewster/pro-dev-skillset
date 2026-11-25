@@ -38,6 +38,6 @@ Never run `uv tool uninstall`; the CLI is machine-wide and other repos may use i
    Remove the untracked ones only after they were listed and the person said yes.
 5. Show `git status` so the person sees everything that changed.
 6. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" answer spec-kit no`.
-   Say the committed `.claude/pro-dev.json` changed and should be committed with the removal, so `/pro-dev install` does not ask for spec-kit again.
+   Say the committed `.claude/pro-dev.json` changed and should be committed with the removal, so `/pro-core:pro-dev install` does not ask for spec-kit again.
 7. Say what stays: `specs/` and, machine-wide, the `specify` CLI.
    To drop the CLI the person runs `uv tool uninstall specify-cli` once no repo needs it.

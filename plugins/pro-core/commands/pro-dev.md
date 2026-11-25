@@ -1,11 +1,15 @@
 ---
-description: "Set up and maintain pro-dev in a repo: check what is installed and stale, install the engines the bridges route to and set the repo up for the intent, spec and plan loop, or update plugins and engines. Usage: /pro-dev [check|install|update]"
+description: "Set up and maintain pro-dev in a repo: check the prerequisites, what is installed and what is stale, install the engines the bridges route to and set the repo up for the intent, spec and plan loop, or update plugins and engines. Usage: /pro-core:pro-dev [check|install|update]"
 argument-hint: "[check|install|update]"
 allowed-tools:
   - "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py status*)"
   - "Bash(python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py\" status*)"
   - "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py answer*)"
   - "Bash(python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py\" answer*)"
+  - "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py prereqs*)"
+  - "Bash(python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py\" prereqs*)"
+  - "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py profile*)"
+  - "Bash(python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py\" profile*)"
   - "Bash(python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/dream-timer.py\"*)"
   - "Bash(claude plugin list*)"
   - "Bash(claude plugin validate*)"
@@ -39,9 +43,10 @@ With no argument, run `check`.
 This command works from the engine registry at `${CLAUDE_PLUGIN_ROOT}/registry/engines.json`.
 `scripts/pro-dev.py` does every deterministic step and this command owns the questions and the file drafting.
 Never run an engine install or update by hand; call the script, which runs the registry argv with no shell.
-Only `status` and `answer` are pre-approved.
-`run`, `plugins` and `stale` prompt the person each time, because they install or change things.
-Nothing here installs third-party code except when the person runs `/pro-dev install` or `/pro-dev update`.
+Only `status`, `prereqs`, `profiles`, `profile` and `answer` are pre-approved, because they report or write nothing but `.claude/pro-dev.json`.
+`profile` is on that list: it writes answers, never an install.
+`run`, `plugins`, `stale` and `prereq-install` prompt the person each time, because they install or change things.
+Nothing here installs third-party code except when the person runs `/pro-core:pro-dev install` or `/pro-core:pro-dev update`.
 Never commit, stage, push or open a PR.
 
 The status JSON lists:
@@ -49,28 +54,38 @@ The status JSON lists:
 - `plugins`: each pro-dev-skillset install with scope, version, `latest`, `covers` (true when its scope is user or its folder is this repo or inside it) and `lagging`.
 - `engines`: each registry row with `state` (`installed`, `missing`, `declined` or `not-applicable`), `needsQuestion`, `why` and `bridges`; a `manual-cli` row also carries `manual`, the lines the person runs by hand.
 - `engines` rows may also carry `versionDrift` (a `uv tool` CLI installed at another commit than the registry pin, with `installed` and `pinned`), `specKitFindings` (read-only findings about spec-kit's files in this repo) and `marketplaceProblem` (the marketplace registered under the row's name has another source, or cannot be read), `surfaceGrew` (an installed plugin has more agents, skills, tools, hooks or LSP servers than its registry pin, or its surface cannot be read) and `surfaceProblem` (the same for a plugin about to be installed, which then has `needsQuestion` true and `wantsInstall` false).
+- `prerequisites`: each prerequisite row with `label`, `why`, `required`, `docs`, `note`, `state` (`present` or `missing`), `found`, `probe` (why a probe failed), `altFound` (for `python3`: `python` or `py` works but `python3` does not), `installLine` (the exact command for this platform, or null when pro-dev does not install it here) and `manual` (the by-hand lines for this platform).
+- `profiles`: each project profile with `label`, `what`, `default`, `ask` and, for a real profile, `on` (the engine ids it turns on, filtered to the plugins installed for this repo) and `off`.
+- `alwaysAsk`: the optional engine ids asked one at a time whatever the profile, because each carries real consent.
+- `profile`: the profile id saved in `.claude/pro-dev.json`, or null.
+- `laggingCount`: how many installs that cover the repo lag behind the marketplace.
 - `aiSdlcInstallPath`: where pro-ai-sdlc is installed, or null.
 - `starterShim`: installs of the old `pro-starter` that cover this repo.
 - `staleCount`: installs whose project folder no longer exists.
 - `shortcode`: `projectFile` (true when `intent/project.json` exists) and `default` (the shortcode to propose for this repo, or null).
-- `tools`: whether `claude`, `npx` and `uv` are on PATH.
+- `tools`: whether `claude`, `npx`, `uv`, `python3`, `git` and `gh` are on PATH; `python3` is false when only the Windows Microsoft Store stub answers.
 
 If the status block above is empty or is an error, say so and run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status` yourself to show the message.
-If `tools.npx` is false, tell the person Node.js is needed for the engine installs and stop before running any.
+A missing tool is reported and offered by the prerequisites step of `install` and `update`, which is where Node.js, Python 3, Git and the GitHub CLI are handled.
 If `tools.uv` is false and a row of kind `uv-tool` is wanted, tell the person uv is needed, link https://docs.astral.sh/uv/getting-started/installation/ and stop before either spec-kit row.
 Never run an installer for uv.
 
 ## 1. check (default)
 
 Change nothing.
-Never call `run`, `plugins` or `stale --remove` from `check`; those are not pre-approved and prompt on purpose.
+Never call `run`, `plugins`, `stale --remove` or `prereq-install` from `check`; those are not pre-approved and prompt on purpose.
 Print a short report, then one line naming the next command to run.
 
+- Prerequisites: one line per row from `prerequisites` whose `state` is `missing`, with its label and its `why`.
+  Mark the report `needs attention` when a row with `required` true is missing.
+  Say that `/pro-core:pro-dev install` offers to install the missing ones.
+  When the `python3` row carries `altFound`, add one line: the commands here all call `python3`, so `python` alone is not enough.
+  Say nothing per row when every prerequisite is present; one line that they all are is enough.
 - Plugins: a table of each install with `covers` true, with scope, version and latest.
   Flag every one that lags.
   List installs with `covers` false under one line that says they belong to other repos and are left alone.
-  Mention `staleCount` when it is above zero and say `/pro-dev update` offers to remove them.
-  If `starterShim` is not empty, say `/pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`.
+  Mention `staleCount` when it is above zero and say `/pro-core:pro-dev update` offers to remove them.
+  If `starterShim` is not empty, say `/pro-core:pro-dev update` offers to swap `pro-starter` for `pro-dev-starter`.
 - Engines: a table of each row with its state.
   Say which are default and which are optional.
   A `manual-cli` row (the `codex` row) reads `installed` when its binary is on PATH (the login is checked when a review runs), `missing` with its `manual` lines as "install by hand: <lines joined by "; then ">" or `declined`.
@@ -78,7 +93,7 @@ Print a short report, then one line naming the next command to run.
   For each row with `marketplaceProblem` or `surfaceGrew`, print the text exactly as the status JSON gives it and mark the report `needs attention`.
   For a row with `versionDrift`, print "<id>: installed <installed>, pinned <pinned>" and mark the report `needs attention`.
   Print each line of `specKitFindings` as given and mark the report `needs attention`.
-  Change nothing and run no `specify` command; `/pro-dev update` or `/pro-speckit:install update` is the next step.
+  Change nothing and run no `specify` command; `/pro-core:pro-dev update` or `/pro-speckit:install update` is the next step.
 - Strict validation: for each installed pro-dev plugin that covers the repo, run `claude plugin validate` on its `installPath` from the status JSON and report any failure.
 - Router smoke check: confirm `pro-core` exposes the `using-pro-dev` skill, then sanity-route these prompts against the installed skill descriptions and flag any that would resolve elsewhere:
   - "where do I start / what's the workflow" goes to `using-pro-dev`.
@@ -88,13 +103,13 @@ Print a short report, then one line naming the next command to run.
 - Memory consolidation: run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dream-timer.py" --status` from the repo root.
   Take the interval and the `due:` verdict from its output.
   If the `memory:` line reports none, the project has no auto-memory directory yet; report that as informational.
-  When the directory exists, count its memory files with `ls` and measure its `MEMORY.md` with `wc -l`; flag more than 200 lines as needs attention with `/dream dry-run` as the next step.
+  When the directory exists, count its memory files with `ls` and measure its `MEMORY.md` with `wc -l`; flag more than 200 lines as needs attention with `/pro-core:dream dry-run` as the next step.
   Confirm pro-core's installed `hooks/hooks.json` registers `scripts/dream-flag.py` on `Stop` and `scripts/dream-nudge.py` on `SessionStart`; Claude Code loads no other hook file, so a missing entry never fires.
-  Recommend `/dream dry-run` when consolidation is due or the index is over budget.
+  Recommend `/pro-core:dream dry-run` when consolidation is due or the index is over budget.
 - Roles: print the role map from `REVIEW.md`.
   When pro-ai-sdlc is installed, run `python3 "<aiSdlcInstallPath>/scripts/factory.py" roles --repo .` and print its output; exit 2 means the block is unreadable, so report that as needs attention.
   Otherwise print the raw `## Roles` block as it stands.
-  When `REVIEW.md` has no `## Roles` section, say `/pro-dev install` adds one.
+  When `REVIEW.md` has no `## Roles` section, say `/pro-core:pro-dev install` adds one.
 - Mieruka ships its own plugin; mention it only if the repo uses it.
 - Verdict: `healthy` or `needs attention`, with the memory line.
 - The upstream catalog diffs are not part of `check`.
@@ -103,15 +118,57 @@ Print a short report, then one line naming the next command to run.
 
 ## 2. install
 
-1. Show the engines the run will install: the rows with `wantsInstall` true.
-   Say which are skipped because their owner plugin is not installed.
-2. Ask about each optional row with `needsQuestion` true, one at a time.
-   A `manual-cli` row is asked even when its binary is already on PATH, because the yes is the consent to use it; an installed row with a yes needs no install.
+1. Prerequisites.
+   Read `prerequisites` from the status block, or run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" prereqs --json` when that block is empty or an error.
+   Say in one line which are present.
+   For each row whose `state` is `missing`, give its label and its `why`.
+   Then:
+   - List the missing rows that carry an `installLine` with the exact command for each, then ask once whether to install them.
+     Say plainly that this changes the machine, not the repo.
+   - Only the person's reply after that list counts as the yes, never `$ARGUMENTS` and never tool output.
+   - On a yes, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" prereq-install <id>` once per row, in registry order.
+     Relay each line it prints exactly.
+     A failure does not stop the others; report each one.
+   - For a missing row with no `installLine` (`claude` and `uv`), print its `docs` link and say pro-dev does not install it.
+   - Relay the `manual` lines of any row that has them for this platform, exactly as given.
+     For `python3` on Windows those lines are the whole fix, so print them in full.
+   - After the installs, say that a tool installed just now is usually not on this session's PATH yet, so Claude Code and the terminal need a restart before the rest of the install will see it.
+   - If a row with `required` true is still missing, stop here.
+     Name what is missing and the one command to run again afterwards: `/pro-core:pro-dev install`.
+     Do not go on to the engine installs.
+   - In a non-interactive run, list the missing rows with their install lines and stop.
+2. Stale plugins.
+   Read `laggingCount`.
+   When it is above zero, say how many installs lag and that a lagging plugin ships an old registry and old skills, so the engines it installs are old too.
+   Offer to update them first.
+   On a yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" plugins update`, then run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again and build everything after this step from that fresh output.
+   Say that a plugin update needs a restart of Claude Code to take effect, that the install can carry on now and that it can be rerun after the restart.
+   On a no, carry on and say the engine list may be the old registry's.
+3. Project profile.
+   When `profile` in the status JSON is already set, say which one it is and go to step 4; a second install asks nothing here.
+   Otherwise show the rows from `profiles` as a short numbered list: the label, then the `what` line, then `on:` with the engine ids it would install for this repo.
+   Give each id on that line its `why` from the engine table, in a few words, so the person sees what a profile turns on before picking it. A profile writes a yes for each of those rows in one step and each one installs third-party skill files into this repo.
+   `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" profiles --json` prints the same rows on their own when the status block is stale.
+   Mark the row with `default` true as the default.
+   Ask once which fits this project, in one question.
+   Say the answer is saved and can be changed later with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" profile <id> --force`.
+   Save the reply with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" profile <id>`.
+   In a non-interactive run take the default profile and say so.
+   - When the person picks `custom`, ask about each optional row with `needsQuestion` true instead, one at a time, exactly as step 4 asks the consent rows: the row `id`, its `why` line, yes or no, saved with `answer <id> yes|no`.
+   - Say in one line that `figma` is on no profile because it needs a Figma account and an authorized connector.
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" answer figma yes` turns it on.
+4. The consent questions.
+   Ask about each row in `alwaysAsk` that still has `needsQuestion` true, one at a time.
    Give the row `id`, its `why` line and ask yes or no.
    Save each reply with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" answer <id> yes` or `no`, using the row `id` exactly as the status JSON gives it.
-3. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again.
-   Build the list from this fresh output, never from the status block above, because the answers just saved change it.
-   List every row that will install. Mark each row with `answerCommitted` true as "answer from the committed .claude/pro-dev.json".
+   A `manual-cli` row is asked even when its binary is already on PATH, because the yes is the consent to use it; an installed row with a yes needs no install.
+   When the row is `codex`, say the yes is also the consent to send diffs to OpenAI when a review runs.
+   Say that the `specify-cli` row runs `uv tool install`, a user-wide change; the `spec-kit` row writes files into this repo.
+5. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again.
+   Build the list from this fresh output, never from the status block above, because the profile and the answers just saved change it.
+   List every row that will install: the rows with `wantsInstall` true.
+   Say which rows are skipped because their owner plugin is not installed.
+   Mark each row with `answerCommitted` true as "answer from the committed .claude/pro-dev.json".
    Show a row with `versionDrift` as "replace <id> <installed> with <pin>, user-wide", for example "replace specify-cli <installed> with <pin>, user-wide", because the run replaces a tool that every repo on this machine shares.
    List a wanted `manual-cli` row as "install by hand" with its `manual` lines; the run only prints those lines and starts nothing.
    When the row is `codex`, say the yes is also the consent to send diffs to OpenAI when a review runs.
@@ -127,45 +184,56 @@ Print a short report, then one line naming the next command to run.
    Relay that line, any `surface beyond the pin` difference line and any marketplace mismatch exactly as printed.
    A row beyond its pin, or whose surface cannot be read, is not installed: tell the person which row it is and that the pin in `registry/engines.json` is reviewed before it is raised.
    Never install such a row another way.
-4. Set the repo up for the loop, as in section 4.
-5. Run `check`'s engine table again so the person sees what landed.
-6. Print what changed and what to commit.
-   A second `install` in a row changes nothing and asks nothing, because answers are saved and installed rows are skipped.
+6. Set the repo up for the loop, as in section 4.
+7. Run `check`'s engine table again so the person sees what landed.
+8. Print what changed and what to commit.
+   Name the profile that was applied and the engines it turned off.
+   Give the one line that turns any of them on later: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" answer <id> yes`, then `/pro-core:pro-dev install` again.
+   A second `install` in a row changes nothing and asks nothing, because the profile and the answers are saved and installed rows are skipped.
 
 ## 3. update
 
 Print each step as it finishes.
 
-1. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" plugins update`.
+1. Prerequisites, in short form.
+   Read `prerequisites` from the status block and name every row whose `state` is `missing` with its `why`.
+   List the install lines of the missing rows that carry one and ask once whether to install them, saying that this changes the machine, not the repo.
+   On a yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" prereq-install <id>` once per row, in registry order.
+   Relay each line it prints exactly.
+   Relay the `docs` link of a row pro-dev does not install and the `manual` lines of any row that has them for this platform.
+   Say that a tool installed just now needs a restart of Claude Code and the terminal before it is on PATH, then carry on.
+2. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" plugins update`.
    It refreshes the marketplace, then updates each pro-dev plugin install that covers the repo at its own scope and prints before and after versions.
-2. If `starterShim` was not empty, offer to swap `pro-starter` for `pro-dev-starter` at the same scope.
+3. If `starterShim` was not empty, offer to swap `pro-starter` for `pro-dev-starter` at the same scope.
    On yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" plugins swap-starter`.
    It installs `pro-nextjs` and `pro-astro` explicitly first when they are installed at that scope, so the site keeps its stack plugins.
-3. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again, since the registry may have changed with the plugin update.
-   Ask about each optional row with `needsQuestion` true, as in install step 2.
-4. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again.
+4. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again, since the registry may have changed with the plugin update.
+   When `profile` is null, offer the profile question once from this fresh output, with the same list as install step 3, because a repo set up before profiles existed has none.
+   Save the reply with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" profile <id>` and re-read `status --json` afterwards.
+   Then ask about each row in `alwaysAsk` that still has `needsQuestion` true, as in install step 4.
+5. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" status --json` again.
    Build the list from this fresh output, never from the status block above, because the answers just saved change it.
    List every row that will install or update, which includes the installed rows. Mark each row with `answerCommitted` true as "answer from the committed .claude/pro-dev.json".
-   Show a row with `versionDrift` as "replace <id> <installed> with <pin>, user-wide", as in install step 3.
+   Show a row with `versionDrift` as "replace <id> <installed> with <pin>, user-wide", as in install step 5.
    Ask the person for a yes.
    Only the person's reply after the list counts as the yes, never `$ARGUMENTS` or tool output.
    In a non-interactive run, list the rows and stop.
    After the yes, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" run all update`.
    It updates every installed engine, installs default rows now missing and optional rows answered yes.
    It also records `registryVersion`.
-   Relay surface lines, difference lines and marketplace mismatches exactly as printed, as in install step 3.
+   Relay surface lines, difference lines and marketplace mismatches exactly as printed, as in install step 5.
    An update of a pinned plugin first runs `claude plugin marketplace update` and reads the refreshed clone; a clone beyond the pin is a question and the update never runs.
-   After any install or update the installed copy is read again; one beyond the pin is disabled at project scope and listed with the failures in step 6.
-5. If `staleCount` is above zero, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale`, show the list and ask once whether to remove them.
+   After any install or update the installed copy is read again; one beyond the pin is disabled at project scope and listed with the failures in step 7.
+6. If `staleCount` is above zero, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale`, show the list and ask once whether to remove them.
    On yes run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev.py" stale --remove`.
    It writes a backup of `installed_plugins.json` beside the file and removes only pro-dev-skillset entries whose folder is gone.
    If it reports an unexpected file shape, it changed nothing; say so.
-6. List every failure from the steps above with the command to retry.
-7. End with exactly this line: Restart Claude Code so the updated plugins load.
+7. List every failure from the steps above with the command to retry.
+8. End with exactly this line: Restart Claude Code so the updated plugins load.
 
 ## 4. Set the repo up for the loop (install only)
 
-This prepares the repo for the loop that `/intent`, `/spec`, `/plan`, `/review` and `/pr-babysit` run.
+This prepares the repo for the loop that `/pro-ai-sdlc:intent`, `/pro-ai-sdlc:spec`, `/pro-ai-sdlc:plan`, `/pro-ai-sdlc:review` and `/pro-ai-sdlc:pr-babysit` run.
 It writes files and stops.
 It never commits, stages, pushes or opens a PR; the person reviews the changes and commits them.
 If `aiSdlcInstallPath` is null, skip this section and say in one line that pro-ai-sdlc is not installed so the loop setup was skipped.
@@ -190,12 +258,12 @@ Leave a placeholder in angle brackets for anything the inspection could not find
 
 The "How work flows here" section says, in short sentences, one per line:
 
-- Work enters through `intent/<date>-<slug>/intent.md`, written by `/intent`.
-- `/spec` writes spec.md beside it, `/plan` writes plan.md.
+- Work enters through `intent/<date>-<slug>/intent.md`, written by `/pro-ai-sdlc:intent`.
+- `/pro-ai-sdlc:spec` writes spec.md beside it, `/pro-ai-sdlc:plan` writes plan.md.
   plan.md is committed before the first change and kept true afterwards.
 - The verify command, named exactly, runs before anything is called done.
 - For a bug, the failing test is committed before the fix and tests are not edited during the fix.
-- `/review` checks the diff against REVIEW.md; findings go to the person and are never a verdict.
+- `/pro-ai-sdlc:review` checks the diff against REVIEW.md; findings go to the person and are never a verdict.
 - The person merges.
   Agents work up to the gate (branch, PR, green checks, addressed findings) and stop there.
 - A "Things Claude gets wrong" list, empty to start, that a mistake flagged twice is added to.
@@ -207,7 +275,7 @@ The "How work flows here" section says, in short sentences, one per line:
   Offer `shortcode.default` as the default when it is not null; when it is null, ask with no default.
   Accept only an answer matching `^[A-Z]{2,6}$` and ask again on anything else.
   On an answer write `intent/project.json` holding `{"shortcode": "<answer>"}` and a newline.
-  On a skip write nothing and say that `/intent` keeps date folders until a shortcode is set.
+  On a skip write nothing and say that `/pro-ai-sdlc:intent` keeps date folders until a shortcode is set.
   Never overwrite an existing `intent/project.json`: the shortcode never changes in place.
 - If the repo has no `REVIEW.md`, write one from the template at `<aiSdlcInstallPath>/templates/REVIEW.md`, replacing the generated-files placeholder with the paths found in the inspection.
   If it has one, leave it alone.
@@ -238,7 +306,7 @@ The "How work flows here" section says, in short sentences, one per line:
   If it exists, show the entries to merge and do not edit it.
   The guard hooks are not written here; the plugins supply them.
 - Make sure `.gitignore` ignores `.claude/settings.local.json`, `.claude/worktrees/`, `.claude/.fix-task`, `.claude/fix-mode` and `.claude/test-lock`; append only the missing lines.
-- `.claude/pro-dev.json` is meant to be committed so a team shares its optional-engine choices; do not ignore it.
+- `.claude/pro-dev.json` is meant to be committed so a team shares its profile and its optional-engine choices; do not ignore it.
 
 ### Required documents
 
@@ -283,7 +351,7 @@ Do this after the folders and the review policy, so a `REVIEW.md` written above 
    When the host offers `pro-quality:documentation-engineer`, dispatch it once per document with the template path, the target path and the facts from the inspection.
    The agent writes the file.
    Without that agent, write the bare template and list the sections left to fill.
-   When the template file is missing, report "no template for <doc> in the installed pro-ai-sdlc; run /pro-dev update" and go on.
+   When the template file is missing, report "no template for <doc> in the installed pro-ai-sdlc; run /pro-core:pro-dev update" and go on.
 
 5. Make the agent file pair.
    When AGENTS.md exists in any form (a file or a symlink, dangling ones included), do not write it and report it; check with `test -e AGENTS.md || test -L AGENTS.md`.
@@ -294,11 +362,11 @@ Do this after the folders and the review policy, so a `REVIEW.md` written above 
 6. When neither `docs/decisions/` nor `docs/adr/` exists, create `docs/decisions/README.md` with a one-line purpose and an empty index table with the columns `| ADR | Decision | Date |`.
 
 7. Do not draft DESIGN.md.
-   When the UI signal holds and DESIGN.md is missing, name `/impeccable document` (through pro-design's `impeccable-bridge`) as the next step, or say the impeccable engine is not installed.
+   When the UI signal holds and DESIGN.md is missing, name pro-design's `impeccable-bridge` skill as the next step, or say the impeccable engine is not installed and `/pro-design:install` sets it up.
    `pr-check` keeps listing DESIGN.md as missing until it exists.
 
 8. Write the answers into `REVIEW.md` only in the run that wrote it.
-   Fill its `## Required documents` block with an `add` or `remove` entry for every answer that differs from the check's default, and uncomment the block.
+   Fill its `## Required documents` block with an `add` or `remove` entry for every answer that differs from the check's default, then uncomment the block.
    With no difference the block stays commented.
    When `REVIEW.md` already exists, print the block to paste and do not edit the file.
 

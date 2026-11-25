@@ -1,5 +1,5 @@
 ---
-description: "Turn an incident into an incident record, a new intent and a regression test plan: interview, preserve evidence outside git, scan for credentials and commit incident.md and intent.md together. Usage: /incident <what happened>"
+description: "Turn an incident into an incident record, a new intent and a regression test plan: interview, preserve evidence outside git, scan for credentials and commit incident.md and intent.md together. Usage: /pro-ai-sdlc-egm:incident <what happened>"
 argument-hint: "<what happened, in a sentence or two>"
 allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(git switch:*), Bash(git config user.name), Bash(git log:*), Bash(git add:*), Bash(git commit:*), Bash(date:*), Bash(ls:*), Bash(mkdir:*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/incident.py":*), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" claim), Bash(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/ids.py" next), Read, Write(intent/**), Write(.pro-dev/incidents/**)
 ---
@@ -16,7 +16,7 @@ allowed-tools: Bash(git status:*), Bash(git rev-parse:*), Bash(git branch:*), Ba
 
 What happened: $ARGUMENTS
 
-An incident starts the same loop as any other bug: an intent, then `/design` when the fix changes how a feature works and `/execute`.
+An incident starts the same loop as any other bug: an intent, then `/pro-ai-sdlc-egm:design` when the fix changes how a feature works and `/pro-ai-sdlc-egm:execute`.
 This command writes the incident record and that intent together.
 It never fixes anything and never pushes.
 
@@ -100,5 +100,5 @@ Run these in order and stop at the first failure.
 ### 5. Report
 
 The incident path, the intent path, the commit hash, the record path from `record`'s output and the evidence folder.
-Suggest `/execute <id or folder>` as the next step, or `/design <id or folder>` first when the fix changes how a feature works.
+Suggest `/pro-ai-sdlc-egm:execute <id or folder>` as the next step, or `/pro-ai-sdlc-egm:design <id or folder>` first when the fix changes how a feature works.
 When the state is not yet `resolved`, remind the person that the regression test and the runbook update come before it is.

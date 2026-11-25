@@ -18,4 +18,4 @@ Then offer to fold the section into the plan file.
 
 This is read-only.
 Report findings and required changes; do not edit code.
-For a whole-repo posture check use `/security-audit` instead.
+For a whole-repo posture check use `/pro-security:security-audit` instead.

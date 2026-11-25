@@ -1,5 +1,5 @@
 ---
-name: /spdd-reverse
+name: /pro-spdd:spdd-reverse
 id: spdd-reverse
 category: Development
 description: Reverse-engineer existing code into a REASONS-Canvas structured prompt, enabling the SPDD bidirectional sync workflow for previously unspecified implementations
@@ -7,7 +7,7 @@ description: Reverse-engineer existing code into a REASONS-Canvas structured pro
 
 Generate a REASONS-Canvas structured prompt by reverse-engineering existing code. This creates the missing "spec layer" for legacy implementations so they can participate in the SPDD bidirectional sync workflow going forward.
 
-**Input**: The argument after `/spdd-reverse` is a reference to existing code (files, folders, or a description of the feature area to codify).
+**Input**: The argument after `/pro-spdd:spdd-reverse` is a reference to existing code (files, folders, or a description of the feature area to codify).
 
 Input can be provided in several ways:
 
@@ -19,16 +19,16 @@ Input can be provided in several ways:
 
 ```
 # Folder reference — codify an entire CI layer
-/spdd-reverse @.ci/
+/pro-spdd:spdd-reverse @.ci/
 
 # Specific files — codify a service
-/spdd-reverse @src/services/billing.ts @src/models/invoice.ts
+/pro-spdd:spdd-reverse @src/services/billing.ts @src/models/invoice.ts
 
 # Feature description — agent finds the code
-/spdd-reverse The preview deployment flow in .ci/ (deploy, cleanup, PR comment)
+/pro-spdd:spdd-reverse The preview deployment flow in .ci/ (deploy, cleanup, PR comment)
 
 # Combined — scope guidance + code reference
-/spdd-reverse @src/main/java/com/example/billing/ focus on the invoice generation pipeline
+/pro-spdd:spdd-reverse @src/main/java/com/example/billing/ focus on the invoice generation pipeline
 ```
 
 **Steps**
@@ -134,7 +134,7 @@ Input can be provided in several ways:
     - Input validation and error handling
     - Side effects and I/O
 
-   **Guidance**: Operations should be detailed enough that `/spdd-generate` could reproduce the current behavior. Follow the same ordering as the code's dependency graph (leaf dependencies first).
+   **Guidance**: Operations should be detailed enough that `/pro-spdd:spdd-generate` could reproduce the current behavior. Follow the same ordering as the code's dependency graph (leaf dependencies first).
 
 8. **Extract Norms (N)**
 
@@ -213,9 +213,9 @@ Input can be provided in several ways:
 
     🔗 This prompt is now the spec-of-record for this code area.
        Future changes can use:
-       - /spdd-sync — after code changes, sync back to this prompt
-       - /spdd-prompt-update — to add new requirements before implementation
-       - /spdd-generate — to regenerate code from the updated prompt
+       - /pro-spdd:spdd-sync — after code changes, sync back to this prompt
+       - /pro-spdd:spdd-prompt-update — to add new requirements before implementation
+       - /pro-spdd:spdd-generate — to regenerate code from the updated prompt
     ```
 
 **Output**
@@ -276,7 +276,7 @@ This command is the **legacy onboarding entry point** of the SPDD workflow. It p
 │                  SPDD Lifecycle — Including Legacy Onboarding            │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Legacy Onboarding: /spdd-reverse  ← THIS COMMAND                       │
+│  Legacy Onboarding: /pro-spdd:spdd-reverse  ← THIS COMMAND                       │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Existing Code → Analyze → Reverse-engineer REASONS Canvas      │    │
 │  │                                                                 │    │
@@ -286,27 +286,27 @@ This command is the **legacy onboarding entry point** of the SPDD workflow. It p
 │                              ▼                                          │
 │  ┌─ Now in normal SPDD cycle ─────────────────────────────────────┐    │
 │  │                                                                 │    │
-│  │  /spdd-prompt-update — add new requirements                    │    │
+│  │  /pro-spdd:spdd-prompt-update — add new requirements                    │    │
 │  │           │                                                     │    │
 │  │           ▼                                                     │    │
-│  │  /spdd-generate — implement from the updated prompt            │    │
+│  │  /pro-spdd:spdd-generate — implement from the updated prompt            │    │
 │  │           │                                                     │    │
 │  │           ▼                                                     │    │
-│  │  /spdd-sync — sync code changes back to the prompt             │    │
+│  │  /pro-spdd:spdd-sync — sync code changes back to the prompt             │    │
 │  │           │                                                     │    │
 │  │           └──────────► (loop)                                   │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                                                                          │
 │  Greenfield Flow (unchanged):                                            │
 │  ┌────────────────────────────────────────────────────────────────┐    │
-│  │ /spdd-analysis → /spdd-reasons-canvas → /spdd-generate         │    │
-│  │                       → /spdd-sync (loop)                      │    │
+│  │ /pro-spdd:spdd-analysis → /pro-spdd:spdd-reasons-canvas → /pro-spdd:spdd-generate         │    │
+│  │                       → /pro-spdd:spdd-sync (loop)                      │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**When to Use /spdd-reverse**
+**When to Use /pro-spdd:spdd-reverse**
 
 Use this command when:
 
@@ -316,9 +316,9 @@ Use this command when:
 - Creating documentation-as-spec for code written before SPDD adoption
 - Preparing to extend legacy code and wanting SPDD governance for changes
 
-**Difference from /spdd-sync**
+**Difference from /pro-spdd:spdd-sync**
 
-| Aspect         | `/spdd-reverse`                | `/spdd-sync`                |
+| Aspect         | `/pro-spdd:spdd-reverse`                | `/pro-spdd:spdd-sync`                |
 | -------------- | ------------------------------ | --------------------------- |
 | Starting point | No prompt exists               | Prompt already exists       |
 | Direction      | Code → new prompt              | Code changes → update prompt |

@@ -1,6 +1,6 @@
 ---
 name: spec-kit-bridge
-description: Bridge to GitHub's spec-kit - run a feature through its constitution, specify, plan, tasks and implement flow instead of /spec and /plan. Use when someone wants spec-driven development with spec-kit, asks about /speckit-specify or the specify CLI, or wants spec-kit installed or removed. This is a BRIDGE (not vendored); the CLI installs through the /pro-dev command.
+description: Bridge to GitHub's spec-kit - run a feature through its constitution, specify, plan, tasks and implement flow instead of /pro-ai-sdlc:spec and /plan. Use when someone wants spec-driven development with spec-kit, asks about /speckit-specify or the specify CLI, or wants spec-kit installed or removed. This is a BRIDGE (not vendored); the CLI installs through the /pro-core:pro-dev command.
 ---
 
 # spec-kit-bridge
@@ -12,12 +12,12 @@ Nothing of it is copied here, so it updates with the pin pro-core reviews.
 ## When to use spec-kit
 
 Use it for a feature you want to take through spec-driven steps with files kept in the repo: ground rules, a spec, a plan, a task list and then the build.
-It is one way to do the spec and plan stages, an alternative to `/spec` and `/plan`.
+It is one way to do the spec and plan stages, an alternative to `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan`.
 Skip it for a small fix that fits an intent and a short plan.
 
 ## The commands, in order
 
-1. `/pro-speckit:install` gets the `specify` CLI and sets spec-kit up in this repo; `/pro-dev install` does the same with the other engines.
+1. `/pro-speckit:install` gets the `specify` CLI and sets spec-kit up in this repo; `/pro-core:pro-dev install` does the same with the other engines.
    It stops with a one-line reason when the tree is not clean.
 2. Review and commit the new `.specify/` and `.claude/skills/speckit-*/` files.
 3. `/speckit-constitution` once per repo, to write its ground rules.
@@ -25,7 +25,7 @@ Skip it for a small fix that fits an intent and a short plan.
 5. `/speckit-plan`.
 6. `/speckit-tasks`.
 7. `/speckit-implement`.
-8. `/pro-dev check` any time, to see whether the spec-kit files still match what was reviewed.
+8. `/pro-core:pro-dev check` any time, to see whether the spec-kit files still match what was reviewed.
 9. `/pro-speckit:install update` after a pro-speckit update, to move to the next reviewed pin.
 10. `/pro-speckit:remove` to take spec-kit out of the repo.
 
@@ -39,8 +39,8 @@ Each feature gets a folder `specs/<NNN>-<feature>/`.
 
 ## One loop per feature
 
-A feature runs through spec-kit or through `/spec` and `/plan`, never both.
-When you take the offer at the end of `/intent`, the intent folder keeps its `intent.md` only and gets no `spec.md` or `plan.md`.
+A feature runs through spec-kit or through `/pro-ai-sdlc:spec` and `/pro-ai-sdlc:plan`, never both.
+When you take the offer at the end of `/pro-ai-sdlc:intent`, the intent folder keeps its `intent.md` only and gets no `spec.md` or `plan.md`.
 Add a "spec-kit:" line to `intent.md` that links the feature's `specs/` folder.
 
 ## Review these like code

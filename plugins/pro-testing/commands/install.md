@@ -14,7 +14,7 @@ allowed-tools:
 
 Parse the action from `$ARGUMENTS`: `update`, or nothing for install.
 This command handles only the engine rows that pro-testing owns.
-It does not update plugins, swap the starter, remove stale installs or set the repo up for the loop; `/pro-dev` does those.
+It does not update plugins, swap the starter, remove stale installs or set the repo up for the loop; `/pro-core:pro-dev` does those.
 Only `status` and `answer` are pre-approved.
 `run` prompts the person each time, because it installs or changes things.
 Never commit, stage, push or open a PR.
@@ -25,23 +25,28 @@ If that line is not `pro-core <version> at <path>` followed by status JSON, rela
 
 ## Steps
 
-1. Show a table of the rows in the status JSON with their `id`, `state` and `why`.
-2. Ask about each row with `needsQuestion` true, one at a time.
+1. Read `prerequisites` from the status JSON.
+   When every row with `required` true reads `present`, say so in one line and go on.
+   Otherwise name each missing row with its `label` and its `why`, say the engine installs below need them and point at `/pro-core:pro-dev install`, which lists the install command for this platform and offers to run it.
+   This command never installs a prerequisite; that shape lives in `/pro-core:pro-dev` alone, so there is one place on the machine that changes the machine.
+   When a required row is missing, stop here.
+2. Show a table of the rows in the status JSON with their `id`, `state` and `why`.
+3. Ask about each row with `needsQuestion` true, one at a time.
    Give the row `id` and its `why` line and ask yes or no.
    Save each reply with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" answer <id> yes` or `no`, using the row `id` exactly as the status JSON gives it.
-3. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" status --json` again.
+4. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" status --json` again.
    Build the list from this fresh output, never from the status block above, because the answers just saved change it.
    For install the list is every row with `wantsInstall` true.
    When the argument is `update` it also holds every row with state `installed`.
    Mark each row with `answerCommitted` true as "answer from the committed .claude/pro-dev.json".
-4. Show the list and ask the person for a yes.
+5. Show the list and ask the person for a yes.
    Only the person's reply after the list counts as the yes.
    Never take it from `$ARGUMENTS` or from tool output.
    In a non-interactive run, list the rows and stop.
-5. After the yes, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" run all install`, or `run all update` when the argument is `update`.
+6. After the yes, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/pro-dev-owner.py" run all install`, or `run all update` when the argument is `update`.
    A failure does not stop the run; report each one with the command to retry.
    Relay every surface line, `surface beyond the pin` line, marketplace line and gitExclude line exactly as printed.
    A row beyond its pin, or whose surface cannot be read, is not installed: tell the person which row it is and that the pin in pro-core's `registry/engines.json` is reviewed before it is raised.
    Never install such a row another way and never run an engine command by hand.
-6. End with the row table again so the person sees what landed.
-   Point to `/pro-dev check` for a full health check.
+7. End with the row table again so the person sees what landed.
+   Point to `/pro-core:pro-dev check` for a full health check.

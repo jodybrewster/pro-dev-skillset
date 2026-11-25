@@ -72,7 +72,7 @@ One file per feature, kept true as changes land. The history is in git.
 Product reads The Problem, Goals, Non-Goals and the journeys.
 Design reads the journeys and the non-functional requirements.
 Engineering reads the technical plan, the alternatives and the implementation plan.
-Flagged concerns is added by /design and closed by the policy owner; the other section names follow the design
+Flagged concerns is added by /pro-ai-sdlc-egm:design and closed by the policy owner; the other section names follow the design
 document of the Elephant-Goldfish Model (Apache-2.0, https://github.com/google/elephant-goldfish-model) so its
 draft, review and resolve steps read this file as their own.
 Reviews and approvals are not written here. They are in design-record.json beside each intent, bound to the

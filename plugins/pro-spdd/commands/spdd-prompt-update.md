@@ -1,5 +1,5 @@
 ---
-name: /spdd-prompt-update
+name: /pro-spdd:spdd-prompt-update
 id: spdd-prompt-update
 category: Development
 description: Update an existing SPDD prompt file with new requirements or architectural changes while preserving the REASONS Canvas structure
@@ -7,21 +7,21 @@ description: Update an existing SPDD prompt file with new requirements or archit
 
 Update an existing SPDD (Structured Prompt-Driven Development) prompt file with new requirements, architectural changes, or refinements while maintaining the REASONS Canvas structure and following all specification rules.
 
-**Input**: The argument after `/spdd-prompt-update` includes the prompt file reference and the update instructions.
+**Input**: The argument after `/pro-spdd:spdd-prompt-update` includes the prompt file reference and the update instructions.
 
 **Examples**:
 
 ```
 # Update with architectural principles
-/spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+/pro-spdd:spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
 Add three-layer architecture with dependency inversion principle
 
 # Update with new requirements
-/spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+/pro-spdd:spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
 Add support for batch usage submission
 
 # Update specific section
-/spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
+/pro-spdd:spdd-prompt-update @spdd/prompt/GGQPA-XXX-202603131758-[Feat]-api-token-usage-billing.md
 Update Safeguards section to add rate limiting constraints
 ```
 
@@ -120,7 +120,7 @@ Update Safeguards section to add rate limiting constraints
 
 9. **Ask for confirmation**
 
-   > "The SPDD prompt has been updated. Would you like me to regenerate the affected code using `/spdd-generate`?"
+   > "The SPDD prompt has been updated. Would you like me to regenerate the affected code using `/pro-spdd:spdd-generate`?"
 
 **Output**
 
@@ -139,7 +139,7 @@ The updated SPDD prompt file with changes integrated while preserving the REASON
 
 **No Code Block Rules** (CRITICAL):
 
-The SPDD prompt file is a **specification document**, not source code. It describes WHAT to implement, leaving the HOW to the `/spdd-generate` phase.
+The SPDD prompt file is a **specification document**, not source code. It describes WHAT to implement, leaving the HOW to the `/pro-spdd:spdd-generate` phase.
 
 - **Do NOT include language-specific code blocks** (e.g., ```java, ```python, ```typescript)
 - **Do NOT include implementation code** - no class definitions, method bodies, SQL queries, or annotations in code form
@@ -153,7 +153,7 @@ The SPDD prompt file is a **specification document**, not source code. It descri
     - ❌ ```java @Repository public class JpaCustomerRepositoryAdapter { ... } ```
 - **Specification vs Implementation boundary**:
     - SPDD prompt = specification (describes contracts, behaviors, constraints)
-    - Generated code = implementation (actual source files created by `/spdd-generate`)
+    - Generated code = implementation (actual source files created by `/pro-spdd:spdd-generate`)
 
 **Update-Specific Guardrails**:
 
@@ -171,13 +171,13 @@ This command supports the iterative refinement cycle in SPDD:
 │                    SPDD Prompt Lifecycle                                 │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Create: /spdd-reasons-canvas                                           │
+│  Create: /pro-spdd:spdd-reasons-canvas                                           │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Business Context → REASONS Canvas → spdd/prompt/*.md            │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Update: /spdd-prompt-update  ◄────────────────────────┐               │
+│  Update: /pro-spdd:spdd-prompt-update  ◄────────────────────────┐               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Existing Prompt + Change Request → Updated Prompt              │    │
 │  │                                                                 │    │
@@ -189,13 +189,13 @@ This command supports the iterative refinement cycle in SPDD:
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Generate: /spdd-generate                                               │
+│  Generate: /pro-spdd:spdd-generate                                               │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Structured Prompt → Implementation Code                         │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 │                              │                                          │
 │                              ▼                                          │
-│  Sync: /spdd-sync (if code changes first)                              │
+│  Sync: /pro-spdd:spdd-sync (if code changes first)                              │
 │  ┌────────────────────────────────────────────────────────────────┐    │
 │  │ Code Changes → Update Prompt → Maintain Consistency            │────┘
 │  └────────────────────────────────────────────────────────────────┘    │

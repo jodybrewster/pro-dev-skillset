@@ -10,9 +10,9 @@ It prints `egmRoot` and `skills`, a map from each EGM skill name to its `SKILL.m
 The engine is always the installed `egm@egm` plugin it reports.
 Never read EGM from a source checkout, another installed copy or a guessed cache folder.
 
-- `egmRoot` is null: print `pro-egm needs egm@egm: run /pro-dev install` and stop.
+- `egmRoot` is null: print `pro-egm needs egm@egm: run /pro-core:pro-dev install` and stop.
 - `egmRoot` is set but the skill you need is null: the install is older than the skill.
-  Print `pro-egm needs a newer egm@egm: update egm@egm (claude plugin marketplace update egm, then claude plugin update egm@egm) or run /pro-dev update` and stop.
+  Print `pro-egm needs a newer egm@egm: update egm@egm (claude plugin marketplace update egm, then claude plugin update egm@egm) or run /pro-core:pro-dev update` and stop.
 
 ## Follow the skill
 

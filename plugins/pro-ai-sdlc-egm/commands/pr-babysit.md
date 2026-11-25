@@ -12,7 +12,7 @@ argument-hint: "[pr-number | url | branch]  (default: the PR for the current bra
 - Checks: !`gh pr checks $ARGUMENTS 2>&1 | head -40`
 - Repo: !`gh repo view --json nameWithOwner,defaultBranchRef 2>&1`
 
-This is the loop after `/review` and before a person merges.
+This is the loop after `/pro-ai-sdlc-egm:review` and before a person merges.
 It gets a PR to the point where the only thing missing is a human approval, then stops.
 
 ## Your task

@@ -15,14 +15,14 @@ Source: PDS-27, intent/2026-10-29-review-policy/.
 
 An agent author and an agent reviewer can loop for fifty rounds overnight.
 Each nit becomes a commit and each commit becomes another round.
-`/pr-babysit` was that loop, capped at five rounds.
-The `reviewer` agent and `/review` read the whole diff every time, so a later round re-read code an earlier round had cleared and could raise the same finding again.
+`/pro-ai-sdlc:pr-babysit` was that loop, capped at five rounds.
+The `reviewer` agent and `/pro-ai-sdlc:review` read the whole diff every time, so a later round re-read code an earlier round had cleared and could raise the same finding again.
 A class of bug was reported one instance at a time, so each instance cost its own round.
 Old bugs in code the PR never touched could block a PR that did not cause them.
 
 ## Decision
 
-Later rounds review only the new commits, through `since <sha>` on the reviewer and `--since <sha>` on `/review`.
+Later rounds review only the new commits, through `since <sha>` on the reviewer and `--since <sha>` on `/pro-ai-sdlc:review`.
 
 A finding is never raised twice.
 The calling session keeps the list of what was already raised and drops repeats.
@@ -34,7 +34,7 @@ One fix per class closes it.
 A finding in code the PR did not change is tagged Pre-existing.
 It is listed and never blocks.
 
-`/pr-babysit` stops after three rounds and asks the maintainer to rethink the approach.
+`/pro-ai-sdlc:pr-babysit` stops after three rounds and asks the maintainer to rethink the approach.
 Every round counts toward the cap.
 
 The report opens with one summary line: `important: <n>  nits: <n>  pre-existing: <n>  skipped: <n>`.

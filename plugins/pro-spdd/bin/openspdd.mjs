@@ -386,7 +386,7 @@ async function cmdInit({ toolFlag, cwd, all, force }) {
   console.log(`\nInitializing ${TOOLS[toolId].name} (${toolId})...\n`);
   // Without --all, install only the 5 core templates (mirrors Go init behaviour).
   await runGenerate({ toolId, cwd, all, coreOnly: !all, templateName: null, force, allowImplicit: false });
-  console.log(`\n✓ Done. Run /spdd-story to start the SPDD workflow.`);
+  console.log(`\n✓ Done. Run /pro-spdd:spdd-story to start the SPDD workflow.`);
 }
 
 async function cmdUninstall({ toolFlag, cwd, force, dryRun }) {

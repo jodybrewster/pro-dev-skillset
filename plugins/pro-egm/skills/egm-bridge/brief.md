@@ -23,4 +23,4 @@ The assumptions table from `discovery.md`: question, answer assumed and what cha
 ## Changes the work breaks into
 
 A numbered list of the changes that would deliver the recommendation, each small enough to review on its own, in the order they should land.
-For each: one sentence of scope and whether it stays in the `pro-ai-sdlc` lane (`/intent`) or goes through `/pro-egm:draft`.
+For each: one sentence of scope and whether it stays in the `pro-ai-sdlc` lane (`/pro-ai-sdlc:intent`) or goes through `/pro-egm:draft`.

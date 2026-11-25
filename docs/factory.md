@@ -17,11 +17,11 @@ intent.md (accepted by a role)
 level 1 ----> factory.py run (host)
    |            container session 1: /pro-ai-sdlc:auto brief  -> brief PR (spec.md + plan.md)
    |            host: check the brief PR, merge it
-   |            container session 2: /pro-ai-sdlc:auto build  -> build PR (/execute, /review)
+   |            container session 2: /pro-ai-sdlc:auto build  -> build PR (/pro-ai-sdlc:execute, /pro-ai-sdlc:review)
    |            host: CI green, risk-classify low, tests untouched, no policy files -> merge
    |            record: "merged, deploy is yours"
    |
-level 2 ----> the normal loop: /spec, /plan (engineer approves), /execute, merge by the engineer
+level 2 ----> the normal loop: /pro-ai-sdlc:spec, /pro-ai-sdlc:plan (engineer approves), /pro-ai-sdlc:execute, merge by the engineer
 level 3 ----> level 2 plus the policy owner on flagged concerns and the lead on the plan and the merge
 ```
 
@@ -37,7 +37,7 @@ Deploy is always a person's step.
 |---|---|---|---|
 | 1 Auto | risk low, source an idea or an incident, the author is a product owner or engineer, no stop-list word, no new dependency | brief PR and build PR, both merged by the runner | none until deploy |
 | 2 Engineer | risk medium, a new dependency, an author outside the role map, a ticket source | the full loop | the engineer approves the plan and the merge |
-| 3 Escalated | risk high, or a stop-list word: auth, session, permission, migration, payment, deploy, release, secret, token, credential, env var, personal data, export | the full loop plus the `/execute` stop list | engineer, lead and policy owner |
+| 3 Escalated | risk high, or a stop-list word: auth, session, permission, migration, payment, deploy, release, secret, token, credential, env var, personal data, export | the full loop plus the `/pro-ai-sdlc:execute` stop list | engineer, lead and policy owner |
 
 A stop-list word counts only under `## Proposed outcome`, `## Affected users and systems` or `## Constraints`, the sections that say what the change does.
 Under `## Problem`, `## Out of scope` or `## Risk` it is being discussed and does not raise the level.
@@ -75,7 +75,7 @@ pro-security is required for level 1: without it the runner cannot read the secu
 
 ## Step 2: set the repo up
 
-In a Claude Code session in the repo run `/pro-dev install`.
+In a Claude Code session in the repo run `/pro-core:pro-dev install`.
 It creates `intent/`, `REVIEW.md` and a `## Roles` block with your git name in every role.
 
 Validate:
@@ -123,7 +123,7 @@ Validate: `docker info` answers; the first run builds the `pro-dev-factory:<vers
 
 ## Step 5: write and accept a small intent
 
-Run `/intent` and describe something small, for example "list tasks sorted by title".
+Run `/pro-ai-sdlc:intent` and describe something small, for example "list tasks sorted by title".
 The report ends with the level and the reasons, such as `level: 1 (meets every level 1 rule)`.
 Set `status: accepted`, open a pull request with the intent and merge it as the product owner.
 
@@ -192,10 +192,10 @@ Write an intent that touches more, for example "add due dates to tasks and a fil
 The runner never picks it up.
 Then:
 
-1. `/spec intent/<folder>/intent.md`: read the flagged concerns; the policy owner closes each one in the spec and the product owner accepts it.
-2. `/plan intent/<folder>/spec.md`: put the engineer and the lead in `Approver:`, set `Status: approved` and commit.
-3. `/execute intent/<folder>/plan.md`: it pauses at any stop-list step the plan did not consent to.
-4. `/review` on the pull request, then `/pr-babysit` until it is green.
+1. `/pro-ai-sdlc:spec intent/<folder>/intent.md`: read the flagged concerns; the policy owner closes each one in the spec and the product owner accepts it.
+2. `/pro-ai-sdlc:plan intent/<folder>/spec.md`: put the engineer and the lead in `Approver:`, set `Status: approved` and commit.
+3. `/pro-ai-sdlc:execute intent/<folder>/plan.md`: it pauses at any stop-list step the plan did not consent to.
+4. `/pro-ai-sdlc:review` on the pull request, then `/pro-ai-sdlc:pr-babysit` until it is green.
 5. The lead merges with `gh pr merge <n> --squash --match-head-commit <sha>`.
 
 Validate: each commit at a gate is authored by the role that owns it; `factory.py level` still prints 3.
@@ -206,7 +206,7 @@ Validate: each commit at a gate is authored by the role that owns it; `factory.p
 After a GO it offers `ship.py prepare <version>` for the release change; once that has merged, `ship.py version --agree <version> --commit <merged> --carry` prints the tag command.
 Tag and push the release yourself, then run `/pro-ship:deployed`, which walks the checks for the target's kind and takes the time from the tag.
 Validate: a deploy record under `.pro-dev/ship/deploys/`.
-When something breaks, `/incident` writes `incident.md` and a new intent at level 2 or higher.
+When something breaks, `/pro-ai-sdlc:incident` writes `incident.md` and a new intent at level 2 or higher.
 
 ## Step 11: mieruka
 

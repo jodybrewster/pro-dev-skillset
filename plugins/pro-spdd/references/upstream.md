@@ -11,18 +11,18 @@ This plugin imports and adapts command templates from OpenSPDD.
 
 Core commands:
 
-- `/spdd-analysis`
-- `/spdd-reasons-canvas`
-- `/spdd-generate`
-- `/spdd-prompt-update`
-- `/spdd-sync`
+- `/pro-spdd:spdd-analysis`
+- `/pro-spdd:spdd-reasons-canvas`
+- `/pro-spdd:spdd-generate`
+- `/pro-spdd:spdd-prompt-update`
+- `/pro-spdd:spdd-sync`
 
 Optional OpenSPDD commands included in this plugin:
 
-- `/spdd-story`
-- `/spdd-api-test`
-- `/spdd-code-review`
-- `/spdd-reverse`
+- `/pro-spdd:spdd-story`
+- `/pro-spdd:spdd-api-test`
+- `/pro-spdd:spdd-code-review`
+- `/pro-spdd:spdd-reverse`
 
 ## Local Adaptations
 

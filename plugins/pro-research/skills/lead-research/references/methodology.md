@@ -171,7 +171,7 @@ and end in a cited report instead. After the verification pass:
      where sources conflicted, and any claim that failed verification (labeled, never silently dropped).
 3. The report is the deliverable; the JSONL evidence under `.research/<run-id>/` is its audit trail.
 
-The `/research` command drives this path with the generic `research-agent`; `/lead-research` drives the
+The `/pro-research:research` command drives this path with the generic `research-agent`; `/pro-research:lead-research` drives the
 scored lead path with the company/signals/people agents. Both share this engine and the same scripts.
 
 ## Security note — the browser rung (`browse.sh`)
